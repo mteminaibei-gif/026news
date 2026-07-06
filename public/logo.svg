@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 100" fill="none">
+  <!-- Globe body -->
+  <defs>
+    <radialGradient id="globeGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#4a90d9"/>
+      <stop offset="60%" stop-color="#1a5bb5"/>
+      <stop offset="100%" stop-color="#0d3a7a"/>
+    </radialGradient>
+    <radialGradient id="globeShine" cx="35%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="globeClip">
+      <circle cx="50" cy="50" r="34"/>
+    </clipPath>
+  </defs>
+
+  <!-- Globe base circle -->
+  <circle cx="50" cy="50" r="34" fill="url(#globeGrad)"/>
+
+  <!-- Continent shapes (simple land masses) -->
+  <g clip-path="url(#globeClip)" fill="#1e5fa8" opacity="0.6">
+    <ellipse cx="38" cy="42" rx="12" ry="8" transform="rotate(-15 38 42)"/>
+    <ellipse cx="55" cy="56" rx="9" ry="6" transform="rotate(10 55 56)"/>
+    <ellipse cx="43" cy="62" rx="6" ry="4"/>
+    <ellipse cx="62" cy="38" rx="5" ry="7" transform="rotate(-20 62 38)"/>
+  </g>
+
+  <!-- Globe shine overlay -->
+  <circle cx="50" cy="50" r="34" fill="url(#globeShine)"/>
+
+  <!-- Red swoosh ring (bottom arc) -->
+  <path d="M 20 62 Q 50 85 80 62" stroke="#e8192c" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <!-- White swoosh tail -->
+  <path d="M 16 58 Q 18 66 26 68" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Blue swoosh ring (top arc) -->
+  <path d="M 18 42 Q 50 18 82 42" stroke="#1a5bb5" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.7"/>
+
+  <!-- 4-pointed star (top right of globe) -->
+  <g transform="translate(72, 22)">
+    <path d="M0,-9 L1.8,-1.8 L9,0 L1.8,1.8 L0,9 L-1.8,1.8 L-9,0 L-1.8,-1.8 Z" fill="#2979e8"/>
+  </g>
+
+  <!-- "026" text — dark navy bold -->
+  <text x="100" y="67" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#0d2a6e" letter-spacing="-1">026</text>
+  <!-- "NEWS" text — red bold -->
+  <text x="218" y="67" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#e8192c" letter-spacing="1">NEWS</text>
+</svg>
