@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { CookieConsent } from '@/components/ui/CookieConsent'
+import { Analytics } from '@vercel/analytics/next'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
 
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <CookieConsent />
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   )
