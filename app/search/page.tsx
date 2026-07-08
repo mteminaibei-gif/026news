@@ -105,11 +105,12 @@ export default async function SearchPage({ searchParams }: Props) {
               >
                 {/* Thumbnail */}
                 <div className="relative w-28 h-20 shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                  {article.featured_image ? (
+                  {article.featured_image && (article.featured_image.startsWith('http') || article.featured_image.startsWith('/')) ? (
                     <Image
                       src={article.featured_image}
                       alt={article.title}
                       fill
+                      unoptimized
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (

@@ -47,7 +47,7 @@ export function Footer() {
         {/* Brand */}
         <div className="md:col-span-1">
           <Link href="/" aria-label="026NEW Blog home">
-            <Image src="/logo-dark.svg" alt="026NEW Blog" width={160} height={48} className="h-12 w-auto mb-4" />
+            <Image src="/026newslogo.png" alt="026NEW Blog" width={220} height={66} className="h-16 w-auto object-contain mb-4" />
           </Link>
           <p className="text-white/60 text-sm leading-relaxed mb-4">
             Kenya&apos;s premier digital news platform. Breaking news, in-depth analysis, and community journalism from Nairobi and across Africa.

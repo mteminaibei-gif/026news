@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatDate, formatNumber } from '@/lib/utils'
+import { formatDate, formatNumber, cn } from '@/lib/utils'
 
 interface SlideArticle {
   article_id: number
@@ -41,6 +41,9 @@ export function HeroCarousel({ articles }: Props) {
   const isKenyan = (cat?: string | null) =>
     cat && ['Kenya', 'Africa', 'Politics', 'Business'].includes(cat)
 
+  const hasValidImage = (url?: string | null) =>
+    !!url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))
+
   return (
     <section
       className="relative bg-[#1a5c2a] overflow-hidden select-none"
@@ -58,9 +61,9 @@ export function HeroCarousel({ articles }: Props) {
           aria-hidden={i !== current}
           className={`absolute inset-0 transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0'}`}
         >
-          {s.featured_image && !imgErrors.has(s.article_id) ? (
+          {hasValidImage(s.featured_image) && !imgErrors.has(s.article_id) ? (
             <Image
-              src={s.featured_image}
+              src={s.featured_image!}
               alt={s.title}
               fill
               className="object-cover"
@@ -83,15 +86,17 @@ export function HeroCarousel({ articles }: Props) {
       <div className="relative max-w-7xl mx-auto px-4 py-14 md:py-24 grid md:grid-cols-2 gap-8 items-center min-h-[440px]">
         <div
           key={current}
-          style={{ animation: 'fadeInUp 0.5s ease both' }}
+          style={{ animation: 'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both' }}
         >
           {/* Category + date */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className={`text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
+          <div className="flex items-center gap-2 mb-4 flex-wrap animate-fade-in delay-100">
+            <span className={cn(
+              'text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full',
+              'animate-pulse-glow',
               isKenyan(slide.category?.name)
                 ? 'bg-[#c8102e]'
                 : 'bg-[#4caf28]'
-            }`}>
+            )}>
               {isKenyan(slide.category?.name) ? '🇰🇪 ' : '🔴 '}
               {slide.category?.name ?? 'Breaking'}
             </span>
@@ -99,34 +104,46 @@ export function HeroCarousel({ articles }: Props) {
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl md:text-4xl font-extrabold text-white leading-tight mb-4 line-clamp-3 drop-shadow-lg">
+          <h1
+            className="text-2xl md:text-4xl font-extrabold text-white leading-tight mb-4 line-clamp-3 drop-shadow-xl"
+            style={{ animation: 'fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 80ms both' }}
+          >
             {slide.title}
           </h1>
 
           {/* Excerpt */}
-          <p className="text-white/70 text-sm md:text-base mb-5 leading-relaxed line-clamp-2">
+          <p
+            className="text-white/70 text-sm md:text-base mb-5 leading-relaxed line-clamp-2 max-w-xl"
+            style={{ animation: 'fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 160ms both' }}
+          >
             {slide.content.substring(0, 160)}...
           </p>
 
           {/* Meta */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-white/50 mb-6">
+          <div
+            className="flex flex-wrap items-center gap-4 text-sm text-white/50 mb-6"
+            style={{ animation: 'fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 220ms both' }}
+          >
             {slide.author && <span>✍️ {slide.author.name}</span>}
             <span>👁 {formatNumber(slide.views)} views</span>
           </div>
 
           {/* CTAs */}
-          <div className="flex gap-3 flex-wrap">
+          <div
+            className="flex gap-3 flex-wrap"
+            style={{ animation: 'fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 280ms both' }}
+          >
             <Link
               href={`/article/${slide.slug}`}
-              className="bg-[#f5c518] hover:bg-[#d4a010] text-[#1a1a1a] font-bold px-6 py-3 rounded-xl transition-colors text-sm shadow-lg hover:shadow-xl"
+              className="bg-[#f5c518] hover:bg-[#d4a010] text-[#1a1a1a] font-bold px-6 py-3 rounded-2xl transition-all duration-300 text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               Read Full Story →
             </Link>
             <Link
               href="/?category=Kenya"
-              className="border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 font-semibold px-5 py-3 rounded-xl transition-all text-sm"
+              className="border-2 border-white/25 text-white hover:bg-white/10 hover:border-white/50 font-semibold px-5 py-3 rounded-2xl transition-all duration-300 text-sm"
             >
-              🇰🇪 Kenya News
+              <span className="animate-wave inline-block mr-1">🇰🇪</span> Kenya News
             </Link>
           </div>
         </div>
@@ -182,8 +199,8 @@ export function HeroCarousel({ articles }: Props) {
                   : 'opacity-40 hover:opacity-70'
               }`}
             >
-              {s.featured_image && !imgErrors.has(s.article_id) ? (
-                <Image src={s.featured_image} alt={s.title} fill className="object-cover" unoptimized />
+              {hasValidImage(s.featured_image) && !imgErrors.has(s.article_id) ? (
+                <Image src={s.featured_image!} alt={s.title} fill className="object-cover" unoptimized />
               ) : (
                 <div className="absolute inset-0 bg-[#2d8a47] flex items-center justify-center text-white text-[8px] font-bold">026</div>
               )}

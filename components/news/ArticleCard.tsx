@@ -41,13 +41,17 @@ function ArticleImage({ src, alt, fill, width, height, className }: {
 
 const KENYA_CATS = ['Kenya', 'Africa', 'Politics', 'Business', 'Health']
 
+const hasValidImage = (url?: string | null) =>
+  !!url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))
+
 export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
   const [imgError, setImgError] = useState(false)
   const isKenya = KENYA_CATS.includes(article.category?.name ?? '')
+  const showImage = hasValidImage(article.featured_image) && !imgError
 
   const Placeholder = () => (
     <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
-      <span className="text-lg font-black text-[#1a5c2a]/20 dark:text-[#4caf28]/20 select-none tracking-widest">
+      <span className="text-sm font-black text-[#1a5c2a]/20 dark:text-[#4caf28]/20 select-none tracking-widest uppercase">
         {article.category?.name ?? '026NEW'}
       </span>
     </div>
@@ -57,9 +61,9 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
     return (
       <div className="flex gap-3 py-3 border-b border-gray-100 dark:border-[#1a2e1e] last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-all rounded-lg px-1">
         <div className="relative w-20 h-16 shrink-0 rounded-lg overflow-hidden bg-[#e8f5ea] dark:bg-[#1a2e1e]">
-          {article.featured_image && !imgError ? (
+          {showImage ? (
             <Image
-              src={article.featured_image}
+              src={article.featured_image!}
               alt={article.title}
               fill
               className="object-cover"
@@ -89,9 +93,9 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
     <article className="bg-white dark:bg-[#1a2e1e] border border-transparent dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group">
       <Link href={`/article/${article.slug}`}>
         <div className="relative aspect-video bg-[#e8f5ea] dark:bg-[#1a2e1e] overflow-hidden">
-          {article.featured_image && !imgError ? (
+          {showImage ? (
             <Image
-              src={article.featured_image}
+              src={article.featured_image!}
               alt={article.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"

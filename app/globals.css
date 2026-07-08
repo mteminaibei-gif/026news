@@ -2,161 +2,300 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── 026NEW Blog Brand Palette ───────────────────────────────
-   Forest Green  : #1a5c2a  (primary / shield dark)
-   Bright Green  : #4caf28  (gradient / accents)
-   Gold          : #f5c518  (sun / Blog script / highlights)
-   Kenya Red     : #c8102e  (flag / breaking / alerts)
-   Kenya Black   : #1a1a1a  (flag stripe / dark text)
-   Off-white     : #f8fdf5  (light page bg — slightly green-tinted)
-──────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   026NEW Blog — Design System
+   Palette extracted from 026newslogo.png
+   Forest Green #1a5c2a · Bright Green #4caf28 · Gold #f5c518
+   Kenya Red #c8102e · Kenya Black #1a1a1a · Cream #f8fdf5
+═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --brand-green-dark:  #1a5c2a;
-  --brand-green:       #2d8a47;
-  --brand-green-light: #4caf28;
-  --brand-gold:        #f5c518;
-  --brand-gold-dark:   #d4a010;
-  --brand-red:         #c8102e;
-  --brand-black:       #1a1a1a;
-  --brand-bg:          #f8fdf5;
+  --green-dark:   #1a5c2a;
+  --green-mid:    #2d8a47;
+  --green-light:  #4caf28;
+  --gold:         #f5c518;
+  --gold-dark:    #d4a010;
+  --red:          #c8102e;
+  --black:        #1a1a1a;
+  --cream:        #f8fdf5;
+  --brand-bg:     #f4fbf6;
 
-  /* Legacy aliases used by Tailwind utility classes */
-  --navy:       #1a5c2a;
-  --navy-mid:   #2d8a47;
-  --navy-light: #4caf28;
-  --accent:     #2d8a47;
-  --orange:     #f5c518;
+  /* easing tokens */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html.dark {
-  --brand-bg:   #0f1a12;
-  --navy:       #0f1a12;
-  --navy-mid:   #1a2e1e;
-  --navy-light: #2d4a33;
-  --accent:     #4caf28;
+  --brand-bg:  #0b1410;
   color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
+/* ── Reset & base ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  /* smooth ease-in-out for anchor jumps */
+  @media (prefers-reduced-motion: no-preference) {
+    scroll-behavior: smooth;
+  }
+}
 
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--brand-bg);
   color: #0f1a12;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.4s var(--ease-in-out),
+              color 0.4s var(--ease-in-out);
 }
 
 html.dark body {
-  background-color: #0f1a12;
-  color: #f0faf2;
+  background-color: var(--brand-bg);
+  color: #e8f5ea;
 }
 
-/* ── Dark mode overrides ─────────────────────────────────── */
-html.dark .bg-white          { background-color: #1a2e1e !important; }
-html.dark .bg-gray-50        { background-color: #0f1a12 !important; }
-html.dark .bg-gray-100       { background-color: #1a2e1e !important; }
-
+/* ── Dark mode token overrides ──────────────────────────── */
+html.dark .bg-white        { background-color: #162319 !important; }
+html.dark .bg-gray-50      { background-color: #0b1410 !important; }
+html.dark .bg-gray-100     { background-color: #162319 !important; }
 html.dark .border-gray-100,
-html.dark .border-gray-200   { border-color: #2d4a33 !important; }
-
-html.dark .text-gray-900     { color: #f0faf2 !important; }
-html.dark .text-gray-800     { color: #d4f0da !important; }
-html.dark .text-gray-700     { color: #b8e4c0 !important; }
-html.dark .text-gray-600     { color: #8cc99a !important; }
-html.dark .text-gray-500     { color: #6aaa7a !important; }
-html.dark .text-gray-400     { color: #4a8a5a !important; }
+html.dark .border-gray-200 { border-color: #223d29 !important; }
+html.dark .text-gray-900   { color: #e8f5ea !important; }
+html.dark .text-gray-800   { color: #c8e6cc !important; }
+html.dark .text-gray-700   { color: #a5d6aa !important; }
+html.dark .text-gray-600   { color: #81c784 !important; }
+html.dark .text-gray-500   { color: #5aaa60 !important; }
+html.dark .text-gray-400   { color: #3d7a42 !important; }
 
 html.dark select,
 html.dark input,
 html.dark textarea {
-  background-color: #1a2e1e !important;
-  color: #f0faf2 !important;
-  border-color: #2d4a33 !important;
+  background-color: #162319 !important;
+  color: #e8f5ea !important;
+  border-color: #223d29 !important;
 }
 html.dark input::placeholder,
-html.dark textarea::placeholder { color: #4a8a5a !important; }
-html.dark select option { background-color: #1a2e1e; color: #f0faf2; }
-
+html.dark textarea::placeholder { color: #3d7a42 !important; }
+html.dark select option { background-color: #162319; color: #e8f5ea; }
 html.dark table th {
-  background-color: #1a2e1e !important;
-  color: #d4f0da !important;
-  border-color: #2d4a33 !important;
+  background-color: #162319 !important;
+  color: #c8e6cc !important;
 }
-html.dark table td { border-color: #1a2e1e !important; }
-html.dark tr:hover { background-color: rgba(76,175,40,0.05) !important; }
+html.dark table td { border-color: #162319 !important; }
+html.dark tr:hover { background-color: rgba(76,175,40,0.04) !important; }
 
-/* ── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #4caf28; border-radius: 3px; }
-html.dark ::-webkit-scrollbar-thumb { background: #2d8a47; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4caf28, #1a5c2a);
+  border-radius: 99px;
+}
 ::-webkit-scrollbar-thumb:hover { background: #1a5c2a; }
 
-/* ── Brand utility classes ───────────────────────────────── */
-.bg-brand         { background-color: var(--brand-green-dark); }
-.bg-brand-mid     { background-color: var(--brand-green); }
-.bg-brand-light   { background-color: var(--brand-green-light); }
-.bg-brand-gold    { background-color: var(--brand-gold); }
-.bg-brand-red     { background-color: var(--brand-red); }
-.text-brand       { color: var(--brand-green-dark); }
-.text-brand-light { color: var(--brand-green-light); }
-.text-brand-gold  { color: var(--brand-gold); }
-.text-brand-red   { color: var(--brand-red); }
-
-/* Kenya flag gradient bar */
+/* ── Kenya flag bar ─────────────────────────────────────── */
 .kenya-bar {
   background: linear-gradient(90deg,
-    #c8102e 0%, #c8102e 33%,
-    #1a1a1a 33%, #1a1a1a 66%,
-    #1a5c2a 66%, #1a5c2a 100%
+    #c8102e 0%,   #c8102e 33%,
+    #1a1a1a 33%,  #1a1a1a 66%,
+    #1a5c2a 66%,  #1a5c2a 100%
   );
-  height: 4px;
+  height: 3px;
+}
+.kenya-bar-thick {
+  background: linear-gradient(90deg,
+    #c8102e 0%,   #c8102e 33%,
+    #1a1a1a 33%,  #1a1a1a 66%,
+    #1a5c2a 66%,  #1a5c2a 100%
+  );
+  height: 5px;
 }
 
-/* ── Article body ────────────────────────────────────────── */
-.article-body p { margin-bottom: 1.25rem; line-height: 1.85; }
+/* ── Article body ───────────────────────────────────────── */
+.article-body p { margin-bottom: 1.25rem; line-height: 1.9; }
 .article-body h2 {
-  font-size: 1.35rem; font-weight: 700;
-  margin: 1.75rem 0 0.75rem;
-  color: var(--brand-green-dark);
+  font-size: 1.35rem; font-weight: 800;
+  margin: 2rem 0 0.75rem;
+  color: var(--green-dark);
 }
 html.dark .article-body h2 { color: #4caf28 !important; }
-.article-body h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+.article-body h3 {
+  font-size: 1.1rem; font-weight: 700;
+  margin: 1.5rem 0 0.5rem;
+}
 .article-body blockquote {
-  border-left: 4px solid var(--brand-gold);
-  padding-left: 1rem;
-  color: #4b5563;
+  border-left: 4px solid var(--gold);
+  background: linear-gradient(90deg, rgba(245,197,24,0.08), transparent);
+  border-radius: 0 12px 12px 0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  color: #374151;
   font-style: italic;
-  margin: 1.25rem 0;
-  background: rgba(245,197,24,0.06);
-  border-radius: 0 8px 8px 0;
-  padding: 0.75rem 1rem;
+  font-size: 1.05rem;
 }
-html.dark .article-body blockquote { color: #8cc99a !important; }
+html.dark .article-body blockquote { color: #a5d6aa !important; }
 
-/* ── Breaking news ticker ────────────────────────────────── */
-.ticker-wrap {
-  background: var(--brand-green-dark);
-  border-bottom: 2px solid var(--brand-gold);
-}
+/* ═══════════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════════ */
 
-/* ── Kenya badge ─────────────────────────────────────────── */
-.badge-kenya {
-  background: linear-gradient(135deg, #c8102e 0%, #1a5c2a 100%);
-  color: white;
-}
-
-/* ── Animations ──────────────────────────────────────────── */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
+/* Fade up — primary entrance */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Slide in from left */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Slide in from right */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Scale in — for badges/pills */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Pulse glow — for breaking badge */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,16,46,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(200,16,46,0); }
+}
+
+/* Ticker scroll */
 @keyframes ticker {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.animate-ticker { animation: ticker 30s linear infinite; }
-.animate-fade-in { animation: fadeInUp 0.4s ease both; }
+
+/* Flag wave */
+@keyframes wave {
+  0%, 100% { transform: rotate(-3deg); }
+  50%       { transform: rotate(3deg); }
+}
+
+/* Shimmer — skeleton loading */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* Number count-up visual pop */
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* ── Animation utility classes ──────────────────────────── */
+.animate-fade-up {
+  animation: fadeUp 0.6s var(--ease-out-expo) both;
+}
+.animate-fade-in {
+  animation: fadeIn 0.5s var(--ease-in-out) both;
+}
+.animate-slide-left {
+  animation: slideInLeft 0.6s var(--ease-out-expo) both;
+}
+.animate-slide-right {
+  animation: slideInRight 0.6s var(--ease-out-expo) both;
+}
+.animate-scale-in {
+  animation: scaleIn 0.4s var(--ease-spring) both;
+}
+.animate-ticker {
+  animation: ticker 35s linear infinite;
+}
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+.animate-wave {
+  animation: wave 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Staggered delay helpers */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(76,175,40,0.06) 0%,
+    rgba(76,175,40,0.12) 50%,
+    rgba(76,175,40,0.06) 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.5s linear infinite;
+  border-radius: 8px;
+}
+
+/* ── Hover utilities ────────────────────────────────────── */
+.hover-lift {
+  transition: transform 0.3s var(--ease-out-expo),
+              box-shadow 0.3s var(--ease-out-expo);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(26,92,42,0.15);
+}
+
+/* Nav link underline animation */
+.nav-link {
+  position: relative;
+  transition: color 0.25s var(--ease-in-out);
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%; right: 50%;
+  height: 2px;
+  background: var(--green-dark);
+  transition: left 0.3s var(--ease-out-expo),
+              right 0.3s var(--ease-out-expo);
+  border-radius: 99px;
+}
+.nav-link:hover::after,
+.nav-link.active::after { left: 0; right: 0; }
+.nav-link.active { color: var(--green-dark); font-weight: 600; }
+
+/* Card glass effect */
+.card-glass {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(76,175,40,0.12);
+  border-radius: 16px;
+}
+html.dark .card-glass {
+  background: rgba(22,35,25,0.85);
+  border-color: rgba(76,175,40,0.15);
+}
+
+/* ── Focus styles ───────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--green-light);
+  outline-offset: 3px;
+  border-radius: 6px;
+}

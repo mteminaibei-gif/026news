@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ArticlesList } from '@/components/news/ArticlesList'
 import { HeroCarousel } from '@/components/news/HeroCarousel'
+import { ArticleCard } from '@/components/news/ArticleCard'
 import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
 import { formatNumber, cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
@@ -168,7 +169,7 @@ export default async function HomePage({ searchParams }: Props) {
       )}
 
       {/* Hero — home page only */}
-      <HeroCarousel articles={heroSlides as never} />
+      {!categoryParam && <HeroCarousel articles={heroSlides as never} />}
 
       {/* Main content grid */}
       <div className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-[1fr_300px] gap-8 w-full">
@@ -187,57 +188,11 @@ export default async function HomePage({ searchParams }: Props) {
               </h2>
               <div className="space-y-4">
                 {spotlight.map(article => (
-                  <div
+                  <ArticleCard
                     key={article.article_id}
-                    className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm p-4 flex gap-4 items-start hover:shadow-md transition-all hover:-translate-y-0.5"
-                  >
-                    {article.featured_image && (
-                      <div className="relative w-24 h-20 shrink-0 rounded-lg overflow-hidden bg-[#e8f5ea]">
-                        <Image
-                          src={article.featured_image}
-                          alt={article.title}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                        />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[11px] font-bold uppercase text-[#2d8a47] dark:text-[#4caf28] tracking-wider">
-                        {article.category?.name}
-                      </span>
-                      <h4 className="font-bold text-gray-900 dark:text-white mt-0.5 mb-1.5 leading-snug">
-                        <Link
-                          href={`/article/${article.slug}`}
-                          className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors"
-                        >
-                          {article.title}
-                        </Link>
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                        {article.content.substring(0, 100)}...
-                      </p>
-                      {article.author && (
-                        <div className="flex items-center gap-1.5 mt-2">
-                          {article.author.profile_image && (
-                            <Image
-                              src={article.author.profile_image}
-                              alt={article.author.name}
-                              width={20}
-                              height={20}
-                              className="rounded-full object-cover"
-                              unoptimized
-                              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                            />
-                          )}
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {article.author.name} — Journalist
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    article={article as any}
+                    variant="horizontal"
+                  />
                 ))}
               </div>
             </>
