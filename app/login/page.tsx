@@ -101,7 +101,7 @@ function LoginForm() {
       {/* Logo */}
       <div className="text-center mb-6">
         <Link href="/" aria-label="026News home">
-          <Image src="/logo.svg" alt="026News" width={160} height={48} className="mx-auto h-12 w-auto mb-2" />
+          <Image src="/026newslogo.png" alt="026NEW Blog" width={160} height={48} className="mx-auto h-24 w-auto mb-2" />
         </Link>
       </div>
 

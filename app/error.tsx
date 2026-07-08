@@ -21,7 +21,7 @@ export default function ErrorPage({
       <header className="bg-white dark:bg-[#0a1628] border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center">
           <Link href="/">
-            <Image src="/logo.svg" alt="026News" width={140} height={44} className="h-9 w-auto" />
+            <Image src="/026newslogo.png" alt="026NEW Blog" width={140} height={44} className="h-20 w-auto" />
           </Link>
         </div>
       </header>

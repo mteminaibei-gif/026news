@@ -200,7 +200,7 @@ export function HeroCarousel({ articles }: Props) {
               }`}
             >
               {hasValidImage(s.featured_image) && !imgErrors.has(s.article_id) ? (
-                <Image src={s.featured_image!} alt={s.title} fill className="object-cover" unoptimized />
+                <Image src={s.featured_image!} alt={s.title} fill sizes="64px" className="object-cover" unoptimized />
               ) : (
                 <div className="absolute inset-0 bg-[#2d8a47] flex items-center justify-center text-white text-[8px] font-bold">026</div>
               )}

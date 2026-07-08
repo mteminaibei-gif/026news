@@ -11,6 +11,7 @@ import { CommentsSection } from '@/components/news/CommentsSection'
 import { ShareBar } from '@/components/news/ShareBar'
 import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
 import { ReadingProgress } from '@/components/ui/ReadingProgress'
+import { FeaturedImage } from '@/components/ui/FeaturedImage'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -179,14 +180,11 @@ export default async function ArticlePage({ params }: Props) {
           {/* Featured image */}
           {article.featured_image && (
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm mb-6 bg-[#e8f5ea] dark:bg-[#1a2e1e]">
-              <Image
+              <FeaturedImage
                 src={article.featured_image}
                 alt={article.title}
-                fill
-                className="object-cover"
                 priority
-                unoptimized
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 900px"
               />
             </div>
           )}

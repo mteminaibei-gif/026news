@@ -53,7 +53,7 @@ export default async function AdminEditPage({ params }: Props) {
       >
         <Link
           href="/admin/articles"
-          className="text-sm font-semibold bg-[#f0faf2] hover:bg-[#e0f5e4] text-[#1a5c2a] px-3 py-1.5 rounded-xl transition-all duration-300"
+          className="text-sm font-semibold bg-[#f5c518] hover:bg-[#f5c518]/90 text-[#1a1a1a] px-3 py-1.5 rounded-xl transition-all duration-300"
         >
           ← All Articles
         </Link>
