@@ -80,37 +80,51 @@ export default async function HomePage({ searchParams }: Props) {
   const trending  = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
   const spotlight = articles.slice(0, 3)
 
+  // Hero: Kenya/Africa content first, then most viewed, then latest
+  const kenyaArticles = articles.filter(a =>
+    ['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '')
+  )
+  const otherArticles = articles.filter(a =>
+    !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '')
+  )
   const featured   = articles.filter(a => (a as any).featured)
   const heroSlides = [
     ...featured,
-    ...[...articles].sort((a, b) => b.views - a.views)
+    ...[...kenyaArticles].sort((a, b) => b.views - a.views)
+      .filter(a => !featured.find(f => f.article_id === a.article_id)),
+    ...[...otherArticles].sort((a, b) => b.views - a.views)
       .filter(a => !featured.find(f => f.article_id === a.article_id)),
   ].slice(0, 7)
 
+  // Kenya/Africa articles first, then rest — when no category filter is active
   const displayArticles = categoryParam
     ? articles.filter(a => a.category?.name === categoryParam)
-    : articles
+    : [
+        ...articles.filter(a => ['Kenya', 'Africa'].includes(a.category?.name ?? '')),
+        ...articles.filter(a => !['Kenya', 'Africa'].includes(a.category?.name ?? '')),
+      ]
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Navbar />
 
       {/* Category bar */}
-      <div className="bg-white dark:bg-[#0a1628] border-b border-gray-200 dark:border-gray-800 sticky top-16 z-40 transition-colors">
+      <div className="bg-white dark:bg-[#0f1a12] border-b-2 border-[#e8f5ea] dark:border-[#1a2e1e] sticky top-16 z-40 transition-colors">
         <div className="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-0 scrollbar-none">
           <Link
             href="/"
             className={cn(
               'px-4 py-2.5 text-sm font-semibold border-b-2 whitespace-nowrap shrink-0 transition-colors',
               !categoryParam
-                ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
-                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600'
+                ? 'text-[#1a5c2a] dark:text-[#4caf28] border-[#1a5c2a] dark:border-[#4caf28]'
+                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-[#1a5c2a] dark:hover:text-[#4caf28] hover:border-[#1a5c2a]'
             )}
           >
             All News
           </Link>
           {categories.map(cat => {
             const isActive = categoryParam === cat.name
+            const isKenya  = ['Kenya', 'Africa'].includes(cat.name)
             return (
               <Link
                 key={cat.category_id}
@@ -118,8 +132,10 @@ export default async function HomePage({ searchParams }: Props) {
                 className={cn(
                   'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0',
                   isActive
-                    ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 font-semibold'
-                    : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600'
+                    ? isKenya
+                      ? 'text-[#c8102e] border-[#c8102e] font-semibold'
+                      : 'text-[#1a5c2a] dark:text-[#4caf28] border-[#1a5c2a] dark:border-[#4caf28] font-semibold'
+                    : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-[#1a5c2a] dark:hover:text-[#4caf28] hover:border-[#1a5c2a]'
                 )}
               >
                 {cat.name}
@@ -131,17 +147,17 @@ export default async function HomePage({ searchParams }: Props) {
 
       {/* Breaking ticker */}
       {trending.length > 0 && (
-        <div className="bg-[#0a1628] text-white py-2 overflow-hidden">
+        <div className="bg-[#1a5c2a] text-white py-2 overflow-hidden border-b-2 border-[#f5c518]/30">
           <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 text-sm">
-            <span className="bg-orange-500 text-white px-2.5 py-0.5 rounded text-xs font-bold uppercase shrink-0 animate-pulse">
-              ⚡ Breaking
+            <span className="bg-[#c8102e] text-white px-2.5 py-0.5 rounded text-xs font-bold uppercase shrink-0 animate-pulse">
+              🇰🇪 Breaking
             </span>
-            <div className="flex gap-8 overflow-hidden whitespace-nowrap text-white/70">
+            <div className="flex gap-8 overflow-hidden whitespace-nowrap text-white/75">
               {trending.map(a => (
                 <Link
                   key={a.article_id}
                   href={`/article/${a.slug}`}
-                  className="before:content-['•_'] before:text-orange-400 hover:text-white transition-colors"
+                  className="before:content-['•_'] before:text-[#f5c518] hover:text-white transition-colors shrink-0"
                 >
                   {a.title}
                 </Link>
@@ -173,27 +189,28 @@ export default async function HomePage({ searchParams }: Props) {
                 {spotlight.map(article => (
                   <div
                     key={article.article_id}
-                    className="bg-white dark:bg-gray-800/40 border dark:border-gray-800/60 rounded-xl shadow-sm p-4 flex gap-4 items-start hover:shadow-md transition-all hover:-translate-y-0.5"
+                    className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm p-4 flex gap-4 items-start hover:shadow-md transition-all hover:-translate-y-0.5"
                   >
                     {article.featured_image && (
-                      <div className="relative w-24 h-20 shrink-0 rounded-lg overflow-hidden">
+                      <div className="relative w-24 h-20 shrink-0 rounded-lg overflow-hidden bg-[#e8f5ea]">
                         <Image
                           src={article.featured_image}
                           alt={article.title}
                           fill
                           className="object-cover"
                           unoptimized
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <span className="text-[11px] font-bold uppercase text-orange-500 tracking-wider">
+                      <span className="text-[11px] font-bold uppercase text-[#2d8a47] dark:text-[#4caf28] tracking-wider">
                         {article.category?.name}
                       </span>
                       <h4 className="font-bold text-gray-900 dark:text-white mt-0.5 mb-1.5 leading-snug">
                         <Link
                           href={`/article/${article.slug}`}
-                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors"
                         >
                           {article.title}
                         </Link>
@@ -211,10 +228,11 @@ export default async function HomePage({ searchParams }: Props) {
                               height={20}
                               className="rounded-full object-cover"
                               unoptimized
+                              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                             />
                           )}
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {article.author.name} — Freelance Journalist
+                            {article.author.name} — Journalist
                           </span>
                         </div>
                       )}
@@ -229,21 +247,21 @@ export default async function HomePage({ searchParams }: Props) {
         {/* Sidebar */}
         <aside className="space-y-5">
           {trending.length > 0 && (
-            <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-800/60 rounded-xl shadow-sm overflow-hidden transition-colors">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-b-2 border-blue-600">
-                <h3 className="text-sm font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">
+            <div className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden">
+              <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a] dark:border-[#4caf28]">
+                <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">
                   🔥 Trending Now
                 </h3>
               </div>
               {trending.map((a, i) => (
                 <div
                   key={a.article_id}
-                  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
                 >
-                  <span className="text-2xl font-black text-gray-200 dark:text-gray-700 min-w-[28px]">{i + 1}</span>
+                  <span className="text-2xl font-black text-[#4caf28]/25 dark:text-[#4caf28]/20 min-w-[28px]">{i + 1}</span>
                   <div>
                     <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug">
-                      <Link href={`/article/${a.slug}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+                      <Link href={`/article/${a.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28]">
                         {a.title}
                       </Link>
                     </h5>
@@ -258,37 +276,37 @@ export default async function HomePage({ searchParams }: Props) {
 
           <SubscribeWidget />
 
-          <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-800/60 rounded-xl shadow-sm overflow-hidden transition-colors">
-            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-b-2 border-blue-600">
-              <h3 className="text-sm font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">
+          <div className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a] dark:border-[#4caf28]">
+              <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">
                 📂 Categories
               </h3>
             </div>
             {categories.map(cat => (
               <div
                 key={cat.category_id}
-                className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
               >
                 <div>
                   <Link
                     href={`/?category=${cat.name}`}
-                    className="text-sm font-semibold text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                    className="text-sm font-semibold text-gray-800 dark:text-gray-200 hover:text-[#1a5c2a] dark:hover:text-[#4caf28]"
                   >
-                    {cat.name}
+                    {['Kenya','Africa'].includes(cat.name) ? '🇰🇪 ' : ''}{cat.name}
                   </Link>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     {articles.filter(a => a.category?.name === cat.name).length} articles
                   </p>
                 </div>
-                <span className="text-gray-300 dark:text-gray-600">→</span>
+                <span className="text-[#4caf28]/40 dark:text-[#4caf28]/30">→</span>
               </div>
             ))}
           </div>
 
           {journalists.length > 0 && (
-            <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-800/60 rounded-xl shadow-sm overflow-hidden transition-colors">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-b-2 border-blue-600">
-                <h3 className="text-sm font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">
+            <div className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden">
+              <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a] dark:border-[#4caf28]">
+                <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">
                   🏆 Top Journalists
                 </h3>
               </div>
@@ -296,7 +314,7 @@ export default async function HomePage({ searchParams }: Props) {
                 <Link
                   key={j.user_id}
                   href={`/journalists/${j.user_id}`}
-                  className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
                 >
                   {j.profile_image ? (
                     <Image
@@ -308,7 +326,7 @@ export default async function HomePage({ searchParams }: Props) {
                       unoptimized
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[#e8f5ea] dark:bg-[#1a5c2a]/40 flex items-center justify-center text-sm font-bold text-[#1a5c2a] dark:text-[#4caf28] shrink-0">
                       {j.name.charAt(0)}
                     </div>
                   )}
@@ -320,7 +338,7 @@ export default async function HomePage({ searchParams }: Props) {
               ))}
               <Link
                 href="/leaderboard"
-                className="block text-center text-xs font-semibold text-blue-600 dark:text-blue-400 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                className="block text-center text-xs font-semibold text-[#1a5c2a] dark:text-[#4caf28] py-2.5 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
               >
                 View Full Leaderboard →
               </Link>

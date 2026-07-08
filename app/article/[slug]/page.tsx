@@ -178,13 +178,15 @@ export default async function ArticlePage({ params }: Props) {
 
           {/* Featured image */}
           {article.featured_image && (
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm mb-6">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm mb-6 bg-[#e8f5ea] dark:bg-[#1a2e1e]">
               <Image
                 src={article.featured_image}
                 alt={article.title}
                 fill
                 className="object-cover"
                 priority
+                unoptimized
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             </div>
           )}

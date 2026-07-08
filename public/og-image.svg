@@ -1,54 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
-  <!-- Background gradient -->
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0a1628"/>
-      <stop offset="100%" stop-color="#1a3a6e"/>
-    </linearGradient>
-    <linearGradient id="accent-grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#e85d04"/>
-      <stop offset="100%" stop-color="#ff8c42"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1a5c2a"/>
+  <!-- Gold accent bar -->
+  <rect x="0" y="0" width="1200" height="8" fill="#f5c518"/>
+  <!-- Kenya flag stripe bottom -->
+  <rect x="0" y="614" width="1200" height="6" fill="#c8102e"/>
+  <rect x="0" y="620" width="1200" height="4" fill="#1a1a1a"/>
+  <rect x="0" y="624" width="1200" height="6" fill="#1a5c2a"/>
   <!-- Decorative circles -->
-  <circle cx="1050" cy="100" r="200" fill="white" fill-opacity="0.03"/>
-  <circle cx="1100" cy="520" r="140" fill="white" fill-opacity="0.02"/>
-  <circle cx="80" cy="520" r="120" fill="#e85d04" fill-opacity="0.08"/>
-
-  <!-- Logo icon -->
-  <circle cx="120" cy="120" r="50" fill="#e85d04"/>
-  <circle cx="120" cy="120" r="32" fill="#0a1628"/>
-  <circle cx="120" cy="120" r="18" fill="#e85d04"/>
-
-  <!-- 026NEWS text -->
-  <text x="190" y="146" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="72" fill="white" letter-spacing="-2">026</text>
-  <text x="375" y="146" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="72" fill="#e85d04" letter-spacing="4">NEWS</text>
-
-  <!-- Divider -->
-  <rect x="120" y="180" width="600" height="3" rx="2" fill="#e85d04" opacity="0.6"/>
-
+  <circle cx="1050" cy="120" r="180" fill="rgba(245,197,24,0.08)"/>
+  <circle cx="1050" cy="120" r="120" fill="rgba(245,197,24,0.06)"/>
+  <!-- Shield watermark -->
+  <path d="M80 60 L200 60 Q220 60 220 80 L220 200 Q220 280 140 320 Q60 280 60 200 L60 80 Q60 60 80 60 Z" fill="rgba(255,255,255,0.06)"/>
+  <!-- Logo text -->
+  <text x="80" y="340" font-family="Arial Black,sans-serif" font-size="140" font-weight="900" fill="white" letter-spacing="-4" opacity="0.95">026NEW</text>
+  <text x="88" y="420" font-family="Georgia,serif" font-size="60" font-style="italic" font-weight="700" fill="#f5c518">Blog</text>
   <!-- Tagline -->
-  <text x="120" y="250" font-family="Arial, sans-serif" font-weight="400" font-size="32" fill="white" fill-opacity="0.7">Breaking News · Freelance Journalism · Africa &amp; The World</text>
-
-  <!-- Feature pills -->
-  <rect x="120" y="310" width="200" height="50" rx="25" fill="#e85d04" fill-opacity="0.2" stroke="#e85d04" stroke-width="1" stroke-opacity="0.5"/>
-  <text x="220" y="341" font-family="Arial, sans-serif" font-size="20" fill="#e85d04" text-anchor="middle" font-weight="600">Politics</text>
-
-  <rect x="340" y="310" width="200" height="50" rx="25" fill="white" fill-opacity="0.05" stroke="white" stroke-width="1" stroke-opacity="0.2"/>
-  <text x="440" y="341" font-family="Arial, sans-serif" font-size="20" fill="white" fill-opacity="0.7" text-anchor="middle">Business</text>
-
-  <rect x="560" y="310" width="160" height="50" rx="25" fill="white" fill-opacity="0.05" stroke="white" stroke-width="1" stroke-opacity="0.2"/>
-  <text x="640" y="341" font-family="Arial, sans-serif" font-size="20" fill="white" fill-opacity="0.7" text-anchor="middle">Tech</text>
-
-  <rect x="740" y="310" width="180" height="50" rx="25" fill="white" fill-opacity="0.05" stroke="white" stroke-width="1" stroke-opacity="0.2"/>
-  <text x="830" y="341" font-family="Arial, sans-serif" font-size="20" fill="white" fill-opacity="0.7" text-anchor="middle">Science</text>
-
-  <!-- URL -->
-  <text x="120" y="560" font-family="Arial, sans-serif" font-size="26" fill="white" fill-opacity="0.35">026news.vercel.app</text>
-
-  <!-- Breaking badge -->
-  <rect x="800" y="520" width="280" height="60" rx="12" fill="#e85d04"/>
-  <text x="940" y="558" font-family="Arial Black, sans-serif" font-weight="900" font-size="22" fill="white" text-anchor="middle" letter-spacing="1">⚡ LIVE COVERAGE</text>
+  <text x="80" y="490" font-family="Arial,sans-serif" font-size="28" fill="rgba(255,255,255,0.7)" letter-spacing="1">Breaking News · Kenya · Africa · World</text>
+  <!-- Flag wave decoration -->
+  <path d="M80 530 Q400 550 800 530 Q1000 520 1150 535" stroke="#c8102e" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M80 542 Q400 562 800 542 Q1000 532 1150 547" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M80 552 Q400 572 800 552 Q1000 542 1150 557" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
 </svg>

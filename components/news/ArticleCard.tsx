@@ -1,8 +1,10 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState } from 'react'
 import { formatDate, formatNumber } from '@/lib/utils'
 
-// Accepts both MockArticle and ArticleWithAuthor shapes
 interface ArticleCardProps {
   article: {
     article_id: number
@@ -18,27 +20,64 @@ interface ArticleCardProps {
   variant?: 'default' | 'horizontal' | 'featured'
 }
 
+function ArticleImage({ src, alt, fill, width, height, className }: {
+  src: string; alt: string; fill?: boolean; width?: number; height?: number; className?: string
+}) {
+  const [error, setError] = useState(false)
+  if (error) return null
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill={fill}
+      width={!fill ? width : undefined}
+      height={!fill ? height : undefined}
+      className={className}
+      unoptimized
+      onError={() => setError(true)}
+    />
+  )
+}
+
+const KENYA_CATS = ['Kenya', 'Africa', 'Politics', 'Business', 'Health']
+
 export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
+  const [imgError, setImgError] = useState(false)
+  const isKenya = KENYA_CATS.includes(article.category?.name ?? '')
+
+  const Placeholder = () => (
+    <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
+      <span className="text-lg font-black text-[#1a5c2a]/20 dark:text-[#4caf28]/20 select-none tracking-widest">
+        {article.category?.name ?? '026NEW'}
+      </span>
+    </div>
+  )
+
   if (variant === 'horizontal') {
     return (
-      <div className="flex gap-3 py-3 border-b border-gray-150 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-all rounded-lg px-1">
-        <div className="relative w-20 h-16 shrink-0 rounded-lg overflow-hidden bg-gray-105 dark:bg-gray-850 flex items-center justify-center border dark:border-gray-800/40">
-          {article.featured_image ? (
-            <Image src={article.featured_image} alt={article.title} fill className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-orange-500/10 flex items-center justify-center">
-              <span className="text-[10px] font-black text-gray-400 dark:text-gray-600 select-none tracking-wider">026</span>
-            </div>
-          )}
+      <div className="flex gap-3 py-3 border-b border-gray-100 dark:border-[#1a2e1e] last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-all rounded-lg px-1">
+        <div className="relative w-20 h-16 shrink-0 rounded-lg overflow-hidden bg-[#e8f5ea] dark:bg-[#1a2e1e]">
+          {article.featured_image && !imgError ? (
+            <Image
+              src={article.featured_image}
+              alt={article.title}
+              fill
+              className="object-cover"
+              unoptimized
+              onError={() => setImgError(true)}
+            />
+          ) : <Placeholder />}
         </div>
         <div className="min-w-0 flex-1">
-          <span className="text-[11px] font-bold uppercase text-orange-500 tracking-wider">
-            {article.category?.name}
+          <span className={`text-[11px] font-bold uppercase tracking-wider ${isKenya ? 'text-[#c8102e]' : 'text-[#1a5c2a] dark:text-[#4caf28]'}`}>
+            {isKenya ? '🇰🇪 ' : ''}{article.category?.name}
           </span>
           <h5 className="text-sm font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2 mt-0.5">
-            <Link href={`/article/${article.slug}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{article.title}</Link>
+            <Link href={`/article/${article.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors">
+              {article.title}
+            </Link>
           </h5>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <p className="text-xs text-gray-400 mt-1">
             👁 {formatNumber(article.views)} · {formatDate(article.created_at)}
           </p>
         </div>
@@ -47,37 +86,42 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   }
 
   return (
-    <article className="bg-white dark:bg-gray-800/40 border border-transparent dark:border-gray-800/60 rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group">
+    <article className="bg-white dark:bg-[#1a2e1e] border border-transparent dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group">
       <Link href={`/article/${article.slug}`}>
-        <div className="relative aspect-video bg-gray-105 dark:bg-gray-850 overflow-hidden flex items-center justify-center border-b dark:border-gray-800/40">
-          {article.featured_image ? (
+        <div className="relative aspect-video bg-[#e8f5ea] dark:bg-[#1a2e1e] overflow-hidden">
+          {article.featured_image && !imgError ? (
             <Image
               src={article.featured_image}
               alt={article.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"
+              unoptimized
+              onError={() => setImgError(true)}
             />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-orange-500/10 flex items-center justify-center">
-              <span className="text-2xl font-black text-gray-300 dark:text-gray-700 select-none tracking-widest">026NEWS</span>
+          ) : <Placeholder />}
+          {isKenya && (
+            <div className="absolute top-2 left-2 bg-[#c8102e] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+              🇰🇪 Kenya
             </div>
           )}
         </div>
       </Link>
       <div className="p-4">
-        <span className="text-[11px] font-bold uppercase text-blue-600 dark:text-blue-400 tracking-wider">
+        <span className={`text-[11px] font-bold uppercase tracking-wider ${isKenya ? 'text-[#c8102e]' : 'text-[#2d8a47] dark:text-[#4caf28]'}`}>
           {article.category?.name}
         </span>
         <h3 className="font-bold text-gray-900 dark:text-white leading-snug mt-1 mb-1.5 line-clamp-2">
-          <Link href={`/article/${article.slug}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{article.title}</Link>
+          <Link href={`/article/${article.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors">
+            {article.title}
+          </Link>
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
           {article.content.substring(0, 110)}...
         </p>
-        <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 dark:text-gray-500">
-          <span>✍️ {article.author?.name}</span>
+        <div className="flex items-center gap-3 text-xs text-gray-400 pt-3 border-t border-gray-100 dark:border-[#2d4a33]/40">
+          <span>✍️ {article.author?.name ?? 'Staff'}</span>
           <span>👁 {formatNumber(article.views)}</span>
-          <span>📅 {formatDate(article.created_at)}</span>
+          <span className="ml-auto">{formatDate(article.created_at)}</span>
         </div>
       </div>
     </article>
