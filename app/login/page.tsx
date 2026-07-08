@@ -97,7 +97,7 @@ function LoginForm() {
   const isSignup = mode !== 'login'
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-linear-to-br from-[#f4fbf6] via-[#eef9ee] to-[#ffffff] py-16">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4fbf6] via-[#eef9ee] to-[#ffffff] py-16">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,rgba(76,175,40,0.15),transparent_30%),radial-gradient(circle_at_top_right,rgba(245,197,24,0.15),transparent_35%)]" />
       <div className="relative mx-auto w-full max-w-md px-4">
         <div className="bg-white/95 dark:bg-[#0c1b13] border border-[#d4e9d4] dark:border-[#183324] shadow-2xl rounded-4xl overflow-hidden backdrop-blur-xl p-8">
@@ -255,7 +255,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] px-4 py-12">
       <Suspense fallback={
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 flex items-center justify-center h-64">
           <div className="text-gray-400 text-sm">Loading…</div>

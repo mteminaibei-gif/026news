@@ -77,7 +77,7 @@ export default function SubscribePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <section className="bg-linear-to-br from-[#0a1628] to-[#1a3a6e] text-white py-16 px-4 text-center">
+      <section className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-16 px-4 text-center">
         <span className="inline-block bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           Join the Team
         </span>

@@ -72,7 +72,7 @@ export default function HeroSlideshow() {
   return (
     <div className="relative group">
       {/* Main Slideshow Container */}
-      <div className="relative h-96 bg-linear-to-r from-[#0a1628] to-[#1a3a6e] dark:from-gray-900 dark:to-gray-800 rounded-2xl overflow-hidden">
+      <div className="relative h-96 bg-gradient-to-r from-[#0a1628] to-[#1a3a6e] dark:from-gray-900 dark:to-gray-800 rounded-2xl overflow-hidden">
         {/* Slide Content */}
         <Link
           href={`/article/${currentArticle.slug}`}

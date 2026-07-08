@@ -52,7 +52,7 @@ export function HeroCarousel({ articles }: Props) {
       onMouseLeave={() => setPaused(false)}
     >
       {/* Kenya flag top bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 h-1.5 bg-linear-to-r from-[#c8102e] via-[#1a1a1a] to-[#1a5c2a]" />
+      <div className="absolute top-0 left-0 right-0 z-10 h-1.5 bg-gradient-to-r from-[#c8102e] via-[#1a1a1a] to-[#1a5c2a]" />
 
       {/* Slide images */}
       {slides.map((s, i) => (
@@ -74,16 +74,16 @@ export function HeroCarousel({ articles }: Props) {
             />
           ) : (
             /* Fallback — branded gradient when no image */
-            <div className="absolute inset-0 bg-linear-to-br from-[#1a5c2a] via-[#2d8a47] to-[#0f3a1a]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a] via-[#2d8a47] to-[#0f3a1a]" />
           )}
           {/* Dark gradient overlay — left-heavy for text legibility */}
-          <div className="absolute inset-0 bg-linear-to-r from-[#0f1a12]/92 via-[#1a5c2a]/65 to-transparent" />
-          <div className="absolute inset-0 bg-linear-to-t from-[#0f1a12]/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f1a12]/92 via-[#1a5c2a]/65 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f1a12]/60 via-transparent to-transparent" />
         </div>
       ))}
 
       {/* Content */}
-      <div className="relative max-w-7xl mx-auto px-4 py-14 md:py-24 grid md:grid-cols-2 gap-8 items-center min-h-110">
+      <div className="relative max-w-7xl mx-auto px-4 py-14 md:py-24 grid md:grid-cols-2 gap-8 items-center min-h-[420px] md:min-h-[520px]">
         <div
           key={current}
           style={{ animation: 'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both' }}

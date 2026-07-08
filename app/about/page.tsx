@@ -34,7 +34,7 @@ export default function AboutPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-linear-to-br from-[#0a1628] to-[#1a3a6e] text-white py-20 px-4">
+      <section className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-block bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
             Our Story

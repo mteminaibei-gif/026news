@@ -62,7 +62,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   const sourceHost = getSourceHost(article.source_reference)
 
   const Placeholder = () => (
-    <div className="absolute inset-0 bg-linear-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
+    <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
       <span className="text-sm font-black text-[#1a5c2a]/20 dark:text-[#4caf28]/20 select-none tracking-widest uppercase">
         {article.category?.name ?? '026NEW'}
       </span>
