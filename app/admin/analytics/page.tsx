@@ -2,112 +2,204 @@ import type { Metadata } from 'next'
 import { Topbar } from '@/components/layout/Topbar'
 import { StatCard } from '@/components/ui/StatCard'
 import { BarChart } from '@/components/ui/BarChart'
-import { MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
-import { formatNumber } from '@/lib/utils'
+import { Badge } from '@/components/ui/Badge'
+import Image from 'next/image'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { formatNumber, formatCurrency, formatDate } from '@/lib/utils'
 
-export const metadata: Metadata = {
-  title: 'Platform Analytics — Admin Panel',
+export const metadata: Metadata = { title: 'Platform Analytics — Admin Panel' }
+
+type ArticleRow = {
+  article_id: number; title: string; slug: string; views: number; earnings: number
+  featured_image: string | null; created_at: string
+  author: { name: string } | null; category: { name: string } | null
 }
+type EarnRow   = { amount: number; source: string; created_at: string }
+type UserRow   = { user_id: number; created_at: string; role: string }
 
-const ADMIN = MOCK_USERS.find(u => u.role === 'admin')!
+export default async function AdminAnalyticsPage() {
+  const supabase = await createClient()
 
-const MONTHLY_TRAFFIC = [
-  { label: 'Nov', value: 28000 },
-  { label: 'Dec', value: 34000 },
-  { label: 'Jan', value: 31000 },
-  { label: 'Feb', value: 42000 },
-  { label: 'Mar', value: 56000 },
-  { label: 'Apr', value: 48000 },
-]
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: rawAdmin } = await supabase.from('users').select('name, profile_image').eq('email', user?.email ?? '').single()
+  const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
-const MONTHLY_REVENUE = [
-  { label: 'Nov', value: 1200 },
-  { label: 'Dec', value: 1600 },
-  { label: 'Jan', value: 1450 },
-  { label: 'Feb', value: 2100 },
-  { label: 'Mar', value: 2800 },
-  { label: 'Apr', value: 2400 },
-]
+  // Parallel queries
+  const [
+    { count: totalArticles },
+    { count: totalUsers },
+    { count: totalJournalists },
+    { data: rawTopArticles },
+    { data: rawEarnings },
+    { data: rawNewUsers },
+  ] = await Promise.all([
+    supabase.from('articles').select('article_id', { count: 'exact', head: true }).eq('status', 'published' as never),
+    supabase.from('users').select('user_id', { count: 'exact', head: true }),
+    supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never),
+    supabase.from('articles')
+      .select('article_id, title, slug, views, earnings, featured_image, created_at, author:users(name), category:categories(name)')
+      .eq('status', 'published' as never)
+      .order('views', { ascending: false })
+      .limit(10),
+    supabase.from('earnings').select('amount, source, created_at').order('created_at', { ascending: false }).limit(500),
+    supabase.from('users').select('user_id, created_at, role').order('created_at', { ascending: false }).limit(200),
+  ])
 
-const TOP_COUNTRIES = [
-  { flag: '🇰🇪', country: 'Kenya', sessions: 18400, percent: 34 },
-  { flag: '🇳🇬', country: 'Nigeria', sessions: 11900, percent: 22 },
-  { flag: '🇿🇦', country: 'South Africa', sessions: 8100, percent: 15 },
-  { flag: '🇬🇧', country: 'United Kingdom', sessions: 6500, percent: 12 },
-  { flag: '🇺🇸', country: 'United States', sessions: 5400, percent: 10 },
-]
+  const topArticles = (rawTopArticles ?? []) as unknown as ArticleRow[]
+  const earnings    = (rawEarnings    ?? []) as unknown as EarnRow[]
+  const newUsers    = (rawNewUsers    ?? []) as unknown as UserRow[]
 
-export default function AdminAnalyticsPage() {
-  const totalViews = MOCK_ARTICLES.reduce((s, a) => s + a.views, 0)
-  const published = MOCK_ARTICLES.filter(a => a.status === 'published')
+  // Total views across all published articles
+  const totalViews = topArticles.reduce((s, a) => s + (a.views ?? 0), 0)
+
+  // Revenue totals
+  const totalRevenue = earnings.reduce((s, e) => s + Number(e.amount), 0)
+  const thisMonth    = new Date().toISOString().slice(0, 7)
+  const monthRevenue = earnings.filter(e => e.created_at.startsWith(thisMonth)).reduce((s, e) => s + Number(e.amount), 0)
+
+  // Revenue by source
+  const bySource: Record<string, number> = {}
+  for (const e of earnings) {
+    bySource[e.source] = (bySource[e.source] ?? 0) + Number(e.amount)
+  }
+
+  // Monthly revenue chart (last 6 months)
+  const revenueData: number[]  = []
+  const revenueLabels: string[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d  = new Date(); d.setMonth(d.getMonth() - i)
+    const ym = d.toISOString().slice(0, 7)
+    revenueLabels.push(d.toLocaleString('default', { month: 'short' }))
+    revenueData.push(earnings.filter(e => e.created_at.startsWith(ym)).reduce((s, e) => s + Number(e.amount), 0))
+  }
+
+  // Monthly new users chart (last 6 months)
+  const usersData: number[]   = []
+  const usersLabels: string[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d  = new Date(); d.setMonth(d.getMonth() - i)
+    const ym = d.toISOString().slice(0, 7)
+    usersLabels.push(d.toLocaleString('default', { month: 'short' }))
+    usersData.push(newUsers.filter(u => u.created_at.startsWith(ym)).length)
+  }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-gray-50">
-      <Topbar title="Platform Analytics" user={ADMIN} />
+    <>
+      <Topbar title="Platform Analytics" user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
+      <div className="p-6 flex-1 space-y-6">
+
         {/* KPI cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Page Views" value={formatNumber(totalViews)} sub="↑ +18% this month" accent="blue" />
-          <StatCard label="Monthly Visits" value="48,000" sub="↓ -14% vs last month" accent="red" />
-          <StatCard label="Avg Session" value="3m 42s" sub="↑ +8% vs last month" accent="green" />
-          <StatCard label="Bounce Rate" value="38.4%" sub="↓ -2% improving" accent="green" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="📰 Published Articles" value={(totalArticles ?? 0).toLocaleString()} sub="All-time"            accent="blue" />
+          <StatCard label="👥 Total Users"         value={(totalUsers ?? 0).toLocaleString()}   sub={`Journalists: ${totalJournalists ?? 0}`} accent="green" />
+          <StatCard label="💰 Total Revenue"        value={formatCurrency(totalRevenue)}          sub={`This month: ${formatCurrency(monthRevenue)}`} accent="orange" />
+          <StatCard label="👁 Total Views"          value={formatNumber(totalViews)}             sub="Across top articles"  accent="blue" />
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-extrabold text-gray-900 mb-4">Monthly Traffic (Sessions)</h2>
-            <BarChart data={MONTHLY_TRAFFIC} />
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-extrabold text-gray-900 mb-4">Monthly Revenue (USD)</h2>
-            <BarChart data={MONTHLY_REVENUE} />
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Top articles */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+        {/* Revenue + Users charts */}
+        <div className="grid lg:grid-cols-2 gap-5">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="font-extrabold text-gray-900">Top Articles by Views</h2>
+              <h2 className="text-sm font-bold text-gray-900">💰 Monthly Revenue</h2>
             </div>
-            <div className="divide-y divide-gray-100">
-              {published.sort((a, b) => b.views - a.views).slice(0, 6).map((a, i) => (
-                <div key={a.article_id} className="flex items-center gap-3 px-5 py-3">
-                  <span className="text-2xl font-black text-gray-200 min-w-[28px]">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{a.title}</p>
-                    <p className="text-xs text-gray-400">{a.category?.name} · {formatNumber(a.views)} views</p>
-                  </div>
-                  <div className="text-sm font-bold text-green-600 shrink-0">${a.earnings.toFixed(2)}</div>
-                </div>
-              ))}
+            <div className="px-5 pb-4 pt-3">
+              <BarChart data={revenueData} labels={revenueLabels} height={80} />
+              <div className="flex gap-5 mt-3 text-xs text-gray-400 flex-wrap">
+                {Object.entries(bySource).map(([src, amt]) => (
+                  <span key={src}>{src}: <strong className="text-gray-700">{formatCurrency(amt)}</strong></span>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Audience by country */}
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-extrabold text-gray-900 mb-4">Top Audiences</h2>
-            <div className="space-y-3">
-              {TOP_COUNTRIES.map(c => (
-                <div key={c.country} className="flex items-center gap-3">
-                  <span className="text-xl shrink-0">{c.flag}</span>
-                  <div className="flex-1">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">{c.country}</span>
-                      <span className="font-bold text-gray-600">{c.percent}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${c.percent}%` }} />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{c.sessions.toLocaleString()} sessions</p>
-                  </div>
-                </div>
-              ))}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-gray-900">👥 New Users per Month</h2>
+            </div>
+            <div className="px-5 pb-4 pt-3">
+              <BarChart data={usersData} labels={usersLabels} height={80} />
+              <p className="text-xs text-gray-400 mt-3">Total registered: <strong className="text-gray-700">{(totalUsers ?? 0).toLocaleString()}</strong></p>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Revenue by source breakdown */}
+        {Object.keys(bySource).length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h2 className="text-sm font-bold text-gray-900 mb-4">📊 Revenue by Source</h2>
+            <div className="space-y-3">
+              {Object.entries(bySource).sort((a, b) => b[1] - a[1]).map(([src, amt]) => {
+                const pct = totalRevenue > 0 ? Math.round((amt / totalRevenue) * 100) : 0
+                return (
+                  <div key={src}>
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span className="font-semibold capitalize">{src}</span>
+                      <span>{formatCurrency(amt)} <span className="text-gray-400">({pct}%)</span></span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Top articles by views */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-gray-900">🔥 Top Articles by Views</h2>
+            <Link href="/admin/articles" className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">View All</Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left w-8">#</th>
+                  <th className="px-4 py-2.5 text-left">Article</th>
+                  <th className="px-4 py-2.5 text-left">Author</th>
+                  <th className="px-4 py-2.5 text-right">Views</th>
+                  <th className="px-4 py-2.5 text-right">Earnings</th>
+                  <th className="px-4 py-2.5 text-left">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {topArticles.map((a, i) => (
+                  <tr key={a.article_id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-black text-gray-300 text-base">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {a.featured_image && (
+                          <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
+                            <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                          </div>
+                        )}
+                        <div>
+                          <Link href={`/article/${a.slug}`} className="font-semibold text-gray-900 hover:text-blue-600 line-clamp-1 max-w-[220px] block">
+                            {a.title}
+                          </Link>
+                          <span className="text-xs text-orange-500 font-semibold">{a.category?.name}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{a.author?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-right font-bold text-gray-700">{formatNumber(a.views)}</td>
+                    <td className="px-4 py-3 text-right font-bold text-emerald-600">{formatCurrency(a.earnings)}</td>
+                    <td className="px-4 py-3 text-xs text-gray-400">{formatDate(a.created_at)}</td>
+                  </tr>
+                ))}
+                {topArticles.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No published articles yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </>
   )
 }

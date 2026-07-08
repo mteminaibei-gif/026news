@@ -12,7 +12,7 @@ const FOOTER_LINKS = {
     { label: 'Subscribe', href: '/subscribe' },
     { label: 'Journalist Portal', href: '/journalist/dashboard' },
     { label: 'Admin Panel', href: '/admin/dashboard' },
-    { label: 'Become a Journalist', href: '/login' },
+    { label: 'Become a Journalist', href: '/login?mode=signup' },
   ],
   Categories: [
     { label: 'Politics', href: '/?category=Politics' },
@@ -39,7 +39,7 @@ const SOCIAL_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#0a1628] text-white mt-12" role="contentinfo">
+    <footer className="bg-[#0a1628] dark:bg-gray-900 text-white mt-12 transition-colors" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-5 gap-8">
         {/* Brand column */}
         <div className="md:col-span-1">

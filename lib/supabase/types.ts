@@ -24,16 +24,26 @@ export interface Database {
       users: {
         Row: {
           user_id: number
+          auth_id: string | null
           name: string
           email: string
           password_hash: string
           role: UserRole
           bio: string | null
           profile_image: string | null
+          social_links: {
+            organization?: string | null
+            portfolio?: string | null
+            phone?: string | null
+            twitter?: string | null
+            linkedin?: string | null
+            website?: string | null
+          } | null
           created_at: string
+          updated_at: string
           status: AccountStatus
         }
-        Insert: Omit<Database['public']['Tables']['users']['Row'], 'user_id' | 'created_at'>
+        Insert: Omit<Database['public']['Tables']['users']['Row'], 'user_id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['users']['Insert']>
       }
       categories: {
@@ -138,6 +148,97 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['analytics']['Row'], 'analytics_id' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['analytics']['Insert']>
+      }
+      journalist_rankings: {
+        Row: {
+          ranking_id: number
+          user_id: number
+          total_views: number
+          total_earnings: number
+          rank_position: number | null
+          rank_tier: string | null
+          last_updated: string
+        }
+        Insert: Omit<Database['public']['Tables']['journalist_rankings']['Row'], 'ranking_id' | 'last_updated'>
+        Update: Partial<Database['public']['Tables']['journalist_rankings']['Insert']>
+      }
+      payout_records: {
+        Row: {
+          payout_id: number
+          user_id: number
+          payout_amount: number
+          payout_method: string
+          phone_number: string | null
+          email_address: string | null
+          status: string
+          transaction_id: string | null
+          error_message: string | null
+          requested_at: string
+          processed_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['payout_records']['Row'], 'payout_id' | 'requested_at'>
+        Update: Partial<Database['public']['Tables']['payout_records']['Insert']>
+      }
+      payout_requests: {
+        Row: {
+          payout_id: number
+          user_id: number
+          amount: number
+          platform_fee: number
+          journalist_cut: number
+          payment_method: string
+          payment_ref: string | null
+          status: string
+          period_start: string
+          period_end: string
+          initiated_by: number | null
+          created_at: string
+          paid_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['payout_requests']['Row'], 'payout_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['payout_requests']['Insert']>
+      }
+      journalist_badges: {
+        Row: {
+          badge_id: number
+          user_id: number
+          badge_type: string
+          badge_name: string
+          badge_icon: string | null
+          description: string | null
+          threshold_views: number | null
+          awarded_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['journalist_badges']['Row'], 'badge_id' | 'awarded_at'>
+        Update: Partial<Database['public']['Tables']['journalist_badges']['Insert']>
+      }
+      rss_feeds: {
+        Row: {
+          feed_id: number
+          name: string
+          feed_url: string
+          category_id: number | null
+          is_active: boolean
+          last_fetched: string | null
+          fetch_count: number
+          error_count: number
+          last_error: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['rss_feeds']['Row'], 'feed_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['rss_feeds']['Insert']>
+      }
+      article_revenue: {
+        Row: {
+          revenue_id: number
+          article_id: number
+          adsense_revenue: number
+          journalist_cut: number
+          platform_fee: number
+          last_updated: string
+        }
+        Insert: Omit<Database['public']['Tables']['article_revenue']['Row'], 'revenue_id' | 'last_updated'>
+        Update: Partial<Database['public']['Tables']['article_revenue']['Insert']>
       }
     }
     Views: Record<string, never>

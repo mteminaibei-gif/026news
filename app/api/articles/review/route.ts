@@ -72,6 +72,22 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   try {
     const supabase = await createClient()
+
+    // ── Auth check ───────────────────────────────────────────────────────────
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: rawProfileGet } = await supabase
+      .from('users')
+      .select('role')
+      .eq('email', user.email ?? '')
+      .single()
+    const profileGet = rawProfileGet as unknown as { role: string } | null
+
+    if (!profileGet || profileGet.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
+    }
+
     const { data, error } = await supabase
       .from('articles')
       .select('*, author:users(user_id,name,profile_image,bio), category:categories(name), review:review_workflow(review_notes,action,reviewed_at)')

@@ -2,120 +2,109 @@ import type { Metadata } from 'next'
 import { Topbar } from '@/components/layout/Topbar'
 import { StatCard } from '@/components/ui/StatCard'
 import { BarChart } from '@/components/ui/BarChart'
-import { MOCK_USERS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { AdminPayoutPanel } from '@/components/admin/AdminPayoutPanel'
 
-export const metadata: Metadata = {
-  title: 'Platform Earnings — Admin Panel',
+export const metadata: Metadata = { title: 'Platform Earnings — Admin Panel' }
+
+type EarnRow   = { amount: number; source: string; payout_status: string; created_at: string }
+type PayoutRow = {
+  payout_id: number; amount: number; journalist_cut: number; platform_fee: number
+  payment_method: string; status: string; period_start: string; period_end: string; paid_at: string | null
+  journalist: { name: string; email: string } | null
 }
+type JournalistEarn = { user_id: number; name: string; email: string; total: number; pending: number }
 
-const ADMIN = MOCK_USERS.find(u => u.role === 'admin')!
-const journalists = MOCK_USERS.filter(u => u.role === 'journalist')
+export default async function AdminEarningsPage() {
+  const supabase = await createClient()
 
-const MONTHLY_EARNINGS = [
-  { label: 'Nov', value: 1200 },
-  { label: 'Dec', value: 1600 },
-  { label: 'Jan', value: 1450 },
-  { label: 'Feb', value: 2100 },
-  { label: 'Mar', value: 2800 },
-  { label: 'Apr', value: 2400 },
-]
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: rawAdmin } = await supabase.from('users').select('name, profile_image').eq('email', user?.email ?? '').single()
+  const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
-const REVENUE_SOURCES = [
-  { label: 'Ad Revenue', value: 5800, percent: 48, color: 'bg-blue-500' },
-  { label: 'Subscriptions', value: 3900, percent: 32, color: 'bg-orange-500' },
-  { label: 'Sponsored Content', value: 1500, percent: 12, color: 'bg-green-500' },
-  { label: 'Affiliate', value: 950, percent: 8, color: 'bg-purple-500' },
-]
+  // All earnings
+  const { data: rawEarnings } = await supabase
+    .from('earnings')
+    .select('amount, source, payout_status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(500)
+  const earnings = (rawEarnings ?? []) as unknown as EarnRow[]
 
-export default function AdminEarningsPage() {
-  const totalJournalistEarnings = journalists.reduce((s, j) => s + j.earnings, 0)
+  // Payout history
+  const { data: rawPayouts } = await supabase
+    .from('payout_requests')
+    .select('payout_id, amount, journalist_cut, platform_fee, payment_method, status, period_start, period_end, paid_at, journalist:users(name,email)')
+    .order('created_at', { ascending: false })
+    .limit(50)
+  const payouts = (rawPayouts ?? []) as unknown as PayoutRow[]
+
+  // Top-earning journalists
+  const { data: rawJournalists } = await supabase
+    .from('users')
+    .select('user_id, name, email')
+    .eq('role', 'journalist' as never)
+    .eq('status', 'active' as never)
+  const journalists = (rawJournalists ?? []) as unknown as { user_id: number; name: string; email: string }[]
+
+  const { data: rawAllEarn } = await supabase
+    .from('earnings')
+    .select('user_id, amount, payout_status')
+  const allEarn = (rawAllEarn ?? []) as unknown as { user_id: number; amount: number; payout_status: string }[]
+
+  const journalistEarnings: JournalistEarn[] = journalists.map(j => ({
+    ...j,
+    total:   allEarn.filter(e => e.user_id === j.user_id).reduce((s, e) => s + Number(e.amount), 0),
+    pending: allEarn.filter(e => e.user_id === j.user_id && e.payout_status === 'pending').reduce((s, e) => s + Number(e.amount), 0),
+  })).sort((a, b) => b.total - a.total).slice(0, 10)
+
+  // Totals
+  const totalRevenue = earnings.reduce((s, e) => s + Number(e.amount), 0)
+  const pendingPayout = earnings.filter(e => e.payout_status === 'pending').reduce((s, e) => s + Number(e.amount), 0)
+  const paidOut = earnings.filter(e => e.payout_status === 'paid').reduce((s, e) => s + Number(e.amount), 0)
+  const platformRetained = paidOut * 0.5
+
+  // Monthly chart (6 months)
+  const chartData: number[]   = []
+  const chartLabels: string[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d  = new Date(); d.setMonth(d.getMonth() - i)
+    const ym = d.toISOString().slice(0, 7)
+    chartLabels.push(d.toLocaleString('default', { month: 'short' }))
+    chartData.push(earnings.filter(e => e.created_at.startsWith(ym)).reduce((s, e) => s + Number(e.amount), 0))
+  }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-gray-50">
-      <Topbar title="Platform Earnings" user={ADMIN} />
+    <>
+      <Topbar title="Platform Earnings" user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Revenue" value="$12,150" sub="↑ +22% all time" accent="green" />
-          <StatCard label="This Month" value="$2,400" sub="↓ -14% vs last month" accent="red" />
-          <StatCard label="Journalist Payouts" value={`$${totalJournalistEarnings.toFixed(2)}`} sub="↑ +8% this month" accent="blue" />
-          <StatCard label="Platform Net" value="$3,270" sub="↑ +31% this month" accent="orange" />
+      <div className="p-6 flex-1 space-y-6">
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="💰 Total Revenue"     value={formatCurrency(totalRevenue)}    sub="All time"                  accent="blue" />
+          <StatCard label="⏳ Pending Payouts"   value={formatCurrency(pendingPayout)}   sub="50% journalist share due"  accent="orange" />
+          <StatCard label="✅ Paid Out"           value={formatCurrency(paidOut * 0.5)}  sub="Journalist share paid"     accent="green" />
+          <StatCard label="🏢 Platform Retained" value={formatCurrency(platformRetained)} sub="50% service fee"          accent="blue" />
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-extrabold text-gray-900 mb-4">Monthly Revenue (USD)</h2>
-            <BarChart data={MONTHLY_EARNINGS} />
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-extrabold text-gray-900 mb-4">Revenue Breakdown</h2>
-            <div className="space-y-4">
-              {REVENUE_SOURCES.map(s => (
-                <div key={s.label}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{s.label}</span>
-                    <span className="font-bold">${s.value.toLocaleString()}</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full">
-                    <div className={`h-full ${s.color} rounded-full`} style={{ width: `${s.percent}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 text-center">Payout period: 1st — 15th each month</p>
-              <button className="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg text-sm transition-colors">
-                Process Payouts
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Journalist payout table */}
+        {/* Monthly chart */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-extrabold text-gray-900">Journalist Earnings & Payouts</h2>
-            <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">
-              Export CSV
-            </button>
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-bold text-gray-900">📈 Monthly Revenue</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-left">
-                  <th className="px-4 py-3 font-semibold text-gray-500">Journalist</th>
-                  <th className="px-4 py-3 font-semibold text-gray-500">Articles</th>
-                  <th className="px-4 py-3 font-semibold text-gray-500">Total Earned</th>
-                  <th className="px-4 py-3 font-semibold text-gray-500">This Month</th>
-                  <th className="px-4 py-3 font-semibold text-gray-500">Payout Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-500">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {journalists.map(j => (
-                  <tr key={j.user_id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-3 font-semibold text-gray-800">{j.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{j.articles}</td>
-                    <td className="px-4 py-3 text-green-600 font-bold">${j.earnings.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-gray-700">
-                      ${(j.earnings * 0.11).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">
-                        Pending
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button className="text-xs font-bold text-green-600 hover:underline">Pay Now</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="px-5 pb-4 pt-3">
+            <BarChart data={chartData} labels={chartLabels} height={80} />
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Payout panel — client component for Pay Now button */}
+        <AdminPayoutPanel
+          journalistEarnings={journalistEarnings}
+          payouts={payouts}
+        />
+
+      </div>
+    </>
   )
 }

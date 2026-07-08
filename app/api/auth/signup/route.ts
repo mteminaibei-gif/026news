@@ -4,13 +4,25 @@ import { createClient } from '@/lib/supabase/server'
 // POST /api/auth/signup
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, bio = '', organization = '', portfolio = '', phone = '' } = await req.json()
+    const {
+      email,
+      password,
+      name,
+      role          = 'journalist',
+      bio           = '',
+      organization  = '',
+      portfolio     = '',
+      phone         = '',
+    } = await req.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    }
+    if (!['journalist', 'admin'].includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -20,29 +32,38 @@ export async function POST(req: NextRequest) {
       : undefined
 
     // 1. Create Supabase Auth user
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
     })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
 
-    // 2. Insert profile row — force journalist role and persist extra fields.
-    // Note: users table currently supports `bio` and `profile_image`. We'll embed organization/portfolio/phone into bio for now.
-    const combinedBio = `${bio}\n\nOrganization: ${organization || '-'}\nPortfolio: ${portfolio || '-'}\nPhone: ${phone || '-'}`
+    // 2. Insert profile row — store extra journalist fields in social_links JSONB
+    //    rather than embedding them in the bio string.
     const profilePayload = {
       name:          name?.trim() || email.split('@')[0],
       email,
       password_hash: '',
-      role:          'journalist',
-      bio:           combinedBio,
+      role:          role,
+      bio:           bio.trim() || null,
       status:        'active',
+      // Store structured fields in social_links (already a JSONB column in schema)
+      social_links: role === 'journalist' ? {
+        organization: organization.trim() || null,
+        portfolio:    portfolio.trim()    || null,
+        phone:        phone.trim()        || null,
+      } : null,
+      // Link auth.uid() so RLS policies work
+      ...(authData.user?.id ? { auth_id: authData.user.id } : {}),
     }
+
     const { error: profileError } = await supabase
       .from('users')
       .insert(profilePayload as never)
 
     if (profileError) {
+      // Log but don't fail the signup — user can complete profile later
       console.error('[signup] profile insert error:', profileError.message)
     }
 

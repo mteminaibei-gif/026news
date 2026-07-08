@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
   const authorId = searchParams.get('author_id')
   const limit    = Number(searchParams.get('limit') ?? '20')
   const offset   = Number(searchParams.get('offset') ?? '0')
+  const sort     = searchParams.get('sort') ?? 'recent' // 'trending' or 'recent'
 
   try {
     const supabase = await createClient()
@@ -22,8 +23,14 @@ export async function GET(req: NextRequest) {
         { count: 'exact' }
       )
       .eq('status', status as never)
-      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
+
+    // Apply sorting
+    if (sort === 'trending') {
+      query = query.order('views', { ascending: false })
+    } else {
+      query = query.order('created_at', { ascending: false })
+    }
 
     if (authorId) query = query.eq('author_id', Number(authorId))
 

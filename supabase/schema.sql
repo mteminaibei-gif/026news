@@ -48,7 +48,10 @@ CREATE TABLE IF NOT EXISTS public.users (
   social_links  JSONB            DEFAULT '{}',    -- { twitter, linkedin, website }
   created_at    TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
-  status        account_status   NOT NULL DEFAULT 'active'
+  status        account_status   NOT NULL DEFAULT 'active',
+  total_views   BIGINT           NOT NULL DEFAULT 0,
+  rank_score    NUMERIC          NOT NULL DEFAULT 0,
+  badge_level   TEXT             DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
@@ -98,168 +101,134 @@ CREATE TABLE IF NOT EXISTS public.articles (
   monetization_type monetization_type  NOT NULL DEFAULT 'free',
   featured_image    TEXT,
   tags              TEXT[]             DEFAULT '{}',
-  featured          BOOLEAN            NOT NULL DEFAULT FALSE,
   views             BIGINT             NOT NULL DEFAULT 0,
   likes             BIGINT             NOT NULL DEFAULT 0,
-  earnings          NUMERIC(10,2)      NOT NULL DEFAULT 0,
+  earnings          NUMERIC(12, 2)     NOT NULL DEFAULT 0.00,
   created_at        TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
-  published_at      TIMESTAMPTZ,                   -- set when status → published
-  search_vector     TSVECTOR           GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(title,'') || ' ' || coalesce(excerpt,'') || ' ' || coalesce(content,''))
-  ) STORED
+  published_at      TIMESTAMPTZ,
+  featured          BOOLEAN            NOT NULL DEFAULT FALSE,
+  source_url        TEXT,
+  content_hash      TEXT,                              -- SHA-256 of title+url for dedup
+  is_aggregated     BOOLEAN            NOT NULL DEFAULT FALSE,
+  source_name       TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_articles_slug          ON public.articles(slug);
-CREATE INDEX IF NOT EXISTS idx_articles_status        ON public.articles(status);
-CREATE INDEX IF NOT EXISTS idx_articles_author        ON public.articles(author_id);
-CREATE INDEX IF NOT EXISTS idx_articles_category      ON public.articles(category_id);
-CREATE INDEX IF NOT EXISTS idx_articles_featured      ON public.articles(featured) WHERE featured = TRUE;
-CREATE INDEX IF NOT EXISTS idx_articles_published_at  ON public.articles(published_at DESC NULLS LAST);
-CREATE INDEX IF NOT EXISTS idx_articles_search        ON public.articles USING GIN(search_vector);
-CREATE INDEX IF NOT EXISTS idx_articles_tags          ON public.articles USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_articles_slug        ON public.articles(slug);
+CREATE INDEX IF NOT EXISTS idx_articles_author_id   ON public.articles(author_id);
+CREATE INDEX IF NOT EXISTS idx_articles_category_id ON public.articles(category_id);
+CREATE INDEX IF NOT EXISTS idx_articles_status      ON public.articles(status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_content_hash
+  ON public.articles(content_hash) WHERE content_hash IS NOT NULL;
+
+-- Full-text search index config
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS search_vector tsvector;
+CREATE OR REPLACE FUNCTION articles_search_vector_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector =
+    setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.content, '')), 'B');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_articles_search_vector ON public.articles;
+CREATE TRIGGER trg_articles_search_vector
+  BEFORE INSERT OR UPDATE ON public.articles
+  FOR EACH ROW EXECUTE FUNCTION articles_search_vector_update();
 
 DROP TRIGGER IF EXISTS articles_updated_at ON public.articles;
 CREATE TRIGGER articles_updated_at
   BEFORE UPDATE ON public.articles
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- Auto-set published_at when status changes to published
-CREATE OR REPLACE FUNCTION set_published_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-BEGIN
-  IF NEW.status = 'published' AND OLD.status <> 'published' THEN
-    NEW.published_at = NOW();
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS articles_published_at ON public.articles;
-CREATE TRIGGER articles_published_at
-  BEFORE UPDATE ON public.articles
-  FOR EACH ROW EXECUTE FUNCTION set_published_at();
-
 -- ─────────────────────────────────────────────────────────────
---  TABLE: article_sources   (reference links per article)
+--  TABLE: article_sources
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.article_sources (
-  id          BIGSERIAL  PRIMARY KEY,
-  article_id  BIGINT     NOT NULL REFERENCES public.articles(article_id) ON DELETE CASCADE,
-  name        TEXT       NOT NULL,
-  url         TEXT       NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  source_id   BIGSERIAL PRIMARY KEY,
+  article_id  BIGINT    REFERENCES public.articles(article_id) ON DELETE CASCADE,
+  name        TEXT      NOT NULL,
+  url         TEXT      NOT NULL
 );
-
-CREATE INDEX IF NOT EXISTS idx_article_sources_article ON public.article_sources(article_id);
 
 -- ─────────────────────────────────────────────────────────────
 --  TABLE: comments
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.comments (
-  comment_id    BIGSERIAL      PRIMARY KEY,
-  article_id    BIGINT         REFERENCES public.articles(article_id) ON DELETE CASCADE,
-  user_id       BIGINT         REFERENCES public.users(user_id)       ON DELETE SET NULL,
-  parent_id     BIGINT         REFERENCES public.comments(comment_id) ON DELETE CASCADE,  -- nested replies
-  comment_text  TEXT           NOT NULL,
-  likes         BIGINT         NOT NULL DEFAULT 0,
-  created_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
-  status        comment_status NOT NULL DEFAULT 'visible',
-  flagged_reason TEXT
+  comment_id   BIGSERIAL      PRIMARY KEY,
+  article_id   BIGINT         REFERENCES public.articles(article_id) ON DELETE CASCADE,
+  user_id      BIGINT         REFERENCES public.users(user_id)          ON DELETE SET NULL,
+  comment_text TEXT           NOT NULL,
+  created_at   TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+  status       comment_status NOT NULL DEFAULT 'visible'
 );
 
-CREATE INDEX IF NOT EXISTS idx_comments_article   ON public.comments(article_id);
-CREATE INDEX IF NOT EXISTS idx_comments_user      ON public.comments(user_id);
-CREATE INDEX IF NOT EXISTS idx_comments_parent    ON public.comments(parent_id);
-CREATE INDEX IF NOT EXISTS idx_comments_status    ON public.comments(status);
-
-DROP TRIGGER IF EXISTS comments_updated_at ON public.comments;
-CREATE TRIGGER comments_updated_at
-  BEFORE UPDATE ON public.comments
-  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE INDEX IF NOT EXISTS idx_comments_article_id ON public.comments(article_id);
 
 -- ─────────────────────────────────────────────────────────────
 --  TABLE: analytics
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.analytics (
-  analytics_id    BIGSERIAL   PRIMARY KEY,
-  article_id      BIGINT      UNIQUE REFERENCES public.articles(article_id) ON DELETE CASCADE,
-  views           BIGINT      NOT NULL DEFAULT 0,
-  unique_views    BIGINT      NOT NULL DEFAULT 0,
-  likes           BIGINT      NOT NULL DEFAULT 0,
-  shares          BIGINT      NOT NULL DEFAULT 0,
-  comments_count  BIGINT      NOT NULL DEFAULT 0,
-  avg_read_time   NUMERIC(5,2) DEFAULT 0,         -- seconds
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  analytics_id   BIGSERIAL   PRIMARY KEY,
+  article_id     BIGINT      UNIQUE REFERENCES public.articles(article_id) ON DELETE CASCADE,
+  views          BIGINT      NOT NULL DEFAULT 0,
+  likes          BIGINT      NOT NULL DEFAULT 0,
+  shares         BIGINT      NOT NULL DEFAULT 0,
+  comments_count BIGINT      NOT NULL DEFAULT 0,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_analytics_article ON public.analytics(article_id);
 
 -- ─────────────────────────────────────────────────────────────
 --  TABLE: earnings
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.earnings (
-  earning_id     BIGSERIAL        PRIMARY KEY,
-  user_id        BIGINT           REFERENCES public.users(user_id)    ON DELETE SET NULL,
-  article_id     BIGINT           REFERENCES public.articles(article_id) ON DELETE SET NULL,
-  amount         NUMERIC(10,2)    NOT NULL,
-  source         earnings_source  NOT NULL DEFAULT 'ads',
-  payout_status  payout_status    NOT NULL DEFAULT 'pending',
-  transaction_ref TEXT,                           -- Stripe / M-Pesa / PayPal ref
-  created_at     TIMESTAMPTZ      NOT NULL DEFAULT NOW()
+  earning_id    BIGSERIAL       PRIMARY KEY,
+  user_id       BIGINT          REFERENCES public.users(user_id)          ON DELETE SET NULL,
+  article_id    BIGINT          REFERENCES public.articles(article_id) ON DELETE SET NULL,
+  amount        NUMERIC(12, 2)  NOT NULL DEFAULT 0.00,
+  source        earnings_source NOT NULL,
+  payout_status payout_status   NOT NULL DEFAULT 'pending',
+  created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_earnings_user   ON public.earnings(user_id);
-CREATE INDEX IF NOT EXISTS idx_earnings_status ON public.earnings(payout_status);
+CREATE INDEX IF NOT EXISTS idx_earnings_user_id ON public.earnings(user_id);
 
 -- ─────────────────────────────────────────────────────────────
 --  TABLE: review_workflow
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.review_workflow (
-  review_id    BIGSERIAL      PRIMARY KEY,
-  article_id   BIGINT         REFERENCES public.articles(article_id) ON DELETE CASCADE,
-  admin_id     BIGINT         REFERENCES public.users(user_id)       ON DELETE SET NULL,
+  review_id    BIGSERIAL     PRIMARY KEY,
+  article_id   BIGINT        REFERENCES public.articles(article_id) ON DELETE CASCADE,
+  admin_id     BIGINT        REFERENCES public.users(user_id)          ON DELETE SET NULL,
   review_notes TEXT,
-  action       review_action  NOT NULL,
-  reviewed_at  TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+  action       review_action NOT NULL,
+  reviewed_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_review_article ON public.review_workflow(article_id);
-CREATE INDEX IF NOT EXISTS idx_review_admin   ON public.review_workflow(admin_id);
 
 -- ─────────────────────────────────────────────────────────────
 --  TABLE: subscriptions
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.subscriptions (
-  subscription_id   BIGSERIAL            PRIMARY KEY,
-  user_id           BIGINT               REFERENCES public.users(user_id) ON DELETE CASCADE,
-  journalist_id     BIGINT               REFERENCES public.users(user_id) ON DELETE SET NULL,  -- who they follow
-  plan_type         subscription_plan    NOT NULL DEFAULT 'free',
-  payment_method    payment_method       NOT NULL DEFAULT 'stripe',
-  stripe_customer_id TEXT,
-  mpesa_phone        TEXT,
-  start_date        TIMESTAMPTZ          NOT NULL DEFAULT NOW(),
-  end_date          TIMESTAMPTZ          NOT NULL,
-  status            subscription_status  NOT NULL DEFAULT 'active',
-  created_at        TIMESTAMPTZ          NOT NULL DEFAULT NOW()
+  subscription_id BIGSERIAL           PRIMARY KEY,
+  user_id         BIGINT              REFERENCES public.users(user_id) ON DELETE CASCADE,
+  plan_type       subscription_plan   NOT NULL DEFAULT 'free',
+  payment_method  payment_method      NOT NULL,
+  start_date      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
+  end_date        TIMESTAMPTZ         NOT NULL,
+  status          subscription_status NOT NULL DEFAULT 'active'
 );
 
-CREATE INDEX IF NOT EXISTS idx_subs_user   ON public.subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_subs_status ON public.subscriptions(status);
-
 -- ─────────────────────────────────────────────────────────────
---  TABLE: sources   (external news feed sources)
+--  TABLE: sources
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.sources (
-  source_id     BIGSERIAL      PRIMARY KEY,
-  name          TEXT           NOT NULL,
-  api_url       TEXT           NOT NULL,
-  category_id   BIGINT         REFERENCES public.categories(category_id) ON DELETE SET NULL,
-  fetch_interval_mins INT      DEFAULT 60,
-  last_fetched  TIMESTAMPTZ,
-  status        source_status  NOT NULL DEFAULT 'active',
-  created_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+  source_id    BIGSERIAL     PRIMARY KEY,
+  name         TEXT          NOT NULL,
+  api_url      TEXT          NOT NULL UNIQUE,
+  last_fetched TIMESTAMPTZ,
+  status       source_status NOT NULL DEFAULT 'active'
 );
 
 -- ─────────────────────────────────────────────────────────────
@@ -268,15 +237,12 @@ CREATE TABLE IF NOT EXISTS public.sources (
 CREATE TABLE IF NOT EXISTS public.notifications (
   notification_id BIGSERIAL   PRIMARY KEY,
   user_id         BIGINT      REFERENCES public.users(user_id) ON DELETE CASCADE,
-  type            TEXT        NOT NULL,   -- article_approved | new_comment | etc.
   title           TEXT        NOT NULL,
-  body            TEXT,
-  article_id      BIGINT      REFERENCES public.articles(article_id) ON DELETE SET NULL,
+  message         TEXT        NOT NULL,
   read            BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user   ON public.notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_unread ON public.notifications(user_id) WHERE read = FALSE;
 
 -- ─────────────────────────────────────────────────────────────
@@ -289,13 +255,137 @@ CREATE TABLE IF NOT EXISTS public.page_views (
   session_id  TEXT,
   ip_hash     TEXT,                   -- hashed for privacy (GDPR)
   referrer    TEXT,
-  country     TEXT(2),
+  country     TEXT,
   device      TEXT,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_page_views_article    ON public.page_views(article_id);
 CREATE INDEX IF NOT EXISTS idx_page_views_created_at ON public.page_views(created_at DESC);
+
+-- ─────────────────────────────────────────────────────────────
+--  TABLE: journalist_badges
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.journalist_badges (
+  badge_id        BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  badge_type      TEXT NOT NULL,   -- bronze / silver / gold / platinum / top5 / etc.
+  badge_name      TEXT NOT NULL DEFAULT '',
+  badge_icon      TEXT,
+  badge_label     TEXT,            -- "10K Views", "Top Journalist", etc.
+  description     TEXT,
+  threshold_views BIGINT,
+  awarded_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, badge_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_badges_user ON public.journalist_badges(user_id);
+
+-- ─────────────────────────────────────────────────────────────
+--  TABLE: journalist_rankings
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.journalist_rankings (
+  ranking_id      BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL UNIQUE REFERENCES public.users(user_id) ON DELETE CASCADE,
+  total_views     BIGINT NOT NULL DEFAULT 0,
+  total_earnings  NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  rank_position   INT,
+  rank_tier       TEXT DEFAULT 'unranked',
+  last_updated    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_journalist_rankings_views ON public.journalist_rankings(total_views DESC);
+CREATE INDEX IF NOT EXISTS idx_journalist_rankings_earnings ON public.journalist_rankings(total_earnings DESC);
+CREATE INDEX IF NOT EXISTS idx_journalist_rankings_tier ON public.journalist_rankings(rank_tier);
+
+-- ─────────────────────────────────────────────────────────────
+--  TABLE: payout_records (Journalist-initiated requests)
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.payout_records (
+  payout_id       BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  payout_amount   NUMERIC(12, 2) NOT NULL,
+  payout_method   TEXT NOT NULL CHECK (payout_method IN ('mpesa', 'paypal')),
+  phone_number    TEXT,
+  email_address   TEXT,
+  status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  transaction_id  TEXT,
+  error_message   TEXT,
+  requested_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  processed_at    TIMESTAMPTZ,
+  UNIQUE(transaction_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payout_records_user ON public.payout_records(user_id);
+CREATE INDEX IF NOT EXISTS idx_payout_records_status ON public.payout_records(status);
+
+-- ─────────────────────────────────────────────────────────────
+--  TABLE: article_revenue
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.article_revenue (
+  revenue_id      BIGSERIAL PRIMARY KEY,
+  article_id      BIGINT NOT NULL UNIQUE REFERENCES public.articles(article_id) ON DELETE CASCADE,
+  adsense_revenue NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  journalist_cut  NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  platform_fee    NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  total_views_at_split BIGINT DEFAULT 0,
+  last_calculated TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_article_revenue_article ON public.article_revenue(article_id);
+
+-- ─────────────────────────────────────────────────────────────
+--  TABLE: rss_feeds
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.rss_feeds (
+  feed_id       BIGSERIAL    PRIMARY KEY,
+  name          TEXT         NOT NULL,
+  feed_url      TEXT         NOT NULL UNIQUE,
+  category_id   BIGINT       REFERENCES public.categories(category_id) ON DELETE SET NULL,
+  is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+  last_fetched  TIMESTAMPTZ,
+  fetch_count   BIGINT       NOT NULL DEFAULT 0,
+  error_count   BIGINT       NOT NULL DEFAULT 0,
+  last_error    TEXT,
+  created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Seed default RSS feeds
+INSERT INTO public.rss_feeds (name, feed_url, is_active, category_id) VALUES
+  ('BBC News Top Stories', 'https://feeds.bbci.co.uk/news/rss.xml', true, 7),
+  ('BBC Technology',       'https://feeds.bbci.co.uk/news/technology/rss.xml', true, 3),
+  ('BBC Science',          'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', true, 4),
+  ('BBC Business',         'https://feeds.bbci.co.uk/news/business/rss.xml', true, 2),
+  ('Al Jazeera English',   'https://www.aljazeera.com/xml/rss/all.xml', true, 7),
+  ('Reuters Top News',     'https://feeds.reuters.com/reuters/topNews', true, 7),
+  ('Reuters Technology',   'https://feeds.reuters.com/reuters/technologyNews', true, 3),
+  ('Reuters Business',     'https://feeds.reuters.com/reuters/businessNews', true, 2),
+  ('NPR News',             'https://feeds.npr.org/1001/rss.xml', true, 7),
+  ('TechCrunch',           'https://techcrunch.com/feed/', true, 3),
+  ('NASA Breaking News',   'https://www.nasa.gov/rss/dyn/breaking_news.rss', true, 4)
+ON CONFLICT (feed_url) DO NOTHING;
+
+-- ─────────────────────────────────────────────────────────────
+--  TABLE: payout_requests (Admin-initiated monthly payout bundles)
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.payout_requests (
+  payout_id       BIGSERIAL     PRIMARY KEY,
+  user_id         BIGINT        NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  amount          NUMERIC(10,2) NOT NULL,
+  platform_fee    NUMERIC(10,2) NOT NULL,   -- 50% retained
+  journalist_cut  NUMERIC(10,2) NOT NULL,   -- 50% to journalist
+  payment_method  TEXT          NOT NULL,   -- mpesa / paypal
+  payment_ref     TEXT,                     -- transaction reference from gateway
+  status          TEXT          NOT NULL DEFAULT 'pending', -- pending/processing/paid/failed
+  period_start    DATE          NOT NULL,
+  period_end      DATE          NOT NULL,
+  initiated_by    BIGINT        REFERENCES public.users(user_id),
+  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  paid_at         TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_payouts_user   ON public.payout_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_payouts_status ON public.payout_requests(status);
 
 -- ─────────────────────────────────────────────────────────────
 --  FUNCTION: increment article view count
@@ -343,17 +433,100 @@ RETURNS TABLE (
 $$;
 
 -- ─────────────────────────────────────────────────────────────
+--  FUNCTION: update_journalist_rank
+--  Called after each article view increment or payout
+-- ─────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION update_journalist_rank(p_user_id BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS $$
+DECLARE
+  v_total_views  BIGINT;
+  v_total_earn   NUMERIC;
+  v_score        NUMERIC;
+  v_badge        TEXT;
+BEGIN
+  SELECT COALESCE(SUM(a.views), 0) INTO v_total_views
+  FROM public.articles a WHERE a.author_id = p_user_id AND a.status = 'published';
+
+  SELECT COALESCE(SUM(e.amount), 0) INTO v_total_earn
+  FROM public.earnings e WHERE e.user_id = p_user_id;
+
+  -- Weighted score: 1 pt per 100 views + 10 pts per $1 earned
+  v_score := (v_total_views / 100.0) + (v_total_earn * 10.0);
+
+  -- Badge tier
+  IF v_total_views >= 1000000 THEN v_badge := 'platinum';
+  ELSIF v_total_views >= 100000 THEN v_badge := 'gold';
+  ELSIF v_total_views >= 10000  THEN v_badge := 'silver';
+  ELSIF v_total_views >= 1000   THEN v_badge := 'bronze';
+  ELSE v_badge := NULL;
+  END IF;
+
+  UPDATE public.users
+  SET total_views = v_total_views,
+      rank_score  = v_score,
+      badge_level = v_badge
+  WHERE user_id = p_user_id;
+
+  -- Upsert badge row if threshold reached
+  IF v_badge IS NOT NULL THEN
+    INSERT INTO public.journalist_badges (user_id, badge_type, badge_name, badge_icon, badge_label, description, threshold_views)
+    VALUES (
+      p_user_id,
+      v_badge,
+      CASE v_badge
+        WHEN 'bronze'   THEN 'Rising Star'
+        WHEN 'silver'   THEN 'Star Contributor'
+        WHEN 'gold'     THEN 'Elite Journalist'
+        WHEN 'platinum' THEN 'Legend'
+      END,
+      CASE v_badge
+        WHEN 'bronze'   THEN '🥉'
+        WHEN 'silver'   THEN '🥈'
+        WHEN 'gold'     THEN '🥇'
+        WHEN 'platinum' THEN '👑'
+      END,
+      CASE v_badge
+        WHEN 'bronze'   THEN '🥉 Bronze — 1K Views'
+        WHEN 'silver'   THEN '🥈 Silver — 10K Views'
+        WHEN 'gold'     THEN '🥇 Gold — 100K Views'
+        WHEN 'platinum' THEN '💎 Platinum — 1M Views'
+      END,
+      CASE v_badge
+        WHEN 'bronze'   THEN 'Awarded for achieving 1,000 article views'
+        WHEN 'silver'   THEN 'Awarded for achieving 10,000 article views'
+        WHEN 'gold'     THEN 'Awarded for achieving 100,000 article views'
+        WHEN 'platinum' THEN 'Awarded for achieving 1,000,000 article views'
+      END,
+      CASE v_badge
+        WHEN 'bronze'   THEN 1000
+        WHEN 'silver'   THEN 10000
+        WHEN 'gold'     THEN 100000
+        WHEN 'platinum' THEN 1000000
+      END::BIGINT
+    )
+    ON CONFLICT (user_id, badge_type) DO NOTHING;
+  END IF;
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────
 --  ROW LEVEL SECURITY (RLS)
 -- ─────────────────────────────────────────────────────────────
-ALTER TABLE public.users          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.articles       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.comments       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.analytics      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.earnings       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.review_workflow ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.subscriptions  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.page_views     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.articles        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.earnings        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.review_workflow  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscriptions   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.page_views      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.journalist_badges  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.journalist_rankings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payout_records      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.article_revenue     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rss_feeds           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payout_requests     ENABLE ROW LEVEL SECURITY;
 
 -- USERS ---
 CREATE POLICY "Public profiles viewable" ON public.users
@@ -428,6 +601,38 @@ CREATE POLICY "Users see own notifications" ON public.notifications
 CREATE POLICY "Analytics are public" ON public.analytics
   FOR SELECT USING (true);
 
+-- BADGES ---
+CREATE POLICY "Badges are public" ON public.journalist_badges FOR SELECT USING (true);
+
+-- RANKINGS ---
+CREATE POLICY "Rankings are public" ON public.journalist_rankings FOR SELECT USING (true);
+
+-- PAYOUT RECORDS ---
+CREATE POLICY "Users see own payouts" ON public.payout_records
+  FOR SELECT USING (auth.uid()::text = user_id::text OR 
+    EXISTS (SELECT 1 FROM public.users WHERE user_id::text = auth.uid()::text AND role = 'admin'));
+
+CREATE POLICY "Admins manage payouts" ON public.payout_records
+  FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE user_id::text = auth.uid()::text AND role = 'admin'));
+
+-- ARTICLE REVENUE ---
+CREATE POLICY "Authors see own revenue" ON public.article_revenue
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.articles WHERE article_id = article_revenue.article_id AND author_id::text = auth.uid()::text) OR
+    EXISTS (SELECT 1 FROM public.users WHERE user_id::text = auth.uid()::text AND role = 'admin')
+  );
+
+-- RSS FEEDS ---
+CREATE POLICY "RSS feeds are public read"  ON public.rss_feeds FOR SELECT USING (true);
+CREATE POLICY "Admins manage RSS feeds"    ON public.rss_feeds
+  FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role = 'admin'));
+
+-- PAYOUT REQUESTS ---
+CREATE POLICY "Journalists see own payout requests" ON public.payout_requests
+  FOR SELECT USING (auth.uid() IN (SELECT auth_id FROM public.users WHERE user_id = user_id));
+CREATE POLICY "Admins manage payout requests"      ON public.payout_requests
+  FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role = 'admin'));
+
 -- ─────────────────────────────────────────────────────────────
 --  REALTIME — enable for live notifications & comments
 -- ─────────────────────────────────────────────────────────────
@@ -435,6 +640,9 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.review_workflow;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.articles;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.journalist_rankings;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.payout_records;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.payout_requests;
 
 -- ─────────────────────────────────────────────────────────────
 --  STORAGE BUCKETS

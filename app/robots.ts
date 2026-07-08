@@ -1,4 +1,4 @@
-import type { MetadataRoute } from 'next'
+import { MetadataRoute } from 'next'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
 
@@ -8,25 +8,17 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/admin/',
-          '/journalist/dashboard',
-          '/journalist/articles',
-          '/journalist/earnings',
-          '/journalist/analytics',
-          '/journalist/subscribers',
-          '/journalist/profile',
-          '/journalist/create',
-          '/api/',
-        ],
+        disallow: ['/api/', '/admin/', '/journalist/', '/login', '/search'],
       },
       {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: ['/admin/', '/api/'],
+        userAgent: 'GPTBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'CCBot',
+        disallow: '/',
       },
     ],
     sitemap: `${APP_URL}/sitemap.xml`,
-    host: APP_URL,
   }
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
@@ -63,11 +64,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
-        <QueryProvider>
-          {children}
-          <CookieConsent />
-        </QueryProvider>
+      <body className="min-h-full flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 transition-colors duration-300">
+        <ThemeProvider>
+          <QueryProvider>
+            {children}
+            <CookieConsent />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

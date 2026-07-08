@@ -1,11 +1,20 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --navy: #0a1628;
   --navy-mid: #0d2045;
   --navy-light: #1a3a6e;
   --accent: #1a56db;
   --orange: #e85d04;
+}
+
+html.dark {
+  --navy: #0f172a;
+  --navy-mid: #1e293b;
+  --navy-light: #334155;
+  color-scheme: dark;
 }
 
 * {
@@ -18,18 +27,97 @@ html {
 
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background-color: #f4f6f9;
-  color: #1a1a2e;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Global Dark Mode Overrides for Automatic Premium Theming */
+html.dark body {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+/* Backgrounds */
+html.dark .bg-white {
+  background-color: #1e293b !important;
+}
+html.dark .bg-gray-50 {
+  background-color: #0f172a !important;
+}
+html.dark .bg-gray-100 {
+  background-color: #334155 !important;
+}
+
+/* Borders */
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+
+/* Text Colors */
+html.dark .text-gray-900 {
+  color: #ffffff !important;
+}
+html.dark .text-gray-800 {
+  color: #f1f5f9 !important;
+}
+html.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+html.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+html.dark .text-gray-400 {
+  color: #64748b !important;
+}
+
+/* Navigation, Sidebar & Form Elements */
+html.dark select,
+html.dark input,
+html.dark textarea {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+html.dark select option {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+/* Table styling for dark mode */
+html.dark table th {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
+html.dark table td {
+  border-color: #334155 !important;
+}
+html.dark tr:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
 /* Prose-like content */
 .article-body p { margin-bottom: 1.25rem; line-height: 1.85; }
 .article-body h2 { font-size: 1.35rem; font-weight: 700; margin: 1.75rem 0 0.75rem; color: #0a1628; }
+html.dark .article-body h2 { color: #ffffff !important; }
 .article-body h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
 .article-body blockquote { border-left: 4px solid #1a56db; padding-left: 1rem; color: #4b5563; font-style: italic; margin: 1.25rem 0; }
+html.dark .article-body blockquote { color: #cbd5e1 !important; }
+

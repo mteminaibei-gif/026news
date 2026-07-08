@@ -2,32 +2,160 @@ import { Topbar } from '@/components/layout/Topbar'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
+import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
+import { AdminJournalistActions } from '@/components/admin/AdminJournalistActions'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MOCK_ARTICLES, MOCK_USERS, MOCK_CATEGORIES, MOCK_ADMIN_STATS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import { formatDate, formatNumber, formatCurrency } from '@/lib/utils'
 import type { Metadata } from 'next'
+import { MOCK_ARTICLES, MOCK_USERS, MOCK_ADMIN_STATS } from '@/lib/mock-data'
 
 export const metadata: Metadata = { title: 'Admin Dashboard' }
 
-export default function AdminDashboard() {
-  const admin = MOCK_USERS[1]
-  const journalists = MOCK_USERS.filter(u => u.role === 'journalist')
-  const pending = MOCK_ARTICLES.filter(a => a.status === 'under_review')
-  const published = MOCK_ARTICLES.filter(a => a.status === 'published')
-  const stats = MOCK_ADMIN_STATS
+type ArticleRow = {
+  article_id: number; title: string; slug: string; status: string
+  featured_image: string | null; views: number; earnings: number; created_at: string
+  author: { name: string } | null
+  category: { name: string } | null
+}
+type JournalistRow = {
+  user_id: number; name: string; email: string
+  profile_image: string | null; status: string
+}
+
+export default async function AdminDashboard() {
+  const supabase = await createClient()
+
+  // Fetch current admin user for topbar
+  const { data: { user } } = await supabase.auth.getUser()
+  let admin = null
+  if (user) {
+    try {
+      const { data: rawAdmin } = await supabase
+        .from('users').select('name, profile_image').eq('email', user.email ?? '').single()
+      admin = rawAdmin as { name: string; profile_image: string | null } | null
+    } catch {
+      // ignore
+    }
+  }
+  if (!admin) {
+    admin = { name: user?.email?.split('@')[0] || 'Admin', profile_image: null }
+  }
+
+  // Fetch articles
+  let articles: ArticleRow[] = []
+  let totalArticlesCount = 0
+  try {
+    const { data: rawArticles, count, error } = await supabase
+      .from('articles')
+      .select('article_id, title, slug, status, featured_image, views, earnings, created_at, author:users(name), category:categories(name)', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .limit(20) as any
+    if (error) throw error
+    articles = (rawArticles ?? [])
+    totalArticlesCount = count ?? 0
+  } catch (err) {
+    console.warn('Dashboard articles query failed, falling back to mock data:', err)
+    articles = MOCK_ARTICLES.map(a => ({
+      article_id: a.article_id,
+      title: a.title,
+      slug: a.slug,
+      status: a.status,
+      featured_image: a.featured_image,
+      views: a.views,
+      earnings: a.earnings,
+      created_at: a.created_at,
+      author: { name: a.author.name },
+      category: { name: a.category.name }
+    }))
+    totalArticlesCount = MOCK_ARTICLES.length
+  }
+  const pending   = articles.filter(a => a.status === 'under_review')
+  const published = articles.filter(a => a.status === 'published')
+
+  // Fetch journalists
+  let journalists: JournalistRow[] = []
+  let journalistsCount = 0
+  try {
+    const { data: rawJournalists, count, error } = await supabase
+      .from('users')
+      .select('user_id, name, email, profile_image, status', { count: 'exact' })
+      .eq('role', 'journalist' as never)
+      .order('created_at', { ascending: false })
+      .limit(10) as any
+    if (error) throw error
+    journalists = rawJournalists ?? []
+    journalistsCount = count ?? 0
+  } catch (err) {
+    console.warn('Dashboard journalists query failed, falling back to mock data:', err)
+    journalists = MOCK_USERS.filter(u => u.role === 'journalist').map(u => ({
+      user_id: u.user_id,
+      name: u.name,
+      email: u.email,
+      profile_image: u.profile_image,
+      status: u.status
+    }))
+    journalistsCount = journalists.length
+  }
+
+  // Fetch revenue totals
+  let totalRevenue = 0
+  let pendingPayout = 0
+  try {
+    const { data: rawRevenue, error } = await supabase.from('earnings').select('amount, payout_status') as any
+    if (error) throw error
+    const revenueRows = rawRevenue ?? []
+    totalRevenue = revenueRows.reduce((s: number, r: any) => s + Number(r.amount), 0)
+    pendingPayout = revenueRows
+      .filter((r: any) => r.payout_status === 'pending')
+      .reduce((s: number, r: any) => s + Number(r.amount), 0)
+  } catch (err) {
+    console.warn('Dashboard earnings query failed, falling back to mock data:', err)
+    totalRevenue = MOCK_ADMIN_STATS.totalRevenue
+    pendingPayout = MOCK_ADMIN_STATS.pendingPayouts
+  }
+
+  // Fetch user count
+  let totalUsers = 0
+  try {
+    const { count, error } = await supabase
+      .from('users').select('user_id', { count: 'exact', head: true })
+    if (error) throw error
+    totalUsers = count ?? 0
+  } catch {
+    totalUsers = MOCK_USERS.length
+  }
 
   return (
     <>
-      <Topbar title="Admin Dashboard" user={{ name: admin.name, profile_image: admin.profile_image }} />
+      <Topbar
+        title="Admin Dashboard"
+        user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }}
+      />
 
       <div className="p-6 flex-1">
 
         {/* Overview stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <StatCard label="📰 Total Articles" value={stats.totalArticles.toLocaleString()} sub={`Published: ${published.length} · Pending: ${pending.length}`} accent="blue" />
-          <StatCard label="✍️ Freelance Submissions" value={`${pending.length} Pending`} sub="Awaiting your review" accent="orange" />
-          <StatCard label="👥 Active Users" value={formatNumber(stats.activeUsers)} sub={`Journalists: ${journalists.length}`} accent="green" />
+          <StatCard
+            label="📰 Total Articles"
+            value={(totalArticlesCount ?? 0).toLocaleString()}
+            sub={`Published: ${published.length} · Pending: ${pending.length}`}
+            accent="blue"
+          />
+          <StatCard
+            label="✍️ Freelance Submissions"
+            value={`${pending.length} Pending`}
+            sub="Awaiting your review"
+            accent="orange"
+          />
+          <StatCard
+            label="👥 Active Users"
+            value={formatNumber(totalUsers ?? 0)}
+            sub={`Journalists: ${journalistsCount ?? 0}`}
+            accent="green"
+          />
         </div>
 
         {/* Traffic + Contributors */}
@@ -46,9 +174,8 @@ export default function AdminDashboard() {
                 height={80}
               />
               <div className="flex gap-5 mt-4 text-xs text-gray-400 flex-wrap">
-                <span>Monthly Visitors: <strong className="text-gray-900">{formatNumber(stats.monthlyVisitors)}</strong></span>
-                <span>Avg. Session: <strong className="text-gray-900">4.2 min</strong></span>
-                <span>Bounce Rate: <strong className="text-red-500">38%</strong></span>
+                <span>Total Revenue: <strong className="text-gray-900">{formatCurrency(totalRevenue)}</strong></span>
+                <span>Pending Payout: <strong className="text-orange-500">{formatCurrency(pendingPayout)}</strong></span>
               </div>
             </div>
           </div>
@@ -60,21 +187,24 @@ export default function AdminDashboard() {
               <Link href="/admin/journalists" className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">View All</Link>
             </div>
             <div className="divide-y divide-gray-50">
-              {journalists.slice(0, 4).map(j => {
-                const jAny = j as typeof j & { articles?: number; earnings?: number }
-                return (
+              {journalists.slice(0, 4).map(j => (
                 <div key={j.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
-                  <Image src={j.profile_image ?? ''} alt={j.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
+                  {j.profile_image ? (
+                    <Image src={j.profile_image} alt={j.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">
+                      {j.name.charAt(0)}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{j.name}</p>
-                    <p className="text-xs text-gray-400">{jAny.articles ?? 0} articles · {formatCurrency(jAny.earnings ?? 0)}</p>
+                    <p className="text-xs text-gray-400">{j.email}</p>
                   </div>
-                  <Badge status="active" />
-                  <span className="text-sm font-bold text-emerald-600">{formatCurrency(jAny.earnings ?? 0)}</span>
+                  <Badge status={j.status} />
                 </div>
-                )
-              })}
+              ))}
             </div>
+
             {pending.length > 0 && (
               <>
                 <div className="px-5 py-2 bg-gray-50 border-t border-gray-100">
@@ -82,9 +212,11 @@ export default function AdminDashboard() {
                 </div>
                 {pending.slice(0, 2).map(a => (
                   <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 border-t border-gray-50">
-                    <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
-                      <Image src={a.featured_image ?? ''} alt={a.title} fill className="object-cover" />
-                    </div>
+                    {a.featured_image && (
+                      <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
+                        <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{a.title}</p>
                       <p className="text-xs text-gray-400">By {a.author?.name}</p>
@@ -102,73 +234,49 @@ export default function AdminDashboard() {
         {/* Manage Articles table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-sm font-bold text-gray-900">📋 Manage Articles</h2>
-              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                {['All Articles', 'Pending Review', 'Published'].map(tab => (
-                  <button key={tab} className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${tab === 'All Articles' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>
-                    {tab}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-2 items-center">
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">🔍</span>
-                <input type="text" placeholder="Search articles..." className="pl-7 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 outline-none focus:border-blue-500 w-44" />
-              </div>
-              <select className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-gray-50 outline-none">
-                <option>All Categories</option>
-                {MOCK_CATEGORIES.map(c => <option key={c.category_id}>{c.name}</option>)}
-              </select>
-            </div>
+            <h2 className="text-sm font-bold text-gray-900">📋 Manage Articles</h2>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                <th className="px-4 py-2.5 text-left w-6">#</th>
-                <th className="px-4 py-2.5 text-left">Title</th>
-                <th className="px-4 py-2.5 text-left">Author</th>
-                <th className="px-4 py-2.5 text-left">Status</th>
-                <th className="px-4 py-2.5 text-left">Views</th>
-                <th className="px-4 py-2.5 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {MOCK_ARTICLES.map((a, i) => (
-                <tr key={a.article_id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
-                        <Image src={a.featured_image ?? ''} alt={a.title} fill className="object-cover" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 truncate max-w-[180px]">{a.title}</p>
-                        <p className="text-xs text-gray-400">{a.category?.name} · {formatDate(a.created_at)}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{a.author?.name}</td>
-                  <td className="px-4 py-3"><Badge status={a.status} /></td>
-                  <td className="px-4 py-3 text-sm text-gray-600">👁 {formatNumber(a.views)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1.5 flex-wrap">
-                      <Link href={`/admin/review/${a.article_id}`} className="text-xs font-bold bg-blue-600 text-white px-2.5 py-1 rounded-lg hover:bg-blue-700">
-                        Review
-                      </Link>
-                      <Link href={`/admin/review/${a.article_id}`} className="text-xs font-semibold bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg hover:bg-gray-200">
-                        Edit
-                      </Link>
-                      <button className="text-xs font-semibold bg-red-500 text-white px-2.5 py-1 rounded-lg hover:bg-red-600">
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left w-6">#</th>
+                  <th className="px-4 py-2.5 text-left">Title</th>
+                  <th className="px-4 py-2.5 text-left">Author</th>
+                  <th className="px-4 py-2.5 text-left">Status</th>
+                  <th className="px-4 py-2.5 text-left">Views</th>
+                  <th className="px-4 py-2.5 text-left">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {articles.map((a, i) => (
+                  <tr key={a.article_id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {a.featured_image && (
+                          <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
+                            <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-gray-900 truncate max-w-[180px]">{a.title}</p>
+                          <p className="text-xs text-gray-400">{a.category?.name} · {formatDate(a.created_at)}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{a.author?.name}</td>
+                    <td className="px-4 py-3"><Badge status={a.status} /></td>
+                    <td className="px-4 py-3 text-sm text-gray-600">👁 {formatNumber(a.views)}</td>
+                    <td className="px-4 py-3">
+                      {/* Client component handles all interactive actions */}
+                      <AdminArticleActions articleId={a.article_id} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Journalist Management + Payout */}
@@ -176,53 +284,45 @@ export default function AdminDashboard() {
 
           {/* Journalist table */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-gray-900">👥 Journalist Management</h2>
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                  {['All', 'Pending', 'Top Earners'].map(tab => (
-                    <button key={tab} className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${tab === 'All' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-gray-900">👥 Journalist Management</h2>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                  <th className="px-4 py-2.5 text-left">Journalist</th>
-                  <th className="px-3 py-2.5">Articles</th>
-                  <th className="px-3 py-2.5">Earnings</th>
-                  <th className="px-3 py-2.5">Status</th>
-                  <th className="px-3 py-2.5">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {journalists.map(j => {
-                  const jx = j as typeof j & { articles?: number; earnings?: number }
-                  return (
-                  <tr key={j.user_id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <Image src={j.profile_image ?? ''} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" />
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{j.name}</p>
-                          <p className="text-xs text-gray-400">{j.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-center text-sm">{jx.articles ?? 0}</td>
-                    <td className="px-3 py-3 text-center font-bold text-emerald-600">{formatCurrency(jx.earnings ?? 0)}</td>
-                    <td className="px-3 py-3 text-center"><Badge status={j.status} /></td>
-                    <td className="px-3 py-3 text-center">
-                      <button className="text-xs font-bold bg-red-500 text-white px-2.5 py-1 rounded-lg hover:bg-red-600">Reject</button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left">Journalist</th>
+                    <th className="px-3 py-2.5">Status</th>
+                    <th className="px-3 py-2.5">Action</th>
                   </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {journalists.map(j => (
+                    <tr key={j.user_id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          {j.profile_image ? (
+                            <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
+                              {j.name.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{j.name}</p>
+                            <p className="text-xs text-gray-400">{j.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-center"><Badge status={j.status} /></td>
+                      <td className="px-3 py-3 text-center">
+                        <AdminJournalistActions userId={j.user_id} currentStatus={j.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Payout Overview */}
@@ -232,10 +332,9 @@ export default function AdminDashboard() {
             </div>
             <div className="divide-y divide-gray-100">
               {[
-                { label: "This Month's Payout", value: formatCurrency(stats.thisMonthPayout), color: 'text-blue-600' },
-                { label: 'Total Payouts (All Time)', value: formatCurrency(stats.totalRevenue), color: 'text-gray-900' },
-                { label: 'Pending Payouts', value: formatCurrency(stats.pendingPayouts), color: 'text-orange-500' },
-                { label: 'Active Journalists', value: journalists.length.toString(), color: 'text-gray-900' },
+                { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue),  color: 'text-gray-900' },
+                { label: 'Pending Payouts',          value: formatCurrency(pendingPayout), color: 'text-orange-500' },
+                { label: 'Active Journalists',        value: (journalistsCount ?? 0).toString(), color: 'text-gray-900' },
               ].map(row => (
                 <div key={row.label} className="flex items-center justify-between px-5 py-3">
                   <span className="text-sm text-gray-500">{row.label}</span>
@@ -244,100 +343,43 @@ export default function AdminDashboard() {
               ))}
             </div>
             <div className="px-5 py-4">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
-                📊 Payment Report
-              </button>
+              <Link href="/admin/earnings" className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
+                📊 View Payment Report
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Analytics row */}
-        <div className="grid lg:grid-cols-2 gap-5">
-          {/* Content Performance */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900">📊 Content Performance</h2>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-gray-50 outline-none">
-                <option>This Month</option>
-                <option>This Week</option>
-                <option>All Time</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-              {[
-                { label: 'Monthly Visitors', value: formatNumber(stats.monthlyVisitors) },
-                { label: 'Top Source', value: 'BBC 18%' },
-                { label: 'Revenue', value: formatCurrency(stats.totalRevenue) },
-              ].map(item => (
-                <div key={item.label} className="px-4 py-3 text-center">
-                  <p className="font-extrabold text-gray-900">{item.value}</p>
-                  <p className="text-xs text-gray-400">{item.label}</p>
-                </div>
-              ))}
-            </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                  <th className="px-4 py-2.5 text-left">Article</th>
-                  <th className="px-4 py-2.5">Views</th>
-                  <th className="px-4 py-2.5">Earnings</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {published.sort((a, b) => b.views - a.views).slice(0, 4).map(a => (
-                  <tr key={a.article_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="relative w-8 h-7 rounded overflow-hidden shrink-0">
-                          <Image src={a.featured_image ?? ''} alt={a.title} fill className="object-cover" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-900 truncate max-w-[120px]">{a.title}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center text-xs text-gray-600">{formatNumber(a.views)}</td>
-                    <td className="px-4 py-3 text-center text-xs font-bold text-emerald-600">{formatCurrency(a.earnings)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Trends & Insights */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-bold text-gray-900">🔍 Trends &amp; Insights</h2>
           </div>
-
-          {/* Trends & Insights */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-bold text-gray-900">🔍 Trends &amp; Insights</h2>
-            </div>
-            <div className="p-5">
-              {/* Revenue breakdown donut */}
-              <div className="flex items-center gap-5 mb-5">
-                <div
-                  className="w-20 h-20 rounded-full shrink-0 shadow-inner"
-                  style={{ background: 'conic-gradient(#0e9f6e 0% 50%, #1a56db 50% 75%, #e85d04 75% 90%, #e5e7eb 90% 100%)' }}
-                />
-                <div className="space-y-1.5 text-xs text-gray-600">
-                  {[
-                    { color: '#0e9f6e', label: 'Ads — 50%' },
-                    { color: '#1a56db', label: 'Subscriptions — 25%' },
-                    { color: '#e85d04', label: 'Sponsored — 15%' },
-                    { color: '#e5e7eb', label: 'Other — 10%' },
-                  ].map(item => (
-                    <div key={item.label} className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      {item.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <BarChart
-                data={[45, 60, 52, 75, 68, 85, 100]}
-                labels={['Mon','Tue','Wed','Thu','Fri','Sat','Sun']}
-                height={60}
+          <div className="p-5">
+            <div className="flex items-center gap-5 mb-5">
+              <div
+                className="w-20 h-20 rounded-full shrink-0 shadow-inner"
+                style={{ background: 'conic-gradient(#0e9f6e 0% 50%, #1a56db 50% 75%, #e85d04 75% 90%, #e5e7eb 90% 100%)' }}
               />
-              <div className="flex gap-4 mt-3 text-xs text-gray-400">
-                <span>Revenue: <strong className="text-gray-900">$1,250</strong></span>
-                <span>Sponsor views: <strong className="text-gray-900">9.9K</strong></span>
+              <div className="space-y-1.5 text-xs text-gray-600">
+                {[
+                  { color: '#0e9f6e', label: 'Ads — 50%' },
+                  { color: '#1a56db', label: 'Subscriptions — 25%' },
+                  { color: '#e85d04', label: 'Sponsored — 15%' },
+                  { color: '#e5e7eb', label: 'Other — 10%' },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                    {item.label}
+                  </div>
+                ))}
               </div>
             </div>
+            <BarChart
+              data={[45, 60, 52, 75, 68, 85, 100]}
+              labels={['Mon','Tue','Wed','Thu','Fri','Sat','Sun']}
+              height={60}
+            />
           </div>
         </div>
 

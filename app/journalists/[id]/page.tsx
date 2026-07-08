@@ -5,47 +5,76 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ArticleCard } from '@/components/news/ArticleCard'
-import { MOCK_USERS, MOCK_ARTICLES } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import { formatNumber } from '@/lib/utils'
+import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
-interface Props {
-  params: Promise<{ id: string }>
+interface Props { params: Promise<{ id: string }> }
+
+type JournalistProfile = {
+  user_id: number
+  name: string
+  bio: string | null
+  profile_image: string | null
+  email: string
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
-  const journalist = MOCK_USERS.find(u => u.user_id === Number(id))
-  if (!journalist) return { title: 'Journalist Not Found' }
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('users')
+    .select('name, bio, profile_image')
+    .eq('user_id', Number(id))
+    .eq('role', 'journalist' as never)
+    .single()
+
+  if (!data) return { title: 'Journalist Not Found' }
+  const j = data as { name: string; bio: string | null; profile_image: string | null }
   return {
-    title: `${journalist.name} — Journalist`,
-    description: journalist.bio ?? `Read articles by ${journalist.name} on 026News.`,
+    title: `${j.name} — Journalist`,
+    description: j.bio ?? `Read articles by ${j.name} on 026News.`,
     openGraph: {
-      title: `${journalist.name} | 026News`,
-      description: journalist.bio ?? '',
-      images: journalist.profile_image ? [{ url: journalist.profile_image }] : [],
+      title: `${j.name} | 026News`,
+      description: j.bio ?? '',
+      images: j.profile_image ? [{ url: j.profile_image }] : [],
     },
   }
 }
 
-export function generateStaticParams() {
-  return MOCK_USERS
-    .filter(u => u.role === 'journalist')
-    .map(u => ({ id: String(u.user_id) }))
-}
-
 export default async function JournalistProfilePage({ params }: Props) {
   const { id } = await params
-  const journalist = MOCK_USERS.find(u => u.user_id === Number(id) && u.role === 'journalist')
-  if (!journalist) notFound()
+  const supabase = await createClient()
 
-  const articles = MOCK_ARTICLES.filter(
-    a => a.author_id === journalist.user_id && a.status === 'published'
-  )
+  // Fetch journalist profile
+  const { data: rawJournalist } = await supabase
+    .from('users')
+    .select('user_id, name, bio, profile_image, email')
+    .eq('user_id', Number(id))
+    .eq('role', 'journalist' as never)
+    .single()
+
+  if (!rawJournalist) notFound()
+  const journalist = rawJournalist as unknown as JournalistProfile
+
+  // Fetch their published articles
+  const { data: rawArticles } = await supabase
+    .from('articles')
+    .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
+    .eq('author_id', journalist.user_id)
+    .eq('status', 'published' as never)
+    .order('created_at', { ascending: false })
+    .limit(20)
+  const articles = (rawArticles ?? []) as unknown as ArticleWithAuthor[]
+
+  // Aggregate stats
+  const totalViews = articles.reduce((s, a) => s + (a.views ?? 0), 0)
 
   const stats = [
-    { label: 'Articles Published', value: journalist.articles },
-    { label: 'Subscribers', value: journalist.subscribers.toLocaleString() },
-    { label: 'Total Views', value: articles.reduce((s, a) => s + a.views, 0).toLocaleString() },
-    { label: 'Earnings (USD)', value: `$${journalist.earnings.toFixed(2)}` },
+    { label: 'Articles Published', value: articles.length.toString() },
+    { label: 'Total Views',        value: formatNumber(totalViews) },
+    { label: 'Categories',         value: [...new Set(articles.map(a => a.category?.name).filter(Boolean))].length.toString() },
+    { label: 'Platform',           value: '026News' },
   ]
 
   return (
@@ -55,17 +84,23 @@ export default async function JournalistProfilePage({ params }: Props) {
       {/* Hero banner */}
       <section
         className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-20 px-4"
-        aria-label={`${journalist.name} profile hero`}
+        aria-label={`${journalist.name} profile`}
       >
         <div className="max-w-4xl mx-auto text-center">
           <div className="relative inline-block mb-4">
-            <Image
-              src={journalist.profile_image ?? ''}
-              alt={journalist.name}
-              width={100}
-              height={100}
-              className="rounded-full object-cover ring-4 ring-orange-500"
-            />
+            {journalist.profile_image ? (
+              <Image
+                src={journalist.profile_image}
+                alt={journalist.name}
+                width={100}
+                height={100}
+                className="rounded-full object-cover ring-4 ring-orange-500"
+              />
+            ) : (
+              <div className="w-[100px] h-[100px] rounded-full bg-white/20 ring-4 ring-orange-500 flex items-center justify-center text-4xl font-black text-white">
+                {journalist.name.charAt(0)}
+              </div>
+            )}
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold mb-2">{journalist.name}</h1>
           <p className="text-orange-400 font-bold uppercase tracking-wider text-sm mb-4">
@@ -75,17 +110,17 @@ export default async function JournalistProfilePage({ params }: Props) {
             <p className="text-white/60 max-w-xl mx-auto text-base leading-relaxed">{journalist.bio}</p>
           )}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
-            <Link
+            <a
               href={`mailto:${journalist.email}`}
               className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
             >
               Contact Journalist
-            </Link>
+            </a>
             <Link
               href="/subscribe"
               className="border border-white/30 hover:bg-white/10 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
             >
-              Follow & Subscribe
+              Follow &amp; Subscribe
             </Link>
           </div>
         </div>
@@ -111,7 +146,7 @@ export default async function JournalistProfilePage({ params }: Props) {
         {articles.length > 0 ? (
           <div className="grid sm:grid-cols-2 gap-5">
             {articles.map(article => (
-              <ArticleCard key={article.article_id} article={article} />
+              <ArticleCard key={article.article_id} article={article as never} />
             ))}
           </div>
         ) : (

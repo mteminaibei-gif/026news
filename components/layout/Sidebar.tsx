@@ -31,21 +31,26 @@ const JOURNALIST_QUICK: NavItem[] = [
 ]
 
 const ADMIN_NAV: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/articles', label: 'Articles', icon: '📰' },
+  { href: '/admin/dashboard',   label: 'Dashboard',   icon: '📊' },
+  { href: '/admin/articles',    label: 'Articles',    icon: '📰' },
   { href: '/admin/journalists', label: 'Journalists', icon: '✍️' },
-  { href: '/admin/sources', label: 'Sources', icon: '🌐' },
-  { href: '/admin/users', label: 'Users', icon: '👥' },
-  { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
-  { href: '/admin/earnings', label: 'Earnings', icon: '💰' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/admin/sources',     label: 'Sources',     icon: '🌐' },
+  { href: '/admin/users',       label: 'Users',       icon: '👥' },
+  { href: '/admin/analytics',   label: 'Analytics',   icon: '📈' },
+  { href: '/admin/earnings',    label: 'Earnings',    icon: '💰' },
+  { href: '/admin/settings',    label: 'Settings',    icon: '⚙️' },
+]
+
+const ADMIN_QUICK: NavItem[] = [
+  { href: '/admin/write', label: 'Write Article', icon: '✏️' },
+  { href: '/',            label: 'View Site',      icon: '🏠' },
 ]
 
 export function Sidebar({ role, user }: SidebarProps) {
   const pathname = usePathname()
-  const navItems = role === 'journalist' ? JOURNALIST_NAV : ADMIN_NAV
-  const quickItems = role === 'journalist' ? JOURNALIST_QUICK : []
-  const tagline = role === 'journalist' ? 'Journalist Portal' : 'Admin Panel'
+  const navItems   = role === 'journalist' ? JOURNALIST_NAV   : ADMIN_NAV
+  const quickItems = role === 'journalist' ? JOURNALIST_QUICK : ADMIN_QUICK
+  const tagline    = role === 'journalist' ? 'Journalist Portal' : 'Admin Panel'
 
   return (
     <aside className="w-60 bg-[#0a1628] text-white flex flex-col fixed top-0 left-0 h-screen z-40 overflow-y-auto">

@@ -6,6 +6,7 @@ type EarningRow   = { amount: number; payout_status: string; source: string; cre
 type AnalyticsRow = { likes: number; shares: number; comments_count: number }
 type RevenueRow   = { amount: number; payout_status: string }
 type TopArticle   = { article_id: number; title: string; views: number; earnings: number; author: { name: string } | null }
+type Profile      = { user_id: number; role: string }
 
 // GET /api/analytics
 export async function GET(req: NextRequest) {
@@ -14,6 +15,28 @@ export async function GET(req: NextRequest) {
 
   try {
     const supabase = await createClient()
+
+    // ── Auth check ───────────────────────────────────────────────────────────
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: rawProfile } = await supabase
+      .from('users')
+      .select('user_id, role')
+      .eq('email', user.email ?? '')
+      .single()
+    const profile = rawProfile as unknown as Profile | null
+
+    if (!profile) return NextResponse.json({ error: 'User profile not found' }, { status: 403 })
+
+    // Journalists can only request their own analytics
+    if (profile.role === 'journalist') {
+      if (!authorId || Number(authorId) !== profile.user_id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    } else if (profile.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     // ── Journalist analytics ─────────────────────────────────────────────────
     if (authorId) {
@@ -59,7 +82,7 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // ── Platform-wide analytics (admin) ──────────────────────────────────────
+    // ── Platform-wide analytics (admin only) ─────────────────────────────────
     const [
       { count: totalArticles },
       { count: totalUsers },

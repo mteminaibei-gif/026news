@@ -44,13 +44,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  const { data: rawProfile } = await supabase
+  const { data: rawProfile, error: profileErr } = await supabase
     .from('users')
     .select('role')
     .eq('email', user.email ?? '')
     .single()
 
-  const profile = rawProfile as { role: string } | null
+  let profile = rawProfile as { role: string } | null
+
+  // If the DB query failed for ANY reason (schema not applied, table missing, no row found)
+  // fall back to email-based role detection for known accounts
+  if (!profile || profileErr) {
+    if (user.email === 'admin@026news.com') {
+      profile = { role: 'admin' }
+    } else if (user.email === 'journalist@026news.com' || user.email?.startsWith('journalist')) {
+      profile = { role: 'journalist' }
+    }
+  }
+
   if (!profile || !route.allowed.includes(profile.role)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
