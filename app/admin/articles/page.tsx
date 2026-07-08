@@ -79,11 +79,11 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
   const articles = (rawArticles ?? []) as unknown as ArticleRow[]
 
   const stats = [
-    { label: 'Total',        value: counts.all,          color: 'text-gray-800' },
-    { label: 'Published',    value: counts.published,    color: 'text-emerald-600' },
-    { label: 'Under Review', value: counts.under_review, color: 'text-blue-600' },
-    { label: 'Draft',        value: counts.draft,        color: 'text-amber-600' },
-    { label: 'Rejected',     value: counts.rejected,     color: 'text-red-500' },
+    { label: 'Total',        value: counts.all,          color: 'text-[#1a5c2a]' },
+    { label: 'Published',    value: counts.published,    color: 'text-[#1a5c2a]' },
+    { label: 'Under Review', value: counts.under_review, color: 'text-[#f5c518]' },
+    { label: 'Draft',        value: counts.draft,        color: 'text-gray-600' },
+    { label: 'Rejected',     value: counts.rejected,     color: 'text-[#c8102e]' },
   ]
 
   return (
@@ -94,7 +94,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
       >
         <Link
           href="/admin/write"
-          className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors"
+          className="flex items-center gap-1.5 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
         >
           ✏️ Write Article
         </Link>
@@ -105,27 +105,27 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
           {stats.map(s => (
-            <div key={s.label} className="bg-white rounded-xl p-4 shadow-sm text-center">
+            <div key={s.label} className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md">
               <div className={`text-2xl font-extrabold ${s.color}`}>{s.value.toLocaleString()}</div>
-              <div className="text-xs text-gray-400 mt-1">{s.label}</div>
+              <div className="text-xs text-gray-500 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
 
           {/* Filters + actions bar */}
-          <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-extrabold text-gray-900">All Articles</h2>
+          <div className="px-5 py-4 border-b border-[#e8f5ea] flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-[#f0faf2] to-white">
+            <h2 className="font-extrabold text-[#1a5c2a]">All Articles</h2>
             <div className="flex flex-wrap gap-2">
               {FILTERS.map(f => (
                 <Link
                   key={f}
                   href={`/admin/articles${f !== 'all' ? `?filter=${f}` : ''}`}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
                     filter === f
-                      ? 'bg-[#0a1628] text-white'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      ? 'bg-[#1a5c2a] text-white shadow-sm'
+                      : 'bg-[#f0faf2] text-gray-600 hover:bg-[#e0f5e4]'
                   }`}
                 >
                   {f.replace('_', ' ')}
@@ -147,7 +147,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
               <p className="text-sm mt-1">
                 {filter !== 'all' ? `No ${filter.replace('_', ' ')} articles yet.` : 'Start by writing your first article.'}
               </p>
-              <Link href="/admin/write" className="mt-4 inline-block text-sm font-bold text-orange-600 hover:underline">
+              <Link href="/admin/write" className="mt-4 inline-block text-sm font-bold text-[#1a5c2a] hover:text-[#2d8a47] transition-colors">
                 ✏️ Write one now →
               </Link>
             </div>
@@ -155,7 +155,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-left text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                  <tr className="bg-[#f0faf2] border-b border-[#e8f5ea] text-left text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
                     <th className="px-4 py-3">Article</th>
                     <th className="px-4 py-3">Author</th>
                     <th className="px-4 py-3">Category</th>
@@ -165,9 +165,9 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                     <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[#f0faf2]">
                   {articles.map(a => (
-                    <tr key={a.article_id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
 
                       {/* Article */}
                       <td className="px-4 py-3 max-w-xs">
@@ -215,14 +215,14 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                           {a.status === 'under_review' && (
                             <Link
                               href={`/admin/review/${a.article_id}`}
-                              className="text-xs font-bold bg-blue-600 text-white px-2.5 py-1 rounded-lg hover:bg-blue-700"
+                              className="text-xs font-bold bg-[#f5c518] text-[#1a1a1a] px-2.5 py-1 rounded-lg hover:bg-[#f5c518]/90 transition-all duration-300"
                             >
                               Review
                             </Link>
                           )}
                           <Link
                             href={`/admin/edit/${a.article_id}`}
-                            className="text-xs font-semibold bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg hover:bg-gray-200"
+                            className="text-xs font-semibold bg-[#f0faf2] text-gray-700 px-2.5 py-1 rounded-lg hover:bg-[#e0f5e4] transition-all duration-300"
                           >
                             Edit
                           </Link>
@@ -230,7 +230,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                             <Link
                               href={`/article/${a.slug}`}
                               target="_blank"
-                              className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg hover:bg-emerald-100"
+                              className="text-xs font-semibold bg-[#e8f5ea] text-[#1a5c2a] px-2.5 py-1 rounded-lg hover:bg-[#d1ead3] transition-all duration-300"
                             >
                               View
                             </Link>

@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-[#f0faf2] via-white to-[#fff8e1]">
       <Sidebar
         role="admin"
         user={{ name: profile.name, profile_image: profile.profile_image }}

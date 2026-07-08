@@ -23,7 +23,6 @@ export default async function AdminEarningsPage() {
   const { data: rawAdmin } = await supabase.from('users').select('name, profile_image').eq('email', user?.email ?? '').single()
   const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
-  // All earnings
   const { data: rawEarnings } = await supabase
     .from('earnings')
     .select('amount, source, payout_status, created_at')
@@ -31,7 +30,6 @@ export default async function AdminEarningsPage() {
     .limit(500)
   const earnings = (rawEarnings ?? []) as unknown as EarnRow[]
 
-  // Payout history
   const { data: rawPayouts } = await supabase
     .from('payout_requests')
     .select('payout_id, amount, journalist_cut, platform_fee, payment_method, status, period_start, period_end, paid_at, journalist:users(name,email)')
@@ -39,7 +37,6 @@ export default async function AdminEarningsPage() {
     .limit(50)
   const payouts = (rawPayouts ?? []) as unknown as PayoutRow[]
 
-  // Top-earning journalists
   const { data: rawJournalists } = await supabase
     .from('users')
     .select('user_id, name, email')
@@ -58,13 +55,11 @@ export default async function AdminEarningsPage() {
     pending: allEarn.filter(e => e.user_id === j.user_id && e.payout_status === 'pending').reduce((s, e) => s + Number(e.amount), 0),
   })).sort((a, b) => b.total - a.total).slice(0, 10)
 
-  // Totals
-  const totalRevenue = earnings.reduce((s, e) => s + Number(e.amount), 0)
-  const pendingPayout = earnings.filter(e => e.payout_status === 'pending').reduce((s, e) => s + Number(e.amount), 0)
-  const paidOut = earnings.filter(e => e.payout_status === 'paid').reduce((s, e) => s + Number(e.amount), 0)
-  const platformRetained = paidOut * 0.5
+  const totalRevenue      = earnings.reduce((s, e) => s + Number(e.amount), 0)
+  const pendingPayout     = earnings.filter(e => e.payout_status === 'pending').reduce((s, e) => s + Number(e.amount), 0)
+  const paidOut           = earnings.filter(e => e.payout_status === 'paid').reduce((s, e) => s + Number(e.amount), 0)
+  const platformRetained  = paidOut * 0.5
 
-  // Monthly chart (6 months)
   const chartData: number[]   = []
   const chartLabels: string[] = []
   for (let i = 5; i >= 0; i--) {
@@ -82,23 +77,23 @@ export default async function AdminEarningsPage() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard label="💰 Total Revenue"     value={formatCurrency(totalRevenue)}    sub="All time"                  accent="blue" />
-          <StatCard label="⏳ Pending Payouts"   value={formatCurrency(pendingPayout)}   sub="50% journalist share due"  accent="orange" />
-          <StatCard label="✅ Paid Out"           value={formatCurrency(paidOut * 0.5)}  sub="Journalist share paid"     accent="green" />
-          <StatCard label="🏢 Platform Retained" value={formatCurrency(platformRetained)} sub="50% service fee"          accent="blue" />
+          <StatCard label="💰 Total Revenue"      value={formatCurrency(totalRevenue)}     sub="All time"                 accent="green" />
+          <StatCard label="⏳ Pending Payouts"    value={formatCurrency(pendingPayout)}    sub="50% journalist share due" accent="gold"  />
+          <StatCard label="✅ Paid Out"            value={formatCurrency(paidOut * 0.5)}   sub="Journalist share paid"    accent="green" />
+          <StatCard label="🏢 Platform Retained"  value={formatCurrency(platformRetained)} sub="50% service fee"          accent="green" />
         </div>
 
         {/* Monthly chart */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">📈 Monthly Revenue</h2>
+        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+          <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+            <h2 className="text-sm font-bold text-[#1a5c2a]">📈 Monthly Revenue Trend</h2>
           </div>
           <div className="px-5 pb-4 pt-3">
             <BarChart data={chartData} labels={chartLabels} height={80} />
           </div>
         </div>
 
-        {/* Payout panel — client component for Pay Now button */}
+        {/* Payout panel */}
         <AdminPayoutPanel
           journalistEarnings={journalistEarnings}
           payouts={payouts}

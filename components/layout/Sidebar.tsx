@@ -52,7 +52,7 @@ export function Sidebar({ role, user }: SidebarProps) {
       {/* Logo */}
       <div className="px-5 py-4 border-b border-white/10">
         <Link href="/" aria-label="026NEW Blog home">
-          <Image src="/026newslogo.png" alt="026NEW Blog" width={180} height={52} className="h-12 w-auto object-contain" />
+          <Image src="/026newslogo.png" alt="026NEW Blog" width={220} height={64} className="h-16 w-auto object-contain" />
         </Link>
         <p className="text-[11px] text-[#f5c518]/70 mt-1 font-semibold">{tagline}</p>
       </div>

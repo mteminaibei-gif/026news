@@ -10,24 +10,31 @@ interface TopbarProps {
 
 export function Topbar({ title, user, children }: TopbarProps) {
   return (
-    <header className="bg-[#0a1628] border-b border-white/10 px-6 py-3 flex items-center justify-between sticky top-0 z-30">
-      <h1 className="text-base font-bold text-white">{title}</h1>
+    <header className="bg-white border-b border-[#e8f5ea] px-6 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+      {/* Left: Kenya accent bar + title */}
+      <div className="flex items-center gap-3">
+        <span className="w-1 h-6 rounded-full bg-gradient-to-b from-[#1a5c2a] to-[#4caf28] shrink-0" />
+        <h1 className="text-base font-bold text-[#1a5c2a]">{title}</h1>
+      </div>
+
       <div className="flex items-center gap-3">
         {children}
-        <span className="text-sm text-white/40 hidden sm:block">
-          Welcome, <strong className="text-white/80">{user.name}</strong>
+
+        <span className="text-sm text-gray-400 hidden sm:block">
+          Welcome, <strong className="text-[#1a5c2a]">{user.name}</strong>
         </span>
 
-        {/* Notification bell — uses real-time via Supabase */}
+        {/* Notification bell */}
         <NotificationBell
           userId={user.user_id ?? 1}
           role={user.role ?? 'journalist'}
         />
 
-        {/* Profile */}
+        {/* Profile avatar */}
         <Link
           href={user.role === 'admin' ? '/admin/settings' : '/journalist/profile'}
           aria-label="View profile"
+          className="transition-transform duration-300 hover:scale-110"
         >
           {user.profile_image ? (
             <Image
@@ -35,10 +42,10 @@ export function Topbar({ title, user, children }: TopbarProps) {
               alt={user.name}
               width={34}
               height={34}
-              className="rounded-full object-cover ring-2 ring-white/20 hover:ring-orange-500 transition-all"
+              className="rounded-full object-cover ring-2 ring-[#e8f5ea] hover:ring-[#f5c518] transition-all duration-300"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 rounded-full bg-[#1a5c2a] flex items-center justify-center text-white text-sm font-bold ring-2 ring-[#e8f5ea] hover:ring-[#f5c518] transition-all duration-300">
               {user.name.charAt(0)}
             </div>
           )}

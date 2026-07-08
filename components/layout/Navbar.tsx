@@ -66,10 +66,10 @@ export function Navbar() {
           <Image
             src="/026newslogo.png"
             alt="026NEW Blog"
-            width={220}
-            height={64}
+            width={280}
+            height={80}
             priority
-            className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]"
+            className="h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </Link>
 
@@ -260,7 +260,7 @@ export function Navbar() {
             <div className="kenya-bar rounded-full mb-5" />
             {/* Logo in drawer */}
             <div className="mb-5 pb-4 border-b border-[#e8f5ea] dark:border-[#1a2e1e]">
-              <Image src="/026newslogo.png" alt="026NEW Blog" width={160} height={52} className="h-12 w-auto object-contain" />
+              <Image src="/026newslogo.png" alt="026NEW Blog" width={200} height={60} className="h-14 w-auto object-contain" />
             </div>
             <p className="text-[10px] font-bold text-[#1a5c2a]/60 dark:text-[#4caf28]/50 uppercase tracking-widest mb-3">
               News Categories

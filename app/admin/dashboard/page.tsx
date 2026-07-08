@@ -142,13 +142,13 @@ export default async function AdminDashboard() {
             label="📰 Total Articles"
             value={(totalArticlesCount ?? 0).toLocaleString()}
             sub={`Published: ${published.length} · Pending: ${pending.length}`}
-            accent="blue"
+            accent="green"
           />
           <StatCard
             label="✍️ Freelance Submissions"
             value={`${pending.length} Pending`}
             sub="Awaiting your review"
-            accent="orange"
+            accent="gold"
           />
           <StatCard
             label="👥 Active Users"
@@ -162,10 +162,10 @@ export default async function AdminDashboard() {
         <div className="grid lg:grid-cols-2 gap-5 mb-6">
 
           {/* Traffic chart */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900">📈 Traffic Overview</h2>
-              <span className="text-xs text-gray-400">Last 12 months</span>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
+              <h2 className="text-sm font-bold text-[#1a5c2a]">📈 Traffic Overview</h2>
+              <span className="text-xs text-gray-500">Last 12 months</span>
             </div>
             <div className="px-5 pb-4 pt-3">
               <BarChart
@@ -173,32 +173,32 @@ export default async function AdminDashboard() {
                 labels={['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']}
                 height={80}
               />
-              <div className="flex gap-5 mt-4 text-xs text-gray-400 flex-wrap">
-                <span>Total Revenue: <strong className="text-gray-900">{formatCurrency(totalRevenue)}</strong></span>
-                <span>Pending Payout: <strong className="text-orange-500">{formatCurrency(pendingPayout)}</strong></span>
+              <div className="flex gap-5 mt-4 text-xs text-gray-500 flex-wrap">
+                <span>Total Revenue: <strong className="text-[#1a5c2a]">{formatCurrency(totalRevenue)}</strong></span>
+                <span>Pending Payout: <strong className="text-[#f5c518]">{formatCurrency(pendingPayout)}</strong></span>
               </div>
             </div>
           </div>
 
           {/* Active contributors */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900">⭐ Active Contributors</h2>
-              <Link href="/admin/journalists" className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">View All</Link>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
+              <h2 className="text-sm font-bold text-[#1a5c2a]">⭐ Active Contributors</h2>
+              <Link href="/admin/journalists" className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300">View All</Link>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-[#f0faf2]">
               {journalists.slice(0, 4).map(j => (
-                <div key={j.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                <div key={j.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
                   {j.profile_image ? (
                     <Image src={j.profile_image} alt={j.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[#e8f5ea] flex items-center justify-center text-sm font-bold text-[#1a5c2a] shrink-0">
                       {j.name.charAt(0)}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{j.name}</p>
-                    <p className="text-xs text-gray-400">{j.email}</p>
+                    <p className="text-xs text-gray-500">{j.email}</p>
                   </div>
                   <Badge status={j.status} />
                 </div>
@@ -207,11 +207,11 @@ export default async function AdminDashboard() {
 
             {pending.length > 0 && (
               <>
-                <div className="px-5 py-2 bg-gray-50 border-t border-gray-100">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Latest Submissions</p>
+                <div className="px-5 py-2 bg-[#f0faf2] border-t border-[#e8f5ea]">
+                  <p className="text-xs font-bold text-[#1a5c2a]/70 uppercase tracking-wider">Latest Submissions</p>
                 </div>
                 {pending.slice(0, 2).map(a => (
-                  <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 border-t border-gray-50">
+                  <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 border-t border-[#f0faf2]">
                     {a.featured_image && (
                       <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
                         <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
@@ -219,9 +219,9 @@ export default async function AdminDashboard() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{a.title}</p>
-                      <p className="text-xs text-gray-400">By {a.author?.name}</p>
+                      <p className="text-xs text-gray-500">By {a.author?.name}</p>
                     </div>
-                    <Link href={`/admin/review/${a.article_id}`} className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors">
+                    <Link href={`/admin/review/${a.article_id}`} className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
                       Review
                     </Link>
                   </div>
@@ -232,14 +232,14 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Manage Articles table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-          <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-bold text-gray-900">📋 Manage Articles</h2>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden mb-6 transition-all duration-300 hover:shadow-md">
+          <div className="px-5 py-4 border-b border-[#e8f5ea] flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-[#f0faf2] to-white">
+            <h2 className="text-sm font-bold text-[#1a5c2a]">📋 Manage Articles</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
                   <th className="px-4 py-2.5 text-left w-6">#</th>
                   <th className="px-4 py-2.5 text-left">Title</th>
                   <th className="px-4 py-2.5 text-left">Author</th>
@@ -248,10 +248,10 @@ export default async function AdminDashboard() {
                   <th className="px-4 py-2.5 text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-[#f0faf2]">
                 {articles.map((a, i) => (
-                  <tr key={a.article_id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
+                  <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                    <td className="px-4 py-3 text-gray-500 text-xs">{i + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {a.featured_image && (
@@ -261,7 +261,7 @@ export default async function AdminDashboard() {
                         )}
                         <div>
                           <p className="font-semibold text-gray-900 truncate max-w-[180px]">{a.title}</p>
-                          <p className="text-xs text-gray-400">{a.category?.name} · {formatDate(a.created_at)}</p>
+                          <p className="text-xs text-gray-500">{a.category?.name} · {formatDate(a.created_at)}</p>
                         </div>
                       </div>
                     </td>
@@ -283,34 +283,34 @@ export default async function AdminDashboard() {
         <div className="grid lg:grid-cols-2 gap-5 mb-6">
 
           {/* Journalist table */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-bold text-gray-900">👥 Journalist Management</h2>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+              <h2 className="text-sm font-bold text-[#1a5c2a]">👥 Journalist Management</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                  <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
                     <th className="px-4 py-2.5 text-left">Journalist</th>
                     <th className="px-3 py-2.5">Status</th>
                     <th className="px-3 py-2.5">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[#f0faf2]">
                   {journalists.map(j => (
-                    <tr key={j.user_id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={j.user_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           {j.profile_image ? (
                             <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-[#e8f5ea] flex items-center justify-center text-xs font-bold text-[#1a5c2a] shrink-0">
                               {j.name.charAt(0)}
                             </div>
                           )}
                           <div>
                             <p className="text-sm font-semibold text-gray-900">{j.name}</p>
-                            <p className="text-xs text-gray-400">{j.email}</p>
+                            <p className="text-xs text-gray-500">{j.email}</p>
                           </div>
                         </div>
                       </td>
@@ -326,24 +326,24 @@ export default async function AdminDashboard() {
           </div>
 
           {/* Payout Overview */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-bold text-gray-900">💵 Payout Overview</h2>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+              <h2 className="text-sm font-bold text-[#1a5c2a]">💵 Payout Overview</h2>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-[#e8f5ea]">
               {[
-                { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue),  color: 'text-gray-900' },
-                { label: 'Pending Payouts',          value: formatCurrency(pendingPayout), color: 'text-orange-500' },
-                { label: 'Active Journalists',        value: (journalistsCount ?? 0).toString(), color: 'text-gray-900' },
+                { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue),  color: 'text-[#1a5c2a]' },
+                { label: 'Pending Payouts',          value: formatCurrency(pendingPayout), color: 'text-[#f5c518]' },
+                { label: 'Active Journalists',        value: (journalistsCount ?? 0).toString(), color: 'text-[#1a5c2a]' },
               ].map(row => (
-                <div key={row.label} className="flex items-center justify-between px-5 py-3">
-                  <span className="text-sm text-gray-500">{row.label}</span>
+                <div key={row.label} className="flex items-center justify-between px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
+                  <span className="text-sm text-gray-600">{row.label}</span>
                   <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
                 </div>
               ))}
             </div>
             <div className="px-5 py-4">
-              <Link href="/admin/earnings" className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
+              <Link href="/admin/earnings" className="block w-full text-center bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
                 📊 View Payment Report
               </Link>
             </div>
@@ -351,21 +351,21 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Trends & Insights */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">🔍 Trends &amp; Insights</h2>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+          <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+            <h2 className="text-sm font-bold text-[#1a5c2a]">🔍 Trends &amp; Insights</h2>
           </div>
           <div className="p-5">
             <div className="flex items-center gap-5 mb-5">
               <div
                 className="w-20 h-20 rounded-full shrink-0 shadow-inner"
-                style={{ background: 'conic-gradient(#0e9f6e 0% 50%, #1a56db 50% 75%, #e85d04 75% 90%, #e5e7eb 90% 100%)' }}
+                style={{ background: 'conic-gradient(#1a5c2a 0% 50%, #f5c518 50% 75%, #c8102e 75% 90%, #e5e7eb 90% 100%)' }}
               />
               <div className="space-y-1.5 text-xs text-gray-600">
                 {[
-                  { color: '#0e9f6e', label: 'Ads — 50%' },
-                  { color: '#1a56db', label: 'Subscriptions — 25%' },
-                  { color: '#e85d04', label: 'Sponsored — 15%' },
+                  { color: '#1a5c2a', label: 'Ads — 50%' },
+                  { color: '#f5c518', label: 'Subscriptions — 25%' },
+                  { color: '#c8102e', label: 'Sponsored — 15%' },
                   { color: '#e5e7eb', label: 'Other — 10%' },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-2">
