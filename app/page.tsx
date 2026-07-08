@@ -10,6 +10,7 @@ import { formatNumber, cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
 import { MOCK_CATEGORIES, MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
 import type { Metadata } from 'next'
+import type { PostgrestResponse } from '@supabase/supabase-js'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
 export const metadata: Metadata = {
@@ -40,14 +41,14 @@ export default async function HomePage({ searchParams }: Props) {
   const supabase = await createClient()
 
   const articles: ArticleWithAuthor[] = await safeQuery(async () => {
-    const { data, error } = await supabase
+    const response = await supabase
       .from('articles')
       .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
       .eq('status', 'published' as never)
       .order('created_at', { ascending: false })
-      .limit(24) as any
-    if (error) throw error
-    return (data ?? []) as unknown as ArticleWithAuthor[]
+      .limit(24) as PostgrestResponse<ArticleWithAuthor>
+    if (response.error) throw response.error
+    return response.data ?? []
   }, MOCK_ARTICLES.filter(a => a.status === 'published').map(a => ({
     ...a,
     author:    a.author,
@@ -56,14 +57,14 @@ export default async function HomePage({ searchParams }: Props) {
   })) as unknown as ArticleWithAuthor[])
 
   const journalists: JournalistRow[] = await safeQuery(async () => {
-    const { data, error } = await supabase
+    const response = await supabase
       .from('users')
       .select('user_id, name, profile_image')
       .eq('role', 'journalist' as never)
       .eq('status', 'active' as never)
-      .limit(3) as any
-    if (error) throw error
-    return (data ?? []) as unknown as JournalistRow[]
+      .limit(3) as PostgrestResponse<JournalistRow>
+    if (response.error) throw response.error
+    return response.data ?? []
   }, MOCK_USERS.filter(u => u.role === 'journalist').slice(0, 3).map(u => ({
     user_id:       u.user_id,
     name:          u.name,
@@ -71,11 +72,11 @@ export default async function HomePage({ searchParams }: Props) {
   })))
 
   const categories: CategoryRow[] = await safeQuery(async () => {
-    const { data, error } = await supabase
+    const response = await supabase
       .from('categories')
-      .select('category_id, name') as any
-    if (error) throw error
-    return (data?.length ? data : MOCK_CATEGORIES) as CategoryRow[]
+      .select('category_id, name') as PostgrestResponse<CategoryRow>
+    if (response.error) throw response.error
+    return (response.data?.length ? response.data : MOCK_CATEGORIES) as CategoryRow[]
   }, MOCK_CATEGORIES)
 
   const trending  = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
@@ -88,7 +89,7 @@ export default async function HomePage({ searchParams }: Props) {
   const otherArticles = articles.filter(a =>
     !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '')
   )
-  const featured   = articles.filter(a => (a as any).featured)
+  const featured   = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } => Boolean((a as unknown as Record<string, unknown>).featured))
   const heroSlides = [
     ...featured,
     ...[...kenyaArticles].sort((a, b) => b.views - a.views)
@@ -190,7 +191,7 @@ export default async function HomePage({ searchParams }: Props) {
                 {spotlight.map(article => (
                   <ArticleCard
                     key={article.article_id}
-                    article={article as any}
+                    article={article}
                     variant="horizontal"
                   />
                 ))}
@@ -213,7 +214,7 @@ export default async function HomePage({ searchParams }: Props) {
                   key={a.article_id}
                   className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
                 >
-                  <span className="text-2xl font-black text-[#4caf28]/25 dark:text-[#4caf28]/20 min-w-[28px]">{i + 1}</span>
+                  <span className="text-2xl font-black text-[#4caf28]/25 dark:text-[#4caf28]/20 min-w-7">{i + 1}</span>
                   <div>
                     <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug">
                       <Link href={`/article/${a.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28]">

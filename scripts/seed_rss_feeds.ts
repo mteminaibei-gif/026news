@@ -13,7 +13,7 @@ const supabase = createClient(
 )
 
 // Map category names exactly as they appear in your DB
-const CATEGORY_MAP: Record<string, string[]> = {
+const CATEGORY_MAP: Record<string, { name: string; url: string }[]> = {
   'Kenya': [
     { name: 'Nation Africa Kenya', url: 'https://nation.africa/kenya/rss.xml' },
     { name: 'The Standard Kenya', url: 'https://www.standardmedia.co.ke/rss/latest_news.php' },

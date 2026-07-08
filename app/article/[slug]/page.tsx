@@ -17,6 +17,15 @@ import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
+const getSourceHost = (url?: string | null) => {
+  if (!url) return null
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return null
+  }
+}
+
 interface Props { params: Promise<{ slug: string }> }
 
 type CommentWithUser = {
@@ -149,6 +158,25 @@ export default async function ArticlePage({ params }: Props) {
               <span>⏱ {readingTime(article.content)} min read</span>
               <Badge status={article.monetization_type} />
             </div>
+
+            {article.source_reference && (
+              <div className="mt-5 rounded-3xl border border-[#d4e9d4] bg-[#f4fbf6] dark:bg-[#132318] dark:border-[#224631] p-4 flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                <div className="font-semibold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-[0.18em] text-[10px]">
+                  Source attribution
+                </div>
+                <p className="text-sm leading-relaxed flex-1">
+                  This story is linked to its original source. Click through for the full external reference and background.
+                </p>
+                <a
+                  href={article.source_reference}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#1a5c2a] bg-white dark:bg-[#0f2318] px-4 py-2 text-sm font-semibold text-[#1a5c2a] dark:text-[#4caf28] hover:bg-[#1a5c2a]/5 transition-colors"
+                >
+                  {getSourceHost(article.source_reference) ?? 'Read source'} ↗
+                </a>
+              </div>
+            )}
 
             {/* Author strip */}
             {article.author && (

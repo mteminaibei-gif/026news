@@ -11,13 +11,24 @@ interface ArticleCardProps {
     title: string
     slug: string
     content: string
+    excerpt?: string | null
     featured_image?: string | null
+    source_reference?: string | null
     views: number
     created_at: string
     author?: { name: string; profile_image?: string | null } | null
     category?: { name: string } | null
   }
   variant?: 'default' | 'horizontal' | 'featured'
+}
+
+const getSourceHost = (url?: string | null) => {
+  if (!url) return null
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return null
+  }
 }
 
 function ArticleImage({ src, alt, fill, width, height, className }: {
@@ -48,9 +59,10 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   const [imgError, setImgError] = useState(false)
   const isKenya = KENYA_CATS.includes(article.category?.name ?? '')
   const showImage = hasValidImage(article.featured_image) && !imgError
+  const sourceHost = getSourceHost(article.source_reference)
 
   const Placeholder = () => (
-    <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
+    <div className="absolute inset-0 bg-linear-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
       <span className="text-sm font-black text-[#1a5c2a]/20 dark:text-[#4caf28]/20 select-none tracking-widest uppercase">
         {article.category?.name ?? '026NEW'}
       </span>
@@ -122,8 +134,18 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
           </Link>
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
-          {article.content.substring(0, 110)}...
+          {article.excerpt?.trim() || article.content.substring(0, 110)}...
         </p>
+        {sourceHost && (
+          <a
+            href={article.source_reference ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1a5c2a] dark:text-[#4caf28] hover:text-[#4caf28] underline decoration-[#4caf28]/30 mb-2"
+          >
+            Source: {sourceHost} ↗
+          </a>
+        )}
         <div className="flex items-center gap-3 text-xs text-gray-400 pt-3 border-t border-gray-100 dark:border-[#2d4a33]/40">
           <span>✍️ {article.author?.name ?? 'Staff'}</span>
           <span>👁 {formatNumber(article.views)}</span>

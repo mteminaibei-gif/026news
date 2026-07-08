@@ -97,16 +97,21 @@ function LoginForm() {
   const isSignup = mode !== 'login'
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-      {/* Logo */}
-      <div className="text-center mb-6">
-        <Link href="/" aria-label="026News home">
-          <Image src="/026newslogo.png" alt="026NEW Blog" width={160} height={48} className="mx-auto h-24 w-auto mb-2" />
-        </Link>
-      </div>
+    <div className="relative min-h-screen overflow-hidden bg-linear-to-br from-[#f4fbf6] via-[#eef9ee] to-[#ffffff] py-16">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,rgba(76,175,40,0.15),transparent_30%),radial-gradient(circle_at_top_right,rgba(245,197,24,0.15),transparent_35%)]" />
+      <div className="relative mx-auto w-full max-w-md px-4">
+        <div className="bg-white/95 dark:bg-[#0c1b13] border border-[#d4e9d4] dark:border-[#183324] shadow-2xl rounded-4xl overflow-hidden backdrop-blur-xl p-8">
+          <div className="text-center mb-6">
+            <Link href="/" aria-label="026News home">
+              <Image src="/026newslogo.png" alt="026NEW Blog" width={160} height={48} className="mx-auto h-24 w-auto mb-2" />
+            </Link>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+              A vibrant news platform for Africa-first journalism, curated stories, and fast, fair reporting.
+            </p>
+          </div>
 
-      {/* Mode tabs */}
-      <div className="flex bg-gray-100 rounded-xl p-1 mb-6 gap-1">
+          {/* Mode tabs */}
+          <div className="flex rounded-xl p-1 mb-6 gap-1 bg-[#eef9ed] dark:bg-[#122217]">
         {([
           { key: 'login',            label: 'Sign In' },
           { key: 'journalist-signup', label: 'Journalist' },
@@ -116,10 +121,10 @@ function LoginForm() {
             key={tab.key}
             type="button"
             onClick={() => { setMode(tab.key); setError(''); setSuccess('') }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
               mode === tab.key
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-800'
+                ? 'bg-[#1a5c2a] text-white shadow-lg shadow-[#1a5c2a]/20'
+                : 'text-gray-500 hover:text-[#1a5c2a] bg-transparent'
             }`}
           >
             {tab.label}
@@ -133,8 +138,8 @@ function LoginForm() {
         {mode === 'admin-signup'      && 'Create an admin account'}
       </p>
 
-      {error   && <div role="alert"  className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>}
-      {success && <div role="status" className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl mb-4">{success}</div>}
+      {error   && <div role="alert"  className="bg-[#fef0f0] border border-[#f5c2c2] text-[#9f1b1b] text-sm px-4 py-3 rounded-2xl mb-4">{error}</div>}
+      {success && <div role="status" className="bg-[#ecf8ed] border border-[#c0e9c0] text-[#1a5c2a] text-sm px-4 py-3 rounded-2xl mb-4">{success}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
@@ -209,7 +214,7 @@ function LoginForm() {
         )}
 
         <button type="submit" disabled={loading}
-          className="w-full bg-[#0d2a6e] hover:bg-[#1a3a6e] text-white font-bold py-3 rounded-xl text-sm transition-colors disabled:opacity-60">
+          className="w-full bg-[#1a5c2a] hover:bg-[#13411f] text-white font-bold py-3.5 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/10">
           {loading
             ? 'Please wait…'
             : mode === 'login'
@@ -243,12 +248,14 @@ function LoginForm() {
         </div>
       </div>
     </div>
+  </div>
+  </div>
   )
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] px-4 py-12">
       <Suspense fallback={
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 flex items-center justify-center h-64">
           <div className="text-gray-400 text-sm">Loading…</div>
