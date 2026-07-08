@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/client'
 
 // ─── Storage bucket names ─────────────────────────────────────────────────────
 export const BUCKETS = {
-  FEATURED_IMAGES: 'featured-images',
-  PROFILE_IMAGES:  'profile-images',
-  ARTICLE_MEDIA:   'article-media',
+  FEATURED_IMAGES: 'article-images',
+  PROFILE_IMAGES:  'avatars',
+  ARTICLE_MEDIA:   'article-images',
 } as const
 
 type BucketName = typeof BUCKETS[keyof typeof BUCKETS]

@@ -50,9 +50,12 @@ export interface Database {
         Row: {
           category_id: number
           name: string
+          slug: string
           description: string | null
+          icon: string | null
+          created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['categories']['Row'], 'category_id'>
+        Insert: Omit<Database['public']['Tables']['categories']['Row'], 'category_id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['categories']['Insert']>
       }
       articles: {
@@ -61,18 +64,25 @@ export interface Database {
           title: string
           slug: string
           content: string
+          excerpt: string | null
           category_id: number | null
           author_id: number | null
           source_reference: string | null
+          source_url: string | null
+          source_name: string | null
           status: ArticleStatus
           monetization_type: MonetizationType
           featured_image: string | null
+          tags: string[]
+          featured: boolean
           views: number
+          likes: number
           earnings: number
+          published_at: string | null
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['articles']['Row'], 'article_id' | 'created_at' | 'updated_at' | 'views' | 'earnings'>
+        Insert: Omit<Database['public']['Tables']['articles']['Row'], 'article_id' | 'created_at' | 'updated_at' | 'views' | 'likes' | 'earnings'>
         Update: Partial<Database['public']['Tables']['articles']['Insert']>
       }
       comments: {
