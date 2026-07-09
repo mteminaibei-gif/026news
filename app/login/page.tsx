@@ -248,9 +248,8 @@ function LoginForm() {
         </div>
       </div>
     </div>
-  </div>
-  </div>
-  )
+    </div>
+    )
 }
 
 export default function LoginPage() {
