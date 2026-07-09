@@ -38,7 +38,10 @@ export function Navbar() {
   const signOutMutation = useSignOut()
 
   // Close drawer on route change
-  useEffect(() => { setMobileOpen(false) }, [pathname])
+  useEffect(() => { 
+    const closeMobileNav = () => setMobileOpen(false)
+    closeMobileNav()
+  }, [pathname])
 
   // Lock body scroll when mobile nav is open
   useEffect(() => {

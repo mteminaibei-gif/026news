@@ -23,6 +23,12 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount]     = useState(0)
 
+  function push(n: Omit<Notification, 'timestamp' | 'read'>) {
+    const notif: Notification = { ...n, timestamp: new Date().toISOString(), read: false }
+    setNotifications(prev => [notif, ...prev.slice(0, 49)]) // keep last 50
+    setUnreadCount(c => c + 1)
+  }
+
   useEffect(() => {
     if (!userId || role === 'reader') return
 
@@ -128,12 +134,6 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
       channels.forEach(ch => supabase.removeChannel(ch))
     }
   }, [userId, role]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  function push(n: Omit<Notification, 'timestamp' | 'read'>) {
-    const notif: Notification = { ...n, timestamp: new Date().toISOString(), read: false }
-    setNotifications(prev => [notif, ...prev.slice(0, 49)]) // keep last 50
-    setUnreadCount(c => c + 1)
-  }
 
   function markAllRead() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))

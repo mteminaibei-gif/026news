@@ -52,7 +52,7 @@ export default async function AdminDashboard() {
       .from('articles')
       .select('article_id, title, slug, status, featured_image, views, earnings, created_at, author:users(name), category:categories(name)', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(20) as any
+      .limit(20)
     if (error) throw error
     articles = (rawArticles ?? [])
     totalArticlesCount = count ?? 0
