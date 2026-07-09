@@ -1,6 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Topbar } from '@/components/layout/Topbar'
 import { AdminArticleEditor } from '@/components/admin/AdminArticleEditor'
 import { createClient } from '@/lib/supabase/server'
 
@@ -14,22 +12,12 @@ export default async function AdminWritePage() {
   const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
   return (
-    <>
-      <Topbar
-        title="Write New Article"
-        user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }}
-      >
-        <Link
-          href="/admin/articles"
-          className="text-sm font-semibold bg-[#f5c518] hover:bg-[#f5c518]/90 text-[#1a1a1a] px-3 py-1.5 rounded-xl transition-all duration-300"
-        >
-          ← All Articles
-        </Link>
-      </Topbar>
-
-      <div className="p-6 flex-1">
-        <AdminArticleEditor redirectTo="/admin/articles" />
-      </div>
-    </>
+    <div className="flex-1">
+      <AdminArticleEditor
+        redirectTo="/admin/articles"
+        adminName={admin?.name ?? 'Admin'}
+        adminImage={admin?.profile_image ?? null}
+      />
+    </div>
   )
 }
