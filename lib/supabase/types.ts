@@ -17,6 +17,7 @@ export type PaymentMethod = 'mpesa' | 'paypal' | 'stripe'
 export type SubscriptionStatus = 'active' | 'expired' | 'cancelled'
 export type CommentStatus = 'visible' | 'hidden' | 'flagged'
 export type AccountStatus = 'active' | 'inactive' | 'banned'
+export type RegionCode = 'ke' | 'ng' | 'za' | 'gh' | 'ug' | 'tz' | 'et' | 'global'
 
 export interface Database {
   public: {
@@ -39,11 +40,19 @@ export interface Database {
             linkedin?: string | null
             website?: string | null
           } | null
+          region_preference: {
+            default_region: RegionCode | null
+            preferred_regions: RegionCode[]
+            region_priority: { [key in RegionCode]?: number }
+          } | null
           created_at: string
           updated_at: string
           status: AccountStatus
+          total_views: number
+          rank_score: number
+          badge_level: string | null
         }
-        Insert: Omit<Database['public']['Tables']['users']['Row'], 'user_id' | 'created_at' | 'updated_at'>
+        Insert: Omit<Database['public']['Tables']['users']['Row'], 'user_id' | 'created_at' | 'updated_at' | 'total_views' | 'rank_score' | 'badge_level'>
         Update: Partial<Database['public']['Tables']['users']['Insert']>
       }
       categories: {
@@ -53,6 +62,8 @@ export interface Database {
           slug: string
           description: string | null
           icon: string | null
+          region_targeted: boolean
+          regions: RegionCode[]
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['categories']['Row'], 'category_id' | 'created_at'>
@@ -81,6 +92,8 @@ export interface Database {
           published_at: string | null
           created_at: string
           updated_at: string
+          regions: RegionCode[]
+          is_region_priority: boolean
         }
         Insert: Omit<Database['public']['Tables']['articles']['Row'], 'article_id' | 'created_at' | 'updated_at' | 'views' | 'likes' | 'earnings'>
         Update: Partial<Database['public']['Tables']['articles']['Insert']>
@@ -233,10 +246,47 @@ export interface Database {
           fetch_count: number
           error_count: number
           last_error: string | null
+          regions: RegionCode[]
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['rss_feeds']['Row'], 'feed_id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['rss_feeds']['Insert']>
+      }
+      regions: {
+        Row: {
+          region_id: number
+          code: RegionCode
+          name: string
+          flag: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['regions']['Row'], 'region_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['regions']['Insert']>
+      }
+      user_regions: {
+        Row: {
+          user_region_id: number
+          user_id: number
+          region_code: RegionCode
+          is_default: boolean
+          priority: number
+          preferred_categories: number[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['user_regions']['Row'], 'user_region_id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['user_regions']['Insert']>
+      }
+      article_regions: {
+        Row: {
+          article_region_id: number
+          article_id: number
+          region_code: RegionCode
+          priority: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['article_regions']['Row'], 'article_region_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['article_regions']['Insert']>
       }
       article_revenue: {
         Row: {
@@ -261,8 +311,44 @@ export interface Database {
 
 export type ArticleWithAuthor = Database['public']['Tables']['articles']['Row'] & {
   author: Pick<Database['public']['Tables']['users']['Row'], 'user_id' | 'name' | 'profile_image' | 'bio'> | null
-  category: Pick<Database['public']['Tables']['categories']['Row'], 'name'> | null
+  category: Pick<Database['public']['Tables']['categories']['Row'], 'name' | 'regions'> | null
   analytics: Pick<Database['public']['Tables']['analytics']['Row'], 'views' | 'likes' | 'shares' | 'comments_count'> | null
+  regions: Database['public']['Tables']['regions']['Row'][] | null
+}
+
+export type UserWithRegion = Database['public']['Tables']['users']['Row'] & {
+  regions: Database['public']['Tables']['user_regions']['Row'][] | null
+}
+
+export type ArticleWithRegion = Database['public']['Tables']['articles']['Row'] & {
+  regions: Database['public']['Tables']['regions']['Row'][] | null
+  author: Pick<Database['public']['Tables']['users']['Row'], 'user_id' | 'name' | 'profile_image' | 'bio'> | null
+  category: Pick<Database['public']['Tables']['categories']['Row'], 'name' | 'regions'> | null
+}
+
+export type RegionPrioritizedArticle = {
+  article_id: number
+  title: string
+  slug: string
+  content: string
+  excerpt: string | null
+  category_id: number | null
+  author_id: number | null
+  source_reference: string | null
+  status: ArticleStatus
+  monetization_type: MonetizationType
+  featured_image: string | null
+  tags: string[]
+  views: number
+  likes: number
+  earnings: number
+  published_at: string | null
+  created_at: string
+  regions: RegionCode[]
+  author_name: string | null
+  author_image: string | null
+  category_name: string | null
+  region_match_score: number
 }
 
 export type ArticleRow = Database['public']['Tables']['articles']['Row']
@@ -272,3 +358,6 @@ export type CommentRow = Database['public']['Tables']['comments']['Row']
 export type EarningsRow = Database['public']['Tables']['earnings']['Row']
 export type ReviewRow = Database['public']['Tables']['review_workflow']['Row']
 export type AnalyticsRow = Database['public']['Tables']['analytics']['Row']
+export type RegionRow = Database['public']['Tables']['regions']['Row']
+export type UserRegionRow = Database['public']['Tables']['user_regions']['Row']
+export type ArticleRegionRow = Database['public']['Tables']['article_regions']['Row']
