@@ -112,7 +112,7 @@ function ForgotPasswordForm() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/">
-            <Image src="/026newslogo.png" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
+            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
           </Link>
           <h1 className="text-3xl font-bold text-[#1a5c2a] mb-2">Reset Password</h1>
           <p className="text-gray-600">Enter your email to receive a reset link</p>
@@ -274,7 +274,7 @@ function VerifyToken({ token }: { token: string }) {
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <Link href="/">
-            <Image src="/026newslogo.png" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
+            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
           </Link>
           <h1 className="text-3xl font-bold text-[#1a5c2a] mb-2">New Password</h1>
           <p className="text-gray-600">Enter your new password for {userEmail}</p>

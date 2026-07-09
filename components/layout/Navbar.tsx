@@ -94,7 +94,7 @@ export function Navbar() {
           {/* ── Logo ── */}
           <Link href="/" aria-label="026NEWS — home" className="shrink-0 group">
             <Image
-              src="/026newslogo.png"
+              src="/logo.svg"
               alt="026NEWS"
               width={280}
               height={80}
@@ -278,7 +278,7 @@ export function Navbar() {
 
           {/* Logo */}
           <div className="mb-5 pb-4 border-b border-[#e8f5ea] dark:border-[#1a2e1e]">
-            <Image src="/026newslogo.png" alt="026NEWS" width={200} height={60} className="h-14 w-auto object-contain" />
+            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="h-14 w-auto object-contain" />
           </div>
 
           <p className="text-[10px] font-black text-[#1a5c2a]/50 dark:text-[#4caf28]/50 uppercase tracking-widest mb-3">
