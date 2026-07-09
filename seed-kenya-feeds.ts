@@ -35,6 +35,10 @@ const KENYA_FEEDS = [
   { name: 'KBC — Kenya News',             feed_url: 'https://www.kbc.co.ke/feed/',                       cat: 'Kenya' },
   // Citizen Digital
   { name: 'Citizen Digital — Kenya',      feed_url: 'https://www.citizen.digital/feed',                  cat: 'Kenya' },
+  // NTV Kenya (priority)
+  { name: 'NTV Kenya',                    feed_url: 'https://ntvkenya.co.ke/feed',                      cat: 'Kenya' },
+  // K24 (Royal Media)
+  { name: 'K24 TV (Royal Media)',         feed_url: 'https://www.k24tv.co.ke/feed/',                    cat: 'Kenya' },
   // The Star
   { name: 'The Star Kenya',               feed_url: 'https://www.the-star.co.ke/rss/',                   cat: 'Kenya' },
   // Capital FM

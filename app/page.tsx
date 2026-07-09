@@ -90,12 +90,26 @@ export default async function HomePage({ searchParams }: Props) {
     !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '')
   )
   const featured   = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } => Boolean((a as unknown as Record<string, unknown>).featured))
+  // Prioritise trusted Kenyan sources (Nation, KBC, Royal Media, NTV, Citizen, K24)
+  const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'ntv', 'citizen', 'k24']
+
+  const isPriority = (a: ArticleWithAuthor) => {
+    const candidates = [a.source_name, a.source_reference, a.source_url, a.author?.name]
+    return candidates.some(v => !!v && PRIORITY_SOURCES.some(p => v!.toLowerCase().includes(p)))
+  }
+
+  const sortByPriorityThenViews = (arr: ArticleWithAuthor[]) =>
+    [...arr].sort((a, b) => {
+      const pa = isPriority(a) ? 1 : 0
+      const pb = isPriority(b) ? 1 : 0
+      if (pa !== pb) return pb - pa
+      return (b.views ?? 0) - (a.views ?? 0)
+    })
+
   const heroSlides = [
     ...featured,
-    ...[...kenyaArticles].sort((a, b) => b.views - a.views)
-      .filter(a => !featured.find(f => f.article_id === a.article_id)),
-    ...[...otherArticles].sort((a, b) => b.views - a.views)
-      .filter(a => !featured.find(f => f.article_id === a.article_id)),
+    ...sortByPriorityThenViews(kenyaArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
+    ...sortByPriorityThenViews(otherArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
   ].slice(0, 7)
 
   // Kenya/Africa articles first, then rest — when no category filter is active
