@@ -407,3 +407,61 @@ html.dark .editor-wrapper .wmde-markdown h2,
 html.dark .editor-wrapper .wmde-markdown h3 {
   color: #4caf28 !important;
 }
+
+/* Doodle animations for WhatsApp-style background */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(5deg); }
+  66% { transform: translateY(10px) rotate(-5deg); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-15px) scale(1.1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.1); }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
+
+.animate-pulse {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* Fix for mobile navigation scrolling */
+@media (max-width: 1024px) {
+  nav#mobile-nav {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  nav#mobile-nav::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+  
+  nav#mobile-nav {
+    scrollbar-width: none;
+  }
+  
+  nav#mobile-nav {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+/* Better mobile menu scrolling fix */
+@supports (overscroll-behavior: contain) {
+  nav#mobile-nav {
+    overscroll-behavior-y: contain;
+  }
+}

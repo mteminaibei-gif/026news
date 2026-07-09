@@ -262,9 +262,12 @@ export function Navbar() {
         className={cn(
           'lg:hidden fixed right-0 z-50 w-[300px] max-w-[90vw]',
           'bg-white dark:bg-[#0f1a12] shadow-2xl',
-          'flex flex-col overflow-y-auto overscroll-contain',
+          'flex flex-col',
           'transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-          mobileOpen ? 'translate-x-0' : 'translate-x-full'
+          mobileOpen ? 'translate-x-0' : 'translate-x-full',
+          'overflow-y-auto overscroll-contain',
+          'touch-action: pan-y',
+          'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700'
         )}
         style={{ top: NAVBAR_H, height: `calc(100dvh - ${NAVBAR_H}px)` }}
       >
