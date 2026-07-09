@@ -6,6 +6,7 @@ import { ArticlesList } from '@/components/news/ArticlesList'
 import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { ArticleCard } from '@/components/news/ArticleCard'
 import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
+import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
 import { formatNumber, cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
 import { MOCK_CATEGORIES, MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
@@ -161,27 +162,14 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Breaking ticker */}
-      {trending.length > 0 && (
-        <div className="bg-[#1a5c2a] text-white py-2 overflow-hidden border-b-2 border-[#f5c518]/30">
-          <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 text-sm">
-            <span className="bg-[#c8102e] text-white px-2.5 py-0.5 rounded text-xs font-bold uppercase shrink-0 animate-pulse">
-              🇰🇪 Breaking
-            </span>
-            <div className="flex gap-8 overflow-hidden whitespace-nowrap text-white/75">
-              {trending.map(a => (
-                <Link
-                  key={a.article_id}
-                  href={`/article/${a.slug}`}
-                  className="before:content-['•_'] before:text-[#f5c518] hover:text-white transition-colors shrink-0"
-                >
-                  {a.title}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Breaking ticker — SSE live stream */}
+      <BreakingNewsTicker initialHeadlines={trending.map(a => ({
+        article_id: a.article_id,
+        title: a.title,
+        slug: a.slug,
+        created_at: a.created_at,
+        category: a.category ?? null,
+      }))} />
 
       {/* Hero — home page only */}
       {!categoryParam && <HeroCarousel articles={heroSlides as never} />}

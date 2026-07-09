@@ -128,9 +128,9 @@ export default async function ArticlePage({ params }: Props) {
         <main>
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 flex-wrap">
-            <Link href="/" className="text-blue-600 hover:underline">Home</Link>
+            <Link href="/" className="text-[#1a5c2a] hover:underline">Home</Link>
             <span>/</span>
-            <Link href={`/?category=${article.category?.name}`} className="text-blue-600 hover:underline">
+            <Link href={`/?category=${article.category?.name}`} className="text-[#1a5c2a] hover:underline">
               {article.category?.name}
             </Link>
             <span>/</span>
@@ -139,7 +139,9 @@ export default async function ArticlePage({ params }: Props) {
 
           {/* Header */}
           <div className="bg-white dark:bg-gray-800/60 border dark:border-gray-700/40 rounded-2xl shadow-sm p-6 md:p-8 mb-6 transition-colors">
-            <span className="inline-block bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded mb-4">
+            <span className={`inline-block text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded mb-4 ${
+              ['Kenya','Africa'].includes(article.category?.name ?? '') ? 'bg-[#c8102e]' : 'bg-[#1a5c2a]'
+            }`}>
               {article.category?.name}
             </span>
             <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
@@ -152,7 +154,7 @@ export default async function ArticlePage({ params }: Props) {
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 dark:text-gray-500 pb-5 border-b border-gray-100 dark:border-gray-700/50">
               <span>✍️ <strong className="text-gray-700 dark:text-gray-300">{article.author?.name}</strong></span>
-              <span>🏷️ {article.author ? (article as any).author?.role ?? 'Journalist' : 'Staff'}</span>
+              <span>🏷️ Author</span>
               <span>📅 {formatDate(article.created_at)}</span>
               <span>👁 {formatNumber(article.views)} views</span>
               <span>⏱ {readingTime(article.content)} min read</span>
@@ -190,13 +192,13 @@ export default async function ArticlePage({ params }: Props) {
                     className="rounded-full object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-[52px] h-[52px] rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-lg font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                  <div className="w-[52px] h-[52px] rounded-full bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 flex items-center justify-center text-lg font-bold text-[#1a5c2a] dark:text-[#4caf28] shrink-0">
                     {article.author.name.charAt(0)}
                   </div>
                 )}
                 <div>
                   <p className="font-bold text-gray-900 dark:text-white">{article.author.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Journalist · {article.category?.name} Specialist</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Author · {article.category?.name} Specialist</p>
                   {article.author.bio && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">🌍 {article.author.bio}</p>
                   )}
@@ -231,12 +233,14 @@ export default async function ArticlePage({ params }: Props) {
 
           {/* Support / Monetization */}
           <div className="grid sm:grid-cols-2 gap-3 mb-6">
-            <button className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors">
+            <a href="https://www.buymeacoffee.com" target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
               ☕ Buy Me a Coffee
-            </button>
-            <button className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-colors">
+            </a>
+            <a href="https://www.patreon.com" target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
               🎬 Become a Patron
-            </button>
+            </a>
           </div>
 
           {/* Comments */}
@@ -257,8 +261,8 @@ export default async function ArticlePage({ params }: Props) {
           {/* Related News */}
           {related.length > 0 && (
             <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-700/50 rounded-xl shadow-sm overflow-hidden transition-colors">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-b-2 border-blue-600">
-                <h3 className="text-sm font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">📰 Related News</h3>
+              <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a]">
+                <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">📰 Related News</h3>
               </div>
               <div className="p-3">
                 {related.map(r => (
@@ -268,23 +272,23 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           )}
 
-          {/* Author profile */}
+          {/* Author profile sidebar */}
           {article.author && (
             <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-700/50 rounded-xl shadow-sm p-5 transition-colors">
-              <h3 className="text-sm font-extrabold text-gray-900 dark:text-white uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider mb-3">
                 ✍️ More by {article.author.name.split(' ')[0]}
               </h3>
               <div className="flex items-center gap-3 mb-3">
                 {article.author.profile_image ? (
-                  <Image src={article.author.profile_image} alt={article.author.name} width={48} height={48} className="rounded-full object-cover" />
+                  <Image src={article.author.profile_image} alt={article.author.name} width={48} height={48} className="rounded-full object-cover" unoptimized />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-lg font-bold text-blue-600 dark:text-blue-400">
+                  <div className="w-12 h-12 rounded-full bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 flex items-center justify-center text-lg font-bold text-[#1a5c2a] dark:text-[#4caf28]">
                     {article.author.name.charAt(0)}
                   </div>
                 )}
                 <div>
                   <p className="font-bold text-sm text-gray-900 dark:text-white">{article.author.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Journalist</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Author</p>
                 </div>
               </div>
               {article.author.bio && (
@@ -292,7 +296,7 @@ export default async function ArticlePage({ params }: Props) {
               )}
               <Link
                 href={`/journalists/${article.author.user_id}`}
-                className="mt-3 block text-center border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-600 dark:hover:text-white text-sm font-semibold py-2 rounded-lg transition-colors"
+                className="mt-3 block text-center border border-[#1a5c2a] text-[#1a5c2a] hover:bg-[#1a5c2a] hover:text-white dark:border-[#4caf28] dark:text-[#4caf28] dark:hover:bg-[#4caf28] dark:hover:text-[#0f1a12] text-sm font-semibold py-2 rounded-lg transition-all duration-300"
               >
                 View Profile
               </Link>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
@@ -42,6 +42,8 @@ interface ArticleEditorProps {
 const fieldCls = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 font-medium outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all placeholder:text-gray-300'
 const labelCls = 'block text-[11px] font-black uppercase tracking-[0.1em] text-gray-400 mb-2'
 
+const AUTOSAVE_KEY = 'admin_editor_draft'
+
 export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles', adminName, adminImage, backHref = '/admin/articles', backLabel = '← Articles' }: ArticleEditorProps) {
   const router = useRouter()
   const isEdit = !!initialData
@@ -49,6 +51,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   const [title,        setTitle]        = useState(initialData?.title ?? '')
   const [content,      setContent]      = useState(initialData?.content ?? '')
   const [excerpt,      setExcerpt]      = useState(initialData?.excerpt ?? '')
+  const [tags,         setTags]         = useState('')
   const [categoryId,   setCategoryId]   = useState<number | ''>(initialData?.category_id ?? '')
   const [sourceRef,    setSourceRef]    = useState(initialData?.source_reference ?? '')
   const [monetization, setMonetization] = useState(initialData?.monetization_type ?? 'free')
@@ -56,19 +59,25 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   const [categories,   setCategories]   = useState<Category[]>([])
 
   const fileInputRef                        = useRef<HTMLInputElement>(null)
+  const dropZoneRef                         = useRef<HTMLDivElement>(null)
   const [imageFile,      setImageFile]      = useState<File | null>(null)
   const [imagePreview,   setImagePreview]   = useState<string | null>(initialData?.featured_image ?? null)
   const [imageUploading, setImageUploading] = useState(false)
   const [imageError,     setImageError]     = useState('')
+  const [isDragging,     setIsDragging]     = useState(false)
+  const [imageUrlInput,  setImageUrlInput]  = useState('')
+  const [showUrlInput,   setShowUrlInput]   = useState(false)
 
-  const [saving,    setSaving]    = useState(false)
-  const [saveError, setSaveError] = useState('')
-  const [saved,     setSaved]     = useState(false)
+  const [saving,      setSaving]      = useState(false)
+  const [saveError,   setSaveError]   = useState('')
+  const [saved,       setSaved]       = useState(false)
+  const [lastSaved,   setLastSaved]   = useState<Date | null>(null)
 
   const wordCount    = content.trim().split(/\s+/).filter(Boolean).length
   const readMins     = Math.max(1, Math.ceil(wordCount / 200))
   const completeness = [title, categoryId, content.length > 50, imagePreview].filter(Boolean).length * 25
 
+  // Load categories
   useEffect(() => {
     fetch('/api/categories')
       .then(r => r.json())
@@ -82,17 +91,33 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
       ]))
   }, [])
 
-  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) { setImageError('Select an image file (PNG, JPG, WebP)'); return }
-    if (file.size > 5 * 1024 * 1024)    { setImageError('Image must be under 5 MB'); return }
-    setImageError('')
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
-  }
+  // Restore autosaved draft (new articles only)
+  useEffect(() => {
+    if (isEdit) return
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY)
+      if (!raw) return
+      const d = JSON.parse(raw) as { title?: string; content?: string; excerpt?: string; tags?: string }
+      if (d.title && !title)   setTitle(d.title)
+      if (d.content && !content) setContent(d.content)
+      if (d.excerpt) setExcerpt(d.excerpt)
+      if (d.tags)    setTags(d.tags)
+    } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  async function handleSave(overrideStatus?: string) {
+  // Autosave draft to localStorage every 2 s
+  useEffect(() => {
+    if (isEdit) return
+    const timer = setTimeout(() => {
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ title, content, excerpt, tags }))
+      setLastSaved(new Date())
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [title, content, excerpt, tags, isEdit])
+
+  // Ctrl+S / Cmd+S → save as draft
+  const handleSave = useCallback(async (overrideStatus?: string) => {
     setSaveError(''); setSaving(true); setSaved(false)
     try {
       let featuredImageUrl: string | null = imagePreview
@@ -115,6 +140,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
         featured_image: featuredImageUrl, monetization_type: monetization,
         status: overrideStatus ?? status,
         source_reference: sourceRef.trim() || null,
+        tags: tags.trim() || null,
       }
       const res = await fetch('/api/admin/articles/edit', {
         method: isEdit ? 'PUT' : 'POST',
@@ -123,11 +149,55 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
       })
       if (!res.ok) { const d = await res.json(); setSaveError(d.error ?? 'Save failed'); return }
       setSaved(true)
+      if (!isEdit) localStorage.removeItem(AUTOSAVE_KEY)
       router.push(redirectTo)
       router.refresh()
     } catch { setSaveError('Unexpected error — please try again.') }
     finally   { setSaving(false) }
+  }, [title, content, excerpt, tags, categoryId, sourceRef, monetization, status, imagePreview, imageFile, isEdit, initialData, redirectTo, router])
+
+  // Image helpers
+  function applyImageFile(file: File) {
+    if (!file.type.startsWith('image/')) { setImageError('Select an image file (PNG, JPG, WebP)'); return }
+    if (file.size > 5 * 1024 * 1024)    { setImageError('Image must be under 5 MB'); return }
+    setImageError('')
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
   }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) applyImageFile(file)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) applyImageFile(file)
+  }
+
+  function handlePasteUrl() {
+    const url = imageUrlInput.trim()
+    if (!url.startsWith('http')) { setImageError('Enter a valid image URL (http/https)'); return }
+    setImageError('')
+    setImagePreview(url)
+    setImageFile(null)
+    setImageUrlInput('')
+    setShowUrlInput(false)
+  }
+
+  // Ctrl+S / Cmd+S → save draft
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        handleSave('draft')
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [handleSave])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f4fbf6] via-white to-[#fff8e1]">
@@ -155,7 +225,13 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                 ✅ Saved
               </span>
             )}
+            {!saved && lastSaved && (
+              <span className="text-[10px] text-gray-400 hidden sm:block">
+                autosaved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
             <span className="text-xs text-gray-400 hidden sm:block">{wordCount} words · {readMins} min</span>
+            <span className="text-[10px] text-gray-300 hidden md:block">Ctrl+S = draft</span>
             <button onClick={() => handleSave('draft')} disabled={saving}
               className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-all disabled:opacity-40">
               💾 Draft
@@ -204,9 +280,9 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               )}
             </div>
 
-            {/* Meta row: category + source */}
+            {/* Meta row: category + source + tags */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className={labelCls} htmlFor="ed-category">🗂 Category</label>
                   <select id="ed-category" value={categoryId}
@@ -217,6 +293,16 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                       <option key={c.category_id} value={c.category_id}>{c.name}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className={labelCls} htmlFor="ed-tags">
+                    🏷 Tags
+                    <span className="font-normal normal-case tracking-normal text-gray-300 ml-1">comma-separated</span>
+                  </label>
+                  <input id="ed-tags" type="text" value={tags}
+                    onChange={e => setTags(e.target.value)}
+                    placeholder="Kenya, Politics, Breaking…"
+                    className={fieldCls} />
                 </div>
                 <div>
                   <label className={labelCls} htmlFor="ed-source">🔗 Source URL</label>
@@ -285,18 +371,50 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
           {/* ════════ RIGHT — sidebar panel ════════ */}
           <div className="space-y-4 xl:sticky xl:top-16">
 
-            {/* Featured image */}
+            {/* Featured image — drag/drop, click, or URL */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-50">
+              <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
                 <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">🖼 Featured Image</h4>
+                <button type="button" onClick={() => setShowUrlInput(v => !v)}
+                  className="text-[10px] font-bold text-[#1a5c2a] hover:underline">
+                  {showUrlInput ? 'Upload file' : 'Paste URL'}
+                </button>
               </div>
               <div className="p-4">
                 <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
                   onChange={handleImageSelect} className="sr-only" aria-label="Upload featured image" />
-                {imagePreview ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden group">
-                    <Image src={imagePreview} alt="Featured" fill className="object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+
+                {showUrlInput ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={imageUrlInput}
+                      onChange={e => setImageUrlInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handlePasteUrl()}
+                      placeholder="https://example.com/image.jpg"
+                      className={fieldCls + ' text-xs'}
+                      autoFocus
+                    />
+                    <button type="button" onClick={handlePasteUrl}
+                      className="shrink-0 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white text-xs font-bold px-3 rounded-xl transition-all">
+                      Use
+                    </button>
+                  </div>
+                ) : imagePreview ? (
+                  <div
+                    ref={dropZoneRef}
+                    className="relative w-full aspect-video rounded-xl overflow-hidden group"
+                    onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                  >
+                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center gap-2">
+                      <button type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="opacity-0 group-hover:opacity-100 bg-white text-gray-800 rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-300">
+                        Replace
+                      </button>
                       <button type="button"
                         onClick={() => { setImagePreview(null); setImageFile(null) }}
                         className="opacity-0 group-hover:opacity-100 bg-[#c8102e] text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-300">
@@ -305,24 +423,37 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="w-full border-2 border-dashed border-gray-200 rounded-xl py-10 flex flex-col items-center gap-2 hover:border-[#4caf28] hover:bg-[#f9fdf9] transition-all duration-300 group">
-                    <div className="w-12 h-12 rounded-full bg-[#f0faf2] group-hover:bg-[#e8f5ea] flex items-center justify-center text-2xl transition-all duration-300">
-                      📷
+                  <div
+                    ref={dropZoneRef}
+                    onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-full border-2 border-dashed rounded-xl py-10 flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 ${
+                      isDragging
+                        ? 'border-[#1a5c2a] bg-[#e8f5ea] scale-[1.01]'
+                        : 'border-gray-200 hover:border-[#4caf28] hover:bg-[#f9fdf9]'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-300 ${
+                      isDragging ? 'bg-[#e8f5ea] scale-110' : 'bg-[#f0faf2]'
+                    }`}>
+                      {isDragging ? '⬇️' : '📷'}
                     </div>
-                    <p className="text-sm font-semibold text-gray-400 group-hover:text-[#1a5c2a] transition-colors">
-                      Click to upload
+                    <p className={`text-sm font-semibold transition-colors ${isDragging ? 'text-[#1a5c2a]' : 'text-gray-400'}`}>
+                      {isDragging ? 'Drop image here' : 'Click or drag image here'}
                     </p>
                     <p className="text-xs text-gray-300">PNG, JPG, WebP · max 5 MB</p>
-                  </button>
+                  </div>
                 )}
+
                 {imageError && (
                   <p className="text-[#c8102e] text-xs mt-2 flex items-center gap-1">⚠️ {imageError}</p>
                 )}
-                {!imagePreview && (
+                {!imagePreview && !showUrlInput && (
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className="w-full mt-3 bg-[#f0faf2] hover:bg-[#e8f5ea] text-[#1a5c2a] text-xs font-bold py-2.5 rounded-xl transition-all duration-300">
-                    Choose Image
+                    Choose File
                   </button>
                 )}
               </div>
