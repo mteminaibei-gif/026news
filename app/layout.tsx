@@ -52,7 +52,10 @@ export const metadata: Metadata = {
     creator: '@026newsblog',
   },
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
     apple:   '/favicon.svg',
     shortcut: '/favicon.svg',
   },

@@ -41,7 +41,8 @@ interface ArticleEditorProps {
   redirectTo?: string
 }
 
-const inputCls = 'w-full border border-[#e8f5ea] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all duration-300'
+const inputCls = 'w-full border border-[#e8f5ea] rounded-xl px-3 py-2.5 text-sm font-medium text-gray-800 outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all duration-300 placeholder:text-gray-300'
+const labelCls = 'block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5'
 
 export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles' }: ArticleEditorProps) {
   const router = useRouter()
@@ -176,25 +177,21 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
 
         {/* Title */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="article-title">
-            Headline
-          </label>
+          <label className={labelCls} htmlFor="article-title">Headline</label>
           <input
             id="article-title"
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Enter your headline here..."
-            className="w-full text-xl font-bold text-gray-900 placeholder-gray-300 border-b-2 border-[#e8f5ea] focus:border-[#4caf28] outline-none pb-2 bg-transparent transition-colors duration-300"
+            className="w-full text-2xl font-extrabold text-gray-900 placeholder-gray-300 border-b-2 border-[#e8f5ea] focus:border-[#4caf28] outline-none pb-2 bg-transparent transition-colors duration-300"
           />
         </div>
 
         {/* Category + Source */}
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="article-category">
-              Category
-            </label>
+            <label className={labelCls} htmlFor="article-category">Category</label>
             <select
               id="article-category"
               value={categoryId}
@@ -208,9 +205,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="article-source">
-              Source Reference URL
-            </label>
+            <label className={labelCls} htmlFor="article-source">Source Reference URL</label>
             <input
               id="article-source"
               type="url"
@@ -224,8 +219,8 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
 
         {/* Excerpt */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="article-excerpt">
-            Excerpt <span className="font-normal text-gray-400">(optional — auto-generated if blank)</span>
+          <label className={labelCls} htmlFor="article-excerpt">
+            Excerpt <span className="font-normal text-gray-400 normal-case tracking-normal">(optional — auto-generated if blank)</span>
           </label>
           <textarea
             id="article-excerpt"
@@ -239,24 +234,24 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
 
         {/* MD Editor */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Content</label>
-          <div data-color-mode="light">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className={labelCls}>Content</label>
+            <span className="text-xs text-gray-400">{wordCount} words · ~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
+          </div>
+          <div data-color-mode="light" className="rounded-xl overflow-hidden border border-[#e8f5ea]">
             <MDEditor
               value={content}
               onChange={val => setContent(val ?? '')}
-              height={420}
-              preview="edit"
+              height={500}
+              preview="live"
               aria-label="Article content editor"
             />
           </div>
-          <p className="text-xs text-gray-400 mt-1.5">
-            {wordCount} words · ~{Math.max(1, Math.ceil(wordCount / 200))} min read
-          </p>
         </div>
 
         {/* Monetization */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">💰 Monetization</label>
+          <label className={labelCls}>💰 Monetization Type</label>
           <div className="grid sm:grid-cols-2 gap-2">
             {MONETIZE_OPTIONS.map(opt => (
               <label

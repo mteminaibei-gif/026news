@@ -6,7 +6,7 @@ import { BarChart } from '@/components/ui/BarChart'
 import { MOCK_USERS } from '@/lib/mock-data'
 
 export const metadata: Metadata = {
-  title: 'Subscribers — Journalist Portal',
+  title: 'Subscribers — Author Portal',
 }
 
 const JOURNALIST = MOCK_USERS.find(u => u.role === 'journalist')!

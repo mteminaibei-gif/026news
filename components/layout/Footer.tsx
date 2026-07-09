@@ -10,7 +10,7 @@ const FOOTER_LINKS = {
   ],
   Platform: [
     { label: 'Subscribe', href: '/subscribe' },
-    { label: 'Journalist Portal', href: '/journalist/dashboard' },
+    { label: 'Author Portal', href: '/journalist/dashboard' },
     { label: 'Admin Panel', href: '/admin/dashboard' },
     { label: 'Become a Writer', href: '/login?mode=signup' },
   ],

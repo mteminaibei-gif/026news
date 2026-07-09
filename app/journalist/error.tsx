@@ -18,7 +18,7 @@ export default function JournalistError({ error, reset }: Props) {
       <span className="text-5xl mb-4">⚠️</span>
       <h2 className="text-xl font-extrabold text-gray-900 mb-2">Something went wrong</h2>
       <p className="text-sm text-gray-500 mb-1 max-w-sm">
-        An unexpected error occurred in the journalist portal. Please try again.
+        An unexpected error occurred in the author portal. Please try again.
       </p>
       {error.digest && (
         <p className="text-xs text-gray-400 font-mono mb-6">Error ID: {error.digest}</p>

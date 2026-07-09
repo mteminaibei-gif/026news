@@ -114,7 +114,7 @@ export default function CreatePostPage() {
   return (
     <>
       <Topbar title="Create New Article" user={{ name: '', profile_image: null }}>
-        <span className="text-sm text-gray-400">Journalist Portal</span>
+        <span className="text-sm text-gray-400">Author Portal</span>
       </Topbar>
 
       <div className="p-6 flex-1">

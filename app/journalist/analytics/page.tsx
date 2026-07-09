@@ -6,7 +6,7 @@ import { MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
 import { formatNumber } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Analytics — Journalist Portal',
+  title: 'Analytics — Author Portal',
 }
 
 const JOURNALIST = MOCK_USERS.find(u => u.role === 'journalist')!

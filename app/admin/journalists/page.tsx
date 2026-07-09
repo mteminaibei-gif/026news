@@ -6,7 +6,7 @@ import { MOCK_USERS, MOCK_ARTICLES } from '@/lib/mock-data'
 import { formatDate } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Journalists Management — Admin Panel',
+  title: 'Authors Management — Admin Panel',
 }
 
 const ADMIN = MOCK_USERS.find(u => u.role === 'admin')!
@@ -23,10 +23,10 @@ export default function AdminJournalistsPage() {
         {/* Quick stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Journalists', value: journalists.length,                                                    color: 'text-[#1a5c2a]' },
-            { label: 'Active',            value: journalists.filter(j => j.status === 'active').length,                 color: 'text-[#1a5c2a]' },
-            { label: 'Total Articles',    value: journalists.reduce((s, j) => s + j.articles, 0),                      color: 'text-[#1a5c2a]' },
-            { label: 'Earnings Paid',     value: `$${journalists.reduce((s, j) => s + j.earnings, 0).toFixed(2)}`,     color: 'text-[#f5c518]' },
+            { label: 'Total Authors',  value: journalists.length,                                                    color: 'text-[#1a5c2a]' },
+            { label: 'Active',         value: journalists.filter(j => j.status === 'active').length,                 color: 'text-[#1a5c2a]' },
+            { label: 'Total Articles', value: journalists.reduce((s, j) => s + j.articles, 0),                      color: 'text-[#1a5c2a]' },
+            { label: 'Earnings Paid',  value: `$${journalists.reduce((s, j) => s + j.earnings, 0).toFixed(2)}`,     color: 'text-[#f5c518]' },
           ].map(s => (
             <div key={s.label} className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md">
               <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
@@ -37,16 +37,16 @@ export default function AdminJournalistsPage() {
 
         <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
           <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="font-extrabold text-[#1a5c2a]">All Journalists</h2>
+            <h2 className="font-extrabold text-[#1a5c2a]">All Authors</h2>
             <button className="bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-              + Invite Journalist
+              + Invite Author
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
-                  <th className="px-4 py-3 text-left">Journalist</th>
+                  <th className="px-4 py-3 text-left">Author</th>
                   <th className="px-4 py-3 text-left">Email</th>
                   <th className="px-4 py-3 text-left">Articles</th>
                   <th className="px-4 py-3 text-left">Subscribers</th>

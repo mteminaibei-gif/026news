@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { AdminJournalistActions } from '@/components/admin/AdminJournalistActions'
+import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -116,8 +117,9 @@ export default async function AdminDashboard() {
     pendingPayout = MOCK_ADMIN_STATS.pendingPayouts
   }
 
-  // Fetch user count
+  // Fetch user count + last 10 recent signups (for live feed)
   let totalUsers = 0
+  let recentUsers: { user_id: number; name: string; email: string; role: string; status: string; created_at: string }[] = []
   try {
     const { count, error } = await supabase
       .from('users').select('user_id', { count: 'exact', head: true })
@@ -125,6 +127,19 @@ export default async function AdminDashboard() {
     totalUsers = count ?? 0
   } catch {
     totalUsers = MOCK_USERS.length
+  }
+  try {
+    const { data: rawRecent } = await supabase
+      .from('users')
+      .select('user_id, name, email, role, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(10) as any
+    recentUsers = rawRecent ?? []
+  } catch {
+    recentUsers = MOCK_USERS.slice(0, 10).map(u => ({
+      user_id: u.user_id, name: u.name, email: u.email,
+      role: u.role, status: u.status, created_at: u.created_at,
+    }))
   }
 
   return (
@@ -145,15 +160,15 @@ export default async function AdminDashboard() {
             accent="green"
           />
           <StatCard
-            label="✍️ Freelance Submissions"
-            value={`${pending.length} Pending`}
-            sub="Awaiting your review"
+            label="✍️ Pending Review"
+            value={`${pending.length} Articles`}
+            sub="Awaiting your approval"
             accent="gold"
           />
           <StatCard
-            label="👥 Active Users"
+            label="👥 Registered Users"
             value={formatNumber(totalUsers ?? 0)}
-            sub={`Journalists: ${journalistsCount ?? 0}`}
+            sub={`Authors: ${journalistsCount ?? 0}`}
             accent="green"
           />
         </div>
@@ -183,7 +198,7 @@ export default async function AdminDashboard() {
           {/* Active contributors */}
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
             <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="text-sm font-bold text-[#1a5c2a]">⭐ Active Contributors</h2>
+              <h2 className="text-sm font-bold text-[#1a5c2a]">⭐ Active Authors</h2>
               <Link href="/admin/journalists" className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300">View All</Link>
             </div>
             <div className="divide-y divide-[#f0faf2]">
@@ -285,13 +300,13 @@ export default async function AdminDashboard() {
           {/* Journalist table */}
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
             <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="text-sm font-bold text-[#1a5c2a]">👥 Journalist Management</h2>
+              <h2 className="text-sm font-bold text-[#1a5c2a]">👥 Author Management</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
-                    <th className="px-4 py-2.5 text-left">Journalist</th>
+                    <th className="px-4 py-2.5 text-left">Author</th>
                     <th className="px-3 py-2.5">Status</th>
                     <th className="px-3 py-2.5">Action</th>
                   </tr>
@@ -334,7 +349,7 @@ export default async function AdminDashboard() {
               {[
                 { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue),  color: 'text-[#1a5c2a]' },
                 { label: 'Pending Payouts',          value: formatCurrency(pendingPayout), color: 'text-[#f5c518]' },
-                { label: 'Active Journalists',        value: (journalistsCount ?? 0).toString(), color: 'text-[#1a5c2a]' },
+                { label: 'Active Authors',            value: (journalistsCount ?? 0).toString(), color: 'text-[#1a5c2a]' },
               ].map(row => (
                 <div key={row.label} className="flex items-center justify-between px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
                   <span className="text-sm text-gray-600">{row.label}</span>
@@ -381,6 +396,11 @@ export default async function AdminDashboard() {
               height={60}
             />
           </div>
+        </div>
+
+        {/* Live Registrations Feed */}
+        <div className="mb-6">
+          <LiveRegistrationsFeed initialUsers={recentUsers} />
         </div>
 
       </div>

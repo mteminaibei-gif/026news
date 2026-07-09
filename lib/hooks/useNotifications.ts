@@ -5,19 +5,23 @@ import { createClient } from '@/lib/supabase/client'
 
 export interface Notification {
   id: string
-  type: 'article_approved' | 'article_rejected' | 'revision_requested' | 'new_comment' | 'new_submission'
+  type:
+    | 'article_approved'
+    | 'article_rejected'
+    | 'revision_requested'
+    | 'new_comment'
+    | 'new_submission'
+    | 'new_user'
   message: string
   articleId?: number
+  userId?: number
   timestamp: string
   read: boolean
 }
 
-// ─── Realtime notifications hook ──────────────────────────────────────────────
-// Listens to review_workflow changes (for journalists) and new article
-// submissions (for admins) over Supabase Realtime.
 export function useNotifications(userId: number, role: 'admin' | 'journalist' | 'reader') {
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadCount, setUnreadCount]     = useState(0)
 
   useEffect(() => {
     if (!userId || role === 'reader') return
@@ -25,8 +29,8 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
     const supabase = createClient()
     const channels: ReturnType<typeof supabase.channel>[] = []
 
+    // ── JOURNALIST: watch review_workflow for decisions on their articles ──
     if (role === 'journalist') {
-      // Watch review_workflow for status changes on their articles
       const reviewChannel = supabase
         .channel(`notifications:journalist:${userId}`)
         .on(
@@ -39,7 +43,6 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
               review_notes: string
             }
 
-            // Check this review is for an article owned by this journalist
             const { data: rawArticle } = await supabase
               .from('articles')
               .select('title, author_id')
@@ -50,22 +53,17 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
             if (article?.author_id !== userId) return
 
             const actionLabels: Record<string, string> = {
-              approved: '✅ Your article was approved and published!',
-              rejected: '❌ Your article was rejected.',
+              approved:           '✅ Your article was approved and published!',
+              rejected:           '❌ Your article was rejected.',
               revision_requested: '🔄 Revision requested on your article.',
             }
 
-            const notification: Notification = {
-              id: `review-${Date.now()}`,
-              type: review.action as Notification['type'],
-              message: `${actionLabels[review.action] ?? review.action}: "${article.title}"`,
+            push({
+              id:        `review-${Date.now()}`,
+              type:      review.action as Notification['type'],
+              message:   `${actionLabels[review.action] ?? review.action}: "${article.title}"`,
               articleId: review.article_id,
-              timestamp: new Date().toISOString(),
-              read: false,
-            }
-
-            setNotifications(prev => [notification, ...prev])
-            setUnreadCount(c => c + 1)
+            })
           }
         )
         .subscribe()
@@ -73,41 +71,69 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
       channels.push(reviewChannel)
     }
 
+    // ── ADMIN: watch new article submissions ──
     if (role === 'admin') {
-      // Watch articles table for new under_review submissions
       const submissionChannel = supabase
-        .channel(`notifications:admin:${userId}`)
+        .channel(`notifications:admin:submissions:${userId}`)
         .on(
           'postgres_changes',
           {
-            event: 'UPDATE',
+            event:  'UPDATE',
             schema: 'public',
-            table: 'articles',
+            table:  'articles',
             filter: `status=eq.under_review`,
           },
           (payload) => {
             const article = payload.new as { article_id: number; title: string }
-            const notification: Notification = {
-              id: `submission-${Date.now()}`,
-              type: 'new_submission',
-              message: `📝 New article pending review: "${article.title}"`,
+            push({
+              id:        `submission-${Date.now()}`,
+              type:      'new_submission',
+              message:   `📝 New article pending review: "${article.title}"`,
               articleId: article.article_id,
-              timestamp: new Date().toISOString(),
-              read: false,
-            }
-            setNotifications(prev => [notification, ...prev])
-            setUnreadCount(c => c + 1)
+            })
           }
         )
         .subscribe()
 
       channels.push(submissionChannel)
+
+      // ── ADMIN: watch new user registrations (INSERT on users table) ──
+      const newUserChannel = supabase
+        .channel(`notifications:admin:new-users:${userId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'users' },
+          (payload) => {
+            const newUser = payload.new as {
+              user_id: number
+              name: string
+              email: string
+              role: string
+            }
+            const roleLabel = newUser.role === 'journalist' ? 'Author' : newUser.role
+            push({
+              id:      `new-user-${Date.now()}`,
+              type:    'new_user',
+              message: `🆕 New ${roleLabel} registered: ${newUser.name || newUser.email}`,
+              userId:  newUser.user_id,
+            })
+          }
+        )
+        .subscribe()
+
+      channels.push(newUserChannel)
     }
 
     return () => {
       channels.forEach(ch => supabase.removeChannel(ch))
     }
-  }, [userId, role])
+  }, [userId, role]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function push(n: Omit<Notification, 'timestamp' | 'read'>) {
+    const notif: Notification = { ...n, timestamp: new Date().toISOString(), read: false }
+    setNotifications(prev => [notif, ...prev.slice(0, 49)]) // keep last 50
+    setUnreadCount(c => c + 1)
+  }
 
   function markAllRead() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
@@ -115,7 +141,9 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
   }
 
   function markRead(id: string) {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    )
     setUnreadCount(c => Math.max(0, c - 1))
   }
 
