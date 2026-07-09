@@ -13,6 +13,11 @@ interface Props {
 export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
   const [articles, setArticles] = useState<ArticleWithAuthor[]>(initialArticles)
 
+  // Lightweight in-memory realtime log for debugging (inspect via devtools)
+  if (typeof window !== 'undefined') {
+    ;(window as any).__realtimeLogs = (window as any).__realtimeLogs || []
+  }
+
   // Sync state if initialArticles changes (e.g., category selection change)
   useEffect(() => {
     setArticles(initialArticles)
@@ -20,6 +25,34 @@ export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
 
   useEffect(() => {
     const supabase = createClient()
+
+    function sleep(ms: number) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    async function fetchArticleWithRetry(articleId: number, attempts = 3, delay = 250) {
+      let lastData: any = null
+      for (let i = 0; i < attempts; i++) {
+        const res: any = await supabase
+          .from('articles')
+          .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
+          .eq('article_id', articleId)
+          .single()
+
+        const data = res?.data
+        const error = res?.error
+
+        if (!error && data) {
+          lastData = data
+          // Consider data valid if it has content and author (joined fields)
+          if ((data as any).content && (data as any).author) return lastData
+        }
+
+        // small delay before retrying
+        await sleep(delay)
+      }
+      return lastData
+    }
 
     const channel = supabase
       .channel('live-articles-feed')
@@ -29,14 +62,21 @@ export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
         async (payload) => {
           if (payload.new.status !== 'published') return
 
-          // Fetch full joined data
-          const { data: newArt, error } = await supabase
-            .from('articles')
-            .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-            .eq('article_id', payload.new.article_id)
-            .single()
+          const t0 = Date.now()
+          ;(console as any).debug?.('[realtime] INSERT payload received', payload.new)
 
-          if (!error && newArt) {
+          // Try fetching the full joined row with retries to avoid partial reads
+          const newArt = await fetchArticleWithRetry(payload.new.article_id)
+
+          const t1 = Date.now()
+          ;(console as any).debug?.(`[realtime] fetched article ${payload.new.article_id} in ${t1 - t0}ms`, newArt)
+
+          // store a short log for inspection in the browser
+          if (typeof window !== 'undefined') {
+            ;(window as any).__realtimeLogs.push({ event: 'INSERT', id: payload.new.article_id, ts: new Date().toISOString(), fetched: !!newArt })
+          }
+
+          if (newArt) {
             const art = newArt as unknown as ArticleWithAuthor
             // Apply category filter if active
             if (categoryFilterName && art.category?.name !== categoryFilterName) {
@@ -60,14 +100,19 @@ export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
             return
           }
 
-          // Fetch full joined data for updated article
-          const { data: updatedArt, error } = await supabase
-            .from('articles')
-            .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-            .eq('article_id', payload.new.article_id)
-            .single()
+          const t0 = Date.now()
+          ;(console as any).debug?.('[realtime] UPDATE payload received', payload.new)
 
-          if (!error && updatedArt) {
+          const updatedArt = await fetchArticleWithRetry(payload.new.article_id)
+
+          const t1 = Date.now()
+          ;(console as any).debug?.(`[realtime] fetched updated article ${payload.new.article_id} in ${t1 - t0}ms`, updatedArt)
+
+          if (typeof window !== 'undefined') {
+            ;(window as any).__realtimeLogs.push({ event: 'UPDATE', id: payload.new.article_id, ts: new Date().toISOString(), fetched: !!updatedArt })
+          }
+
+          if (updatedArt) {
             const art = updatedArt as unknown as ArticleWithAuthor
             // Check if it belongs in current category filter
             if (categoryFilterName && art.category?.name !== categoryFilterName) {
