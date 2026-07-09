@@ -26,8 +26,8 @@ export function BarChart({
   data,
   labels,
   height = 80,
-  color = '#dbeafe',
-  highlightColor = '#1a56db',
+  color = '#e8f5ea',
+  highlightColor = '#1a5c2a',
 }: BarChartProps) {
   const normalized = normalizeData(data)
   const values = normalized.values

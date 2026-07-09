@@ -82,18 +82,17 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
         <button
           onClick={handleApprove}
           disabled={loading !== null}
-          className="text-xs font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-lg hover:bg-emerald-600 disabled:opacity-50"
+          className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
         >
           {loading === 'approve' ? '…' : 'Approve'}
         </button>
       )}
 
-      {/* Reject — show for under_review, draft, published */}
       {currentStatus !== 'rejected' && (
         <button
           onClick={handleReject}
           disabled={loading !== null}
-          className="text-xs font-semibold bg-amber-500 text-white px-2.5 py-1 rounded-lg hover:bg-amber-600 disabled:opacity-50"
+          className="text-xs font-semibold bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
         >
           {loading === 'reject' ? '…' : 'Reject'}
         </button>
@@ -102,7 +101,7 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
       <button
         onClick={handleDelete}
         disabled={loading !== null}
-        className="text-xs font-semibold bg-red-500 text-white px-2.5 py-1 rounded-lg hover:bg-red-600 disabled:opacity-50"
+        className="text-xs font-semibold bg-[#fde8e8] hover:bg-[#fbd0d0] text-[#c8102e] px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
       >
         {loading === 'delete' ? '…' : 'Delete'}
       </button>
