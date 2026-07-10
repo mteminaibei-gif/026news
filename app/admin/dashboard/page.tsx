@@ -195,7 +195,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setShowCreateAccountDialog(true)}
-            className="ml-auto px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all"
+            className="ml-auto px-4 py-2 rounded-lg font-medium bg-[#1a5c2a] hover:bg-[#2d8a47] text-white transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
           >
             ➕ Create Account
           </button>

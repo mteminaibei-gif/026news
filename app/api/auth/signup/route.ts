@@ -60,11 +60,14 @@ export async function POST(req: NextRequest) {
 
     const { error: profileError } = await supabase
       .from('users')
-      .insert(profilePayload as never)
+      .insert([profilePayload] as any)
 
     if (profileError) {
-      // Log but don't fail the signup — user can complete profile later
-      console.error('[signup] profile insert error:', profileError.message)
+      // Try to rollback auth user if profile creation failed
+      if (authData.user?.id) {
+        await supabase.auth.admin.deleteUser(authData.user.id).catch(() => {})
+      }
+      return NextResponse.json({ error: `Profile creation failed: ${profileError.message}` }, { status: 500 })
     }
 
     return NextResponse.json({

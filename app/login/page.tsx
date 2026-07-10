@@ -178,9 +178,9 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a5c2a] hover:bg-[#13411f] text-white font-bold py-4 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20"
+              className="w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-4 rounded-2xl text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 active:scale-95"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? '⏳ Signing in...' : '✓ Sign In'}
             </button>
           </form>
 

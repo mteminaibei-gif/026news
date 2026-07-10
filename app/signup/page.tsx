@@ -443,9 +443,9 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a5c2a] hover:bg-[#13411f] text-white font-bold py-4 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 mt-4"
+              className="w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-4 rounded-2xl text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 active:scale-95 mt-4"
             >
-              {loading ? 'Creating Account...' : `Create ${role === 'reader' ? 'Reader' : role === 'journalist' ? 'Author' : 'Admin'} Account`}
+              {loading ? '⏳ Creating Account...' : `✓ Create ${role === 'reader' ? 'Reader' : role === 'journalist' ? 'Author' : 'Admin'} Account`}
             </button>
           </form>
 
