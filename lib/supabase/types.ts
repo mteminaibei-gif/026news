@@ -45,6 +45,9 @@ export interface Database {
             preferred_regions: RegionCode[]
             region_priority: { [key in RegionCode]?: number }
           } | null
+          follower_count: number
+          following_count: number
+          article_count: number
           created_at: string
           updated_at: string
           status: AccountStatus
@@ -52,7 +55,7 @@ export interface Database {
           rank_score: number
           badge_level: string | null
         }
-        Insert: Omit<Database['public']['Tables']['users']['Row'], 'user_id' | 'created_at' | 'updated_at' | 'total_views' | 'rank_score' | 'badge_level'>
+        Insert: Omit<Database['public']['Tables']['users']['Row'], 'user_id' | 'created_at' | 'updated_at' | 'total_views' | 'rank_score' | 'badge_level' | 'follower_count' | 'following_count' | 'article_count'>
         Update: Partial<Database['public']['Tables']['users']['Insert']>
       }
       categories: {
@@ -89,13 +92,17 @@ export interface Database {
           views: number
           likes: number
           earnings: number
+          like_count: number
+          share_count: number
+          save_count: number
+          reading_time_minutes: number | null
           published_at: string | null
           created_at: string
           updated_at: string
           regions: RegionCode[]
           is_region_priority: boolean
         }
-        Insert: Omit<Database['public']['Tables']['articles']['Row'], 'article_id' | 'created_at' | 'updated_at' | 'views' | 'likes' | 'earnings'>
+        Insert: Omit<Database['public']['Tables']['articles']['Row'], 'article_id' | 'created_at' | 'updated_at' | 'views' | 'likes' | 'earnings' | 'like_count' | 'share_count' | 'save_count'>
         Update: Partial<Database['public']['Tables']['articles']['Insert']>
       }
       comments: {
@@ -104,10 +111,11 @@ export interface Database {
           article_id: number | null
           user_id: number | null
           comment_text: string
+          like_count: number
           created_at: string
           status: CommentStatus
         }
-        Insert: Omit<Database['public']['Tables']['comments']['Row'], 'comment_id' | 'created_at'>
+        Insert: Omit<Database['public']['Tables']['comments']['Row'], 'comment_id' | 'created_at' | 'like_count'>
         Update: Partial<Database['public']['Tables']['comments']['Insert']>
       }
       earnings: {
@@ -312,8 +320,170 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['messages']['Row'], 'message_id' | 'created_at' | 'is_read'>
         Update: Partial<Database['public']['Tables']['messages']['Insert']>
       }
+      saved_articles: {
+        Row: {
+          save_id: number
+          user_id: number
+          article_id: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['saved_articles']['Row'], 'save_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['saved_articles']['Insert']>
+      }
+      audit_log: {
+        Row: {
+          log_id: number
+          admin_id: number | null
+          action: string
+          table_name: string
+          record_id: number | null
+          old_data: Json | null
+          new_data: Json | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['audit_log']['Row'], 'log_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['audit_log']['Insert']>
+      }
+      api_rate_limits: {
+        Row: {
+          limit_id: number
+          user_id: number | null
+          endpoint: string
+          ip_hash: string | null
+          request_count: number
+          window_start: string
+          window_end: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['api_rate_limits']['Row'], 'limit_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['api_rate_limits']['Insert']>
+      }
+      article_likes: {
+        Row: {
+          like_id: number
+          article_id: number
+          user_id: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['article_likes']['Row'], 'like_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['article_likes']['Insert']>
+      }
+      user_follows: {
+        Row: {
+          follow_id: number
+          follower_id: number
+          following_id: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['user_follows']['Row'], 'follow_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['user_follows']['Insert']>
+      }
+      article_versions: {
+        Row: {
+          version_id: number
+          article_id: number
+          title: string
+          content: string
+          excerpt: string | null
+          featured_image: string | null
+          version_number: number
+          status: ArticleStatus
+          change_summary: string | null
+          author_id: number | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['article_versions']['Row'], 'version_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['article_versions']['Insert']>
+      }
+      article_tags: {
+        Row: {
+          tag_id: number
+          tag_name: string
+          tag_slug: string
+          usage_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['article_tags']['Row'], 'tag_id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['article_tags']['Insert']>
+      }
+      article_tag_mappings: {
+        Row: {
+          mapping_id: number
+          article_id: number
+          tag_id: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['article_tag_mappings']['Row'], 'mapping_id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['article_tag_mappings']['Insert']>
+      }
+      content_moderation: {
+        Row: {
+          moderation_id: number
+          content_type: string
+          content_id: number
+          flagged_by: number | null
+          reason: string
+          severity: 'low' | 'medium' | 'high' | 'critical'
+          status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes: string | null
+          resolved_by: number | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['content_moderation']['Row'], 'moderation_id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['content_moderation']['Insert']>
+      }
+      email_templates: {
+        Row: {
+          template_id: number
+          template_name: string
+          template_slug: string
+          subject: string
+          body: string
+          variables: string[]
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['email_templates']['Row'], 'template_id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['email_templates']['Insert']>
+      }
     }
-    Views: Record<string, never>
+    Views: {
+      v_trending_articles: {
+        Row: {
+          article_id: number
+          title: string
+          slug: string
+          excerpt: string | null
+          featured_image: string | null
+          views: number
+          like_count: number
+          share_count: number
+          save_count: number
+          author_name: string | null
+          category_name: string | null
+          created_at: string
+          engagement_score: number
+        }
+      }
+      v_top_journalists: {
+        Row: {
+          user_id: number
+          name: string
+          profile_image: string | null
+          bio: string | null
+          follower_count: number
+          article_count: number
+          published_count: number
+          total_likes: number
+        }
+      }
+    }
     Functions: Record<string, never>
     Enums: Record<string, never>
   }
@@ -373,3 +543,33 @@ export type AnalyticsRow = Database['public']['Tables']['analytics']['Row']
 export type RegionRow = Database['public']['Tables']['regions']['Row']
 export type UserRegionRow = Database['public']['Tables']['user_regions']['Row']
 export type ArticleRegionRow = Database['public']['Tables']['article_regions']['Row']
+
+// New table types from schema enhancements
+export type SavedArticleRow = Database['public']['Tables']['saved_articles']['Row']
+export type AuditLogRow = Database['public']['Tables']['audit_log']['Row']
+export type ApiRateLimitRow = Database['public']['Tables']['api_rate_limits']['Row']
+export type ArticleLikeRow = Database['public']['Tables']['article_likes']['Row']
+export type UserFollowRow = Database['public']['Tables']['user_follows']['Row']
+export type ArticleVersionRow = Database['public']['Tables']['article_versions']['Row']
+export type ArticleTagRow = Database['public']['Tables']['article_tags']['Row']
+export type ArticleTagMappingRow = Database['public']['Tables']['article_tag_mappings']['Row']
+export type ContentModerationRow = Database['public']['Tables']['content_moderation']['Row']
+export type EmailTemplateRow = Database['public']['Tables']['email_templates']['Row']
+
+// View types
+export type TrendingArticleView = Database['public']['Views']['v_trending_articles']['Row']
+export type TopJournalistView = Database['public']['Views']['v_top_journalists']['Row']
+
+// Updated types with new engagement columns
+export type ArticleWithEngagement = Database['public']['Tables']['articles']['Row'] & {
+  like_count: number
+  share_count: number
+  save_count: number
+  reading_time_minutes?: number
+}
+
+export type UserWithEngagement = Database['public']['Tables']['users']['Row'] & {
+  follower_count: number
+  following_count: number
+  article_count: number
+}
