@@ -104,84 +104,84 @@ export default async function JournalistDashboard() {
     <>
       <Topbar title="Journalist Dashboard" user={{ name: profile.name, profile_image: profile.profile_image }}>
         <Link href="/journalist/create"
-          className="text-sm font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-          + New Article
+          className="text-xs md:text-sm font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-3 md:px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 whitespace-nowrap">
+          ➕ New Article
         </Link>
       </Topbar>
 
-      <div className="p-6 flex-1 space-y-6">
+      <div className="p-4 md:p-6 flex-1 space-y-4 md:space-y-6 overflow-y-auto">
 
-        {/* Badges strip */}
+        {/* Badges strip - Mobile responsive */}
         {badges.length > 0 && (
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-4 flex flex-wrap items-center gap-3">
-            <span className="text-sm font-bold text-[#1a5c2a]">🏅 Your Badges</span>
+          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-3 md:p-4 flex flex-wrap items-center gap-2 md:gap-3 overflow-x-auto">
+            <span className="text-sm font-bold text-[#1a5c2a] whitespace-nowrap">🏅 Your Badges</span>
             {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        {/* Stats - Responsive grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
           <StatCard label="Total Views"    value={formatNumber(totalViews)}      sub="👁 All published articles"                               accent="green" icon="👁" />
           <StatCard label="Total Earnings" value={formatCurrency(totalEarnings)} sub={`This month: ${formatCurrency(monthEarnings)}`}          accent="gold"  icon="💰" />
           <StatCard label="Articles"       value={published.length}              sub={`Drafts: ${drafts.length} · Review: ${underReview.length}`} accent="green" icon="📰" />
           <StatCard label="Ranking"        value={`#${rank}`}                   sub={`of ${totalJournalists} journalists`}                    accent="green" icon="🏆" />
         </div>
 
-        {/* Articles + Earnings */}
-        <div className="grid lg:grid-cols-2 gap-5">
+        {/* Articles + Earnings - Responsive grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
 
           <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
+            <div className="px-3 md:px-5 py-3 md:py-4 border-b border-[#e8f5ea] flex items-center justify-between gap-2 bg-gradient-to-r from-[#f0faf2] to-white">
               <h2 className="text-sm font-bold text-[#1a5c2a]">📰 Recent Articles</h2>
               <Link href="/journalist/create"
-                className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300">
-                + New
+                className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-2 md:px-3 py-1.5 rounded-lg transition-all duration-300 whitespace-nowrap">
+                ➕ New
               </Link>
             </div>
-            <div className="divide-y divide-[#f0faf2]">
+            <div className="divide-y divide-[#f0faf2] max-h-[300px] overflow-y-auto">
               {articles.length === 0 ? (
-                <div className="p-6 text-center text-gray-400 text-sm">
+                <div className="p-4 md:p-6 text-center text-gray-400 text-sm">
                   No articles yet.{' '}
                   <Link href="/journalist/create" className="text-[#1a5c2a] font-semibold hover:underline">Create your first!</Link>
                 </div>
               ) : articles.slice(0, 6).map(a => (
-                <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
+                <div key={a.article_id} className="flex items-center gap-2 md:gap-3 px-3 md:px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
                   {a.featured_image ? (
-                    <div className="relative w-12 h-10 rounded-lg overflow-hidden shrink-0">
+                    <div className="relative w-10 md:w-12 h-8 md:h-10 rounded-lg overflow-hidden shrink-0">
                       <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
                     </div>
                   ) : (
-                    <div className="w-12 h-10 rounded-lg bg-[#f0faf2] shrink-0 flex items-center justify-center text-lg">📰</div>
+                    <div className="w-10 md:w-12 h-8 md:h-10 rounded-lg bg-[#f0faf2] shrink-0 flex items-center justify-center text-base md:text-lg">📰</div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{a.title}</p>
-                    <p className="text-xs text-gray-500">{formatDate(a.created_at)} · 👁 {formatNumber(a.views)}</p>
+                    <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">{a.title}</p>
+                    <p className="text-xs text-gray-500 truncate">{formatDate(a.created_at)} · 👁 {formatNumber(a.views)}</p>
                   </div>
                   <Badge status={a.status} />
-                  <span className="text-sm font-bold text-[#1a5c2a] shrink-0">{formatCurrency(a.earnings)}</span>
+                  <span className="text-xs md:text-sm font-bold text-[#1a5c2a] shrink-0 whitespace-nowrap">{formatCurrency(a.earnings)}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+            <div className="px-3 md:px-5 py-3 md:py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
               <h2 className="text-sm font-bold text-[#1a5c2a]">💰 Earnings — Last 6 Months</h2>
             </div>
-            <div className="px-5 pt-3 pb-4">
+            <div className="px-3 md:px-5 pt-3 pb-4">
               <BarChart data={chartData} labels={chartLabels} height={80} />
-              <hr className="my-4 border-[#f0faf2]" />
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <hr className="my-3 md:my-4 border-[#f0faf2]" />
+              <div className="grid grid-cols-3 gap-2 md:gap-4 text-center">
                 <div>
-                  <p className="text-base font-extrabold text-[#1a5c2a]">{formatCurrency(totalEarnings)}</p>
+                  <p className="text-sm md:text-base font-extrabold text-[#1a5c2a]">{formatCurrency(totalEarnings)}</p>
                   <p className="text-xs text-gray-400">Total</p>
                 </div>
                 <div>
-                  <p className="text-base font-extrabold text-[#f5c518]">{formatCurrency(monthEarnings)}</p>
+                  <p className="text-sm md:text-base font-extrabold text-[#f5c518]">{formatCurrency(monthEarnings)}</p>
                   <p className="text-xs text-gray-400">This Month</p>
                 </div>
                 <div>
-                  <p className="text-base font-extrabold text-[#1a5c2a]">{formatCurrency(pendingAmount)}</p>
+                  <p className="text-sm md:text-base font-extrabold text-[#1a5c2a]">{formatCurrency(pendingAmount)}</p>
                   <p className="text-xs text-gray-400">Pending</p>
                 </div>
               </div>
@@ -189,29 +189,29 @@ export default async function JournalistDashboard() {
           </div>
         </div>
 
-        {/* Payout history */}
+        {/* Payout history - Horizontal scroll on mobile */}
         {payouts.length > 0 && (
           <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+            <div className="px-3 md:px-5 py-3 md:py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
               <h2 className="text-sm font-bold text-[#1a5c2a]">💸 Payout History</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs md:text-sm min-w-max">
                 <thead>
                   <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
-                    <th className="px-4 py-2.5 text-left">Period</th>
-                    <th className="px-4 py-2.5 text-left">Your Cut (50%)</th>
-                    <th className="px-4 py-2.5 text-left">Method</th>
-                    <th className="px-4 py-2.5 text-left">Status</th>
+                    <th className="px-2 md:px-4 py-2.5 text-left">Period</th>
+                    <th className="px-2 md:px-4 py-2.5 text-left">Your Cut (50%)</th>
+                    <th className="px-2 md:px-4 py-2.5 text-left">Method</th>
+                    <th className="px-2 md:px-4 py-2.5 text-left">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f0faf2]">
                   {payouts.map((p, i) => (
                     <tr key={i} className="hover:bg-[#f9fdf9] transition-all duration-300">
-                      <td className="px-4 py-3 text-gray-600">{p.period_start} → {p.period_end}</td>
-                      <td className="px-4 py-3 font-bold text-[#1a5c2a]">{formatCurrency(Number(p.journalist_cut))}</td>
-                      <td className="px-4 py-3 text-gray-500 capitalize">{p.payment_method}</td>
-                      <td className="px-4 py-3"><Badge status={p.status} /></td>
+                      <td className="px-2 md:px-4 py-3 text-gray-600 text-xs md:text-sm">{p.period_start} → {p.period_end}</td>
+                      <td className="px-2 md:px-4 py-3 font-bold text-[#1a5c2a] text-xs md:text-sm">{formatCurrency(Number(p.journalist_cut))}</td>
+                      <td className="px-2 md:px-4 py-3 text-gray-500 capitalize text-xs md:text-sm">{p.payment_method}</td>
+                      <td className="px-2 md:px-4 py-3"><Badge status={p.status} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -220,19 +220,19 @@ export default async function JournalistDashboard() {
           </div>
         )}
 
-        {/* CTA banner */}
-        <div className="bg-gradient-to-r from-[#1a5c2a] to-[#2d8a47] rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-md">
+        {/* CTA banner - Mobile responsive */}
+        <div className="bg-gradient-to-r from-[#1a5c2a] to-[#2d8a47] rounded-2xl p-4 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 shadow-md">
           <div>
-            <h3 className="text-white font-bold text-base mb-1">Ready to publish your next story?</h3>
-            <p className="text-white/70 text-sm">Create, submit, and start earning from your journalism today.</p>
+            <h3 className="text-white font-bold text-sm md:text-base mb-1">Ready to publish your next story?</h3>
+            <p className="text-white/70 text-xs md:text-sm">Create, submit, and start earning from your journalism today.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 md:gap-3 flex-wrap">
             <Link href="/journalist/create"
-              className="bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] font-bold px-6 py-3 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shrink-0">
+              className="bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] font-bold px-3 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 whitespace-nowrap">
               ✏️ New Article
             </Link>
             <Link href="/leaderboard"
-              className="border border-white/40 text-white hover:bg-white/10 font-semibold px-5 py-3 rounded-xl text-sm transition-all duration-300 shrink-0">
+              className="border border-white/40 text-white hover:bg-white/10 font-semibold px-3 md:px-5 py-2 md:py-3 rounded-xl text-xs md:text-sm transition-all duration-300 whitespace-nowrap">
               🏆 Leaderboard
             </Link>
           </div>

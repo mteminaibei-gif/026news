@@ -152,7 +152,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 md:py-4 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none transition-all duration-300"
               />
             </div>
 
@@ -171,14 +171,14 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 md:py-4 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none transition-all duration-300"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-4 rounded-2xl text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 active:scale-95"
+              className="w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-3 md:py-4 rounded-2xl text-sm md:text-base transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 active:scale-95 min-h-11 md:min-h-12"
             >
               {loading ? '⏳ Signing in...' : '✓ Sign In'}
             </button>
@@ -196,16 +196,16 @@ function LoginForm() {
 
           {/* OAuth Buttons */}
           <div className="grid grid-cols-3 gap-2">
-            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 md:py-3 text-xs md:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors min-h-11 md:min-h-12">
               🌐 Google
             </button>
-            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 md:py-3 text-xs md:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors min-h-11 md:min-h-12">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.629L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
               X
             </button>
-            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-[#1877F2] hover:bg-blue-50 transition-colors">
+            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 md:py-3 text-xs md:text-sm font-semibold text-[#1877F2] hover:bg-blue-50 transition-colors min-h-11 md:min-h-12">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
                 <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
               </svg>

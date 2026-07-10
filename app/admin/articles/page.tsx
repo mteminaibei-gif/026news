@@ -152,96 +152,98 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#f0faf2] border-b border-[#e8f5ea] text-left text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
-                    <th className="px-4 py-3">Article</th>
-                    <th className="px-4 py-3">Author</th>
-                    <th className="px-4 py-3">Category</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Views</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f0faf2]">
-                  {articles.map(a => (
-                    <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
-
-                      {/* Article */}
-                      <td className="px-4 py-3 max-w-xs">
-                        <div className="flex items-center gap-3">
-                          {a.featured_image ? (
-                            <div className="relative w-12 h-9 rounded shrink-0 overflow-hidden bg-gray-100">
-                              <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized />
-                            </div>
-                          ) : (
-                            <div className="w-12 h-9 rounded shrink-0 bg-gray-100 flex items-center justify-center text-lg">
-                              📰
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="font-semibold text-gray-800 line-clamp-2 text-xs leading-snug">{a.title}</p>
-                            {a.is_aggregated && (
-                              <span className="text-[10px] bg-sky-50 text-sky-600 font-semibold px-1.5 py-0.5 rounded mt-0.5 inline-block">
-                                RSS
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Author */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          {a.author?.profile_image && (
-                            <div className="relative w-6 h-6 rounded-full overflow-hidden shrink-0">
-                              <Image src={a.author.profile_image} alt={a.author.name} fill className="object-cover" unoptimized />
-                            </div>
-                          )}
-                          <span className="text-gray-600 text-xs">{a.author?.name ?? '—'}</span>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3 text-gray-500 text-xs">{a.category?.name ?? '—'}</td>
-                      <td className="px-4 py-3"><Badge status={a.status} /></td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">{(a.views ?? 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(a.created_at)}</td>
-
-                      {/* Actions */}
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {a.status === 'under_review' && (
-                            <Link
-                              href={`/admin/review/${a.article_id}`}
-                              className="text-xs font-bold bg-[#f5c518] text-[#1a1a1a] px-2.5 py-1 rounded-lg hover:bg-[#f5c518]/90 transition-all duration-300"
-                            >
-                              Review
-                            </Link>
-                          )}
-                          <Link
-                            href={`/admin/edit/${a.article_id}`}
-                            className="text-xs font-semibold bg-[#f0faf2] text-gray-700 px-2.5 py-1 rounded-lg hover:bg-[#e0f5e4] transition-all duration-300"
-                          >
-                            Edit
-                          </Link>
-                          {a.status === 'published' && (
-                            <Link
-                              href={`/article/${a.slug}`}
-                              target="_blank"
-                              className="text-xs font-semibold bg-[#e8f5ea] text-[#1a5c2a] px-2.5 py-1 rounded-lg hover:bg-[#d1ead3] transition-all duration-300"
-                            >
-                              View
-                            </Link>
-                          )}
-                          <AdminArticleActions articleId={a.article_id} currentStatus={a.status} />
-                        </div>
-                      </td>
+            <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs md:text-sm min-w-max">
+                  <thead>
+                    <tr className="bg-[#f0faf2] border-b border-[#e8f5ea] text-left text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+                      <th className="px-2 md:px-4 py-3">Article</th>
+                      <th className="px-2 md:px-4 py-3 hidden sm:table-cell">Author</th>
+                      <th className="px-2 md:px-4 py-3 hidden md:table-cell">Category</th>
+                      <th className="px-2 md:px-4 py-3 hidden lg:table-cell">Status</th>
+                      <th className="px-2 md:px-4 py-3 hidden lg:table-cell">Views</th>
+                      <th className="px-2 md:px-4 py-3 text-right">Date</th>
+                      <th className="px-2 md:px-4 py-3">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0faf2]">
+                    {articles.map(a => (
+                      <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+
+                        {/* Article */}
+                        <td className="px-2 md:px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {a.featured_image ? (
+                              <div className="relative w-8 h-6 rounded shrink-0 overflow-hidden bg-gray-100 hidden sm:block">
+                                <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-6 rounded shrink-0 bg-gray-100 flex items-center justify-center text-sm hidden sm:flex">
+                                📰
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-800 line-clamp-1 text-xs md:text-sm">{a.title}</p>
+                              {a.is_aggregated && (
+                                <span className="text-[10px] bg-sky-50 text-sky-600 font-semibold px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                                  RSS
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Author */}
+                        <td className="px-2 md:px-4 py-3 hidden sm:table-cell">
+                          <div className="flex items-center gap-1">
+                            {a.author?.profile_image && (
+                              <div className="relative w-5 h-5 rounded-full overflow-hidden shrink-0">
+                                <Image src={a.author.profile_image} alt={a.author.name} fill className="object-cover" unoptimized />
+                              </div>
+                            )}
+                            <span className="text-gray-600 text-xs truncate">{a.author?.name ?? '—'}</span>
+                          </div>
+                        </td>
+
+                        <td className="px-2 md:px-4 py-3 text-gray-500 text-xs hidden md:table-cell">{a.category?.name ?? '—'}</td>
+                        <td className="px-2 md:px-4 py-3 hidden lg:table-cell"><Badge status={a.status} /></td>
+                        <td className="px-2 md:px-4 py-3 text-gray-600 text-xs hidden lg:table-cell">{(a.views ?? 0).toLocaleString()}</td>
+                        <td className="px-2 md:px-4 py-3 text-gray-400 text-xs whitespace-nowrap text-right">{formatDate(a.created_at)}</td>
+
+                        {/* Actions */}
+                        <td className="px-2 md:px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {a.status === 'under_review' && (
+                              <Link
+                                href={`/admin/review/${a.article_id}`}
+                                className="text-xs font-bold bg-[#f5c518] text-[#1a1a1a] px-2 md:px-2.5 py-1 rounded-lg hover:bg-[#f5c518]/90 transition-all duration-300 whitespace-nowrap"
+                              >
+                                Review
+                              </Link>
+                            )}
+                            <Link
+                              href={`/admin/edit/${a.article_id}`}
+                              className="text-xs font-semibold bg-[#f0faf2] text-gray-700 px-2 md:px-2.5 py-1 rounded-lg hover:bg-[#e0f5e4] transition-all duration-300"
+                            >
+                              Edit
+                            </Link>
+                            {a.status === 'published' && (
+                              <Link
+                                href={`/article/${a.slug}`}
+                                target="_blank"
+                                className="text-xs font-semibold bg-[#e8f5ea] text-[#1a5c2a] px-2 md:px-2.5 py-1 rounded-lg hover:bg-[#d1ead3] transition-all duration-300 hidden sm:inline-block"
+                              >
+                                View
+                              </Link>
+                            )}
+                            <AdminArticleActions articleId={a.article_id} currentStatus={a.status} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

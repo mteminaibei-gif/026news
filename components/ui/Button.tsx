@@ -17,11 +17,11 @@ const variants = {
 }
 
 const sizes = {
-  xs: 'px-3 py-1.5 text-xs',
-  sm: 'px-4 py-2 text-sm',
-  md: 'px-6 py-3 text-base',
-  lg: 'px-8 py-4 text-lg',
-  xl: 'px-10 py-5 text-xl',
+  xs: 'px-2 md:px-3 py-1.5 md:py-2 text-xs min-h-8 md:min-h-10',
+  sm: 'px-3 md:px-4 py-2 md:py-2.5 text-sm min-h-10 md:min-h-11',
+  md: 'px-4 md:px-6 py-2.5 md:py-3 text-base min-h-11 md:min-h-12',
+  lg: 'px-6 md:px-8 py-3 md:py-4 text-lg min-h-12 md:min-h-14',
+  xl: 'px-8 md:px-10 py-4 md:py-5 text-xl min-h-14 md:min-h-16',
 }
 
 export function Button({
