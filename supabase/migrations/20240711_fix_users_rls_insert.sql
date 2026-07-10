@@ -7,16 +7,20 @@
 -- The users table was missing an INSERT policy, preventing new user registration
 -- This fixes the issue: "Profile creation failed: new row violates row-level security policy for table users"
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can create own profile" ON public.users;
+DROP POLICY IF EXISTS "Service can create users" ON public.users;
+
 -- Add INSERT policy for users table
 -- Authenticated users can insert their own profile
-CREATE POLICY IF NOT EXISTS "Users can create own profile" ON public.users
+CREATE POLICY "Users can create own profile" ON public.users
   FOR INSERT WITH CHECK (
     auth.uid() = auth_id
   );
 
 -- Alternative: Allow service role to create users (for signup endpoint)
 -- This is useful if signup happens server-side via service role key
-CREATE POLICY IF NOT EXISTS "Service can create users" ON public.users
+CREATE POLICY "Service can create users" ON public.users
   FOR INSERT WITH CHECK (
     -- This allows the service role (from API handlers) to create users
     -- The auth_id will be set by the signup handler
