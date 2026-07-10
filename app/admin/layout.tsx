@@ -23,17 +23,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-[#f0faf2] via-white to-[#fff8e1]">
-      {/* Sidebar - Hidden on mobile, fixed on desktop */}
-      <div className="hidden md:block">
-        <Sidebar
-          role="admin"
-          user={{ name: profile.name, profile_image: profile.profile_image }}
-        />
-      </div>
+    <div className="flex min-h-screen bg-gradient-to-br from-[#f0fdf4] via-white to-[#fef7cd]">
+      {/* Collapsible Sidebar */}
+      <Sidebar
+        role="admin"
+        user={{ name: profile.name, profile_image: profile.profile_image }}
+      />
       
-      {/* Main content area - responsive */}
-      <div className="flex-1 flex flex-col min-h-screen w-full md:ml-0">
+      {/* Main content area - responsive with dynamic margin */}
+      <div className="flex-1 flex flex-col min-h-screen transition-all duration-300 md:ml-16 lg:ml-64">
         {children}
       </div>
     </div>

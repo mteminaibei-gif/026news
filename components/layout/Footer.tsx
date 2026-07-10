@@ -39,19 +39,21 @@ const SOCIAL_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#1a5c2a] text-white mt-12" role="contentinfo">
-      {/* Kenya flag top stripe */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-[#c8102e] via-[#1a1a1a] to-[#1a5c2a]" />
+    <footer className="bg-gradient-to-b from-[#1a5c2a] to-[#0f3a1a] text-white mt-12 relative" role="contentinfo">
+      {/* Kenya flag top stripe with animation */}
+      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#c8102e] via-[#1a1a1a] to-[#4caf28]" />
+      <div className="pt-4" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-5 gap-8">
         {/* Brand */}
         <div className="md:col-span-1">
-          <Link href="/" aria-label="026NEW Blog home">
-            <Image src="/logo.svg" alt="026NEW Blog" width={280} height={84} className="h-20 w-auto object-contain mb-4" />
+          <Link href="/" aria-label="026NEW Blog home" className="block group">
+            <Image src="/logo.svg" alt="026NEW Blog" width={280} height={84} className="h-16 w-auto object-contain mb-4 filter drop-shadow-lg group-hover:scale-105 transition-transform duration-300" />
           </Link>
-          <p className="text-white/60 text-sm leading-relaxed mb-4">
+          <p className="text-white/70 text-sm leading-relaxed mb-4 font-medium">
             Kenya&apos;s premier digital news platform. Breaking news, in-depth analysis, and community journalism from Nairobi and across Africa.
           </p>
+          {/* Social Links with Kenya colors */}
           <div className="flex gap-3">
             {SOCIAL_LINKS.map(s => (
               <a
@@ -60,7 +62,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.label}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#f5c518] hover:text-[#1a1a1a] flex items-center justify-center text-xs font-bold transition-all"
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#f5c518] hover:text-[#1a1a1a] flex items-center justify-center text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-[#f5c518]/30 hover:-translate-y-0.5"
               >
                 {s.icon}
               </a>
@@ -70,11 +72,15 @@ export function Footer() {
 
         {Object.entries(FOOTER_LINKS).map(([section, links]) => (
           <div key={section}>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-[#f5c518] mb-3">{section}</h5>
-            <ul className="space-y-2">
+            <h5 className="text-xs font-black uppercase tracking-wider text-[#f5c518] mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-[#f5c518] rounded-full"></span>
+              {section}
+            </h5>
+            <ul className="space-y-2.5">
               {links.map(link => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-white/55 hover:text-white hover:translate-x-1 inline-block transition-all">
+                  <Link href={link.href} className="text-sm text-white/70 hover:text-white hover:translate-x-1.5 inline-block transition-all duration-300 flex items-center gap-1.5 group">
+                    <span className="w-1 h-1 bg-[#4caf28] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     {link.label}
                   </Link>
                 </li>
@@ -85,14 +91,17 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-2 text-xs text-white/40">
-          <span>&copy; {new Date().getFullYear()} 026NEW Blog. All rights reserved. Made in Kenya 🇰🇪</span>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-            <Link href="/sitemap.xml" className="hover:text-white transition-colors">Sitemap</Link>
+      <div className="border-t border-white/10 bg-[#0a1f12]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="flex items-center gap-2 text-white/50">
+            <span className="text-sm">🇰🇪</span>
+            &copy; {new Date().getFullYear()} 026NEW Blog. All rights reserved. Made in Kenya
+          </span>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/privacy" className="text-white/50 hover:text-white transition-colors font-medium">Privacy</Link>
+            <Link href="/terms" className="text-white/50 hover:text-white transition-colors font-medium">Terms</Link>
+            <Link href="/contact" className="text-white/50 hover:text-white transition-colors font-medium">Contact</Link>
+            <Link href="/sitemap.xml" className="text-white/50 hover:text-white transition-colors font-medium">Sitemap</Link>
           </div>
         </div>
       </div>

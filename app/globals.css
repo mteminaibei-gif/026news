@@ -7,58 +7,103 @@
    Forest Green #1a5c2a · Bright Green #4caf28 · Gold #f5c518
 ═══════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════
+   026NEW Blog — Enhanced Design System
+   Kenya Flag Colors: Red #c8102e · Black #1a1a1a · Green #1a5c2a · Gold #f5c518
+═══════════════════════════════════════════════════════════════ */
+
 :root {
-  --green-dark:   #1a5c2a;
-  --green-mid:    #2d8a47;
-  --green-light:  #4caf28;
-  --green-ultra:  #6dd335;
-  --gold:         #f5c518;
-  --gold-dark:    #d4a010;
-  --red:          #c8102e;
-  --black:        #1a1a1a;
-  --cream:        #f8fdf5;
-  --brand-bg:     #f4fbf6;
-  --blue-accent:  #2563eb;
-  --purple-accent: #7c3aed;
-  --cyan-accent:  #06b6d4;
-
-  /* Gradients */
-  --gradient-green: linear-gradient(135deg, #1a5c2a 0%, #4caf28 100%);
-  --gradient-gold: linear-gradient(135deg, #f5c518 0%, #d4a010 100%);
-  --gradient-blue: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  --gradient-purple: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  --gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-
-  /* Easing tokens */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* Text colors */
+  /* Kenya Flag Color Palette */
+  --kenya-red:      #c8102e;
+  --kenya-red-dark: #a50d25;
+  --kenya-black:    #1a1a1a;
+  --kenya-green:    #1a5c2a;
+  --kenya-green-light: #2d8a47;
+  --kenya-green-bright: #4caf28;
+  --kenya-gold:     #f5c518;
+  --kenya-gold-dark: #d4a010;
+  
+  /* Extended Palette */
+  --cream:          #fef7cd;
+  --cream-light:    #fefce8;
+  --cream-dark:     #f59e0b;
+  
+  /* Semantic Colors */
+  --success:        #16a34a;
+  --warning:        #f59e0b;
+  --error:          #dc2626;
+  --info:           #2563eb;
+  
+  /* Text Colors - High Contrast */
   --text-primary:   #0f1a12;
-  --text-secondary: #374151;
+  --text-secondary: #1f2937;
   --text-tertiary:  #6b7280;
-  --border-light:   #e5e7eb;
-  --border-dark:    #d1d5db;
+  --text-muted:     #9ca3af;
+  
+  /* Background & Surfaces */
+  --bg-primary:     #ffffff;
+  --bg-secondary:   #f9fafb;
+  --bg-tertiary:    #f3f4f6;
+  --surface:        rgba(255, 255, 255, 0.95);
+  --surface-glass:  rgba(255, 255, 255, 0.8);
+  
+  /* Borders */
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  --border-accent:  #e8f5ea;
+  
+  /* Shadows */
+  --shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:      0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg:      0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl:      0 20px 25px -5px rgb(0 0 0 / 0.1);
+  
+  /* Gradients */
+  --gradient-kenya: linear-gradient(135deg, #1a5c2a 0%, #4caf28 100%);
+  --gradient-gold:  linear-gradient(135deg, #f5c518 0%, #d4a010 100%);
+  --gradient-red:   linear-gradient(135deg, #c8102e 0%, #a50d25 100%);
+  --gradient-bg:    linear-gradient(135deg, #fefce8 0%, #ffffff 50%, #f0faf2 100%);
 }
 
 html.dark {
-  --brand-bg:     #0f1410;
-  --green-dark:   #1a5c2a;
-  --green-mid:    #2d8a47;
-  --green-light:  #4caf28;
-  --gold:         #e8b640;
-  --gold-dark:    #c8952e;
-  --red:          #ef534a;
-  --black:        #0f1410;
-  --cream:        #e8f5ea;
+  /* Kenya Flag Colors - Dark Mode Adjusted */
+  --kenya-red:      #ef4444;
+  --kenya-red-dark: #dc2626;
+  --kenya-black:    #0f1410;
+  --kenya-green:    #22c55e;
+  --kenya-green-light: #4ade80;
+  --kenya-green-bright: #65a30d;
+  --kenya-gold:     #eab308;
+  --kenya-gold-dark: #ca8a04;
   
-  /* dark mode text/border colors */
-  --text-primary:   #e8f5ea;
-  --text-secondary: #a5d6aa;
-  --text-tertiary:  #81c784;
-  --border-light:   #223d29;
-  --border-dark:    #1a2e1e;
+  /* Extended Palette - Dark Mode */
+  --cream:          #1a2e1e;
+  --cream-light:    #162319;
+  --cream-dark:     #0f1410;
+  
+  /* Text Colors - High Contrast Dark Mode */
+  --text-primary:   #f8fdf5;
+  --text-secondary: #e8f5ea;
+  --text-tertiary:  #a5d6aa;
+  --text-muted:     #81c784;
+  
+  /* Background & Surfaces - Dark Mode */
+  --bg-primary:     #0f1410;
+  --bg-secondary:   #162319;
+  --bg-tertiary:    #1a2e1e;
+  --surface:        rgba(22, 35, 25, 0.95);
+  --surface-glass:  rgba(22, 35, 25, 0.8);
+  
+  /* Borders - Dark Mode */
+  --border-primary: #223d29;
+  --border-secondary: #2d4a33;
+  --border-accent:  #1a5c2a;
+  
+  /* Gradients - Dark Mode */
+  --gradient-kenya: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  --gradient-gold:  linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  --gradient-red:   linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --gradient-bg:    linear-gradient(135deg, #0f1410 0%, #162319 50%, #1a2e1e 100%);
   
   color-scheme: dark;
 }
@@ -77,25 +122,49 @@ html {
 
 body {
   font-family: 'Roboto', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--brand-bg);
+  background: var(--gradient-bg);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
   letter-spacing: 0.01em;
-  transition: background-color 0.4s var(--ease-in-out),
-              color 0.4s var(--ease-in-out);
+  transition: background-color 0.4s ease-out, color 0.4s ease-out;
+  min-height: 100vh;
+  line-height: 1.6;
 }
 
-html.dark body {
-  background-color: var(--brand-bg);
-  color: var(--text-primary);
+/* Enhanced text visibility classes */
+.text-high-contrast { 
+  color: var(--text-primary) !important; 
+  font-weight: 600;
+}
+.text-readable { 
+  color: var(--text-secondary) !important; 
+  font-weight: 500;
+}
+.text-subtle { 
+  color: var(--text-tertiary) !important; 
+}
+.text-muted { 
+  color: var(--text-muted) !important; 
 }
 
-html:not(.dark) body {
-  background-color: var(--brand-bg);
-  color: var(--text-primary);
-}
+/* Kenya-themed text colors */
+.text-kenya-red { color: var(--kenya-red) !important; }
+.text-kenya-green { color: var(--kenya-green) !important; }
+.text-kenya-gold { color: var(--kenya-gold) !important; }
+.text-kenya-black { color: var(--kenya-black) !important; }
+
+/* Background utilities */
+.bg-kenya-red { background-color: var(--kenya-red) !important; }
+.bg-kenya-green { background-color: var(--kenya-green) !important; }
+.bg-kenya-gold { background-color: var(--kenya-gold) !important; }
+.bg-kenya-black { background-color: var(--kenya-black) !important; }
+
+/* Kenya flag gradient backgrounds */
+.bg-gradient-kenya { background: var(--gradient-kenya) !important; }
+.bg-gradient-gold { background: var(--gradient-gold) !important; }
+.bg-gradient-red { background: var(--gradient-red) !important; }
 
 /* ── Dark mode token overrides ──────────────────────────── */
 html.dark .bg-white        { background-color: #162319 !important; }

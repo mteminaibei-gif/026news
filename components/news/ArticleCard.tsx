@@ -71,31 +71,34 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
 
   if (variant === 'horizontal') {
     return (
-      <div className="flex gap-3 py-3 border-b border-gray-100 dark:border-[#1a2e1e] last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-all rounded-lg px-1">
-        <div className="relative w-20 h-16 shrink-0 rounded-lg overflow-hidden bg-[#e8f5ea] dark:bg-[#1a2e1e]">
+      <div className="flex gap-4 py-4 border-b-2 border-[#e8f5ea] dark:border-[#223d29] last:border-0 hover:bg-[#f0faf2] dark:hover:bg-[#1a5c2a]/8 transition-all duration-300 rounded-xl px-3 group">
+        <div className="relative w-24 h-20 shrink-0 rounded-xl overflow-hidden bg-[#f0faf2] dark:bg-[#1a2e1e] shadow-sm group-hover:shadow-md transition-shadow">
           {showImage ? (
             <Image
               src={article.featured_image!}
               alt={article.title}
               fill
-              className="object-cover"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
               unoptimized
-              sizes="80px"
+              sizes="96px"
               onError={() => setImgError(true)}
             />
           ) : <Placeholder />}
         </div>
         <div className="min-w-0 flex-1">
-          <span className={`text-[11px] font-bold uppercase tracking-wider ${isKenya ? 'text-[#c8102e]' : 'text-[#1a5c2a] dark:text-[#4caf28]'}`}>
-            {isKenya ? '🇰🇪 ' : ''}{article.category?.name}
-          </span>
-          <h5 className="text-sm font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2 mt-0.5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${isKenya ? 'bg-[#c8102e] text-white' : 'bg-[#1a5c2a] text-white dark:bg-[#4caf28] dark:text-[#1a1a1a]'}`}>
+              {isKenya ? '🇰🇪 ' : '📰 '}{article.category?.name}
+            </span>
+          </div>
+          <h5 className="text-sm font-bold text-[#1a1a1a] dark:text-[#f8fdf5] leading-snug line-clamp-2 mt-1 mb-2">
             <Link href={`/article/${article.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors">
               {article.title}
             </Link>
           </h5>
-          <p className="text-xs text-gray-400 mt-1">
-            👁 {formatNumber(article.views)} · {formatDate(article.created_at)}
+          <p className="text-xs text-[#6b7280] dark:text-[#81c784] flex items-center gap-3 font-medium">
+            <span className="flex items-center gap-1">👁 {formatNumber(article.views)}</span>
+            <span className="flex items-center gap-1">📅 {formatDate(article.created_at)}</span>
           </p>
         </div>
       </div>
@@ -103,9 +106,9 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   }
 
   return (
-    <article className="bg-white dark:bg-[#1a2e1e] border border-transparent dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group">
+    <article className="bg-white dark:bg-[#162319] border-2 border-[#e8f5ea] dark:border-[#223d29] rounded-2xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-[#1a5c2a] dark:hover:border-[#4caf28] transition-all duration-300 group">
       <Link href={`/article/${article.slug}`}>
-        <div className="relative aspect-video bg-[#e8f5ea] dark:bg-[#1a2e1e] overflow-hidden">
+        <div className="relative aspect-video bg-[#f0faf2] dark:bg-[#1a2e1e] overflow-hidden">
           {showImage ? (
             <Image
               src={article.featured_image!}
@@ -118,38 +121,68 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
             />
           ) : <Placeholder />}
           {isKenya && (
-            <div className="absolute top-2 left-2 bg-[#c8102e] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-              🇰🇪 Kenya
+            <div className="absolute top-3 left-3 bg-gradient-to-r from-[#c8102e] to-[#a50d25] text-white text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+              🇰🇪 Kenya News
             </div>
           )}
+          {/* Kenya flag accent corner */}
+          <div className="absolute top-0 right-0 w-12 h-12">
+            <div className="absolute inset-0 bg-gradient-to-bl from-[#c8102e] via-[#1a1a1a] to-[#1a5c2a] opacity-80 rounded-bl-2xl"></div>
+          </div>
         </div>
       </Link>
-      <div className="p-4">
-        <span className={`text-[11px] font-bold uppercase tracking-wider ${isKenya ? 'text-[#c8102e]' : 'text-[#2d8a47] dark:text-[#4caf28]'}`}>
-          {article.category?.name}
-        </span>
-        <h3 className="font-bold text-gray-900 dark:text-white leading-snug mt-1 mb-1.5 line-clamp-2">
-          <Link href={`/article/${article.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors">
+      <div className="p-5">
+        {/* Category badge */}
+        <div className="flex items-center justify-between mb-3">
+          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${isKenya ? 'bg-[#c8102e] text-white' : 'bg-[#1a5c2a] text-white dark:bg-[#4caf28] dark:text-[#1a1a1a]'}`}>
+            {article.category?.name}
+          </span>
+          {sourceHost && (
+            <span className="text-[9px] text-[#6b7280] dark:text-[#81c784] font-medium">
+              {sourceHost}
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h3 className="font-black text-lg text-[#1a1a1a] dark:text-[#f8fdf5] leading-tight mt-2 mb-3 line-clamp-2 group-hover:text-[#1a5c2a] dark:group-hover:text-[#4caf28] transition-colors">
+          <Link href={`/article/${article.slug}`}>
             {article.title}
           </Link>
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
-          {article.excerpt?.trim() || article.content.substring(0, 110)}...
+
+        {/* Excerpt */}
+        <p className="text-sm text-[#374151] dark:text-[#a5d6aa] line-clamp-2 mb-4 leading-relaxed font-medium">
+          {article.excerpt?.trim() || article.content.substring(0, 120)}...
         </p>
+
+        {/* Source link */}
         {sourceHost && (
           <a
             href={article.source_reference ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1a5c2a] dark:text-[#4caf28] hover:text-[#4caf28] underline decoration-[#4caf28]/30 mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1a5c2a] dark:text-[#4caf28] hover:text-[#2d8a47] dark:hover:text-[#65a30d] mb-4 group/source"
           >
-            Source: {sourceHost} ↗
+            <span className="w-2 h-2 bg-[#4caf28] rounded-full"></span>
+            Source: {sourceHost} 
+            <span className="group-hover/source:translate-x-0.5 transition-transform">↗</span>
           </a>
         )}
-        <div className="flex items-center gap-3 text-xs text-gray-400 pt-3 border-t border-gray-100 dark:border-[#2d4a33]/40">
-          <span>✍️ {article.author?.name ?? 'Staff'}</span>
-          <span>👁 {formatNumber(article.views)}</span>
-          <span className="ml-auto">{formatDate(article.created_at)}</span>
+
+        {/* Meta info with Kenya flag accent */}
+        <div className="flex items-center gap-4 text-xs text-[#6b7280] dark:text-[#81c784] pt-4 border-t-2 border-[#e8f5ea] dark:border-[#223d29] font-medium">
+          <span className="flex items-center gap-1.5">
+            <span className="text-sm">✍️</span> 
+            {article.author?.name ?? 'Staff Writer'}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-sm">👁</span> 
+            {formatNumber(article.views)}
+          </span>
+          <span className="ml-auto text-[#1a5c2a] dark:text-[#4caf28] font-bold">
+            {formatDate(article.created_at)}
+          </span>
         </div>
       </div>
     </article>
