@@ -1,6 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
-
-@custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════
    026NEW Blog — Design System
@@ -27,7 +26,15 @@
 }
 
 html.dark {
-  --brand-bg:  #0b1410;
+  --brand-bg:     #0f1410;
+  --green-dark:   #1a5c2a;
+  --green-mid:    #2d8a47;
+  --green-light:  #4caf28;
+  --gold:         #e8b640;
+  --gold-dark:    #c8952e;
+  --red:          #ef534a;
+  --black:        #0f1410;
+  --cream:        #e8f5ea;
   color-scheme: dark;
 }
 
@@ -44,28 +51,31 @@ html {
 }
 
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--brand-bg);
   color: #0f1a12;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+  letter-spacing: 0.01em;
   transition: background-color 0.4s var(--ease-in-out),
               color 0.4s var(--ease-in-out);
 }
 
 html.dark body {
   background-color: var(--brand-bg);
-  color: #e8f5ea;
+  color: var(--cream);
 }
 
 /* ── Dark mode token overrides ──────────────────────────── */
 html.dark .bg-white        { background-color: #162319 !important; }
-html.dark .bg-gray-50      { background-color: #0b1410 !important; }
+html.dark .bg-gray-50      { background-color: #0f1410 !important; }
 html.dark .bg-gray-100     { background-color: #162319 !important; }
+html.dark .bg-gray-200     { background-color: #1a2e1e !important; }
 html.dark .border-gray-100,
 html.dark .border-gray-200 { border-color: #223d29 !important; }
-html.dark .text-gray-900   { color: #e8f5ea !important; }
-html.dark .text-gray-800   { color: #c8e6cc !important; }
+html.dark .text-gray-900   { color: var(--cream) !important; }
+html.dark .text-gray-800   { color: #d0e8d4 !important; }
 html.dark .text-gray-700   { color: #a5d6aa !important; }
 html.dark .text-gray-600   { color: #81c784 !important; }
 html.dark .text-gray-500   { color: #5aaa60 !important; }
@@ -75,18 +85,18 @@ html.dark select,
 html.dark input,
 html.dark textarea {
   background-color: #162319 !important;
-  color: #e8f5ea !important;
+  color: var(--cream) !important;
   border-color: #223d29 !important;
 }
 html.dark input::placeholder,
 html.dark textarea::placeholder { color: #3d7a42 !important; }
-html.dark select option { background-color: #162319; color: #e8f5ea; }
+html.dark select option { background-color: #162319; color: var(--cream); }
 html.dark table th {
   background-color: #162319 !important;
-  color: #c8e6cc !important;
+  color: #d0e8d4 !important;
 }
 html.dark table td { border-color: #162319 !important; }
-html.dark tr:hover { background-color: rgba(76,175,40,0.04) !important; }
+html.dark tr:hover { background-color: rgba(76,175,40,0.08) !important; }
 
 /* ── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -464,4 +474,73 @@ html.dark .editor-wrapper .wmde-markdown h3 {
   nav#mobile-nav {
     overscroll-behavior-y: contain;
   }
+}
+/* ── Article Content Styles ────────────────────────────────── */
+.article-content {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  line-height: 1.8;
+  word-spacing: 0.5px;
+  letter-spacing: 0.01em;
+}
+
+.article-content p {
+  font-weight: 500;
+  margin-bottom: 1.5em;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3 {
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.article-content h1 { font-size: 2rem; }
+.article-content h2 { font-size: 1.5rem; }
+.article-content h3 { font-size: 1.25rem; }
+
+.article-content a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-content blockquote {
+  font-weight: 500;
+  font-style: italic;
+  border-left: 4px solid var(--green-mid);
+  padding-left: 1em;
+  margin: 1.5em 0;
+}
+
+/* ── Simplified Loading Screen ──────────────────────────────── */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--brand-bg);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--green-light);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--green-dark);
+  font-weight: 500;
 }

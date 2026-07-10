@@ -221,36 +221,6 @@ function LoginForm() {
             </Link>
           </div>
         </div>
-
-        {/* Demo Accounts Info */}
-        <div className="mt-6 bg-white/80 rounded-2xl p-4 text-center">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Demo Accounts</p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Admin:</span>
-              <code className="text-[#1a5c2a] font-mono text-xs">admin@026news.com</code>
-            </div>
-            <div className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Author:</span>
-              <code className="text-[#1a5c2a] font-mono text-xs">journalist@example.com</code>
-            </div>
-            <div className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Reader:</span>
-              <code className="text-[#1a5c2a] font-mono text-xs">reader@example.com</code>
-            </div>
-          </div>
-          <p className="text-xs text-gray-400 mt-3">Password for all: password123</p>
-        </div>
-
-        {/* Role Info */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
-            <Link href="/signup" className="text-[#1a5c2a] hover:underline font-medium">Sign up</Link> as a{' '}
-            <span className="text-[#1a5c2a] font-medium">Reader</span>,{' '}
-            <span className="text-[#1a5c2a] font-medium">Author</span>, or{' '}
-            <span className="text-[#1a5c2a] font-medium">Admin</span> to get started.
-          </p>
-        </div>
       </div>
     </div>
   )

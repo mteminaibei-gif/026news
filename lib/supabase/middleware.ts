@@ -57,19 +57,18 @@ export async function updateSession(request: NextRequest) {
     .eq('email', user.email ?? '')
     .single()
 
-  let profile = rawProfile as { role: string } | null
+  const profile = rawProfile as { role: string } | null
 
-  // Fallback role detection for known seed accounts if DB query fails
+  // If DB query fails or profile not found, deny access
   if (!profile || profileErr) {
-    if (user.email === 'admin@026news.com') {
-      profile = { role: 'admin' }
-    } else if (user.email?.startsWith('journalist')) {
-      profile = { role: 'journalist' }
-    }
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('error', 'profile_not_found')
+    return NextResponse.redirect(url)
   }
 
   // Wrong role — redirect to login
-  if (!profile || !route.allowed.includes(profile.role)) {
+  if (!route.allowed.includes(profile.role)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('error', 'unauthorized')

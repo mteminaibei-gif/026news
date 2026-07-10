@@ -25,22 +25,28 @@ export async function POST(req: NextRequest) {
       if (profileError) throw profileError
       profile = rawProfile as unknown as UserProfile | null
     } catch (err) {
-      console.warn('Login profile query failed, using email-based role fallback:', err)
-      if (email === 'admin@026news.com') {
-        profile = { role: 'admin', name: 'Admin User', profile_image: null, user_id: 2 }
-      } else if (email === 'journalist@026news.com' || email.includes('journalist')) {
-        profile = { role: 'journalist', name: 'Journalist User', profile_image: null, user_id: 3 }
-      }
+      console.error('Profile query failed:', err)
+      return NextResponse.json(
+        { error: 'User profile not found. Please ensure your account is properly set up.' },
+        { status: 401 }
+      )
+    }
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: 'User profile not found. Please contact support.' },
+        { status: 401 }
+      )
     }
 
     return NextResponse.json({
       user: {
         id:            data.user.id,
         email:         data.user.email,
-        role:          profile?.role ?? 'reader',
-        name:          profile?.name ?? '',
-        profile_image: profile?.profile_image ?? null,
-        user_id:       profile?.user_id ?? null,
+        role:          profile.role ?? 'reader',
+        name:          profile.name ?? '',
+        profile_image: profile.profile_image ?? null,
+        user_id:       profile.user_id ?? null,
       },
     })
   } catch (err) {
