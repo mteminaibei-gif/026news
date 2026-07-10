@@ -24,11 +24,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-[#f0faf2] via-white to-[#fff8e1]">
-      <Sidebar
-        role="admin"
-        user={{ name: profile.name, profile_image: profile.profile_image }}
-      />
-      <div className="flex-1 ml-60 flex flex-col min-h-screen">
+      {/* Sidebar - Hidden on mobile, fixed on desktop */}
+      <div className="hidden md:block">
+        <Sidebar
+          role="admin"
+          user={{ name: profile.name, profile_image: profile.profile_image }}
+        />
+      </div>
+      
+      {/* Main content area - responsive */}
+      <div className="flex-1 flex flex-col min-h-screen w-full md:ml-0">
         {children}
       </div>
     </div>

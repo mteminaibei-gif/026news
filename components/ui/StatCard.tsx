@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 
 interface StatCardProps {
   label: string
-  value: string | number
+  value: string | number | React.ReactNode
   sub?: string
   accent?: 'blue' | 'orange' | 'green' | 'red' | 'gold'
   icon?: React.ReactNode
