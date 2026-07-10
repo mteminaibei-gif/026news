@@ -230,6 +230,38 @@ function LoginForm() {
             </button>
           </div>
 
+          {/* Demo Account for Preview */}
+          <div className="mt-6 p-4 bg-[#f0faf2] dark:bg-[#1a5c2a]/20 rounded-xl border-2 border-[#1a5c2a]/20">
+            <p className="text-xs font-bold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider mb-3">📋 Demo Preview Account</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Journalist:</span>
+                <button
+                  onClick={() => {
+                    setEmail('journalist@demo.com')
+                    setPassword('demo123')
+                  }}
+                  className="font-semibold text-[#1a5c2a] dark:text-[#4caf28] hover:underline"
+                >
+                  journalist@demo.com
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Admin:</span>
+                <button
+                  onClick={() => {
+                    setEmail('admin@demo.com')
+                    setPassword('demo123')
+                  }}
+                  className="font-semibold text-[#c8102e] hover:underline"
+                >
+                  admin@demo.com
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Password for both: demo123</p>
+            </div>
+          </div>
+
           {/* Sign Up Link */}
           <div className="mt-6 text-center text-sm">
             <span className="text-[#6b7280]">Don&apos;t have an account?</span>{' '}
