@@ -1,0 +1,45 @@
+Cannot find project ref. Have you run supabase link?
+Try rerunning the command with --debug to troubleshoot the error.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20240701_feature_expansion.sql
+ • 20240709_add_recurring.sql
+ • 20240710000000_region_prioritization.sql
+ • 20240710000001_saved_articles.sql
+ • 20240711_fix_rss_feeds.sql
+ • 20240711_fix_users_rls_insert.sql
+ • 20240711_schema_enhancements.sql
+ • 20240715_auth_enhancements.sql
+ • 20260708_kenya_rss_feeds.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20240701_feature_expansion.sql
+ • 20240709_add_recurring.sql
+ • 20240710000000_region_prioritization.sql
+ • 20240710000001_saved_articles.sql
+ • 20240711_fix_rss_feeds.sql
+ • 20240711_fix_users_rls_insert.sql
+ • 20240711_schema_enhancements.sql
+ • 20240715_auth_enhancements.sql
+ • 20260708_kenya_rss_feeds.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20240701_feature_expansion.sql
+ • 20240709_add_recurring.sql
+ • 20240710000000_region_prioritization.sql
+ • 20240710000001_saved_articles.sql
+ • 20240711_add_auth_id_to_users.sql
+ • 20240711_fix_rss_feeds.sql
+ • 20240711_fix_users_rls_insert.sql
+ • 20240711_schema_enhancements.sql
+ • 20240715_auth_enhancements.sql
+ • 20260708_kenya_rss_feeds.sql
+Finished supabase db push.
