@@ -221,9 +221,9 @@ export default async function ArticlePage({ params }: Props) {
 
           {/* Body */}
           <div className="bg-white dark:bg-gray-800/60 border dark:border-gray-700/40 rounded-2xl shadow-sm p-6 md:p-8 mb-6 transition-colors">
-            <div className="article-body text-gray-700 dark:text-gray-300 text-[0.95rem]">
+            <div className="article-content text-gray-700 dark:text-gray-300 text-base leading-[1.85]">
               {paragraphs.map((para, i) => (
-                <p key={i} className="mb-5 leading-[1.85]">{para}</p>
+                <p key={i} className="mb-5">{para}</p>
               ))}
             </div>
           </div>

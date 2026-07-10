@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
       email,
       password,
       name,
-      role          = 'journalist',
+      role          = 'reader',
       bio           = '',
       organization  = '',
       portfolio     = '',
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
     }
-    if (!['journalist', 'admin'].includes(role)) {
+    if (!['journalist', 'reader', 'admin'].includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 

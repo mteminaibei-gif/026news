@@ -300,6 +300,18 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['article_revenue']['Row'], 'revenue_id' | 'last_updated'>
         Update: Partial<Database['public']['Tables']['article_revenue']['Insert']>
       }
+      messages: {
+        Row: {
+          message_id: number
+          sender_id: number
+          receiver_id: number
+          message: string
+          created_at: string
+          is_read: boolean
+        }
+        Insert: Omit<Database['public']['Tables']['messages']['Row'], 'message_id' | 'created_at' | 'is_read'>
+        Update: Partial<Database['public']['Tables']['messages']['Insert']>
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

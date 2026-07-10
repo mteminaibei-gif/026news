@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ArticleCard } from '@/components/news/ArticleCard'
+import { ChatWidget } from '@/components/ui/ChatWidget'
 import { createClient } from '@/lib/supabase/server'
 import { formatNumber } from '@/lib/utils'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
@@ -123,6 +124,15 @@ export default async function JournalistProfilePage({ params }: Props) {
               Follow &amp; Subscribe
             </Link>
           </div>
+        </div>
+
+        {/* Chat Widget */}
+        <div className="absolute bottom-6 right-6 z-10">
+          <ChatWidget
+            receiverId={journalist.user_id}
+            receiverName={journalist.name}
+            receiverImage={journalist.profile_image}
+          />
         </div>
       </section>
 

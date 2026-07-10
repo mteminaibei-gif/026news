@@ -327,6 +327,40 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.user_regions;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.article_regions;
 
 -- ============================================================
+--  TABLE: messages
+--  Direct messaging between readers and journalists
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.messages (
+  message_id    BIGSERIAL       PRIMARY KEY,
+  sender_id     BIGINT          NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  receiver_id   BIGINT          NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  message       TEXT            NOT NULL,
+  created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+  is_read       BOOLEAN         NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON public.messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver ON public.messages(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
+
+-- RLS for messages
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see own messages" ON public.messages
+  FOR SELECT USING (
+    sender_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+    OR receiver_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+  );
+
+CREATE POLICY "Users insert own messages" ON public.messages
+  FOR INSERT WITH CHECK (
+    sender_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+  );
+
+-- Realtime for messages
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+
+-- ============================================================
 --  SEED: Initial user regions (for existing users)
 -- ============================================================
 DO $$

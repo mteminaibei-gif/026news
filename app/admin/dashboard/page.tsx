@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
 import { Topbar } from '@/components/layout/Topbar'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
@@ -5,14 +8,11 @@ import { BarChart } from '@/components/ui/BarChart'
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { AdminJournalistActions } from '@/components/admin/AdminJournalistActions'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
+import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatNumber, formatCurrency } from '@/lib/utils'
-import type { Metadata } from 'next'
-import { MOCK_ARTICLES, MOCK_USERS, MOCK_ADMIN_STATS } from '@/lib/mock-data'
-
-export const metadata: Metadata = { title: 'Admin Dashboard' }
 
 type ArticleRow = {
   article_id: number; title: string; slug: string; status: string
@@ -25,137 +25,168 @@ type JournalistRow = {
   profile_image: string | null; status: string
 }
 
-export default async function AdminDashboard() {
-  const supabase = await createClient()
+export default function AdminDashboard() {
+  const supabase = createClient()
+  const [articles, setArticles] = useState<ArticleRow[]>([])
+  const [journalists, setJournalists] = useState<JournalistRow[]>([])
+  const [totalArticlesCount, setTotalArticlesCount] = useState(0)
+  const [journalistsCount, setJournalistsCount] = useState(0)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [totalRevenue, setTotalRevenue] = useState(0)
+  const [pendingPayout, setPendingPayout] = useState(0)
+  const [recentUsers, setRecentUsers] = useState<any[]>([])
+  const [admin, setAdmin] = useState<{ name: string; profile_image: string | null }>({ name: 'Admin', profile_image: null })
+  const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Fetch current admin user for topbar
-  const { data: { user } } = await supabase.auth.getUser()
-  let admin = null
-  if (user) {
+  // Fetch data
+  const fetchData = useCallback(async () => {
     try {
-      const { data: rawAdmin } = await supabase
-        .from('users').select('name, profile_image').eq('email', user.email ?? '').single()
-      admin = rawAdmin as { name: string; profile_image: string | null } | null
-    } catch {
-      // ignore
-    }
-  }
-  if (!admin) {
-    admin = { name: user?.email?.split('@')[0] || 'Admin', profile_image: null }
-  }
+      // Fetch current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: adminData } = await supabase
+          .from('users').select('name, profile_image').eq('email', user.email ?? '').single() as { data: { name: string; profile_image: string | null } | null }
+        if (adminData) {
+          setAdmin({ name: adminData.name, profile_image: adminData.profile_image })
+        } else {
+          setAdmin({ name: user.email?.split('@')[0] || 'Admin', profile_image: null })
+        }
+      }
 
-  // Fetch articles
-  let articles: ArticleRow[] = []
-  let totalArticlesCount = 0
-  try {
-    const { data: rawArticles, count, error } = await supabase
-      .from('articles')
-      .select('article_id, title, slug, status, featured_image, views, earnings, created_at, author:users(name), category:categories(name)', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .limit(20)
-    if (error) throw error
-    articles = (rawArticles ?? [])
-    totalArticlesCount = count ?? 0
-  } catch (err) {
-    console.warn('Dashboard articles query failed, falling back to mock data:', err)
-    articles = MOCK_ARTICLES.map(a => ({
-      article_id: a.article_id,
-      title: a.title,
-      slug: a.slug,
-      status: a.status,
-      featured_image: a.featured_image,
-      views: a.views,
-      earnings: a.earnings,
-      created_at: a.created_at,
-      author: { name: a.author.name },
-      category: { name: a.category.name }
-    }))
-    totalArticlesCount = MOCK_ARTICLES.length
-  }
-  const pending   = articles.filter(a => a.status === 'under_review')
+      // Fetch articles
+      const { data: rawArticles, count: articlesCount } = await supabase
+        .from('articles')
+        .select('article_id, title, slug, status, featured_image, views, earnings, created_at, author:users(name), category:categories(name)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .limit(20)
+      setArticles((rawArticles ?? []) as ArticleRow[])
+      setTotalArticlesCount(articlesCount ?? 0)
+
+      // Fetch journalists
+      const { data: rawJournalists, count: jCount } = await supabase
+        .from('users')
+        .select('user_id, name, email, profile_image, status', { count: 'exact' })
+        .eq('role', 'journalist' as never)
+        .order('created_at', { ascending: false })
+        .limit(10) as any
+      setJournalists((rawJournalists ?? []) as JournalistRow[])
+      setJournalistsCount(jCount ?? 0)
+
+      // Fetch user count
+      const { count: uCount } = await supabase
+        .from('users').select('user_id', { count: 'exact', head: true })
+      setTotalUsers(uCount ?? 0)
+
+      // Fetch revenue
+      const { data: rawRevenue } = await supabase.from('earnings').select('amount, payout_status') as any
+      const revenueRows = rawRevenue ?? []
+      const totalRev = revenueRows.reduce((s: number, r: any) => s + Number(r.amount), 0)
+      const pendingPay = revenueRows
+        .filter((r: any) => r.payout_status === 'pending')
+        .reduce((s: number, r: any) => s + Number(r.amount), 0)
+      setTotalRevenue(totalRev)
+      setPendingPayout(pendingPay)
+
+      // Fetch recent users
+      const { data: rawRecent } = await supabase
+        .from('users')
+        .select('user_id, name, email, role, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(10) as any
+      setRecentUsers(rawRecent ?? [])
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase])
+
+  // Initial fetch + setup realtime subscription
+  useEffect(() => {
+    fetchData()
+
+    // Subscribe to articles table for real-time updates
+    const articlesChannel = supabase
+      .channel('admin-articles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'articles' }, (payload) => {
+        console.log('Article change detected:', payload)
+        
+        // Show notification for new articles
+        if (payload.eventType === 'INSERT') {
+          setNotification({
+            type: 'success',
+            message: `📰 New article published: ${(payload.new as any).title?.substring(0, 50)}...`
+          })
+          setTimeout(() => setNotification(null), 5000)
+        }
+        
+        // Refresh data on any change
+        fetchData()
+      })
+      .subscribe()
+
+    // Subscribe to users table for real-time registration notifications
+    const usersChannel = supabase
+      .channel('admin-users')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'users' }, (payload) => {
+        console.log('New user registration:', payload)
+        setNotification({
+          type: 'info',
+          message: `👤 New user registered: ${(payload.new as any).name || (payload.new as any).email}`
+        })
+        setTimeout(() => setNotification(null), 5000)
+        fetchData()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(articlesChannel)
+      supabase.removeChannel(usersChannel)
+    }
+  }, [fetchData, supabase])
+
+  const pending = articles.filter(a => a.status === 'under_review')
   const published = articles.filter(a => a.status === 'published')
 
-  // Fetch journalists
-  let journalists: JournalistRow[] = []
-  let journalistsCount = 0
-  try {
-    const { data: rawJournalists, count, error } = await supabase
-      .from('users')
-      .select('user_id, name, email, profile_image, status', { count: 'exact' })
-      .eq('role', 'journalist' as never)
-      .order('created_at', { ascending: false })
-      .limit(10) as any
-    if (error) throw error
-    journalists = rawJournalists ?? []
-    journalistsCount = count ?? 0
-  } catch (err) {
-    console.warn('Dashboard journalists query failed, falling back to mock data:', err)
-    journalists = MOCK_USERS.filter(u => u.role === 'journalist').map(u => ({
-      user_id: u.user_id,
-      name: u.name,
-      email: u.email,
-      profile_image: u.profile_image,
-      status: u.status
-    }))
-    journalistsCount = journalists.length
-  }
-
-  // Fetch revenue totals
-  let totalRevenue = 0
-  let pendingPayout = 0
-  try {
-    const { data: rawRevenue, error } = await supabase.from('earnings').select('amount, payout_status') as any
-    if (error) throw error
-    const revenueRows = rawRevenue ?? []
-    totalRevenue = revenueRows.reduce((s: number, r: any) => s + Number(r.amount), 0)
-    pendingPayout = revenueRows
-      .filter((r: any) => r.payout_status === 'pending')
-      .reduce((s: number, r: any) => s + Number(r.amount), 0)
-  } catch (err) {
-    console.warn('Dashboard earnings query failed, falling back to mock data:', err)
-    totalRevenue = MOCK_ADMIN_STATS.totalRevenue
-    pendingPayout = MOCK_ADMIN_STATS.pendingPayouts
-  }
-
-  // Fetch user count + last 10 recent signups (for live feed)
-  let totalUsers = 0
-  let recentUsers: { user_id: number; name: string; email: string; role: string; status: string; created_at: string }[] = []
-  try {
-    const { count, error } = await supabase
-      .from('users').select('user_id', { count: 'exact', head: true })
-    if (error) throw error
-    totalUsers = count ?? 0
-  } catch {
-    totalUsers = MOCK_USERS.length
-  }
-  try {
-    const { data: rawRecent } = await supabase
-      .from('users')
-      .select('user_id, name, email, role, status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(10) as any
-    recentUsers = rawRecent ?? []
-  } catch {
-    recentUsers = MOCK_USERS.slice(0, 10).map(u => ({
-      user_id: u.user_id, name: u.name, email: u.email,
-      role: u.role, status: u.status, created_at: u.created_at,
-    }))
+  if (loading) {
+    return (
+      <>
+        <Topbar title="Admin Dashboard" user={admin} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="loading-spinner" />
+        </div>
+      </>
+    )
   }
 
   return (
     <>
-      <Topbar
-        title="Admin Dashboard"
-        user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }}
-      />
+      {/* Notification toast */}
+      {notification && (
+        <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-fade-in ${
+          notification.type === 'success' 
+            ? 'bg-green-50 border border-green-200 text-green-700' 
+            : 'bg-blue-50 border border-blue-200 text-blue-700'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
+      <Topbar title="Admin Dashboard" user={admin} />
 
       <div className="p-6 flex-1">
+        {/* RSS Feed Fetcher */}
+        <div className="mb-6">
+          <RealtimeFeedFetcher initialArticlesCount={totalArticlesCount} />
+        </div>
 
         {/* Overview stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <StatCard
             label="📰 Total Articles"
-            value={(totalArticlesCount ?? 0).toLocaleString()}
+            value={totalArticlesCount.toLocaleString()}
             sub={`Published: ${published.length} · Pending: ${pending.length}`}
             accent="green"
           />
@@ -167,8 +198,8 @@ export default async function AdminDashboard() {
           />
           <StatCard
             label="👥 Registered Users"
-            value={formatNumber(totalUsers ?? 0)}
-            sub={`Authors: ${journalistsCount ?? 0}`}
+            value={formatNumber(totalUsers)}
+            sub={`Authors: ${journalistsCount}`}
             accent="green"
           />
         </div>
@@ -284,7 +315,6 @@ export default async function AdminDashboard() {
                     <td className="px-4 py-3"><Badge status={a.status} /></td>
                     <td className="px-4 py-3 text-sm text-gray-600">👁 {formatNumber(a.views)}</td>
                     <td className="px-4 py-3">
-                      {/* Client component handles all interactive actions */}
                       <AdminArticleActions articleId={a.article_id} />
                     </td>
                   </tr>
@@ -296,7 +326,6 @@ export default async function AdminDashboard() {
 
         {/* Journalist Management + Payout */}
         <div className="grid lg:grid-cols-2 gap-5 mb-6">
-
           {/* Journalist table */}
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
             <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
@@ -347,9 +376,9 @@ export default async function AdminDashboard() {
             </div>
             <div className="divide-y divide-[#e8f5ea]">
               {[
-                { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue),  color: 'text-[#1a5c2a]' },
-                { label: 'Pending Payouts',          value: formatCurrency(pendingPayout), color: 'text-[#f5c518]' },
-                { label: 'Active Authors',            value: (journalistsCount ?? 0).toString(), color: 'text-[#1a5c2a]' },
+                { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue), color: 'text-[#1a5c2a]' },
+                { label: 'Pending Payouts', value: formatCurrency(pendingPayout), color: 'text-[#f5c518]' },
+                { label: 'Active Authors', value: journalistsCount.toString(), color: 'text-[#1a5c2a]' },
               ].map(row => (
                 <div key={row.label} className="flex items-center justify-between px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
                   <span className="text-sm text-gray-600">{row.label}</span>
@@ -368,7 +397,7 @@ export default async function AdminDashboard() {
         {/* Trends & Insights */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
           <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="text-sm font-bold text-[#1a5c2a]">🔍 Trends &amp; Insights</h2>
+            <h2 className="text-sm font-bold text-[#1a5c2a]">🔍 Trends & Insights</h2>
           </div>
           <div className="p-5">
             <div className="flex items-center gap-5 mb-5">
@@ -402,7 +431,6 @@ export default async function AdminDashboard() {
         <div className="mb-6">
           <LiveRegistrationsFeed initialUsers={recentUsers} />
         </div>
-
       </div>
     </>
   )
