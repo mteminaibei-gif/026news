@@ -95,16 +95,16 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData()
-    const articlesChannel = supabase.channel('admin-articles').on('postgres_changes', { event: '*', schema: 'public', table: 'articles' }, (payload) => {
+    const articlesChannel = supabase.channel('admin-articles').on('postgres_changes', { event: '*', schema: 'public', table: 'articles' }, (payload: any) => {
       if (payload.eventType === 'INSERT') {
-        setNotification({ type: 'success', message: `📰 New article: ${(payload.new as any).title?.substring(0, 40)}...` })
+        setNotification({ type: 'success', message: `New article: ${payload.new.title?.substring(0, 40)}...` })
         setTimeout(() => setNotification(null), 5000)
       }
       fetchData()
     }).subscribe()
 
-    const usersChannel = supabase.channel('admin-users').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'users' }, (payload) => {
-      setNotification({ type: 'info', message: `👤 New user: ${(payload.new as any).name || (payload.new as any).email}` })
+    const usersChannel = supabase.channel('admin-users').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'users' }, (payload: any) => {
+      setNotification({ type: 'info', message: `New user: ${payload.new.name || payload.new.email}` })
       setTimeout(() => setNotification(null), 5000)
       fetchData()
     }).subscribe()
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
 
       <AccountCreationDialog isOpen={showCreateAccountDialog} onClose={() => setShowCreateAccountDialog(false)} />
 
-      {/* Modern Tab Navigation */}
+      {/* Tab Navigation */}
       <div className="px-6 pt-6">
         <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl w-fit">
           <button
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
               activeView === 'dashboard' ? 'bg-white dark:bg-gray-700 text-[#1a5c2a] dark:text-[#4caf28] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            <span className="flex items-center gap-2">📊 Dashboard</span>
+            📊 Dashboard
           </button>
           <button
             onClick={() => setActiveView('control-panel')}
@@ -149,12 +149,12 @@ export default function AdminDashboard() {
               activeView === 'control-panel' ? 'bg-white dark:bg-gray-700 text-[#1a5c2a] dark:text-[#4caf28] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            <span className="flex items-center gap-2">⚙️ Control Panel</span>
+            ⚙️ Control Panel
           </button>
           <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
           <button
             onClick={() => setShowCreateAccountDialog(true)}
-            className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white transition-all flex items-center gap-2 shadow-sm hover:shadow"
+            className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white transition-all flex items-center gap-2"
           >
             <span>➕ Create</span>
           </button>
@@ -173,16 +173,44 @@ export default function AdminDashboard() {
             <>
               <RealtimeFeedFetcher initialArticlesCount={totalArticlesCount} />
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="📰 Articles" value={totalArticlesCount.toLocaleString()} sub={`${published.length} published`} accent="kenya" icon="📰" />
-                <StatCard label="⏳ Pending Review" value={pending.length} sub="Awaiting approval" accent="gold" icon="⏳" />
-                <StatCard label="👥 Users" value={formatNumber(totalUsers)} sub={`${journalistsCount} authors`} accent="kenya" icon="👥" />
-                <StatCard label="💵 Revenue" value={formatCurrency(totalRevenue)} sub={`${formatCurrency(pendingPayout)} pending`} accent="kenya" icon="💵" />
+              {/* Stats Grid - Responsive */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
+                <div className="stat-card group">
+                  <div className="stat-icon bg-[#1a5c2a]/10 text-[#1a5c2a]">📰</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Total Articles</p>
+                    <p className="stat-value">{totalArticlesCount.toLocaleString()}</p>
+                    <p className="stat-sub">{published.length} published</p>
+                  </div>
+                </div>
+                <div className="stat-card group">
+                  <div className="stat-icon bg-amber-100 text-amber-600">⏳</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Pending Review</p>
+                    <p className="stat-value">{pending.length}</p>
+                    <p className="stat-sub">Awaiting approval</p>
+                  </div>
+                </div>
+                <div className="stat-card group">
+                  <div className="stat-icon bg-blue-100 text-blue-600">👥</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Total Users</p>
+                    <p className="stat-value">{formatNumber(totalUsers)}</p>
+                    <p className="stat-sub">{journalistsCount} authors</p>
+                  </div>
+                </div>
+                <div className="stat-card group">
+                  <div className="stat-icon bg-emerald-100 text-emerald-600">💵</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Revenue</p>
+                    <p className="stat-value">{formatCurrency(totalRevenue)}</p>
+                    <p className="stat-sub">{formatCurrency(pendingPayout)} pending</p>
+                  </div>
+                </div>
               </div>
 
               {/* Charts Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                 {/* Traffic Chart */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -226,7 +254,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Main Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
                 {/* Articles Table */}
                 <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -333,6 +361,40 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
+
+      <style jsx>{`
+        .stat-card {
+          @apply bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-start gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1;
+        }
+        .stat-icon {
+          @apply w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0;
+        }
+        .stat-content {
+          @apply flex-1 min-w-0;
+        }
+        .stat-label {
+          @apply text-xs font-semibold text-gray-500 uppercase tracking-wider;
+        }
+        .stat-value {
+          @apply text-2xl font-bold text-gray-900 mt-1;
+        }
+        .stat-sub {
+          @apply text-sm text-gray-500 mt-0.5;
+        }
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.5s ease-out forwards;
+        }
+      `}</style>
     </>
   )
 }
