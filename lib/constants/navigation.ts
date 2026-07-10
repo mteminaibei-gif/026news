@@ -1,0 +1,148 @@
+/**
+ * Comprehensive navigation map for 026NEWS
+ * All routes, links, and SEO metadata in one place
+ */
+
+export const ROUTES = {
+  // Public pages
+  HOME: '/',
+  ABOUT: '/about',
+  CONTACT: '/contact',
+  PRIVACY: '/privacy',
+  TERMS: '/terms',
+  
+  // Articles
+  ARTICLES: '/search',
+  ARTICLE_DETAIL: (slug: string) => `/article/${slug}`,
+  
+  // Authors & Journalists
+  JOURNALISTS: '/journalists',
+  JOURNALIST_DETAIL: (id: string | number) => `/journalists/${id}`,
+  JOURNALIST_DASHBOARD: '/journalist/dashboard',
+  JOURNALIST_CREATE: '/journalist/create',
+  JOURNALIST_ARTICLES: '/journalist/articles',
+  JOURNALIST_ANALYTICS: '/journalist/analytics',
+  JOURNALIST_EARNINGS: '/journalist/earnings',
+  JOURNALIST_PROFILE: '/journalist/profile',
+  JOURNALIST_SUBSCRIBERS: '/journalist/subscribers',
+  
+  // Rankings & Leaderboards
+  RANKINGS: '/rankings',
+  LEADERBOARD: '/leaderboard',
+  
+  // Admin
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_ANALYTICS: '/admin/analytics',
+  ADMIN_ARTICLES: '/admin/articles',
+  ADMIN_EARNINGS: '/admin/earnings',
+  ADMIN_EDIT_ARTICLE: (id: string | number) => `/admin/edit/${id}`,
+  ADMIN_REVIEW_ARTICLE: (id: string | number) => `/admin/review/${id}`,
+  ADMIN_JOURNALISTS: '/admin/journalists',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_SOURCES: '/admin/sources',
+  ADMIN_SETTINGS: '/admin/settings',
+  ADMIN_WRITE: '/admin/write',
+  
+  // Auth
+  LOGIN: '/login',
+  SIGNUP: '/signup',
+  FORGOT_PASSWORD: '/forgot-password',
+  
+  // User
+  PROFILE: '/profile',
+  DASHBOARD: '/dashboard',
+  
+  // Other
+  SUBSCRIBE: '/subscribe',
+} as const
+
+export const NAV_LINKS = [
+  { href: ROUTES.HOME, label: 'Home', icon: '🏠' },
+  { href: ROUTES.HOME + '?category=Kenya', label: '🇰🇪 Kenya', external: false },
+  { href: ROUTES.HOME + '?category=Africa', label: '🌍 Africa', external: false },
+  { href: ROUTES.HOME + '?category=Politics', label: 'Politics', external: false },
+  { href: ROUTES.HOME + '?category=Business', label: 'Business', external: false },
+  { href: ROUTES.HOME + '?category=Tech', label: 'Tech', external: false },
+  { href: ROUTES.HOME + '?category=Sports', label: 'Sports', external: false },
+  { href: ROUTES.HOME + '?category=Health', label: 'Health', external: false },
+  { href: ROUTES.JOURNALISTS, label: 'Authors', icon: '✍️' },
+] as const
+
+export const FOOTER_LINKS = {
+  Company: [
+    { href: ROUTES.ABOUT, label: 'About Us' },
+    { href: ROUTES.CONTACT, label: 'Contact' },
+    { href: ROUTES.SUBSCRIBE, label: 'Newsletter' },
+  ],
+  Legal: [
+    { href: ROUTES.PRIVACY, label: 'Privacy Policy' },
+    { href: ROUTES.TERMS, label: 'Terms of Service' },
+  ],
+  Resources: [
+    { href: ROUTES.RANKINGS, label: 'Rankings' },
+    { href: ROUTES.LEADERBOARD, label: 'Leaderboard' },
+    { href: ROUTES.JOURNALISTS, label: 'Authors' },
+  ],
+  CTA: [
+    { href: ROUTES.SIGNUP, label: 'Become a Journalist', external: false },
+    { href: ROUTES.JOURNALIST_CREATE, label: 'Write an Article', external: false },
+  ],
+} as const
+
+export const ADMIN_NAV_LINKS = [
+  { href: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: '📊' },
+  { href: ROUTES.ADMIN_ARTICLES, label: 'Articles', icon: '📰' },
+  { href: ROUTES.ADMIN_JOURNALISTS, label: 'Authors', icon: '✍️' },
+  { href: ROUTES.ADMIN_USERS, label: 'Users', icon: '👥' },
+  { href: ROUTES.ADMIN_ANALYTICS, label: 'Analytics', icon: '📈' },
+  { href: ROUTES.ADMIN_EARNINGS, label: 'Earnings', icon: '💰' },
+  { href: ROUTES.ADMIN_SETTINGS, label: 'Settings', icon: '⚙️' },
+] as const
+
+export const JOURNALIST_NAV_LINKS = [
+  { href: ROUTES.JOURNALIST_DASHBOARD, label: 'Dashboard', icon: '📊' },
+  { href: ROUTES.JOURNALIST_CREATE, label: 'Write Article', icon: '✏️' },
+  { href: ROUTES.JOURNALIST_ARTICLES, label: 'My Articles', icon: '📰' },
+  { href: ROUTES.JOURNALIST_ANALYTICS, label: 'Analytics', icon: '📈' },
+  { href: ROUTES.JOURNALIST_EARNINGS, label: 'Earnings', icon: '💰' },
+  { href: ROUTES.JOURNALIST_SUBSCRIBERS, label: 'Subscribers', icon: '👥' },
+  { href: ROUTES.JOURNALIST_PROFILE, label: 'Profile', icon: '👤' },
+] as const
+
+/**
+ * Validate that all routes exist and links point to correct pages
+ * Run this in development to catch broken links early
+ */
+export function validateLinks() {
+  if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') {
+    return
+  }
+
+  const brokenLinks: string[] = []
+
+  // Check if link leads somewhere
+  const checkLink = async (href: string) => {
+    if (href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) {
+      return // Skip external links
+    }
+
+    try {
+      const response = await fetch(href, { method: 'HEAD' })
+      if (response.status === 404) {
+        brokenLinks.push(href)
+      }
+    } catch (e) {
+      // Ignore fetch errors in dev
+    }
+  }
+
+  // Validate all routes
+  Object.values(ROUTES).forEach(route => {
+    const href = typeof route === 'function' ? route('1').replace('/1', '') : route
+    checkLink(href)
+  })
+
+  if (brokenLinks.length > 0) {
+    console.warn('[Navigation Validation] Potentially broken links:', brokenLinks)
+  }
+}

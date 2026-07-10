@@ -10,6 +10,7 @@ import { AdminJournalistActions } from '@/components/admin/AdminJournalistAction
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
 import { AdminControlPanel } from '@/components/admin/AdminControlPanel'
+import { AccountCreationDialog } from '@/components/admin/AccountCreationDialog'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -40,6 +41,7 @@ export default function AdminDashboard() {
   const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeView, setActiveView] = useState<'dashboard' | 'control-panel'>('dashboard')
+  const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false)
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -162,6 +164,12 @@ export default function AdminDashboard() {
 
       <Topbar title="Admin Dashboard" user={admin} />
 
+      {/* Account Creation Dialog */}
+      <AccountCreationDialog
+        isOpen={showCreateAccountDialog}
+        onClose={() => setShowCreateAccountDialog(false)}
+      />
+
       {/* View Toggle */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-800">
         <div className="flex gap-2">
@@ -184,6 +192,12 @@ export default function AdminDashboard() {
             }`}
           >
             ⚙️ Control Panel
+          </button>
+          <button
+            onClick={() => setShowCreateAccountDialog(true)}
+            className="ml-auto px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all"
+          >
+            ➕ Create Account
           </button>
         </div>
       </div>

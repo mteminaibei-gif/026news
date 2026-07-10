@@ -1,0 +1,172 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+interface CreateAccountRequest {
+  email: string
+  password: string
+  name: string
+  role: 'reader' | 'journalist'
+  phone?: string
+  location?: string
+  bio?: string
+}
+
+/**
+ * POST /api/admin/create-account
+ * Admin endpoint to create reader or journalist accounts
+ * Requires admin authentication
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const { email, password, name, role, phone, location, bio } = (await req.json()) as CreateAccountRequest
+
+    // Validate required fields
+    if (!email || !password || !name || !role) {
+      return NextResponse.json(
+        { error: 'Email, password, name, and role are required' },
+        { status: 400 }
+      )
+    }
+
+    if (!['reader', 'journalist'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Role must be "reader" or "journalist"' },
+        { status: 400 }
+      )
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createClient()
+
+    // Verify admin authentication
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if user is admin
+    const { data: adminUser } = await supabase
+      .from('users')
+      .select('role')
+      .eq('email', user.email ?? '')
+      .single()
+
+    if ((adminUser as any)?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
+    }
+
+    // Check if email already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle() as any
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Email already exists' },
+        { status: 409 }
+      )
+    }
+
+    // Create auth user
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email.toLowerCase().trim(),
+      password: password,
+      email_confirm: true,
+    })
+
+    if (authError || !authData.user) {
+      console.error('Auth user creation error:', authError)
+      return NextResponse.json(
+        { error: authError?.message || 'Failed to create auth user' },
+        { status: 500 }
+      )
+    }
+
+    // Create user profile in users table
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
+      .insert([{
+        auth_id: authData.user.id,
+        email: email.toLowerCase().trim(),
+        name: name.trim(),
+        role: role,
+        phone: phone?.trim() || null,
+        location: location?.trim() || null,
+        bio: bio?.trim() || null,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }] as any)
+      .select()
+      .single() as any
+
+    if (userError) {
+      // Rollback: delete auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(authData.user.id)
+      console.error('User profile creation error:', userError)
+      return NextResponse.json(
+        { error: 'Failed to create user profile' },
+        { status: 500 }
+      )
+    }
+
+    // If journalist, create journalist profile
+    if (role === 'journalist') {
+      const { error: journalistError } = await supabase
+        .from('journalists')
+        .insert([{
+          user_id: newUser.user_id,
+          bio: bio?.trim() || '',
+          verified: false,
+          commission_rate: 0.15, // Default 15% commission
+          total_earnings: 0,
+          payment_method: null,
+        }] as any)
+
+      if (journalistError) {
+        console.error('Journalist profile creation warning:', journalistError)
+        // Don't fail, just log warning
+      }
+    }
+
+    // Log admin action
+    try {
+      await supabase
+        .from('admin_logs')
+        .insert([{
+          admin_id: (adminUser as any)?.user_id,
+          action: `Created ${role} account: ${email}`,
+          ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+          created_at: new Date().toISOString(),
+        }] as any)
+    } catch (err) {
+      console.error('Error logging admin action:', err)
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully`,
+      user: {
+        user_id: newUser.user_id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        status: newUser.status,
+      },
+    })
+  } catch (err) {
+    console.error('[POST /api/admin/create-account]', err)
+    return NextResponse.json(
+      { error: 'Account creation failed' },
+      { status: 500 }
+    )
+  }
+}
