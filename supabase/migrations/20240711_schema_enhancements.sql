@@ -5,41 +5,46 @@
 -- ============================================================
 
 -- ============================================================
---  PART 1: Fix saved_articles RLS Policy Bug
+--  PART 1: Fix saved_articles RLS Policy Bug (if table exists)
 -- ============================================================
 
--- Drop broken RLS policies
-DROP POLICY IF EXISTS "Users can view their own saved articles" ON public.saved_articles;
-DROP POLICY IF EXISTS "Users can save articles" ON public.saved_articles;
-DROP POLICY IF EXISTS "Users can remove saved articles" ON public.saved_articles;
+-- Only fix RLS policies if saved_articles table exists
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'saved_articles') THEN
+    -- Drop broken RLS policies
+    DROP POLICY IF EXISTS "Users can view their own saved articles" ON public.saved_articles;
+    DROP POLICY IF EXISTS "Users can save articles" ON public.saved_articles;
+    DROP POLICY IF EXISTS "Users can remove saved articles" ON public.saved_articles;
 
--- Create corrected RLS policies using auth_id instead of nonexistent user_email
-CREATE POLICY "Users can view their own saved articles"
-  ON public.saved_articles
-  FOR SELECT
-  USING (
-    auth.uid() = (
-      SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id
-    )
-  );
+    -- Create corrected RLS policies using auth_id instead of nonexistent user_email
+    CREATE POLICY "Users can view their own saved articles"
+      ON public.saved_articles
+      FOR SELECT
+      USING (
+        auth.uid() = (
+          SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id
+        )
+      );
 
-CREATE POLICY "Users can save articles"
-  ON public.saved_articles
-  FOR INSERT
-  WITH CHECK (
-    auth.uid() = (
-      SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id
-    )
-  );
+    CREATE POLICY "Users can save articles"
+      ON public.saved_articles
+      FOR INSERT
+      WITH CHECK (
+        auth.uid() = (
+          SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id
+        )
+      );
 
-CREATE POLICY "Users can remove saved articles"
-  ON public.saved_articles
-  FOR DELETE
-  USING (
-    auth.uid() = (
-      SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id
-    )
-  );
+    CREATE POLICY "Users can remove saved articles"
+      ON public.saved_articles
+      FOR DELETE
+      USING (
+        auth.uid() = (
+          SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id
+        )
+      );
+  END IF;
+END $$;
 
 -- ============================================================
 --  PART 2: Add Missing Tables
