@@ -82,61 +82,64 @@ export default async function AdminAnalyticsPage() {
 
       <div className="p-6 flex-1 space-y-6">
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {/* KPI cards with staggered animation */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-[fade-in-up_0.4s_ease-out]">
           <StatCard label="📰 Published Articles" value={(totalArticles ?? 0).toLocaleString()} sub="All-time"                                               accent="green" />
           <StatCard label="👥 Total Users"         value={(totalUsers ?? 0).toLocaleString()}   sub={`Journalists: ${totalJournalists ?? 0}`}               accent="green" />
           <StatCard label="💰 Total Revenue"        value={formatCurrency(totalRevenue)}          sub={`This month: ${formatCurrency(monthRevenue)}`}         accent="gold"  />
           <StatCard label="👁 Total Views"          value={formatNumber(totalViews)}              sub="Across top articles"                                    accent="green" />
         </div>
 
-        {/* Revenue + Users charts */}
+        {/* Revenue + Users charts with smooth animations */}
         <div className="grid lg:grid-cols-2 gap-5">
 
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.01] animate-[fade-in-up_0.5s_ease-out_0.1s_both]">
             <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
               <h2 className="text-sm font-bold text-[#1a5c2a]">💰 Monthly Revenue</h2>
             </div>
-            <div className="px-5 pb-4 pt-3">
+            <div className="px-5 pb-4 pt-3 animate-[fade-in_0.5s_ease-out_0.3s_both]">
               <BarChart data={revenueData} labels={revenueLabels} height={80} />
               <div className="flex gap-5 mt-3 text-xs text-gray-500 flex-wrap">
-                {Object.entries(bySource).map(([src, amt]) => (
-                  <span key={src}>{src}: <strong className="text-[#1a5c2a]">{formatCurrency(amt)}</strong></span>
+                {Object.entries(bySource).map(([src, amt], idx) => (
+                  <span key={src} className="animate-[fade-in_0.4s_ease-out]" style={{ animationDelay: `${0.3 + idx * 0.1}s` }}>
+                    {src}: <strong className="text-[#1a5c2a]">{formatCurrency(amt)}</strong>
+                  </span>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.01] animate-[fade-in-up_0.5s_ease-out_0.2s_both]">
             <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
               <h2 className="text-sm font-bold text-[#1a5c2a]">👥 New Users per Month</h2>
             </div>
-            <div className="px-5 pb-4 pt-3">
+            <div className="px-5 pb-4 pt-3 animate-[fade-in_0.5s_ease-out_0.3s_both]">
               <BarChart data={usersData} labels={usersLabels} height={80} />
               <p className="text-xs text-gray-500 mt-3">Total registered: <strong className="text-[#1a5c2a]">{(totalUsers ?? 0).toLocaleString()}</strong></p>
             </div>
           </div>
         </div>
 
-        {/* Revenue by source breakdown */}
+        {/* Revenue by source breakdown with animated progress bars */}
         {Object.keys(bySource).length > 0 && (
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
+          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-lg animate-[fade-in-up_0.5s_ease-out_0.3s_both]">
             <h2 className="text-sm font-bold text-[#1a5c2a] mb-4">📊 Revenue by Source</h2>
             <div className="space-y-3">
-              {Object.entries(bySource).sort((a, b) => b[1] - a[1]).map(([src, amt]) => {
+              {Object.entries(bySource).sort((a, b) => b[1] - a[1]).map(([src, amt], idx) => {
                 const pct = totalRevenue > 0 ? Math.round((amt / totalRevenue) * 100) : 0
                 return (
-                  <div key={src}>
+                  <div key={src} className="animate-[fade-in_0.4s_ease-out]" style={{ animationDelay: `${0.2 + idx * 0.05}s` }}>
                     <div className="flex justify-between text-xs text-gray-600 mb-1">
                       <span className="font-semibold capitalize">{src}</span>
                       <span>{formatCurrency(amt)} <span className="text-gray-400">({pct}%)</span></span>
                     </div>
                     <div className="h-2 bg-[#f0faf2] rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-500"
+                        className="h-full rounded-full transition-all duration-700"
                         style={{
                           width: `${pct}%`,
                           background: 'linear-gradient(to right, #1a5c2a, #4caf28)',
+                          animation: `width 0.7s ease-out ${0.2 + idx * 0.05}s both`,
                         }}
                       />
                     </div>
@@ -147,11 +150,11 @@ export default async function AdminAnalyticsPage() {
           </div>
         )}
 
-        {/* Top articles by views */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+        {/* Top articles by views with row animations */}
+        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg animate-[fade-in-up_0.5s_ease-out_0.4s_both]">
           <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
             <h2 className="text-sm font-bold text-[#1a5c2a]">🔥 Top Articles by Views</h2>
-            <Link href="/admin/articles" className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300">
+            <Link href="/admin/articles" className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300 hover:scale-105">
               View All
             </Link>
           </div>
@@ -169,12 +172,16 @@ export default async function AdminAnalyticsPage() {
               </thead>
               <tbody className="divide-y divide-[#f0faf2]">
                 {topArticles.map((a, i) => (
-                  <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                  <tr 
+                    key={a.article_id} 
+                    className="hover:bg-[#f9fdf9] transition-all duration-300 animate-[fade-in_0.4s_ease-out]"
+                    style={{ animationDelay: `${0.2 + i * 0.05}s` }}
+                  >
                     <td className="px-4 py-3 font-black text-[#1a5c2a]/30 text-base">{i + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {a.featured_image && (
-                          <div className="relative w-10 h-8 rounded-lg overflow-hidden shrink-0">
+                          <div className="relative w-10 h-8 rounded-lg overflow-hidden shrink-0 hover:scale-110 transition-transform duration-300">
                             <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
                           </div>
                         )}
@@ -193,7 +200,7 @@ export default async function AdminAnalyticsPage() {
                   </tr>
                 ))}
                 {topArticles.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No published articles yet.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400 animate-[fade-in_0.4s_ease-out]">No published articles yet.</td></tr>
                 )}
               </tbody>
             </table>
