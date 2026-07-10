@@ -79,8 +79,8 @@ export function Navbar() {
       <header
         role="banner"
         className={cn(
-          'sticky top-0 z-50 transition-all duration-500',
-          'bg-white/90 dark:bg-[#0b1410]/92 backdrop-blur-xl',
+          'sticky top-0 z-50 transition-all duration-300',
+          'bg-white dark:bg-[#162319] backdrop-blur-xl',
           scrolled
             ? 'shadow-[0_4px_24px_rgba(26,92,42,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]'
             : 'shadow-none'

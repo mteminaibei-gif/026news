@@ -166,6 +166,7 @@ html:not(.dark) tr:hover { background-color: rgba(26,92,42,0.04) !important; }
     #1a5c2a 66%,  #1a5c2a 100%
   );
   height: 3px;
+  transition: all 0.3s var(--ease-in-out);
 }
 .kenya-bar-thick {
   background: linear-gradient(90deg,

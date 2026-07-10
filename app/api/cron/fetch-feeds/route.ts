@@ -148,10 +148,11 @@ export async function GET(req: NextRequest) {
       })
 
       if (!res.ok) {
-        results[feed.name] = `HTTP ${res.status}`
+        const errorMsg = `HTTP ${res.status}`
+        results[feed.name] = `ERROR: ${errorMsg}`
         totalErrors++
         await supabase.from('rss_feeds')
-          .update({ last_error: `HTTP ${res.status}`, error_count: feed.feed_id } as never)
+          .update({ last_error: errorMsg, error_count: (feed.feed_id as any) } as never)
           .eq('feed_id', feed.feed_id)
         continue
       }
