@@ -41,6 +41,8 @@ export default async function HomePage({ searchParams }: Props) {
   // the page falls back to mock data instead of crashing
   const supabase = await createClient()
 
+  // PRIORITY FILTER: Fetch articles with weighting towards Kenya/Africa sources
+  // When fetching articles for homepage, prefer those from high-priority RSS feeds
   const articles: ArticleWithAuthor[] = await safeQuery(async () => {
     const response = await supabase
       .from('articles')
@@ -83,16 +85,29 @@ export default async function HomePage({ searchParams }: Props) {
   const trending  = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
   const spotlight = articles.slice(0, 3)
 
-  // Hero: Kenya/Africa content first, then most viewed, then latest
+  // HOMEPAGE PRIORITY SYSTEM:
+  // 1. Kenya articles (highest priority)
+  // 2. Africa articles (high priority)
+  // 3. International articles (lower priority)
+  // Within each tier, sort by RSS feed priority, then views
   const kenyaArticles = articles.filter(a =>
-    ['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '')
+    ['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? '') ||
+    (a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('kenya')
+  )
+  const africaArticles = articles.filter(a =>
+    a.category?.name === 'Africa' ||
+    ((a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa') && 
+     !['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? ''))
   )
   const otherArticles = articles.filter(a =>
-    !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '')
+    !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '') &&
+    !(a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa')
   )
+  
   const featured   = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } => Boolean((a as unknown as Record<string, unknown>).featured))
+  
   // Prioritise trusted Kenyan sources (Nation, KBC, Royal Media, NTV, Citizen, K24)
-  const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'ntv', 'citizen', 'k24']
+  const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'citizen', 'standard', 'capital', 'star', 'business daily']
 
   const isPriority = (a: ArticleWithAuthor) => {
     const candidates = [a.source_name, a.source_reference, a.source_url, a.author?.name]
@@ -107,18 +122,23 @@ export default async function HomePage({ searchParams }: Props) {
       return (b.views ?? 0) - (a.views ?? 0)
     })
 
+  // Hero slides: Featured → Kenya → Africa → International
   const heroSlides = [
     ...featured,
     ...sortByPriorityThenViews(kenyaArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
+    ...sortByPriorityThenViews(africaArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
     ...sortByPriorityThenViews(otherArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
   ].slice(0, 7)
 
-  // Kenya/Africa articles first, then rest — when no category filter is active
+  // Display articles: Local news first (Kenya/Africa), then international
+  // When category filter is active, show filtered results
+  // When no filter, show by priority tier
   const displayArticles = categoryParam
     ? articles.filter(a => a.category?.name === categoryParam)
     : [
-        ...articles.filter(a => ['Kenya', 'Africa'].includes(a.category?.name ?? '')),
-        ...articles.filter(a => !['Kenya', 'Africa'].includes(a.category?.name ?? '')),
+        ...sortByPriorityThenViews(kenyaArticles),
+        ...sortByPriorityThenViews(africaArticles),
+        ...sortByPriorityThenViews(otherArticles),
       ]
 
   return (
