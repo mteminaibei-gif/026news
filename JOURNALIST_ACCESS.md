@@ -25,7 +25,7 @@ ON CONFLICT (email) DO UPDATE SET role = 'journalist';
 
 **URL**: `http://localhost:3000/login`
 - Email: `journalist@026news.com`
-- Password: [Your password]
+- Password: [Yumy]
 
 After login, you'll be automatically redirected to: `/journalist/dashboard`
 

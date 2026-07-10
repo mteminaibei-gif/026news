@@ -9,6 +9,7 @@ import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { AdminJournalistActions } from '@/components/admin/AdminJournalistActions'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
+import { AdminControlPanel } from '@/components/admin/AdminControlPanel'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
   const [admin, setAdmin] = useState<{ name: string; profile_image: string | null }>({ name: 'Admin', profile_image: null })
   const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activeView, setActiveView] = useState<'dashboard' | 'control-panel'>('dashboard')
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -112,8 +114,6 @@ export default function AdminDashboard() {
       .channel('admin-articles')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'articles' }, (payload) => {
         console.log('Article change detected:', payload)
-        
-        // Show notification for new articles
         if (payload.eventType === 'INSERT') {
           setNotification({
             type: 'success',
@@ -121,8 +121,6 @@ export default function AdminDashboard() {
           })
           setTimeout(() => setNotification(null), 5000)
         }
-        
-        // Refresh data on any change
         fetchData()
       })
       .subscribe()
@@ -150,20 +148,8 @@ export default function AdminDashboard() {
   const pending = articles.filter(a => a.status === 'under_review')
   const published = articles.filter(a => a.status === 'published')
 
-  if (loading) {
-    return (
-      <>
-        <Topbar title="Admin Dashboard" user={admin} />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="loading-spinner" />
-        </div>
-      </>
-    )
-  }
-
   return (
     <>
-      {/* Notification toast */}
       {notification && (
         <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-fade-in ${
           notification.type === 'success' 
@@ -176,262 +162,302 @@ export default function AdminDashboard() {
 
       <Topbar title="Admin Dashboard" user={admin} />
 
-      <div className="p-6 flex-1">
-        {/* RSS Feed Fetcher */}
-        <div className="mb-6">
-          <RealtimeFeedFetcher initialArticlesCount={totalArticlesCount} />
-        </div>
-
-        {/* Overview stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <StatCard
-            label="📰 Total Articles"
-            value={totalArticlesCount.toLocaleString()}
-            sub={`Published: ${published.length} · Pending: ${pending.length}`}
-            accent="green"
-          />
-          <StatCard
-            label="✍️ Pending Review"
-            value={`${pending.length} Articles`}
-            sub="Awaiting your approval"
-            accent="gold"
-          />
-          <StatCard
-            label="👥 Registered Users"
-            value={formatNumber(totalUsers)}
-            sub={`Authors: ${journalistsCount}`}
-            accent="green"
-          />
-        </div>
-
-        {/* Traffic + Contributors */}
-        <div className="grid lg:grid-cols-2 gap-5 mb-6">
-
-          {/* Traffic chart */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="text-sm font-bold text-[#1a5c2a]">📈 Traffic Overview</h2>
-              <span className="text-xs text-gray-500">Last 12 months</span>
-            </div>
-            <div className="px-5 pb-4 pt-3">
-              <BarChart
-                data={[30, 45, 38, 55, 60, 50, 72, 80, 75, 90, 85, 100]}
-                labels={['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']}
-                height={80}
-              />
-              <div className="flex gap-5 mt-4 text-xs text-gray-500 flex-wrap">
-                <span>Total Revenue: <strong className="text-[#1a5c2a]">{formatCurrency(totalRevenue)}</strong></span>
-                <span>Pending Payout: <strong className="text-[#f5c518]">{formatCurrency(pendingPayout)}</strong></span>
-              </div>
-            </div>
-          </div>
-
-          {/* Active contributors */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="text-sm font-bold text-[#1a5c2a]">⭐ Active Authors</h2>
-              <Link href="/admin/journalists" className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300">View All</Link>
-            </div>
-            <div className="divide-y divide-[#f0faf2]">
-              {journalists.slice(0, 4).map(j => (
-                <div key={j.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
-                  {j.profile_image ? (
-                    <Image src={j.profile_image} alt={j.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#e8f5ea] flex items-center justify-center text-sm font-bold text-[#1a5c2a] shrink-0">
-                      {j.name.charAt(0)}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{j.name}</p>
-                    <p className="text-xs text-gray-500">{j.email}</p>
-                  </div>
-                  <Badge status={j.status} />
-                </div>
-              ))}
-            </div>
-
-            {pending.length > 0 && (
-              <>
-                <div className="px-5 py-2 bg-[#f0faf2] border-t border-[#e8f5ea]">
-                  <p className="text-xs font-bold text-[#1a5c2a]/70 uppercase tracking-wider">Latest Submissions</p>
-                </div>
-                {pending.slice(0, 2).map(a => (
-                  <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 border-t border-[#f0faf2]">
-                    {a.featured_image && (
-                      <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
-                        <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{a.title}</p>
-                      <p className="text-xs text-gray-500">By {a.author?.name}</p>
-                    </div>
-                    <Link href={`/admin/review/${a.article_id}`} className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-                      Review
-                    </Link>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Manage Articles table */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden mb-6 transition-all duration-300 hover:shadow-md">
-          <div className="px-5 py-4 border-b border-[#e8f5ea] flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="text-sm font-bold text-[#1a5c2a]">📋 Manage Articles</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
-                  <th className="px-4 py-2.5 text-left w-6">#</th>
-                  <th className="px-4 py-2.5 text-left">Title</th>
-                  <th className="px-4 py-2.5 text-left">Author</th>
-                  <th className="px-4 py-2.5 text-left">Status</th>
-                  <th className="px-4 py-2.5 text-left">Views</th>
-                  <th className="px-4 py-2.5 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0faf2]">
-                {articles.map((a, i) => (
-                  <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
-                    <td className="px-4 py-3 text-gray-500 text-xs">{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {a.featured_image && (
-                          <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
-                            <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-gray-900 truncate max-w-[180px]">{a.title}</p>
-                          <p className="text-xs text-gray-500">{a.category?.name} · {formatDate(a.created_at)}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{a.author?.name}</td>
-                    <td className="px-4 py-3"><Badge status={a.status} /></td>
-                    <td className="px-4 py-3 text-sm text-gray-600">👁 {formatNumber(a.views)}</td>
-                    <td className="px-4 py-3">
-                      <AdminArticleActions articleId={a.article_id} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Journalist Management + Payout */}
-        <div className="grid lg:grid-cols-2 gap-5 mb-6">
-          {/* Journalist table */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="text-sm font-bold text-[#1a5c2a]">👥 Author Management</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
-                    <th className="px-4 py-2.5 text-left">Author</th>
-                    <th className="px-3 py-2.5">Status</th>
-                    <th className="px-3 py-2.5">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f0faf2]">
-                  {journalists.map(j => (
-                    <tr key={j.user_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          {j.profile_image ? (
-                            <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-[#e8f5ea] flex items-center justify-center text-xs font-bold text-[#1a5c2a] shrink-0">
-                              {j.name.charAt(0)}
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{j.name}</p>
-                            <p className="text-xs text-gray-500">{j.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-center"><Badge status={j.status} /></td>
-                      <td className="px-3 py-3 text-center">
-                        <AdminJournalistActions userId={j.user_id} currentStatus={j.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Payout Overview */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="text-sm font-bold text-[#1a5c2a]">💵 Payout Overview</h2>
-            </div>
-            <div className="divide-y divide-[#e8f5ea]">
-              {[
-                { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue), color: 'text-[#1a5c2a]' },
-                { label: 'Pending Payouts', value: formatCurrency(pendingPayout), color: 'text-[#f5c518]' },
-                { label: 'Active Authors', value: journalistsCount.toString(), color: 'text-[#1a5c2a]' },
-              ].map(row => (
-                <div key={row.label} className="flex items-center justify-between px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
-                  <span className="text-sm text-gray-600">{row.label}</span>
-                  <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
-                </div>
-              ))}
-            </div>
-            <div className="px-5 py-4">
-              <Link href="/admin/earnings" className="block w-full text-center bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-                📊 View Payment Report
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Trends & Insights */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
-          <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="text-sm font-bold text-[#1a5c2a]">🔍 Trends & Insights</h2>
-          </div>
-          <div className="p-5">
-            <div className="flex items-center gap-5 mb-5">
-              <div
-                className="w-20 h-20 rounded-full shrink-0 shadow-inner"
-                style={{ background: 'conic-gradient(#1a5c2a 0% 50%, #f5c518 50% 75%, #c8102e 75% 90%, #e5e7eb 90% 100%)' }}
-              />
-              <div className="space-y-1.5 text-xs text-gray-600">
-                {[
-                  { color: '#1a5c2a', label: 'Ads — 50%' },
-                  { color: '#f5c518', label: 'Subscriptions — 25%' },
-                  { color: '#c8102e', label: 'Sponsored — 15%' },
-                  { color: '#e5e7eb', label: 'Other — 10%' },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    {item.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <BarChart
-              data={[45, 60, 52, 75, 68, 85, 100]}
-              labels={['Mon','Tue','Wed','Thu','Fri','Sat','Sun']}
-              height={60}
-            />
-          </div>
-        </div>
-
-        {/* Live Registrations Feed */}
-        <div className="mb-6">
-          <LiveRegistrationsFeed initialUsers={recentUsers} />
+      {/* View Toggle */}
+      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveView('dashboard')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              activeView === 'dashboard'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300'
+            }`}
+          >
+            📊 Dashboard
+          </button>
+          <button
+            onClick={() => setActiveView('control-panel')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              activeView === 'control-panel'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300'
+            }`}
+          >
+            ⚙️ Control Panel
+          </button>
         </div>
       </div>
+
+      {/* Control Panel View */}
+      {activeView === 'control-panel' && (
+        <AdminControlPanel />
+      )}
+
+      {/* Dashboard View */}
+      {activeView === 'dashboard' && (
+        <div className="p-6 flex-1">
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="loading-spinner" />
+            </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                <RealtimeFeedFetcher initialArticlesCount={totalArticlesCount} />
+              </div>
+
+              {/* Overview stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <StatCard
+                  label="📰 Total Articles"
+                  value={totalArticlesCount.toLocaleString()}
+                  sub={`Published: ${published.length} · Pending: ${pending.length}`}
+                  accent="green"
+                />
+                <StatCard
+                  label="✍️ Pending Review"
+                  value={`${pending.length} Articles`}
+                  sub="Awaiting your approval"
+                  accent="gold"
+                />
+                <StatCard
+                  label="👥 Registered Users"
+                  value={formatNumber(totalUsers)}
+                  sub={`Authors: ${journalistsCount}`}
+                  accent="green"
+                />
+              </div>
+
+              {/* Traffic + Contributors */}
+              <div className="grid lg:grid-cols-2 gap-5 mb-6">
+                {/* Traffic chart */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+                  <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
+                    <h2 className="text-sm font-bold text-[#1a5c2a]">📈 Traffic Overview</h2>
+                    <span className="text-xs text-gray-500">Last 12 months</span>
+                  </div>
+                  <div className="px-5 pb-4 pt-3">
+                    <BarChart
+                      data={[30, 45, 38, 55, 60, 50, 72, 80, 75, 90, 85, 100]}
+                      labels={['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']}
+                      height={80}
+                    />
+                    <div className="flex gap-5 mt-4 text-xs text-gray-500 flex-wrap">
+                      <span>Total Revenue: <strong className="text-[#1a5c2a]">{formatCurrency(totalRevenue)}</strong></span>
+                      <span>Pending Payout: <strong className="text-[#f5c518]">{formatCurrency(pendingPayout)}</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active contributors */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+                  <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
+                    <h2 className="text-sm font-bold text-[#1a5c2a]">⭐ Active Authors</h2>
+                    <Link href="/admin/journalists" className="text-xs font-semibold text-[#1a5c2a] bg-[#e8f5ea] hover:bg-[#d1ead3] px-3 py-1.5 rounded-lg transition-all duration-300">View All</Link>
+                  </div>
+                  <div className="divide-y divide-[#f0faf2]">
+                    {journalists.slice(0, 4).map(j => (
+                      <div key={j.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
+                        {j.profile_image ? (
+                          <Image src={j.profile_image} alt={j.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-[#e8f5ea] flex items-center justify-center text-sm font-bold text-[#1a5c2a] shrink-0">
+                            {j.name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{j.name}</p>
+                          <p className="text-xs text-gray-500">{j.email}</p>
+                        </div>
+                        <Badge status={j.status} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {pending.length > 0 && (
+                    <>
+                      <div className="px-5 py-2 bg-[#f0faf2] border-t border-[#e8f5ea]">
+                        <p className="text-xs font-bold text-[#1a5c2a]/70 uppercase tracking-wider">Latest Submissions</p>
+                      </div>
+                      {pending.slice(0, 2).map(a => (
+                        <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 border-t border-[#f0faf2]">
+                          {a.featured_image && (
+                            <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
+                              <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{a.title}</p>
+                            <p className="text-xs text-gray-500">By {a.author?.name}</p>
+                          </div>
+                          <Link href={`/admin/review/${a.article_id}`} className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+                            Review
+                          </Link>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Manage Articles table */}
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden mb-6 transition-all duration-300 hover:shadow-md">
+                <div className="px-5 py-4 border-b border-[#e8f5ea] flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-[#f0faf2] to-white">
+                  <h2 className="text-sm font-bold text-[#1a5c2a]">📋 Manage Articles</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+                        <th className="px-4 py-2.5 text-left w-6">#</th>
+                        <th className="px-4 py-2.5 text-left">Title</th>
+                        <th className="px-4 py-2.5 text-left">Author</th>
+                        <th className="px-4 py-2.5 text-left">Status</th>
+                        <th className="px-4 py-2.5 text-left">Views</th>
+                        <th className="px-4 py-2.5 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f0faf2]">
+                      {articles.map((a, i) => (
+                        <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                          <td className="px-4 py-3 text-gray-500 text-xs">{i + 1}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              {a.featured_image && (
+                                <div className="relative w-10 h-8 rounded overflow-hidden shrink-0">
+                                  <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-semibold text-gray-900 truncate max-w-[180px]">{a.title}</p>
+                                <p className="text-xs text-gray-500">{a.category?.name} · {formatDate(a.created_at)}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{a.author?.name}</td>
+                          <td className="px-4 py-3"><Badge status={a.status} /></td>
+                          <td className="px-4 py-3 text-sm text-gray-600">👁 {formatNumber(a.views)}</td>
+                          <td className="px-4 py-3">
+                            <AdminArticleActions articleId={a.article_id} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Journalist Management + Payout */}
+              <div className="grid lg:grid-cols-2 gap-5 mb-6">
+                {/* Journalist table */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+                  <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+                    <h2 className="text-sm font-bold text-[#1a5c2a]">👥 Author Management</h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+                          <th className="px-4 py-2.5 text-left">Author</th>
+                          <th className="px-3 py-2.5">Status</th>
+                          <th className="px-3 py-2.5">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#f0faf2]">
+                        {journalists.map(j => (
+                          <tr key={j.user_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                {j.profile_image ? (
+                                  <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-[#e8f5ea] flex items-center justify-center text-xs font-bold text-[#1a5c2a] shrink-0">
+                                    {j.name.charAt(0)}
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{j.name}</p>
+                                  <p className="text-xs text-gray-500">{j.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-center"><Badge status={j.status} /></td>
+                            <td className="px-3 py-3 text-center">
+                              <AdminJournalistActions userId={j.user_id} currentStatus={j.status} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Payout Overview */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+                  <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+                    <h2 className="text-sm font-bold text-[#1a5c2a]">💵 Payout Overview</h2>
+                  </div>
+                  <div className="divide-y divide-[#e8f5ea]">
+                    {[
+                      { label: 'Total Revenue (All Time)', value: formatCurrency(totalRevenue), color: 'text-[#1a5c2a]' },
+                      { label: 'Pending Payouts', value: formatCurrency(pendingPayout), color: 'text-[#f5c518]' },
+                      { label: 'Active Authors', value: journalistsCount.toString(), color: 'text-[#1a5c2a]' },
+                    ].map(row => (
+                      <div key={row.label} className="flex items-center justify-between px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
+                        <span className="text-sm text-gray-600">{row.label}</span>
+                        <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-5 py-4">
+                    <Link href="/admin/earnings" className="block w-full text-center bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+                      📊 View Payment Report
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trends & Insights */}
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] overflow-hidden transition-all duration-300 hover:shadow-md">
+                <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
+                  <h2 className="text-sm font-bold text-[#1a5c2a]">🔍 Trends & Insights</h2>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-5 mb-5">
+                    <div
+                      className="w-20 h-20 rounded-full shrink-0 shadow-inner"
+                      style={{ background: 'conic-gradient(#1a5c2a 0% 50%, #f5c518 50% 75%, #c8102e 75% 90%, #e5e7eb 90% 100%)' }}
+                    />
+                    <div className="space-y-1.5 text-xs text-gray-600">
+                      {[
+                        { color: '#1a5c2a', label: 'Ads — 50%' },
+                        { color: '#f5c518', label: 'Subscriptions — 25%' },
+                        { color: '#c8102e', label: 'Sponsored — 15%' },
+                        { color: '#e5e7eb', label: 'Other — 10%' },
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                          {item.label}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <BarChart
+                    data={[45, 60, 52, 75, 68, 85, 100]}
+                    labels={['Mon','Tue','Wed','Thu','Fri','Sat','Sun']}
+                    height={60}
+                  />
+                </div>
+              </div>
+
+              {/* Live Registrations Feed */}
+              <div className="mb-6">
+                <LiveRegistrationsFeed initialUsers={recentUsers} />
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </>
   )
 }
