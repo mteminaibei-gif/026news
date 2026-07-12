@@ -30,6 +30,8 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ── users: add columns from types.ts ────────────────────────
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS
+  auth_id UUID UNIQUE;                    -- ensure link to auth.users exists
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS
   region_preference JSONB DEFAULT NULL;   -- { default_region, preferred_regions[], region_priority{} }
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS
   follower_count INTEGER NOT NULL DEFAULT 0;
@@ -52,11 +54,37 @@ ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS
 ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS
   save_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS
+  excerpt TEXT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS
   reading_time_minutes INTEGER;
 ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS
   regions region_code[] DEFAULT '{}';
 ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS
   is_region_priority BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Defensive: ensure core article columns exist (live DB may predate schema.sql)
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS likes BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS earnings NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS views BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS source_url TEXT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS source_name TEXT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS is_aggregated BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS content_hash TEXT;
+
+-- Defensive core columns (some live DBs predate schema.sql entirely)
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS category_id BIGINT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS author_id BIGINT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS status article_status;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS monetization_type monetization_type;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS featured_image TEXT;
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- ── comments: like_count ────────────────────────────────────
 ALTER TABLE public.comments ADD COLUMN IF NOT EXISTS
@@ -111,18 +139,57 @@ CREATE TABLE IF NOT EXISTS public.article_regions (
   article_id        BIGINT NOT NULL REFERENCES public.articles(article_id) ON DELETE CASCADE,
   region_code       region_code NOT NULL,
   priority          INTEGER NOT NULL DEFAULT 0,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (article_id, region_code)
 );
 
--- messages (user-to-user)
-CREATE TABLE IF NOT EXISTS public.messages (
-  message_id  BIGSERIAL PRIMARY KEY,
-  sender_id   BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
-  receiver_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
-  message     TEXT NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  is_read     BOOLEAN NOT NULL DEFAULT FALSE
+-- saved_articles (user bookmarks)
+CREATE TABLE IF NOT EXISTS public.saved_articles (
+  saved_id   BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  article_id BIGINT NOT NULL REFERENCES public.articles(article_id) ON DELETE CASCADE,
+  saved_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  notes      TEXT,
+  UNIQUE(user_id, article_id)
 );
+CREATE INDEX IF NOT EXISTS idx_saved_articles_user_id
+  ON public.saved_articles(user_id, saved_at DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_articles_article_id
+  ON public.saved_articles(article_id);
+
+-- messages (user-to-user)
+-- Guarded: if a messages table already exists from an earlier schema load with a
+-- different shape (e.g. UUID sender/receiver), leave it untouched to avoid type
+-- conflicts. The frontend does not currently read/write messages.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'messages'
+  ) THEN
+    CREATE TABLE public.messages (
+      message_id  BIGSERIAL PRIMARY KEY,
+      sender_id   BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+      receiver_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+      message     TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      is_read     BOOLEAN NOT NULL DEFAULT FALSE
+    );
+    CREATE INDEX idx_messages_sender ON public.messages(sender_id);
+    CREATE INDEX idx_messages_receiver ON public.messages(receiver_id);
+
+    ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS "Users see own messages" ON public.messages;
+    CREATE POLICY "Users see own messages" ON public.messages
+      FOR SELECT USING (
+        auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = messages.sender_id)
+        OR auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = messages.receiver_id)
+      );
+    DROP POLICY IF EXISTS "Users send messages" ON public.messages;
+    CREATE POLICY "Users send messages" ON public.messages
+      FOR INSERT WITH CHECK (auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = messages.sender_id));
+  END IF;
+END $$;
 
 -- audit_log
 CREATE TABLE IF NOT EXISTS public.audit_log (
@@ -234,8 +301,7 @@ CREATE TABLE IF NOT EXISTS public.email_templates (
 -- ── indexes for new tables ──────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_user_regions_user   ON public.user_regions(user_id);
 CREATE INDEX IF NOT EXISTS idx_article_regions_art ON public.article_regions(article_id);
-CREATE INDEX IF NOT EXISTS idx_messages_receiver   ON public.messages(receiver_id);
-CREATE INDEX IF NOT EXISTS idx_messages_sender     ON public.messages(sender_id);
+-- (messages indexes are created inside the guarded DO block above)
 CREATE INDEX IF NOT EXISTS idx_article_likes_art   ON public.article_likes(article_id);
 CREATE INDEX IF NOT EXISTS idx_user_follows_follow ON public.user_follows(following_id);
 CREATE INDEX IF NOT EXISTS idx_article_versions_art ON public.article_versions(article_id);
@@ -371,7 +437,10 @@ ALTER TABLE public.article_tag_mappings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.content_moderation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_templates    ENABLE ROW LEVEL SECURITY;
 
--- ── saved_articles: FIX broken policies (user_email did not exist) ──
+-- ── saved_articles: table is created in the NEW TABLES section above; fix policies ──
+ALTER TABLE public.saved_articles ENABLE ROW LEVEL SECURITY;
+
+-- FIX broken policies (user_email did not exist) ──
 DROP POLICY IF EXISTS "Users can view their own saved articles" ON public.saved_articles;
 DROP POLICY IF EXISTS "Users can save articles"                ON public.saved_articles;
 DROP POLICY IF EXISTS "Users can remove saved articles"        ON public.saved_articles;
@@ -420,16 +489,7 @@ DROP POLICY IF EXISTS "Users unfollow own" ON public.user_follows;
 CREATE POLICY "Users unfollow own" ON public.user_follows
   FOR DELETE USING (auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = user_follows.follower_id));
 
--- ── messages: sender/receiver only ──
-DROP POLICY IF EXISTS "Users see own messages" ON public.messages;
-CREATE POLICY "Users see own messages" ON public.messages
-  FOR SELECT USING (
-    auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = messages.sender_id)
-    OR auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = messages.receiver_id)
-  );
-DROP POLICY IF EXISTS "Users send messages" ON public.messages;
-CREATE POLICY "Users send messages" ON public.messages
-  FOR INSERT WITH CHECK (auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = messages.sender_id));
+-- ── messages policies are created (guarded) near the table definition above ──
 
 -- ── article_tags / mappings: public read; admin manage ──
 DROP POLICY IF EXISTS "Tags are public" ON public.article_tags;

@@ -28,19 +28,19 @@ ALTER TABLE public.saved_articles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own saved articles"
   ON public.saved_articles
   FOR SELECT
-  USING (auth.uid()::text = (SELECT user_email FROM public.users WHERE user_id = saved_articles.user_id)::text);
+  USING (auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id));
 
 -- RLS Policy: Users can insert their own saved articles
 CREATE POLICY "Users can save articles"
   ON public.saved_articles
   FOR INSERT
-  WITH CHECK (auth.uid()::text = (SELECT user_email FROM public.users WHERE user_id = saved_articles.user_id)::text);
+  WITH CHECK (auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id));
 
 -- RLS Policy: Users can delete their own saved articles
 CREATE POLICY "Users can remove saved articles"
   ON public.saved_articles
   FOR DELETE
-  USING (auth.uid()::text = (SELECT user_email FROM public.users WHERE user_id = saved_articles.user_id)::text);
+  USING (auth.uid() = (SELECT auth_id FROM public.users WHERE user_id = saved_articles.user_id));
 
 -- Grant permissions
 GRANT SELECT, INSERT, DELETE ON public.saved_articles TO authenticated;

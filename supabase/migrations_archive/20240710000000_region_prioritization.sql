@@ -142,7 +142,10 @@ SELECT
   ARRAY_AGG(DISTINCT ar.priority) FILTER (WHERE ar.priority > 0) AS article_priorities,
   -- Region match score (higher = more region-relevant)
   COUNT(DISTINCT ar.region_code) FILTER (
-    WHERE ar.region_code = ANY(u.region_preference->>'preferred_regions'::region_code[] OR u.region_preference IS NULL)
+    WHERE u.region_preference IS NOT NULL
+      AND ar.region_code::text = ANY(
+        ARRAY(SELECT jsonb_array_elements_text(u.region_preference->'preferred_regions'))
+      )
   ) AS region_match_score
 FROM public.articles a
 LEFT JOIN public.users u ON u.user_id = a.author_id
@@ -196,7 +199,7 @@ BEGIN
     c.name AS category_name,
     -- Region match: count matching regions in user preference
     COALESCE(
-      (SELECT COUNT(*) FROM unnest(a.regions) AS ar WHERE ar = ANY(string_to_array(p_user_region::text, ','))),
+      (SELECT COUNT(*) FROM unnest(a.regions) AS ar WHERE ar::text = ANY(ARRAY[p_user_region::text])),
       0
     ) AS region_match_score
   FROM public.articles a
@@ -338,6 +341,14 @@ CREATE TABLE IF NOT EXISTS public.messages (
   created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
   is_read       BOOLEAN         NOT NULL DEFAULT FALSE
 );
+
+-- Tolerant: if messages already exists (e.g. from an earlier load) with a
+-- different shape, add any missing columns instead of failing.
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS sender_id   BIGINT REFERENCES public.users(user_id) ON DELETE CASCADE;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS receiver_id BIGINT REFERENCES public.users(user_id) ON DELETE CASCADE;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS message     TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS is_read     BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON public.messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver ON public.messages(receiver_id);
