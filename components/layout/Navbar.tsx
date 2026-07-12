@@ -48,6 +48,18 @@ export function Navbar() {
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
 
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileOpen(false)
+        setSearchOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   return (
     <>
       <header
@@ -307,6 +319,7 @@ export function Navbar() {
         onClick={closeMobile}
         className="lg:hidden fixed inset-0 z-40 transition-opacity duration-300"
         style={{
+          display: mobileOpen ? 'block' : 'none',
           top: NAVBAR_H,
           background: 'oklch(0% 0 0 / 0.4)',
           backdropFilter: 'blur(4px)',
@@ -321,6 +334,7 @@ export function Navbar() {
         aria-label="Mobile navigation"
         className="lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain"
         style={{
+          display: mobileOpen ? 'flex' : 'none',
           width: 320, maxWidth: '85vw',
           background: 'var(--bg-surface)',
           boxShadow: 'var(--shadow-xl)',
