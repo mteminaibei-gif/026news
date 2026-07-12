@@ -134,7 +134,11 @@ export default async function JournalistProfilePage({ params }: Props) {
                       <span>{article.likes?.toLocaleString()} likes</span>
                     </div>
                   </div>
-                  <Image className="article-card-img" src={article.featured_image} alt={article.title} width={180} height={160} style={{ width: '100%', height: '100%', minHeight: 130, borderRadius: 10, objectFit: 'cover' }} />
+                  {article.featured_image ? (
+                    <Image className="article-card-img" src={article.featured_image} alt={article.title} width={180} height={160} style={{ width: '100%', height: '100%', minHeight: 130, borderRadius: 10, objectFit: 'cover' }} />
+                  ) : (
+                    <div className="article-card-img" style={{ width: '100%', height: '100%', minHeight: 130, borderRadius: 10, background: 'var(--bg-inset)' }} />
+                  )}
                 </Link>
               ))}
             </div>

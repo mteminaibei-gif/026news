@@ -34,7 +34,10 @@ export async function updateSession(request: NextRequest) {
     { prefix: '/journalist', allowed: ['journalist'] },
   ]
 
-  const route = protectedRoutes.find(r => request.nextUrl.pathname.startsWith(r.prefix))
+  const pathname = request.nextUrl.pathname
+  const route = protectedRoutes.find(
+    r => pathname === r.prefix || pathname.startsWith(r.prefix + '/')
+  )
 
   // Not a protected route — pass through
   if (!route) {
