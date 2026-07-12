@@ -140,7 +140,7 @@ export default async function JournalistsPage() {
             audience on 026News.
           </p>
           <Link
-            href="/login?mode=signup"
+            href="/onboarding"
             className="font-bold px-8 py-3 rounded-xl transition-colors"
             style={{ background: 'var(--accent)', color: '#1a1a1a' }}
           >

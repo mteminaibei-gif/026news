@@ -47,8 +47,6 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
     setRunning(true)
     setFetchResult(null)
     try {
-      // Use the admin endpoint (authenticated) rather than the cron endpoint,
-      // which is guarded by CRON_SECRET and returns 401 without a Bearer token.
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -60,14 +58,13 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
       if (!res.ok || !data) {
         setFetchResult(`❌ Fetch failed (${res.status}) — check server logs.`)
       } else {
-        const feeds    = data.feeds ?? 0
-        const inserted = data.inserted ?? 0
-        const skipped  = data.skipped ?? 0
-        const errors   = data.errors ?? 0
+        const f      = data.feeds ?? 0
+        const ins    = data.inserted ?? 0
+        const skipped = data.skipped ?? 0
+        const errs   = data.errors ?? 0
         setFetchResult(
-          `✅ Done — ${inserted} inserted, ${skipped} skipped` +
-          (errors ? `, ${errors} errors` : '') +
-          ` across ${feeds} feeds.`
+          `✅ Done — ${ins} inserted, ${skipped} skipped` +
+          (errs ? `, ${errs} errors` : '') + ` across ${f} feeds.`
         )
       }
       router.refresh()
@@ -147,222 +144,164 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
   const totalFetch = feeds.reduce((s, f) => s + (f.fetch_count ?? 0), 0)
 
   return (
-    <div className="space-y-5">
-
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[
-          { label: 'Total Feeds',   value: feeds.length,                    style: { color: 'var(--primary)' } },
-          { label: 'Active',        value: active,                          style: { color: 'var(--primary)' } },
-          { label: 'Inactive',      value: feeds.length - active,           style: { color: 'var(--text-tertiary)' } },
-          { label: 'Total Fetches', value: totalFetch.toLocaleString(),     style: { color: 'var(--warning)' } },
+          { label: 'Total Feeds',   value: feeds.length,            color: 'var(--primary)' },
+          { label: 'Active',        value: active,                  color: 'var(--primary)' },
+          { label: 'Inactive',      value: feeds.length - active,   color: 'var(--text-tertiary)' },
+          { label: 'Total Fetches', value: totalFetch.toLocaleString(), color: 'var(--warning)' },
         ].map(s => (
-          <div key={s.label} className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
-            <div className="text-2xl font-extrabold" style={s.style}>{s.value}</div>
-            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
+          <div key={s.label} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '18px 20px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Action bar */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 16 }}>
         <div>
-          <h2 className="font-bold" style={{ color: 'var(--primary)' }}>RSS Feed Sources</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Auto-fetched daily via Vercel Cron.</p>
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>RSS Feed Sources</h2>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 2 }}>Auto-fetched daily via Vercel Cron.</p>
         </div>
-        <div className="flex gap-2 items-center flex-wrap">
-          {fetchResult && <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: 'var(--text-secondary)', background: 'var(--primary-light)' }}>{fetchResult}</span>}
-          <button
-            onClick={() => setShowAdd(true)}
-            className="text-white font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
-            style={{ background: 'var(--primary)' }}
-          >
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {fetchResult && (
+            <span style={{ fontSize: '0.78rem', padding: '8px 14px', borderRadius: 10, color: 'var(--text-secondary)', background: 'var(--primary-light)' }}>{fetchResult}</span>
+          )}
+          <button onClick={() => setShowAdd(true)}
+            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--primary)', color: 'oklch(98% 0.005 175)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' }}>
             + Add Feed
           </button>
-          <button
-            onClick={runFetchAll}
-            disabled={running}
-            className="font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md disabled:opacity-50"
-            style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}
-          >
+          <button onClick={runFetchAll} disabled={running}
+            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--warning)', color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.85rem', cursor: running ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: running ? 0.6 : 1 }}>
             {running ? '⏳ Fetching…' : '⚡ Fetch All Now'}
           </button>
         </div>
       </div>
 
       {/* Search + filter */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <input
-          type="search"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name or URL…"
-          className="border rounded-xl px-3 py-2 text-sm outline-none flex-1 min-w-[200px] transition-all duration-300"
-          style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }}
-        />
-        <div className="flex gap-1">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', display: 'flex' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+          </span>
+          <input
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search feeds by name or URL…"
+            style={{ width: '100%', padding: '11px 14px 11px 42px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none' }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
           {(['all', 'active', 'inactive'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300`}
+            <button key={s} onClick={() => setFilterStatus(s)}
               style={{
+                padding: '9px 16px', borderRadius: 10, border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
                 background: filterStatus === s ? 'var(--primary)' : 'var(--primary-light)',
-                color: filterStatus === s ? 'white' : 'var(--text-secondary)',
-              }}
-            >
+                color: filterStatus === s ? 'oklch(98% 0.005 175)' : 'var(--text-secondary)',
+              }}>
               {s}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                <th className="px-4 py-2.5 text-left">Source</th>
-                <th className="px-4 py-2.5 text-left">Feed URL</th>
-                <th className="px-4 py-2.5 text-left">Category</th>
-                <th className="px-4 py-2.5 text-left">Last Fetched</th>
-                <th className="px-4 py-2.5 text-left">Fetches</th>
-                <th className="px-4 py-2.5 text-left">Status</th>
-                <th className="px-4 py-2.5 text-left">Error</th>
-                <th className="px-4 py-2.5 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--primary-light)' }}>
-              {visible.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-400 text-sm">No feeds match your search.</td>
-                </tr>
-              ) : visible.map(f => (
-                <tr key={f.feed_id} className="transition-all duration-300" style={{ ['--hover-bg' as string]: 'var(--bg-inset)' }}>
-                  <td className="px-4 py-3 font-semibold text-gray-900 max-w-[160px]">
-                    <span className="line-clamp-1">{f.name}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <a href={f.feed_url} target="_blank" rel="noopener noreferrer"
-                      className="hover:underline text-xs truncate max-w-[200px] block"
-                      style={{ color: 'var(--primary)' }}>
-                      {f.feed_url}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{f.category?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                    {f.last_fetched ? formatDate(f.last_fetched) : 'Never'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{(f.fetch_count ?? 0).toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold"
-                      style={{
-                        background: f.is_active ? 'var(--border-subtle)' : 'var(--border)',
-                        color: f.is_active ? 'var(--primary)' : 'var(--text-tertiary)',
-                      }}>
-                      {f.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs max-w-[140px]" style={{ color: 'var(--error)' }}>
-                    <span className="line-clamp-1">{f.last_error ?? '—'}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1.5">
-                      <button
-                        onClick={() => toggleFeed(f)}
-                        disabled={togglingId === f.feed_id}
-                        className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
-                        style={{
-                          background: f.is_active ? 'var(--primary-light)' : 'var(--border-subtle)',
-                          color: f.is_active ? 'var(--text-secondary)' : 'var(--primary)',
-                        }}
-                      >
-                        {togglingId === f.feed_id ? '…' : f.is_active ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
-                        onClick={() => deleteFeed(f)}
-                        disabled={deletingId === f.feed_id}
-                        className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
-                        style={{ background: 'var(--error-light)', color: 'var(--error)' }}
-                      >
-                        {deletingId === f.feed_id ? '…' : 'Delete'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Feed cards */}
+      {visible.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-tertiary)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16 }}>
+          No feeds match your search.
         </div>
-      </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+          {visible.map(f => (
+            <div key={f.feed_id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: f.is_active ? 'var(--success)' : 'var(--text-muted)', flexShrink: 0 }} />
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</h3>
+                  </div>
+                  <a href={f.feed_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', fontSize: '0.74rem', color: 'var(--primary)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>
+                    {f.feed_url}
+                  </a>
+                </div>
+                {f.category && (
+                  <span style={{ flexShrink: 0, padding: '3px 10px', borderRadius: 20, background: 'var(--primary-light)', color: 'var(--primary)', fontSize: '0.68rem', fontWeight: 600 }}>
+                    {f.category.name}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                <span>Last fetched: {f.last_fetched ? formatDate(f.last_fetched) : 'Never'}</span>
+                <span>{f.fetch_count ?? 0} fetches</span>
+              </div>
+
+              {f.last_error && (
+                <div style={{ fontSize: '0.72rem', color: 'var(--error)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>⚠ {f.last_error}</div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 4 }}>
+                <button onClick={() => toggleFeed(f)} disabled={togglingId === f.feed_id}
+                  style={{ flex: 1, padding: '8px', borderRadius: 9, border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    background: f.is_active ? 'var(--bg-inset)' : 'var(--primary-light)', color: f.is_active ? 'var(--text-secondary)' : 'var(--primary)' }}>
+                  {togglingId === f.feed_id ? '…' : f.is_active ? 'Disable' : 'Enable'}
+                </button>
+                <button onClick={() => deleteFeed(f)} disabled={deletingId === f.feed_id}
+                  style={{ padding: '8px 14px', borderRadius: 9, border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    background: 'var(--error-light)', color: 'var(--error)' }}>
+                  {deletingId === f.feed_id ? '…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Feed Modal */}
       {showAdd && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setShowAdd(false) }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <span className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} />
-                <h3 className="text-base font-extrabold" style={{ color: 'var(--primary)' }}>Add RSS Feed</h3>
+          <div style={{ background: 'var(--bg-surface)', borderRadius: 20, boxShadow: 'var(--shadow-xl)', width: '100%', maxWidth: 440, padding: 28, animation: 'ob-fade-in 0.3s var(--ease-out-expo)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 4, height: 20, borderRadius: 2, background: 'var(--primary)' }} />
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--primary)' }}>Add RSS Feed</h3>
               </div>
-              <button onClick={() => setShowAdd(false)}
-                className="text-gray-400 hover:text-gray-600 w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center transition-all duration-300"
-                aria-label="Close">✕</button>
+              <button onClick={() => setShowAdd(false)} style={{ width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'var(--bg-inset)', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.9rem' }} aria-label="Close">✕</button>
             </div>
 
             {addError && (
-              <div role="alert" className="text-sm px-3 py-2 rounded-xl mb-4" style={{ background: 'var(--error-light)', borderColor: 'var(--error)', border: '1px solid var(--error)', color: 'var(--error)' }}>
-                {addError}
-              </div>
+              <div style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid var(--error)', padding: '8px 12px', borderRadius: 10, fontSize: '0.82rem', marginBottom: 14 }}>{addError}</div>
             )}
 
-            <form onSubmit={addFeed} className="space-y-4">
+            <form onSubmit={addFeed} style={{ display: 'grid', gap: 14 }}>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="add-name">
-                  Source Name
-                </label>
-                <input id="add-name" type="text" value={addName} onChange={e => setAddName(e.target.value)} required
-                  placeholder="e.g. Nation Africa — Top Stories"
-                  className="w-full border rounded-xl px-3 py-2 text-sm outline-none transition-all duration-300"
-                  style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }} />
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: 6 }}>Source Name</label>
+                <input value={addName} onChange={e => setAddName(e.target.value)} required placeholder="e.g. Nation Africa — Top Stories"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none' }} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="add-url">
-                  RSS Feed URL
-                </label>
-                <input id="add-url" type="url" value={addUrl} onChange={e => setAddUrl(e.target.value)} required
-                  placeholder="https://example.com/rss"
-                  className="w-full border rounded-xl px-3 py-2 text-sm outline-none transition-all duration-300"
-                  style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }} />
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: 6 }}>RSS Feed URL</label>
+                <input value={addUrl} onChange={e => setAddUrl(e.target.value)} required type="url" placeholder="https://example.com/rss"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none' }} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="add-cat">
-                  Category <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <select id="add-cat" value={addCatId} onChange={e => setAddCatId(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full border rounded-xl px-3 py-2 text-sm outline-none bg-white transition-all duration-300"
-                  style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: 6 }}>Category <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--text-tertiary)' }}>(optional)</span></label>
+                <select value={addCatId} onChange={e => setAddCatId(e.target.value === '' ? '' : Number(e.target.value))}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none' }}>
                   <option value="">Uncategorised</option>
-                  {categories.map(c => (
-                    <option key={c.category_id} value={c.category_id}>{c.name}</option>
-                  ))}
+                  {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.name}</option>)}
                 </select>
               </div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setShowAdd(false)}
-                  className="flex-1 font-semibold py-2.5 rounded-xl text-sm transition-all duration-300"
-                  style={{ background: 'var(--primary-light)', color: 'var(--text-secondary)' }}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={addLoading || !addName.trim() || !addUrl.trim()}
-                  className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 disabled:opacity-50"
-                  style={{ background: 'var(--primary)' }}>
-                  {addLoading ? 'Adding…' : '+ Add Feed'}
-                </button>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                <button type="button" onClick={() => setShowAdd(false)} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'var(--primary-light)', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+                <button type="submit" disabled={addLoading || !addName.trim() || !addUrl.trim()} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'var(--primary)', color: 'oklch(98% 0.005 175)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit', opacity: (addLoading || !addName.trim() || !addUrl.trim()) ? 0.6 : 1 }}>{addLoading ? 'Adding…' : '+ Add Feed'}</button>
               </div>
             </form>
           </div>

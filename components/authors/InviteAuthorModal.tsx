@@ -16,9 +16,9 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
 
   if (!isOpen) return null
 
-  const inviteMessage = `Join 026NEWS as an author and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=invite`
+  const inviteMessage = `Join 026NEWS as an author and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=invite`
 
-  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=journalist_invite`
+  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=journalist_invite`
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink)

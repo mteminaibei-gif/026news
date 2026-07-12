@@ -51,7 +51,10 @@ CREATE TABLE IF NOT EXISTS public.users (
   status        account_status   NOT NULL DEFAULT 'active',
   total_views   BIGINT           NOT NULL DEFAULT 0,
   rank_score    NUMERIC          NOT NULL DEFAULT 0,
-  badge_level   TEXT             DEFAULT NULL
+  badge_level   TEXT             DEFAULT NULL,
+  interests     TEXT[]           DEFAULT '{}',
+  notification_prefs JSONB       DEFAULT '{}'::jsonb,
+  author_application JSONB       DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);

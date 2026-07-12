@@ -272,7 +272,7 @@ export function Navbar() {
                     Sign In
                   </Link>
                   <Link
-                    href="/login?mode=signup"
+                    href="/onboarding"
                     className="nav-btn nav-btn-primary"
                     style={{
                       padding: '8px 18px', borderRadius: 8,
@@ -431,7 +431,7 @@ export function Navbar() {
                 Sign In
               </Link>
               <Link
-                href="/login?mode=signup"
+                href="/onboarding"
                 onClick={closeMobile}
                 className="flex items-center justify-center gap-2 w-full text-sm font-semibold py-3.5 rounded-xl transition-all"
                 style={{

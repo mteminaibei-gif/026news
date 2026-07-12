@@ -111,7 +111,7 @@ function LoginForm() {
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Sign In</h2>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Don&apos;t have an account?{' '}
-              <Link href="/signup" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create one</Link>
+              <Link href="/onboarding" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create one</Link>
             </p>
           </div>
 

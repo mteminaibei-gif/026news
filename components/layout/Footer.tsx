@@ -10,7 +10,7 @@ const FOOTER_LINKS = {
   Platform: [
     { label: 'Author Portal', href: '/journalist/dashboard' },
     { label: 'Admin Panel', href: '/admin/dashboard' },
-    { label: 'Become an Author', href: '/login?mode=signup' },
+    { label: 'Become an Author', href: '/onboarding' },
   ],
   Kenya: [
     { label: 'Kenya News', href: '/?category=Kenya' },
