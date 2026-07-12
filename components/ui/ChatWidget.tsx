@@ -133,7 +133,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
       <div className={`mb-4 transition-all duration-300 transform ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-80 md:w-96 max-h-[600px] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
           {/* Header */}
-          <div className="bg-[#1a5c2a] p-4 flex items-center gap-3">
+          <div className="p-4 flex items-center gap-3" style={{ background: 'var(--primary)' }}>
             {receiverImage ? (
               <div className="relative">
                 <img
@@ -164,7 +164,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/50">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="animate-spin text-[#1a5c2a]" size={24} />
+                <Loader2 className="animate-spin" size={24} style={{ color: 'var(--primary)' }} />
               </div>
             ) : messages.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -182,9 +182,10 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
                         isMe
-                          ? 'bg-[#1a5c2a] text-white rounded-br-none'
+                          ? 'text-white rounded-br-none'
                           : 'bg-white dark:bg-gray-700 dark:text-white text-gray-900 rounded-bl-none'
                       }`}
+                      style={isMe ? { background: 'var(--primary)' } : undefined}
                     >
                       <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                       <p className={`text-[10px] mt-1 ${isMe ? 'text-white/60' : 'text-gray-400'}`}>
@@ -201,7 +202,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
           {/* Input */}
           <div className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div className="flex gap-2 items-center">
-              <button className="p-2 text-gray-400 hover:text-[#1a5c2a] hover:bg-[#1a5c2a]/10 rounded-lg transition-colors">
+              <button className="p-2 text-gray-400 rounded-lg transition-colors" style={{ '--tw-hover-bg': 'var(--primary-light)' } as React.CSSProperties}>
                 <Paperclip size={20} />
               </button>
               <input
@@ -210,12 +211,14 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] transition-all"
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none transition-all"
+                style={{ outlineColor: 'var(--primary)' }}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={sending || !newMessage.trim()}
-                className="p-2 bg-[#1a5c2a] text-white rounded-xl hover:bg-[#2d8a47] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ background: 'var(--primary)' }}
               >
                 {sending ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
               </button>
@@ -227,7 +230,8 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110"
+        className="w-14 h-14 text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110"
+        style={{ background: 'var(--primary)' }}
       >
         <MessageSquare size={28} />
       </button>

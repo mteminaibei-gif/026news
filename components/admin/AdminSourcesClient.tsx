@@ -131,36 +131,38 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Feeds',   value: feeds.length,                    color: 'text-[#1a5c2a]' },
-          { label: 'Active',        value: active,                          color: 'text-[#1a5c2a]' },
-          { label: 'Inactive',      value: feeds.length - active,           color: 'text-gray-500' },
-          { label: 'Total Fetches', value: totalFetch.toLocaleString(),     color: 'text-[#f5c518]' },
+          { label: 'Total Feeds',   value: feeds.length,                    style: { color: 'var(--primary)' } },
+          { label: 'Active',        value: active,                          style: { color: 'var(--primary)' } },
+          { label: 'Inactive',      value: feeds.length - active,           style: { color: 'var(--text-tertiary)' } },
+          { label: 'Total Fetches', value: totalFetch.toLocaleString(),     style: { color: 'var(--warning)' } },
         ].map(s => (
-          <div key={s.label} className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md">
-            <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+          <div key={s.label} className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+            <div className="text-2xl font-extrabold" style={s.style}>{s.value}</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Action bar */}
-      <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
         <div>
-          <h2 className="font-bold text-[#1a5c2a]">RSS Feed Sources</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Auto-fetched daily via Vercel Cron.</p>
+          <h2 className="font-bold" style={{ color: 'var(--primary)' }}>RSS Feed Sources</h2>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Auto-fetched daily via Vercel Cron.</p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
-          {fetchResult && <span className="text-xs text-gray-600 bg-[#f0faf2] px-3 py-1.5 rounded-lg">{fetchResult}</span>}
+          {fetchResult && <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: 'var(--text-secondary)', background: 'var(--primary-light)' }}>{fetchResult}</span>}
           <button
             onClick={() => setShowAdd(true)}
-            className="bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+            className="text-white font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+            style={{ background: 'var(--primary)' }}
           >
             + Add Feed
           </button>
           <button
             onClick={runFetchAll}
             disabled={running}
-            className="bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md disabled:opacity-50"
+            className="font-bold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:shadow-md disabled:opacity-50"
+            style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}
           >
             {running ? '⏳ Fetching…' : '⚡ Fetch All Now'}
           </button>
@@ -174,18 +176,19 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or URL…"
-          className="border border-[#e8f5ea] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 flex-1 min-w-[200px] transition-all duration-300"
+          className="border rounded-xl px-3 py-2 text-sm outline-none flex-1 min-w-[200px] transition-all duration-300"
+          style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }}
         />
         <div className="flex gap-1">
           {(['all', 'active', 'inactive'] as const).map(s => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
-                filterStatus === s
-                  ? 'bg-[#1a5c2a] text-white shadow-sm'
-                  : 'bg-[#f0faf2] text-gray-600 hover:bg-[#e0f5e4]'
-              }`}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300`}
+              style={{
+                background: filterStatus === s ? 'var(--primary)' : 'var(--primary-light)',
+                color: filterStatus === s ? 'white' : 'var(--text-secondary)',
+              }}
             >
               {s}
             </button>
@@ -194,11 +197,11 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
       </div>
 
       {/* Table */}
-      <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+              <tr className="text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
                 <th className="px-4 py-2.5 text-left">Source</th>
                 <th className="px-4 py-2.5 text-left">Feed URL</th>
                 <th className="px-4 py-2.5 text-left">Category</th>
@@ -209,19 +212,20 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
                 <th className="px-4 py-2.5 text-left">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f0faf2]">
+            <tbody className="divide-y" style={{ borderColor: 'var(--primary-light)' }}>
               {visible.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-gray-400 text-sm">No feeds match your search.</td>
                 </tr>
               ) : visible.map(f => (
-                <tr key={f.feed_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                <tr key={f.feed_id} className="transition-all duration-300" style={{ ['--hover-bg' as string]: 'var(--bg-inset)' }}>
                   <td className="px-4 py-3 font-semibold text-gray-900 max-w-[160px]">
                     <span className="line-clamp-1">{f.name}</span>
                   </td>
                   <td className="px-4 py-3">
                     <a href={f.feed_url} target="_blank" rel="noopener noreferrer"
-                      className="text-[#1a5c2a] hover:underline text-xs truncate max-w-[200px] block">
+                      className="hover:underline text-xs truncate max-w-[200px] block"
+                      style={{ color: 'var(--primary)' }}>
                       {f.feed_url}
                     </a>
                   </td>
@@ -231,13 +235,15 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{(f.fetch_count ?? 0).toLocaleString()}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                      f.is_active ? 'bg-[#e8f5ea] text-[#1a5c2a]' : 'bg-gray-100 text-gray-500'
-                    }`}>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold"
+                      style={{
+                        background: f.is_active ? 'var(--border-subtle)' : 'var(--border)',
+                        color: f.is_active ? 'var(--primary)' : 'var(--text-tertiary)',
+                      }}>
                       {f.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[#c8102e] text-xs max-w-[140px]">
+                  <td className="px-4 py-3 text-xs max-w-[140px]" style={{ color: 'var(--error)' }}>
                     <span className="line-clamp-1">{f.last_error ?? '—'}</span>
                   </td>
                   <td className="px-4 py-3">
@@ -245,18 +251,19 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
                       <button
                         onClick={() => toggleFeed(f)}
                         disabled={togglingId === f.feed_id}
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50 ${
-                          f.is_active
-                            ? 'bg-[#f0faf2] text-gray-700 hover:bg-[#e0f5e4]'
-                            : 'bg-[#e8f5ea] text-[#1a5c2a] hover:bg-[#d1ead3]'
-                        }`}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+                        style={{
+                          background: f.is_active ? 'var(--primary-light)' : 'var(--border-subtle)',
+                          color: f.is_active ? 'var(--text-secondary)' : 'var(--primary)',
+                        }}
                       >
                         {togglingId === f.feed_id ? '…' : f.is_active ? 'Disable' : 'Enable'}
                       </button>
                       <button
                         onClick={() => deleteFeed(f)}
                         disabled={deletingId === f.feed_id}
-                        className="text-xs font-semibold bg-[#fde8e8] text-[#c8102e] px-2.5 py-1 rounded-lg hover:bg-[#fbd0d0] transition-all duration-300 disabled:opacity-50"
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+                        style={{ background: 'var(--error-light)', color: 'var(--error)' }}
                       >
                         {deletingId === f.feed_id ? '…' : 'Delete'}
                       </button>
@@ -278,8 +285,8 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <span className="w-1 h-5 rounded-full bg-[#1a5c2a]" />
-                <h3 className="text-base font-extrabold text-[#1a5c2a]">Add RSS Feed</h3>
+                <span className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} />
+                <h3 className="text-base font-extrabold" style={{ color: 'var(--primary)' }}>Add RSS Feed</h3>
               </div>
               <button onClick={() => setShowAdd(false)}
                 className="text-gray-400 hover:text-gray-600 w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center transition-all duration-300"
@@ -287,7 +294,7 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
             </div>
 
             {addError && (
-              <div role="alert" className="bg-[#fde8e8] border border-[#c8102e]/20 text-[#c8102e] text-sm px-3 py-2 rounded-xl mb-4">
+              <div role="alert" className="text-sm px-3 py-2 rounded-xl mb-4" style={{ background: 'var(--error-light)', borderColor: 'var(--error)', border: '1px solid var(--error)', color: 'var(--error)' }}>
                 {addError}
               </div>
             )}
@@ -299,7 +306,8 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
                 </label>
                 <input id="add-name" type="text" value={addName} onChange={e => setAddName(e.target.value)} required
                   placeholder="e.g. Nation Africa — Top Stories"
-                  className="w-full border border-[#e8f5ea] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all duration-300" />
+                  className="w-full border rounded-xl px-3 py-2 text-sm outline-none transition-all duration-300"
+                  style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="add-url">
@@ -307,14 +315,16 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
                 </label>
                 <input id="add-url" type="url" value={addUrl} onChange={e => setAddUrl(e.target.value)} required
                   placeholder="https://example.com/rss"
-                  className="w-full border border-[#e8f5ea] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all duration-300" />
+                  className="w-full border rounded-xl px-3 py-2 text-sm outline-none transition-all duration-300"
+                  style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" htmlFor="add-cat">
                   Category <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <select id="add-cat" value={addCatId} onChange={e => setAddCatId(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full border border-[#e8f5ea] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 bg-white transition-all duration-300">
+                  className="w-full border rounded-xl px-3 py-2 text-sm outline-none bg-white transition-all duration-300"
+                  style={{ borderColor: 'var(--border-subtle)', ['--tw-ring-color' as string]: 'var(--success)' }}>
                   <option value="">Uncategorised</option>
                   {categories.map(c => (
                     <option key={c.category_id} value={c.category_id}>{c.name}</option>
@@ -323,11 +333,13 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowAdd(false)}
-                  className="flex-1 bg-[#f0faf2] hover:bg-[#e0f5e4] text-gray-700 font-semibold py-2.5 rounded-xl text-sm transition-all duration-300">
+                  className="flex-1 font-semibold py-2.5 rounded-xl text-sm transition-all duration-300"
+                  style={{ background: 'var(--primary-light)', color: 'var(--text-secondary)' }}>
                   Cancel
                 </button>
                 <button type="submit" disabled={addLoading || !addName.trim() || !addUrl.trim()}
-                  className="flex-1 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 disabled:opacity-50">
+                  className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 disabled:opacity-50"
+                  style={{ background: 'var(--primary)' }}>
                   {addLoading ? 'Adding…' : '+ Add Feed'}
                 </button>
               </div>

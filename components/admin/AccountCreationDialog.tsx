@@ -20,7 +20,7 @@ export function AccountCreationDialog({ isOpen, onClose, onSuccess }: AccountCre
         <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create New Account</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Add a reader or journalist to the platform</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Add a reader or author to the platform</p>
           </div>
           <button
             onClick={onClose}

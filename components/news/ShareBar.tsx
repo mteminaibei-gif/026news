@@ -45,9 +45,12 @@ export function ShareBar({ title, slug }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-[#1a2e1e]/60 border dark:border-[#2d4a33]/40 rounded-2xl shadow-sm p-5 mb-6 flex flex-wrap items-center gap-3 transition-colors">
-      <span className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-1.5 mr-2">
-        <Share2 size={16} className="text-[#1a5c2a] dark:text-[#4caf28]" />
+    <div
+      className="rounded-2xl p-5 mb-6 flex flex-wrap items-center gap-3 transition-colors"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
+    >
+      <span className="text-sm font-bold flex items-center gap-1.5 mr-2" style={{ color: 'var(--text-primary)' }}>
+        <Share2 size={16} style={{ color: 'var(--primary)' }} />
         Share This Article
       </span>
 
@@ -107,7 +110,8 @@ export function ShareBar({ title, slug }: Props) {
       {canShare && (
         <button
           onClick={handleNativeShare}
-          className="flex items-center gap-2 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-xs"
+          className="flex items-center gap-2 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-xs"
+          style={{ background: 'var(--primary)' }}
         >
           <Share2 size={14} />
           More Share
@@ -118,10 +122,12 @@ export function ShareBar({ title, slug }: Props) {
       <button
         onClick={handleCopy}
         className={`flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-xs ${
-          copied
-            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+          copied ? '' : ''
         }`}
+        style={copied
+          ? { background: 'var(--success-light)', color: 'var(--success)' }
+          : { background: 'var(--bg-muted)', color: 'var(--text-secondary)' }
+        }
       >
         {copied ? (
           <Check size={14} />

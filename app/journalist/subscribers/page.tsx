@@ -28,10 +28,10 @@ const MOCK_SUBSCRIBERS = [
   { id: 5, name: 'Sarah Chen',   email: 'sarah@example.com',  plan: 'Free',    since: '2024-03-22', avatar: 'https://i.pravatar.cc/40?img=14' },
 ]
 
-const PLAN_COLORS: Record<string, string> = {
-  Pro:     'bg-[#fff8e1] text-[#c8820a]',
-  Premium: 'bg-[#e8f5ea] text-[#1a5c2a]',
-  Free:    'bg-gray-100 text-gray-500',
+const PLAN_COLORS: Record<string, { background: string; color: string }> = {
+  Pro:     { background: 'var(--warning-light)', color: 'var(--warning)' },
+  Premium: { background: 'var(--success-light)', color: 'var(--primary)' },
+  Free:    { background: 'var(--bg-muted)', color: 'var(--text-tertiary)' },
 }
 
 export default function JournalistSubscribersPage() {
@@ -55,37 +55,37 @@ export default function JournalistSubscribersPage() {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
 
           {/* Growth chart */}
-          <div className="lg:col-span-2 bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">Subscriber Growth</h2>
+          <div className="lg:col-span-2 rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>Subscriber Growth</h2>
             <BarChart data={MONTHLY_SUBS} />
           </div>
 
           {/* Plan breakdown */}
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">Plan Breakdown</h2>
+          <div className="rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>Plan Breakdown</h2>
             <div className="space-y-4">
               {[
-                { plan: 'Pro',     count: 120, color: 'from-[#f5c518] to-[#f5c518]' },
-                { plan: 'Premium', count: 430, color: 'from-[#1a5c2a] to-[#4caf28]' },
-                { plan: 'Free',    count: 700, color: 'from-gray-200 to-gray-300'   },
+                { plan: 'Pro',     count: 120, color: 'linear-gradient(to right, var(--warning), var(--warning))' },
+                { plan: 'Premium', count: 430, color: 'linear-gradient(to right, var(--primary), var(--accent))' },
+                { plan: 'Free',    count: 700, color: 'linear-gradient(to right, var(--border), var(--border))' },
               ].map(p => (
                 <div key={p.plan}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600 font-medium">{p.plan}</span>
-                    <span className="font-bold text-gray-800">{p.count}</span>
+                    <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{p.plan}</span>
+                    <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{p.count}</span>
                   </div>
-                  <div className="h-2 bg-[#f0faf2] rounded-full overflow-hidden">
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-muted)' }}>
                     <div
-                      className={`h-full bg-gradient-to-r ${p.color} rounded-full transition-all duration-500`}
-                      style={{ width: `${(p.count / JOURNALIST.subscribers) * 100}%` }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${(p.count / JOURNALIST.subscribers) * 100}%`, background: p.color }}
                     />
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 bg-[#f0faf2] border border-[#e8f5ea] rounded-xl p-3 text-center">
-              <p className="text-xs text-[#1a5c2a] font-semibold">
+            <div className="mt-6 rounded-xl p-3 text-center" style={{ background: 'var(--primary-light)', border: '1px solid var(--border-subtle)' }}>
+              <p className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>
                 💡 Upgrade free readers with exclusive content!
               </p>
             </div>
@@ -93,38 +93,39 @@ export default function JournalistSubscribersPage() {
         </div>
 
         {/* Subscriber list */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-          <div className="px-5 py-4 border-b border-[#e8f5ea] flex items-center justify-between bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="font-extrabold text-[#1a5c2a]">Recent Subscribers</h2>
-            <span className="text-xs text-gray-400">Showing 5 of {JOURNALIST.subscribers.toLocaleString()}</span>
+        <div className="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
+            <h2 className="font-extrabold" style={{ color: 'var(--primary)' }}>Recent Subscribers</h2>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Showing 5 of {JOURNALIST.subscribers.toLocaleString()}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+                <tr className="text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-muted)', color: 'var(--primary)' }}>
                   <th className="px-4 py-3 text-left">Subscriber</th>
                   <th className="px-4 py-3 text-left">Email</th>
                   <th className="px-4 py-3 text-left">Plan</th>
                   <th className="px-4 py-3 text-left">Since</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f0faf2]">
+              <tbody>
                 {MOCK_SUBSCRIBERS.map(s => (
-                  <tr key={s.id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                  <tr key={s.id} className="transition-all duration-300" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <Image src={s.avatar} alt={s.name} width={28} height={28}
-                          className="rounded-full object-cover ring-2 ring-[#e8f5ea]" />
-                        <span className="font-semibold text-gray-800">{s.name}</span>
+                          className="rounded-full object-cover" style={{ border: '2px solid var(--border-subtle)' }} />
+                        <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{s.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{s.email}</td>
+                    <td className="px-4 py-3" style={{ color: 'var(--text-tertiary)' }}>{s.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${PLAN_COLORS[s.plan]}`}>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold"
+                        style={PLAN_COLORS[s.plan]}>
                         {s.plan}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{s.since}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>{s.since}</td>
                   </tr>
                 ))}
               </tbody>

@@ -146,8 +146,11 @@ export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
 
   if (articles.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800/40 rounded-xl p-8 text-center border dark:border-gray-800/60 transition-colors">
-        <p className="text-gray-400 dark:text-gray-500 text-sm">No articles published in this category yet.</p>
+      <div
+        className="rounded-xl p-8 text-center transition-colors"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      >
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>No articles published in this category yet.</p>
       </div>
     )
   }

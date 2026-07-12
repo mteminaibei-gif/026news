@@ -41,34 +41,34 @@ export default function JournalistEarningsPage() {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
 
           {/* Monthly chart */}
-          <div className="lg:col-span-2 bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">Monthly Earnings (USD)</h2>
+          <div className="lg:col-span-2 rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>Monthly Earnings (USD)</h2>
             <BarChart data={MONTHLY_EARNINGS} />
           </div>
 
           {/* Revenue breakdown */}
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">Revenue Sources</h2>
+          <div className="rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>Revenue Sources</h2>
             <div className="space-y-3">
               {[
-                { label: 'Ad Revenue',    percent: 45, color: 'from-[#1a5c2a] to-[#4caf28]' },
-                { label: 'Subscriptions', percent: 35, color: 'from-[#f5c518] to-[#f5c518]' },
-                { label: 'Sponsored',     percent: 20, color: 'from-[#c8102e] to-[#e03050]' },
+                { label: 'Ad Revenue',    percent: 45, color: 'linear-gradient(to right, var(--primary), var(--accent))' },
+                { label: 'Subscriptions', percent: 35, color: 'linear-gradient(to right, var(--warning), var(--warning))' },
+                { label: 'Sponsored',     percent: 20, color: 'linear-gradient(to right, var(--error), #e03050)' },
               ].map(s => (
                 <div key={s.label}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{s.label}</span>
-                    <span className="font-bold text-gray-800">{s.percent}%</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{s.label}</span>
+                    <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{s.percent}%</span>
                   </div>
-                  <div className="h-2 bg-[#f0faf2] rounded-full overflow-hidden">
-                    <div className={`h-full bg-gradient-to-r ${s.color} rounded-full transition-all duration-500`} style={{ width: `${s.percent}%` }} />
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-muted)' }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${s.percent}%`, background: s.color }} />
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-[#e8f5ea]">
-              <p className="text-xs text-gray-400 text-center">Payouts processed every 15th of the month</p>
-              <button className="mt-3 w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md">
+            <div className="mt-6 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>Payouts processed every 15th of the month</p>
+              <button className="mt-3 w-full font-bold py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
                 Request Payout
               </button>
             </div>
@@ -76,14 +76,14 @@ export default function JournalistEarningsPage() {
         </div>
 
         {/* Transaction history */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-          <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="font-extrabold text-[#1a5c2a]">Transaction History</h2>
+        <div className="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
+            <h2 className="font-extrabold" style={{ color: 'var(--primary)' }}>Transaction History</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#f0faf2] text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+                <tr className="text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-muted)', color: 'var(--primary)' }}>
                   <th className="px-4 py-3 text-left">Type</th>
                   <th className="px-4 py-3 text-left">Article</th>
                   <th className="px-4 py-3 text-left">Amount</th>
@@ -91,17 +91,19 @@ export default function JournalistEarningsPage() {
                   <th className="px-4 py-3 text-left">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f0faf2]">
+              <tbody>
                 {MOCK_TRANSACTIONS.map(t => (
-                  <tr key={t.id} className="hover:bg-[#f9fdf9] transition-all duration-300">
-                    <td className="px-4 py-3 font-medium text-gray-700">{t.type}</td>
-                    <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{t.article}</td>
-                    <td className="px-4 py-3 font-bold text-[#1a5c2a]">${t.amount.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{t.date}</td>
+                  <tr key={t.id} className="transition-all duration-300" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-secondary)' }}>{t.type}</td>
+                    <td className="px-4 py-3 max-w-xs truncate" style={{ color: 'var(--text-tertiary)' }}>{t.article}</td>
+                    <td className="px-4 py-3 font-bold" style={{ color: 'var(--primary)' }}>${t.amount.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>{t.date}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
-                        t.status === 'paid' ? 'bg-[#e8f5ea] text-[#1a5c2a]' : 'bg-[#fff8e1] text-[#c8820a]'
-                      }`}>
+                      <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold"
+                        style={{
+                          background: t.status === 'paid' ? 'var(--success-light)' : 'var(--warning-light)',
+                          color: t.status === 'paid' ? 'var(--primary)' : 'var(--warning)',
+                        }}>
                         {t.status}
                       </span>
                     </td>

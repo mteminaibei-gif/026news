@@ -14,7 +14,7 @@ export function AdminJournalistActions({ userId, currentStatus }: Props) {
 
   async function handleStatusChange(newStatus: string) {
     const label = newStatus === 'banned' ? 'Suspend' : 'Reactivate'
-    if (!confirm(`${label} this journalist?`)) return
+    if (!confirm(`${label} this author?`)) return
     setLoading(true)
     try {
       const res = await fetch('/api/admin/journalists', {

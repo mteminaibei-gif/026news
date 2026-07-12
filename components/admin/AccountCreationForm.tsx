@@ -35,7 +35,6 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
   const [success, setSuccess] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Validation
   const validateForm = (): string | null => {
     if (!formData.email.trim()) return 'Email is required'
     if (!formData.email.includes('@')) return 'Invalid email format'
@@ -63,7 +62,6 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
     setError(null)
     setSuccess(null)
 
-    // Validate
     const validationError = validateForm()
     if (validationError) {
       setError(validationError)
@@ -96,7 +94,6 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
 
       setSuccess(`✓ ${formData.role} account created successfully!`)
       
-      // Reset form
       setFormData({
         email: '',
         password: '',
@@ -108,12 +105,10 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
         bio: '',
       })
 
-      // Callback
       if (onSuccess) {
         onSuccess(data.user)
       }
 
-      // Auto-close after 2 seconds
       setTimeout(() => {
         if (onClose) onClose()
       }, 2000)
@@ -124,25 +119,24 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
     }
   }
 
+  const inputStyle = { borderColor: 'var(--border)', ['--tw-ring-color' as string]: 'var(--primary)' }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Error Alert */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <div className="p-3 rounded-lg text-sm" style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
           {error}
         </div>
       )}
 
-      {/* Success Alert */}
       {success && (
-        <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+        <div className="p-3 rounded-lg text-sm" style={{ background: 'var(--primary-light)', border: '1px solid var(--success)', color: 'var(--success)' }}>
           {success}
         </div>
       )}
 
-      {/* Name */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Full Name *
         </label>
         <input
@@ -151,14 +145,14 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
           value={formData.name}
           onChange={handleChange}
           placeholder="e.g., John Kamau"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          style={inputStyle}
           disabled={loading}
         />
       </div>
 
-      {/* Email */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Email Address *
         </label>
         <input
@@ -167,28 +161,28 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
           value={formData.email}
           onChange={handleChange}
           placeholder="e.g., john@example.com"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          style={inputStyle}
           disabled={loading}
         />
       </div>
 
-      {/* Role Selection */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Account Type *
         </label>
         <div className="flex gap-3">
           {[
             { value: 'reader', label: '👤 Reader', description: 'Can read and comment on articles' },
-            { value: 'journalist', label: '✍️ Journalist', description: 'Can write and publish articles' },
+            { value: 'journalist', label: '✍️ Author', description: 'Can write and publish articles' },
           ].map(option => (
             <label
               key={option.value}
-              className={`flex-1 p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.role === option.value
-                  ? 'border-[#1a5c2a] bg-[#f0faf2]'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className="flex-1 p-3 border-2 rounded-lg cursor-pointer transition-all"
+              style={{
+                borderColor: formData.role === option.value ? 'var(--primary)' : 'var(--border)',
+                background: formData.role === option.value ? 'var(--primary-light)' : 'transparent',
+              }}
             >
               <input
                 type="radio"
@@ -199,16 +193,15 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
                 className="sr-only"
                 disabled={loading}
               />
-              <div className="font-semibold text-gray-900">{option.label}</div>
-              <div className="text-xs text-gray-500">{option.description}</div>
+              <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{option.label}</div>
+              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{option.description}</div>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Password */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Password *
         </label>
         <div className="relative">
@@ -218,13 +211,15 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
             value={formData.password}
             onChange={handleChange}
             placeholder="Min 8 characters"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+            style={inputStyle}
             disabled={loading}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-2.5"
+            style={{ color: 'var(--text-tertiary)' }}
             disabled={loading}
           >
             {showPassword ? '👁️' : '👁️‍🗨️'}
@@ -232,9 +227,8 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
         </div>
       </div>
 
-      {/* Confirm Password */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Confirm Password *
         </label>
         <input
@@ -243,14 +237,14 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
           value={formData.confirmPassword}
           onChange={handleChange}
           placeholder="Re-enter password"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          style={inputStyle}
           disabled={loading}
         />
       </div>
 
-      {/* Phone (Optional) */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Phone Number (Optional)
         </label>
         <input
@@ -259,14 +253,14 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
           value={formData.phone}
           onChange={handleChange}
           placeholder="e.g., +254 712 345 678"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          style={inputStyle}
           disabled={loading}
         />
       </div>
 
-      {/* Location (Optional) */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
           Location (Optional)
         </label>
         <input
@@ -275,15 +269,15 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
           value={formData.location}
           onChange={handleChange}
           placeholder="e.g., Nairobi, Kenya"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          style={inputStyle}
           disabled={loading}
         />
       </div>
 
-      {/* Bio (Optional, visible for journalists) */}
       {formData.role === 'journalist' && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
             Professional Bio (Optional)
           </label>
           <textarea
@@ -292,18 +286,19 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
             onChange={handleChange}
             placeholder="Brief professional background..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c2a] focus:border-transparent"
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+            style={inputStyle}
             disabled={loading}
           />
         </div>
       )}
 
-      {/* Buttons */}
       <div className="flex gap-3 pt-4">
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-2.5 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 text-white font-bold py-2.5 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}
         >
           {loading ? '⏳ Creating...' : `✓ Create ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`}
         </button>
@@ -312,7 +307,8 @@ export function AccountCreationForm({ onSuccess, onClose }: AccountCreationFormP
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-2.5 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 font-bold py-2.5 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--border)', color: 'var(--text-primary)' }}
           >
             Cancel
           </button>

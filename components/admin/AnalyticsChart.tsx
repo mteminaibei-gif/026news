@@ -20,7 +20,7 @@ export function AnimatedChart({
   data,
   title,
   type = 'line',
-  color = '#4caf28',
+  color = 'var(--success)',
   animationDuration = 800,
 }: AnimatedChartProps) {
   const [displayData, setDisplayData] = useState<ChartData[]>([])

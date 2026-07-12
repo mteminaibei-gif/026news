@@ -37,13 +37,11 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
 
   const supabase = await createClient()
 
-  // Admin identity
   const { data: { user } } = await supabase.auth.getUser()
   const { data: rawAdmin } = await supabase
     .from('users').select('name, profile_image').eq('email', user?.email ?? '').single()
   const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
-  // Fetch counts for all statuses (for tab badges)
   const [
     { count: totalCount },
     { count: publishedCount },
@@ -66,7 +64,6 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     rejected:     rejectedCount ?? 0,
   }
 
-  // Fetch articles (filtered)
   let query = supabase
     .from('articles')
     .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, author:users(name,profile_image), category:categories(name)')
@@ -79,11 +76,11 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
   const articles = (rawArticles ?? []) as unknown as ArticleRow[]
 
   const stats = [
-    { label: 'Total',        value: counts.all,          color: 'text-[#1a5c2a]' },
-    { label: 'Published',    value: counts.published,    color: 'text-[#1a5c2a]' },
-    { label: 'Under Review', value: counts.under_review, color: 'text-[#f5c518]' },
-    { label: 'Draft',        value: counts.draft,        color: 'text-gray-600' },
-    { label: 'Rejected',     value: counts.rejected,     color: 'text-[#c8102e]' },
+    { label: 'Total',        value: counts.all,          color: 'var(--primary)' },
+    { label: 'Published',    value: counts.published,    color: 'var(--primary)' },
+    { label: 'Under Review', value: counts.under_review, color: 'var(--warning)' },
+    { label: 'Draft',        value: counts.draft,        color: 'var(--text-tertiary)' },
+    { label: 'Rejected',     value: counts.rejected,     color: 'var(--error)' },
   ]
 
   return (
@@ -94,43 +91,46 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
       >
         <Link
           href="/admin/write"
-          className="flex items-center gap-1.5 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+          className="flex items-center gap-1.5 font-bold px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+          style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
         >
           ✏️ Write Article
         </Link>
       </Topbar>
 
-      <div className="p-6 flex-1">
+      <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
           {stats.map(s => (
-            <div key={s.label} className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md">
-              <div className={`text-2xl font-extrabold ${s.color}`}>{s.value.toLocaleString()}</div>
-              <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+            <div key={s.label} className="backdrop-blur-sm rounded-2xl p-4 shadow-sm text-center transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <div className="text-2xl font-extrabold" style={{ color: s.color }}>{s.value.toLocaleString()}</div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+        <div className="backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
 
           {/* Filters + actions bar */}
-          <div className="px-5 py-4 border-b border-[#e8f5ea] flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="font-extrabold text-[#1a5c2a]">All Articles</h2>
+          <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
+            <h2 className="font-extrabold" style={{ color: 'var(--primary)' }}>All Articles</h2>
             <div className="flex flex-wrap gap-2">
               {FILTERS.map(f => (
                 <Link
                   key={f}
                   href={`/admin/articles${f !== 'all' ? `?filter=${f}` : ''}`}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
-                    filter === f
-                      ? 'bg-[#1a5c2a] text-white shadow-sm'
-                      : 'bg-[#f0faf2] text-gray-600 hover:bg-[#e0f5e4]'
-                  }`}
+                  className="px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300"
+                  style={{
+                    padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                    ...(filter === f
+                      ? { background: 'var(--primary)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-sm)' }
+                      : { background: 'var(--bg-muted)', color: 'var(--text-secondary)' })
+                  }}
                 >
                   {f.replace('_', ' ')}
                   {counts[f] > 0 && (
-                    <span className={`ml-1.5 ${filter === f ? 'text-white/70' : 'text-gray-400'}`}>
+                    <span className="ml-1.5" style={{ opacity: 0.6 }}>
                       {counts[f]}
                     </span>
                   )}
@@ -141,22 +141,22 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
 
           {/* Table */}
           {articles.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
               <p className="text-3xl mb-2">📭</p>
               <p className="font-semibold">No articles found</p>
               <p className="text-sm mt-1">
                 {filter !== 'all' ? `No ${filter.replace('_', ' ')} articles yet.` : 'Start by writing your first article.'}
               </p>
-              <Link href="/admin/write" className="mt-4 inline-block text-sm font-bold text-[#1a5c2a] hover:text-[#2d8a47] transition-colors">
+              <Link href="/admin/write" className="mt-4 inline-block text-sm font-bold transition-colors" style={{ color: 'var(--primary)' }}>
                 ✏️ Write one now →
               </Link>
             </div>
           ) : (
-            <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div className="backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs md:text-sm min-w-max">
                   <thead>
-                    <tr className="bg-[#f0faf2] border-b border-[#e8f5ea] text-left text-xs text-[#1a5c2a] font-semibold uppercase tracking-wider">
+                    <tr className="text-left text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
                       <th className="px-2 md:px-4 py-3">Article</th>
                       <th className="px-2 md:px-4 py-3 hidden sm:table-cell">Author</th>
                       <th className="px-2 md:px-4 py-3 hidden md:table-cell">Category</th>
@@ -166,26 +166,26 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                       <th className="px-2 md:px-4 py-3">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#f0faf2]">
+                  <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                     {articles.map(a => (
-                      <tr key={a.article_id} className="hover:bg-[#f9fdf9] transition-all duration-300">
+                      <tr key={a.article_id} className="transition-all duration-300" style={{ borderColor: 'var(--border-subtle)' }} onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
 
                         {/* Article */}
                         <td className="px-2 md:px-4 py-3">
                           <div className="flex items-center gap-2">
                             {a.featured_image ? (
-                              <div className="relative w-8 h-6 rounded shrink-0 overflow-hidden bg-gray-100 hidden sm:block">
+                              <div className="relative w-8 h-6 rounded shrink-0 overflow-hidden hidden sm:block" style={{ background: 'var(--bg-muted)' }}>
                                 <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized />
                               </div>
                             ) : (
-                              <div className="w-8 h-6 rounded shrink-0 bg-gray-100 flex items-center justify-center text-sm hidden sm:flex">
+                              <div className="w-8 h-6 rounded shrink-0 flex items-center justify-center text-sm hidden sm:flex" style={{ background: 'var(--bg-muted)' }}>
                                 📰
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="font-semibold text-gray-800 line-clamp-1 text-xs md:text-sm">{a.title}</p>
+                              <p className="font-semibold line-clamp-1 text-xs md:text-sm" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
                               {a.is_aggregated && (
-                                <span className="text-[10px] bg-sky-50 text-sky-600 font-semibold px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 inline-block" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
                                   RSS
                                 </span>
                               )}
@@ -201,14 +201,14 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                                 <Image src={a.author.profile_image} alt={a.author.name} fill className="object-cover" unoptimized />
                               </div>
                             )}
-                            <span className="text-gray-600 text-xs truncate">{a.author?.name ?? '—'}</span>
+                            <span className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{a.author?.name ?? '—'}</span>
                           </div>
                         </td>
 
-                        <td className="px-2 md:px-4 py-3 text-gray-500 text-xs hidden md:table-cell">{a.category?.name ?? '—'}</td>
+                        <td className="px-2 md:px-4 py-3 text-xs hidden md:table-cell" style={{ color: 'var(--text-tertiary)' }}>{a.category?.name ?? '—'}</td>
                         <td className="px-2 md:px-4 py-3 hidden lg:table-cell"><Badge status={a.status} /></td>
-                        <td className="px-2 md:px-4 py-3 text-gray-600 text-xs hidden lg:table-cell">{(a.views ?? 0).toLocaleString()}</td>
-                        <td className="px-2 md:px-4 py-3 text-gray-400 text-xs whitespace-nowrap text-right">{formatDate(a.created_at)}</td>
+                        <td className="px-2 md:px-4 py-3 text-xs hidden lg:table-cell" style={{ color: 'var(--text-primary)' }}>{(a.views ?? 0).toLocaleString()}</td>
+                        <td className="px-2 md:px-4 py-3 text-xs whitespace-nowrap text-right" style={{ color: 'var(--text-tertiary)' }}>{formatDate(a.created_at)}</td>
 
                         {/* Actions */}
                         <td className="px-2 md:px-4 py-3">
@@ -216,14 +216,16 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                             {a.status === 'under_review' && (
                               <Link
                                 href={`/admin/review/${a.article_id}`}
-                                className="text-xs font-bold bg-[#f5c518] text-[#1a1a1a] px-2 md:px-2.5 py-1 rounded-lg hover:bg-[#f5c518]/90 transition-all duration-300 whitespace-nowrap"
+                                className="text-xs font-bold px-2 md:px-2.5 py-1 rounded-lg transition-all duration-300 whitespace-nowrap"
+                                style={{ background: 'var(--warning)', color: '#1a1a1a' }}
                               >
                                 Review
                               </Link>
                             )}
                             <Link
                               href={`/admin/edit/${a.article_id}`}
-                              className="text-xs font-semibold bg-[#f0faf2] text-gray-700 px-2 md:px-2.5 py-1 rounded-lg hover:bg-[#e0f5e4] transition-all duration-300"
+                              className="text-xs font-semibold px-2 md:px-2.5 py-1 rounded-lg transition-all duration-300"
+                              style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)' }}
                             >
                               Edit
                             </Link>
@@ -231,7 +233,8 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                               <Link
                                 href={`/article/${a.slug}`}
                                 target="_blank"
-                                className="text-xs font-semibold bg-[#e8f5ea] text-[#1a5c2a] px-2 md:px-2.5 py-1 rounded-lg hover:bg-[#d1ead3] transition-all duration-300 hidden sm:inline-block"
+                                className="text-xs font-semibold px-2 md:px-2.5 py-1 rounded-lg transition-all duration-300 hidden sm:inline-block"
+                                style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
                               >
                                 View
                               </Link>

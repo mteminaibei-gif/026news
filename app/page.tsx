@@ -7,7 +7,8 @@ import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { ArticleCard } from '@/components/news/ArticleCard'
 import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
 import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
-import { formatNumber, cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
+import { TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { MOCK_CATEGORIES, MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
 import type { Metadata } from 'next'
@@ -18,31 +19,21 @@ export const metadata: Metadata = {
   title: 'Breaking News, Analysis & Freelance Journalism',
 }
 
-type JournalistRow = { user_id: number; name: string; profile_image: string | null }
-type CategoryRow   = { category_id: number; name: string }
+type AuthorRow = { user_id: number; name: string; profile_image: string | null }
+type CategoryRow = { category_id: number; name: string }
 
 interface Props {
   searchParams: Promise<{ category?: string }>
 }
 
-// Safe data-fetch helper — always returns a value, never throws
 async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await fn()
-  } catch {
-    return fallback
-  }
+  try { return await fn() } catch { return fallback }
 }
 
 export default async function HomePage({ searchParams }: Props) {
   const { category: categoryParam } = await searchParams
-
-  // All Supabase calls wrapped — if env vars are missing or DB is unreachable
-  // the page falls back to mock data instead of crashing
   const supabase = await createClient()
 
-  // PRIORITY FILTER: Fetch articles with weighting towards Kenya/Africa sources
-  // When fetching articles for homepage, prefer those from high-priority RSS feeds
   const articles: ArticleWithAuthor[] = await safeQuery(async () => {
     const response = await supabase
       .from('articles')
@@ -54,66 +45,53 @@ export default async function HomePage({ searchParams }: Props) {
     return response.data ?? []
   }, MOCK_ARTICLES.filter(a => a.status === 'published').map(a => ({
     ...a,
-    author:    a.author,
-    category:  a.category,
+    author: a.author,
+    category: a.category,
     analytics: { views: a.views, likes: 0, shares: 0, comments_count: 0 },
   })) as unknown as ArticleWithAuthor[])
 
-  const journalists: JournalistRow[] = await safeQuery(async () => {
+  const authors: AuthorRow[] = await safeQuery(async () => {
     const response = await supabase
       .from('users')
       .select('user_id, name, profile_image')
       .eq('role', 'journalist' as never)
       .eq('status', 'active' as never)
-      .limit(3) as PostgrestResponse<JournalistRow>
+      .limit(3) as PostgrestResponse<AuthorRow>
     if (response.error) throw response.error
     return response.data ?? []
   }, MOCK_USERS.filter(u => u.role === 'journalist').slice(0, 3).map(u => ({
-    user_id:       u.user_id,
-    name:          u.name,
-    profile_image: u.profile_image,
+    user_id: u.user_id, name: u.name, profile_image: u.profile_image,
   })))
 
   const categories: CategoryRow[] = await safeQuery(async () => {
-    const response = await supabase
-      .from('categories')
-      .select('category_id, name') as PostgrestResponse<CategoryRow>
+    const response = await supabase.from('categories').select('category_id, name') as PostgrestResponse<CategoryRow>
     if (response.error) throw response.error
     return (response.data?.length ? response.data : MOCK_CATEGORIES) as CategoryRow[]
   }, MOCK_CATEGORIES)
 
-  const trending  = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
+  const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
   const spotlight = articles.slice(0, 3)
 
-  // HOMEPAGE PRIORITY SYSTEM:
-  // 1. Kenya articles (highest priority)
-  // 2. Africa articles (high priority)
-  // 3. International articles (lower priority)
-  // Within each tier, sort by RSS feed priority, then views
   const kenyaArticles = articles.filter(a =>
     ['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? '') ||
     (a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('kenya')
   )
   const africaArticles = articles.filter(a =>
     a.category?.name === 'Africa' ||
-    ((a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa') && 
+    ((a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa') &&
      !['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? ''))
   )
   const otherArticles = articles.filter(a =>
     !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '') &&
     !(a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa')
   )
-  
-  const featured   = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } => Boolean((a as unknown as Record<string, unknown>).featured))
-  
-  // Prioritise trusted Kenyan sources (Nation, KBC, Royal Media, NTV, Citizen, K24)
-  const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'citizen', 'standard', 'capital', 'star', 'business daily']
 
+  const featured = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } => Boolean((a as unknown as Record<string, unknown>).featured))
+  const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'citizen', 'standard', 'capital', 'star', 'business daily']
   const isPriority = (a: ArticleWithAuthor) => {
     const candidates = [a.source_name, a.source_reference, a.source_url, a.author?.name]
     return candidates.some(v => !!v && PRIORITY_SOURCES.some(p => v!.toLowerCase().includes(p)))
   }
-
   const sortByPriorityThenViews = (arr: ArticleWithAuthor[]) =>
     [...arr].sort((a, b) => {
       const pa = isPriority(a) ? 1 : 0
@@ -122,7 +100,6 @@ export default async function HomePage({ searchParams }: Props) {
       return (b.views ?? 0) - (a.views ?? 0)
     })
 
-  // Hero slides: Featured → Kenya → Africa → International
   const heroSlides = [
     ...featured,
     ...sortByPriorityThenViews(kenyaArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
@@ -130,92 +107,44 @@ export default async function HomePage({ searchParams }: Props) {
     ...sortByPriorityThenViews(otherArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
   ].slice(0, 7)
 
-  // Display articles: Local news first (Kenya/Africa), then international
-  // When category filter is active, show filtered results
-  // When no filter, show by priority tier
   const displayArticles = categoryParam
     ? articles.filter(a => a.category?.name === categoryParam)
-    : [
-        ...sortByPriorityThenViews(kenyaArticles),
-        ...sortByPriorityThenViews(africaArticles),
-        ...sortByPriorityThenViews(otherArticles),
-      ]
+    : [...sortByPriorityThenViews(kenyaArticles), ...sortByPriorityThenViews(africaArticles), ...sortByPriorityThenViews(otherArticles)]
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Navbar />
 
-      {/* Category bar */}
-      <div className="bg-white dark:bg-[#0f1a12] border-b-2 border-[#e8f5ea] dark:border-[#1a2e1e] sticky top-16 z-40 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-0 scrollbar-none">
-          <Link
-            href="/"
-            className={cn(
-              'px-4 py-2.5 text-sm font-semibold border-b-2 whitespace-nowrap shrink-0 transition-colors',
-              !categoryParam
-                ? 'text-[#1a5c2a] dark:text-[#4caf28] border-[#1a5c2a] dark:border-[#4caf28]'
-                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-[#1a5c2a] dark:hover:text-[#4caf28] hover:border-[#1a5c2a]'
-            )}
-          >
-            All News
-          </Link>
-          {categories.map(cat => {
-            const isActive = categoryParam === cat.name
-            const isKenya  = ['Kenya', 'Africa'].includes(cat.name)
-            return (
-              <Link
-                key={cat.category_id}
-                href={`/?category=${cat.name}`}
-                className={cn(
-                  'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0',
-                  isActive
-                    ? isKenya
-                      ? 'text-[#c8102e] border-[#c8102e] font-semibold'
-                      : 'text-[#1a5c2a] dark:text-[#4caf28] border-[#1a5c2a] dark:border-[#4caf28] font-semibold'
-                    : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-[#1a5c2a] dark:hover:text-[#4caf28] hover:border-[#1a5c2a]'
-                )}
-              >
-                {cat.name}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Breaking ticker — SSE live stream */}
+      {/* Breaking ticker */}
       <BreakingNewsTicker initialHeadlines={trending.map(a => ({
-        article_id: a.article_id,
-        title: a.title,
-        slug: a.slug,
-        created_at: a.created_at,
-        category: a.category ?? null,
+        article_id: a.article_id, title: a.title, slug: a.slug, created_at: a.created_at, category: a.category ?? null,
       }))} />
 
-      {/* Hero — home page only */}
+      {/* Hero */}
       {!categoryParam && <HeroCarousel articles={heroSlides as never} />}
 
       {/* Main content grid */}
-      <div className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-[1fr_300px] gap-8 w-full">
+      <div className="main-layout max-w-[1400px] mx-auto px-6 py-12 grid gap-12" style={{ gridTemplateColumns: '1fr 340px' }}>
         <main>
-          <h2 className="text-lg font-extrabold text-gray-900 dark:text-white mb-4 flex items-center gap-2 after:flex-1 after:h-0.5 after:bg-gray-200 dark:after:bg-gray-800 after:ml-2">
-            📰 {categoryParam ? `${categoryParam} News` : 'Latest News'}
-          </h2>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold" style={{ letterSpacing: '-0.01em' }}>
+              {categoryParam ? `${categoryParam} News` : 'Latest News'}
+            </h2>
+            <div className="feed-tabs flex gap-1 p-1 rounded-xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <button className="feed-tab active px-4 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}>All</button>
+              <button className="feed-tab px-4 py-1.5 rounded-lg text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Trending</button>
+              <button className="feed-tab px-4 py-1.5 rounded-lg text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Latest</button>
+            </div>
+          </div>
 
           <ArticlesList initialArticles={displayArticles} categoryFilterName={categoryParam} />
 
-          {/* Freelance Spotlight */}
           {spotlight.length > 0 && (
             <>
-              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white mt-10 mb-4 flex items-center gap-2 after:flex-1 after:h-0.5 after:bg-gray-200 dark:after:bg-gray-800 after:ml-2">
-                ✍️ Freelance Spotlight
-              </h2>
-              <div className="space-y-4">
+              <h2 className="text-xl font-bold mt-12 mb-6">Spotlight</h2>
+              <div className="space-y-6">
                 {spotlight.map(article => (
-                  <ArticleCard
-                    key={article.article_id}
-                    article={article}
-                    variant="horizontal"
-                  />
+                  <ArticleCard key={article.article_id} article={article} variant="horizontal" />
                 ))}
               </div>
             </>
@@ -223,101 +152,76 @@ export default async function HomePage({ searchParams }: Props) {
         </main>
 
         {/* Sidebar */}
-        <aside className="space-y-5">
+        <aside className="flex flex-col gap-8">
+          {/* Trending */}
           {trending.length > 0 && (
-            <div className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a] dark:border-[#4caf28]">
-                <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">
-                  🔥 Trending Now
-                </h3>
+            <div className="sidebar-section p-6 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <h3 className="text-sm font-bold mb-5 flex items-center gap-2">
+                <TrendingUp size={16} style={{ color: 'var(--accent)' }} />
+                Trending Now
+              </h3>
+              <div className="flex flex-col gap-4">
+                {trending.map((a, i) => (
+                  <Link key={a.article_id} href={`/article/${a.slug}`} className="trending-item flex gap-3 items-start no-underline" style={{ color: 'inherit' }}>
+                    <span className="trending-number text-2xl font-bold" style={{ color: 'var(--text-tertiary)', minWidth: 28, lineHeight: 1 }}>{i + 1}</span>
+                    <div className="trending-content flex-1">
+                      <p className="trending-item-title text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.title}</p>
+                      <p className="trending-item-meta text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{formatNumber(a.views)} views · {a.category?.name}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
-              {trending.map((a, i) => (
-                <div
-                  key={a.article_id}
-                  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
-                >
-                  <span className="text-2xl font-black text-[#4caf28]/25 dark:text-[#4caf28]/20 min-w-7">{i + 1}</span>
-                  <div>
-                    <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug">
-                      <Link href={`/article/${a.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28]">
-                        {a.title}
-                      </Link>
-                    </h5>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                      👁 {formatNumber(a.views)} · {a.category?.name}
-                    </p>
-                  </div>
-                </div>
-              ))}
             </div>
           )}
 
+          {/* Newsletter */}
           <SubscribeWidget />
 
-          <div className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a] dark:border-[#4caf28]">
-              <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">
-                📂 Categories
-              </h3>
-            </div>
-            {categories.map(cat => (
-              <div
-                key={cat.category_id}
-                className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
-              >
-                <div>
-                  <Link
-                    href={`/?category=${cat.name}`}
-                    className="text-sm font-semibold text-gray-800 dark:text-gray-200 hover:text-[#1a5c2a] dark:hover:text-[#4caf28]"
-                  >
-                    {['Kenya','Africa'].includes(cat.name) ? '🇰🇪 ' : ''}{cat.name}
-                  </Link>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {articles.filter(a => a.category?.name === cat.name).length} articles
-                  </p>
-                </div>
-                <span className="text-[#4caf28]/40 dark:text-[#4caf28]/30">→</span>
-              </div>
-            ))}
-          </div>
-
-          {journalists.length > 0 && (
-            <div className="bg-white dark:bg-[#1a2e1e] border dark:border-[#2d4a33]/60 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a] dark:border-[#4caf28]">
-                <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">
-                  🏆 Top Journalists
-                </h3>
-              </div>
-              {journalists.map(j => (
+          {/* Categories */}
+          <div className="sidebar-section p-6 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h3 className="text-sm font-bold mb-5 flex items-center gap-2">
+              <svg width="16" height="16" fill="none" stroke="var(--accent)" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+              Categories
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {categories.map(cat => (
                 <Link
-                  key={j.user_id}
-                  href={`/journalists/${j.user_id}`}
-                  className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-[#2d4a33]/40 last:border-0 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
+                  key={cat.category_id}
+                  href={`/?category=${cat.name}`}
+                  className="category-tag px-3.5 py-1.5 rounded-full text-xs font-medium transition-all no-underline"
+                  style={{ background: 'var(--category-bg)', color: 'var(--text-secondary)' }}
                 >
-                  {j.profile_image ? (
-                    <Image
-                      src={j.profile_image}
-                      alt={j.name}
-                      width={36}
-                      height={36}
-                      className="rounded-full object-cover shrink-0"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#e8f5ea] dark:bg-[#1a5c2a]/40 flex items-center justify-center text-sm font-bold text-[#1a5c2a] dark:text-[#4caf28] shrink-0">
-                      {j.name.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{j.name}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Journalist</p>
-                  </div>
+                  {cat.name}
                 </Link>
               ))}
-              <Link
-                href="/leaderboard"
-                className="block text-center text-xs font-semibold text-[#1a5c2a] dark:text-[#4caf28] py-2.5 hover:bg-[#e8f5ea]/50 dark:hover:bg-[#1a5c2a]/10 transition-colors"
-              >
+            </div>
+          </div>
+
+          {/* Top Authors */}
+          {authors.length > 0 && (
+            <div className="sidebar-section p-6 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <h3 className="text-sm font-bold mb-5 flex items-center gap-2">
+                <svg width="16" height="16" fill="none" stroke="var(--accent)" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                Top Authors
+              </h3>
+              <div className="flex flex-col gap-4">
+                {authors.map(j => (
+                  <Link key={j.user_id} href={`/journalists/${j.user_id}`} className="flex items-center gap-3 no-underline" style={{ color: 'inherit' }}>
+                    {j.profile_image ? (
+                      <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" unoptimized />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                        {j.name.charAt(0)}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Author</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/leaderboard" className="block text-center text-xs font-semibold mt-4 pt-4 no-underline" style={{ color: 'var(--primary)', borderTop: '1px solid var(--border-subtle)' }}>
                 View Full Leaderboard →
               </Link>
             </div>

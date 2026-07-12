@@ -46,13 +46,14 @@ export function HeroCarousel({ articles }: Props) {
 
   return (
     <section
-      className="relative bg-[#1a5c2a] overflow-hidden select-none"
+      className="relative overflow-hidden select-none"
+      style={{ background: 'var(--primary)' }}
       aria-label="Featured news slideshow"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {/* Kenya flag top bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 h-1.5 bg-gradient-to-r from-[#c8102e] via-[#1a1a1a] to-[#1a5c2a]" />
+      <div className="absolute top-0 left-0 right-0 z-10 h-1.5" style={{ background: 'linear-gradient(to right, var(--error), var(--text-primary), var(--primary))' }} />
 
       {/* Slide images */}
       {slides.map((s, i) => (
@@ -74,10 +75,10 @@ export function HeroCarousel({ articles }: Props) {
             />
           ) : (
             /* Fallback — branded gradient when no image */
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a] via-[#2d8a47] to-[#0f3a1a]" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, var(--primary), var(--primary-hover), oklch(15% 0.04 175))' }} />
           )}
           {/* Dark gradient overlay — left-heavy for text legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f1a12]/92 via-[#1a5c2a]/65 to-transparent" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, oklch(10% 0.02 175 / 0.92), var(--primary), transparent)' }} />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0f1a12]/60 via-transparent to-transparent" />
         </div>
       ))}
@@ -90,13 +91,13 @@ export function HeroCarousel({ articles }: Props) {
         >
           {/* Category + date */}
           <div className="flex items-center gap-2 mb-4 flex-wrap animate-fade-in delay-100">
-            <span className={cn(
-              'text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full',
-              'animate-pulse-glow',
-              isKenyan(slide.category?.name)
-                ? 'bg-[#c8102e]'
-                : 'bg-[#4caf28]'
-            )}>
+            <span
+              className={cn(
+                'text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full',
+                'animate-pulse-glow'
+              )}
+              style={{ background: isKenyan(slide.category?.name) ? 'var(--error)' : 'var(--success)' }}
+            >
               {isKenyan(slide.category?.name) ? '🇰🇪 ' : '🔴 '}
               {slide.category?.name ?? 'Breaking'}
             </span>
@@ -135,7 +136,8 @@ export function HeroCarousel({ articles }: Props) {
           >
             <Link
               href={`/article/${slide.slug}`}
-              className="bg-[#f5c518] hover:bg-[#d4a010] text-[#1a1a1a] font-bold px-6 py-3 rounded-2xl transition-all duration-300 text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="text-[#1a1a1a] font-bold px-6 py-3 rounded-2xl transition-all duration-300 text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              style={{ background: 'var(--accent)' }}
             >
               Read Full Story →
             </Link>
@@ -155,14 +157,16 @@ export function HeroCarousel({ articles }: Props) {
           <button
             onClick={prev}
             aria-label="Previous slide"
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#1a5c2a]/70 hover:bg-[#1a5c2a] border border-[#4caf28]/40 text-white flex items-center justify-center transition-all backdrop-blur-sm text-xl font-bold"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full text-white flex items-center justify-center transition-all backdrop-blur-sm text-xl font-bold"
+            style={{ background: 'rgba(26,92,42,0.7)', border: '1px solid rgba(76,175,40,0.4)' }}
           >
             ‹
           </button>
           <button
             onClick={next}
             aria-label="Next slide"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#1a5c2a]/70 hover:bg-[#1a5c2a] border border-[#4caf28]/40 text-white flex items-center justify-center transition-all backdrop-blur-sm text-xl font-bold"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full text-white flex items-center justify-center transition-all backdrop-blur-sm text-xl font-bold"
+            style={{ background: 'rgba(26,92,42,0.7)', border: '1px solid rgba(76,175,40,0.4)' }}
           >
             ›
           </button>
@@ -178,8 +182,9 @@ export function HeroCarousel({ articles }: Props) {
               onClick={() => setCurrent(i)}
               aria-label={`Go to slide ${i + 1}`}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? 'w-8 bg-[#f5c518]' : 'w-1.5 bg-white/30 hover:bg-white/60'
+                i === current ? 'w-8' : 'w-1.5'
               }`}
+              style={{ background: i === current ? 'var(--accent)' : 'rgba(255,255,255,0.3)' }}
             />
           ))}
         </div>
@@ -195,14 +200,15 @@ export function HeroCarousel({ articles }: Props) {
               aria-label={`Jump to: ${s.title}`}
               className={`relative w-16 h-10 rounded overflow-hidden shrink-0 transition-all duration-200 ${
                 i === current
-                  ? 'ring-2 ring-[#f5c518] opacity-100'
+                  ? 'opacity-100'
                   : 'opacity-40 hover:opacity-70'
               }`}
+              style={i === current ? { boxShadow: '0 0 0 2px var(--accent)' } : undefined}
             >
               {hasValidImage(s.featured_image) && !imgErrors.has(s.article_id) ? (
                 <Image src={s.featured_image!} alt={s.title} fill sizes="64px" className="object-cover" unoptimized />
               ) : (
-                <div className="absolute inset-0 bg-[#2d8a47] flex items-center justify-center text-white text-[8px] font-bold">026</div>
+                <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] font-bold" style={{ background: 'var(--primary-hover)' }}>026</div>
               )}
             </button>
           ))}

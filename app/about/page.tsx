@@ -12,14 +12,14 @@ export const metadata: Metadata = {
 
 const STATS = [
   { value: '120K+', label: 'Monthly Readers' },
-  { value: '50+', label: 'Freelance Journalists' },
+  { value: '50+', label: 'Freelance Authors' },
   { value: '1,200+', label: 'Articles Published' },
   { value: '7', label: 'News Categories' },
 ]
 
 const VALUES = [
   { icon: '🎯', title: 'Accuracy First', desc: 'Every article is fact-checked and sourced. We cite our references and correct errors transparently.' },
-  { icon: '✊', title: 'Journalist Empowerment', desc: 'We pay fair rates, provide analytics, and give journalists the tools to build sustainable careers.' },
+  { icon: '✊', title: 'Author Empowerment', desc: 'We pay fair rates, provide analytics, and give journalists the tools to build sustainable careers.' },
   { icon: '🌍', title: 'Africa-Centered', desc: 'We amplify African voices, stories, and perspectives that are underrepresented in global media.' },
   { icon: '🔓', title: 'Open Access', desc: 'Core news is always free. Premium subscriptions unlock exclusive analysis and ad-free reading.' },
   { icon: '🔒', title: 'Privacy by Design', desc: 'We collect only what we need, never sell your data, and give you full control over your account.' },
@@ -34,16 +34,25 @@ export default function AboutPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-20 px-4">
+      <section
+        className="text-white py-20 px-4"
+        style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}
+      >
         <div className="max-w-4xl mx-auto text-center">
-          <span className="inline-block bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
+          <span
+            className="inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6"
+            style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
+          >
             Our Story
           </span>
-          <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-6">
-            Journalism that <span className="text-orange-400">matters.</span><br />
-            Stories that <span className="text-orange-400">connect.</span>
+          <h1
+            className="text-4xl md:text-5xl font-extrabold leading-tight mb-6"
+            style={{ fontFamily: "'Newsreader', Georgia, serif" }}
+          >
+            Journalism that <span style={{ color: 'var(--accent)' }}>matters.</span><br />
+            Stories that <span style={{ color: 'var(--accent)' }}>connect.</span>
           </h1>
-          <p className="text-white/65 text-lg leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg leading-relaxed max-w-2xl mx-auto" style={{ color: 'rgba(255,255,255,0.65)' }}>
             026News was founded with a simple belief: quality journalism should be accessible to everyone,
             and talented journalists deserve a platform that rewards their work fairly. We&apos;re building
             the future of news — open, transparent, and Africa-first.
@@ -52,12 +61,12 @@ export default function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-white border-b border-gray-100">
+      <section style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {STATS.map(s => (
             <div key={s.label}>
-              <p className="text-3xl font-extrabold text-[#0a1628]">{s.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+              <p className="text-3xl font-extrabold" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>{s.value}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -66,37 +75,45 @@ export default function AboutPage() {
       {/* Mission */}
       <section className="max-w-5xl mx-auto px-4 py-16 grid md:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#0a1628] mb-4">Our Mission</h2>
-          <p className="text-gray-600 leading-relaxed mb-4">
+          <h2 className="text-2xl font-extrabold mb-4" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>Our Mission</h2>
+          <p className="leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
             026News is a next-generation media platform that combines aggregated global news with
             original freelance journalism. We believe the best stories come from people who live them —
             local journalists, analysts, and contributors from across the African continent and beyond.
           </p>
-          <p className="text-gray-600 leading-relaxed mb-6">
+          <p className="leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
             Our platform gives journalists tools to publish, monetize their work through subscriptions
             and sponsored content, and build a loyal audience. Readers get breaking news, deep analysis,
             and a direct connection to the journalists they trust.
           </p>
-          <Link href="/subscribe" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl transition-colors">
+          <Link
+            href="/subscribe"
+            className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-colors"
+            style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
+          >
             Join 026News →
           </Link>
         </div>
-        <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>
           <Image src="https://picsum.photos/id/1060/600/400" alt="Newsroom" fill className="object-cover" />
         </div>
       </section>
 
       {/* Values */}
-      <section className="bg-gray-50 py-16 px-4">
+      <section className="py-16 px-4" style={{ background: 'var(--bg-inset)' }}>
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-extrabold text-[#0a1628] mb-2 text-center">What We Stand For</h2>
-          <p className="text-gray-500 text-center mb-10">The principles that guide every decision we make.</p>
+          <h2 className="text-2xl font-extrabold mb-2 text-center" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>What We Stand For</h2>
+          <p className="text-center mb-10" style={{ color: 'var(--text-tertiary)' }}>The principles that guide every decision we make.</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {VALUES.map(v => (
-              <div key={v.title} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div
+                key={v.title}
+                className="rounded-xl p-6 transition-shadow"
+                style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)' }}
+              >
                 <span className="text-3xl mb-3 block">{v.icon}</span>
-                <h3 className="font-bold text-gray-900 mb-2">{v.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{v.desc}</p>
+                <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{v.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{v.desc}</p>
               </div>
             ))}
           </div>
@@ -105,40 +122,58 @@ export default function AboutPage() {
 
       {/* Team */}
       <section className="max-w-5xl mx-auto px-4 py-16">
-        <h2 className="text-2xl font-extrabold text-[#0a1628] mb-2 text-center">Meet Our Journalists</h2>
-        <p className="text-gray-500 text-center mb-10">The voices behind our stories.</p>
+        <h2 className="text-2xl font-extrabold mb-2 text-center" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>Meet Our Authors</h2>
+        <p className="text-center mb-10" style={{ color: 'var(--text-tertiary)' }}>The voices behind our stories.</p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {journalists.map(j => (
-            <Link key={j.user_id} href={`/journalists/${j.user_id}`} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-center group">
+            <Link
+              key={j.user_id}
+              href={`/journalists/${j.user_id}`}
+              className="rounded-xl p-5 transition-all text-center group"
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
+            >
               <Image
                 src={j.profile_image ?? ''}
                 alt={j.name}
                 width={72}
                 height={72}
-                className="rounded-full object-cover mx-auto mb-3 ring-2 ring-gray-100 group-hover:ring-blue-400 transition-all"
+                className="rounded-full object-cover mx-auto mb-3"
+                style={{ border: '2px solid var(--border-subtle)' }}
               />
-              <p className="font-bold text-gray-900">{j.name}</p>
-              <p className="text-xs text-gray-400 mt-1">{j.articles} articles published</p>
-              <p className="text-xs text-gray-500 mt-2 line-clamp-2">{j.bio}</p>
+              <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{j.articles} articles published</p>
+              <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>{j.bio}</p>
             </Link>
           ))}
         </div>
         <div className="text-center mt-8">
-          <Link href="/journalists" className="inline-flex items-center gap-2 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold px-6 py-2.5 rounded-xl transition-colors">
-            View All Journalists →
+          <Link
+            href="/journalists"
+            className="inline-flex items-center gap-2 font-semibold px-6 py-2.5 rounded-xl transition-colors"
+            style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}
+          >
+            View All Authors →
           </Link>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-[#0a1628] text-white py-16 px-4 text-center">
-        <h2 className="text-2xl font-extrabold mb-3">Ready to contribute?</h2>
-        <p className="text-white/60 mb-6 max-w-lg mx-auto">Join hundreds of freelance journalists already earning on 026News.</p>
+      <section className="text-white py-16 px-4 text-center" style={{ background: 'var(--bg-elevated)' }}>
+        <h2 className="text-2xl font-extrabold mb-3" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>Ready to contribute?</h2>
+        <p className="mb-6 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>Join hundreds of freelance authors already earning on 026News.</p>
         <div className="flex gap-4 justify-center flex-wrap">
-          <Link href="/login" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl transition-colors">
+          <Link
+            href="/login"
+            className="font-bold px-6 py-3 rounded-xl transition-colors"
+            style={{ background: 'var(--accent)', color: '#1a1a1a' }}
+          >
             Start Writing
           </Link>
-          <Link href="/contact" className="border border-white/30 text-white hover:bg-white/10 font-semibold px-6 py-3 rounded-xl transition-colors">
+          <Link
+            href="/contact"
+            className="font-semibold px-6 py-3 rounded-xl transition-colors"
+            style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white' }}
+          >
             Get in Touch
           </Link>
         </div>

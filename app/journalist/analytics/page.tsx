@@ -60,27 +60,27 @@ export default function JournalistAnalyticsPage() {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
 
           {/* Weekly views chart */}
-          <div className="lg:col-span-2 bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">📈 Views This Week</h2>
+          <div className="lg:col-span-2 rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>📈 Views This Week</h2>
             <BarChart data={WEEKLY_VIEWS} />
           </div>
 
           {/* Traffic sources */}
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">🔗 Traffic Sources</h2>
+          <div className="rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>🔗 Traffic Sources</h2>
             <div className="space-y-3">
               {TOP_SOURCES.map(s => (
                 <div key={s.label}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{s.label}</span>
-                    <span className="font-bold text-gray-800">{s.percent}%</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{s.label}</span>
+                    <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{s.percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-[#f0faf2] rounded-full overflow-hidden">
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-muted)' }}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${s.percent}%`,
-                        background: 'linear-gradient(to right, #1a5c2a, #4caf28)',
+                        background: 'linear-gradient(to right, var(--primary), var(--accent))',
                       }}
                     />
                   </div>
@@ -93,47 +93,47 @@ export default function JournalistAnalyticsPage() {
         <div className="grid lg:grid-cols-2 gap-6">
 
           {/* Top articles */}
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-              <h2 className="font-extrabold text-[#1a5c2a]">🔥 Top Performing Articles</h2>
+          <div className="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
+              <h2 className="font-extrabold" style={{ color: 'var(--primary)' }}>🔥 Top Performing Articles</h2>
             </div>
-            <div className="divide-y divide-[#f0faf2]">
+            <div>
               {myArticles.sort((a, b) => b.views - a.views).slice(0, 5).map((a, i) => (
-                <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#f9fdf9] transition-all duration-300">
-                  <span className="text-2xl font-black text-[#1a5c2a]/20 min-w-[24px]">{i + 1}</span>
+                <div key={a.article_id} className="flex items-center gap-3 px-5 py-3 transition-all duration-300" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <span className="text-2xl font-black min-w-[24px]" style={{ color: 'var(--primary)', opacity: 0.2 }}>{i + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{a.title}</p>
-                    <p className="text-xs text-gray-400">👁 {formatNumber(a.views)} views</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>👁 {formatNumber(a.views)} views</p>
                   </div>
-                  <span className="text-xs font-bold text-[#1a5c2a] shrink-0">{formatNumber(a.views)}</span>
+                  <span className="text-xs font-bold shrink-0" style={{ color: 'var(--primary)' }}>{formatNumber(a.views)}</span>
                 </div>
               ))}
               {myArticles.length === 0 && (
-                <p className="px-5 py-6 text-sm text-gray-400 text-center">No published articles yet.</p>
+                <p className="px-5 py-6 text-sm text-center" style={{ color: 'var(--text-tertiary)' }}>No published articles yet.</p>
               )}
             </div>
           </div>
 
           {/* Audience by country */}
-          <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md">
-            <h2 className="font-extrabold text-[#1a5c2a] mb-4">🌍 Audience by Country</h2>
+          <div className="rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <h2 className="font-extrabold mb-4" style={{ color: 'var(--primary)' }}>🌍 Audience by Country</h2>
             <div className="space-y-3">
               {TOP_COUNTRIES.map(c => (
                 <div key={c.country} className="flex items-center gap-3">
                   <span className="text-xl">{c.flag}</span>
                   <div className="flex-1">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">{c.country}</span>
-                      <span className="font-bold text-gray-800">{c.percent}%</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{c.country}</span>
+                      <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{c.percent}%</span>
                     </div>
-                    <div className="h-1.5 bg-[#f0faf2] rounded-full overflow-hidden">
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-muted)' }}>
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${c.percent}%`,
                           background: c.country === 'Kenya'
-                            ? 'linear-gradient(to right, #c8102e, #e03050)'
-                            : 'linear-gradient(to right, #1a5c2a, #4caf28)',
+                            ? 'linear-gradient(to right, var(--error), #e03050)'
+                            : 'linear-gradient(to right, var(--primary), var(--accent))',
                         }}
                       />
                     </div>

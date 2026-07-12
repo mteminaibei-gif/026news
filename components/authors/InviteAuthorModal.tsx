@@ -16,7 +16,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
 
   if (!isOpen) return null
 
-  const inviteMessage = `Join 026NEWS as a journalist and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=invite`
+  const inviteMessage = `Join 026NEWS as an author and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=invite`
 
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=journalist_invite`
 
@@ -34,7 +34,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
   }
 
   const handleEmail = () => {
-    const subject = encodeURIComponent('Invite: Join 026NEWS as a Journalist')
+    const subject = encodeURIComponent('Invite: Join 026NEWS as an Author')
     const body = encodeURIComponent(
       `Hi ${authorName},\n\n${inviteMessage}\n\nBest regards,\n026NEWS Team`
     )
@@ -44,7 +44,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
   }
 
   const handleTwitter = () => {
-    const text = encodeURIComponent(`I'm inviting you to join @026News as a journalist! Share your stories and start earning. ${inviteLink}`)
+    const text = encodeURIComponent(`I'm inviting you to join @026News as an author! Share your stories and start earning. ${inviteLink}`)
     const url = `https://twitter.com/intent/tweet?text=${text}`
     window.open(url, '_blank')
     setSelectedMethod('twitter')
@@ -57,7 +57,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invite {authorName}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Share the journalist signup link</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Share the author signup link</p>
           </div>
           <button
             onClick={onClose}
@@ -72,7 +72,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
           {/* Invite Link */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Journalist Signup Link
+              Author Signup Link
             </label>
             <div className="flex gap-2">
               <input

@@ -13,13 +13,12 @@ const PLANS = [
     name: 'Free',
     price: '$0',
     period: 'forever',
-    color: 'border-gray-200',
     badge: '',
     features: [
       '5 free articles per month',
       'Breaking news alerts',
       'Comment on articles',
-      'Follow journalists',
+      'Follow authors',
       'Mobile-friendly reading',
     ],
     cta: 'Get Started Free',
@@ -30,13 +29,12 @@ const PLANS = [
     name: 'Premium',
     price: '$7',
     period: 'per month',
-    color: 'border-blue-600',
     badge: 'Most Popular',
     features: [
       'Unlimited article access',
       'Ad-free reading experience',
       'Early access to investigations',
-      'Exclusive journalist newsletters',
+      'Exclusive author newsletters',
       'Download articles offline',
       'Priority comment visibility',
       'Cancel anytime',
@@ -49,7 +47,6 @@ const PLANS = [
     name: 'Pro',
     price: '$19',
     period: 'per month',
-    color: 'border-orange-500',
     badge: 'For Teams',
     features: [
       'Everything in Premium',
@@ -77,33 +74,39 @@ export default function SubscribePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <section className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-16 px-4 text-center">
-        <span className="inline-block bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+      <section
+        className="text-white py-16 px-4 text-center"
+        style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}
+      >
+        <span
+          className="inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4"
+          style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
+        >
           Join the Team
         </span>
-        <h1 className="text-4xl font-extrabold mb-4">Contribute as a Journalist</h1>
-        <p className="text-white/60 max-w-xl mx-auto mb-6">
+        <h1 className="text-4xl font-extrabold mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>Contribute as an Author</h1>
+        <p className="max-w-xl mx-auto mb-6" style={{ color: 'rgba(255,255,255,0.6)' }}>
           The site remains free to view — supported by AdSense and optional in-app purchases.
-          If you're a journalist or contributor, join our team to publish and earn revenue.
+          If you&apos;re an author or contributor, join our team to publish and earn revenue.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <Link href="/login?mode=signup" className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-xl font-bold text-white">Join the Team — Sign Up</Link>
-          <Link href="/" className="text-white/90 underline">Browse for free</Link>
+          <Link href="/login?mode=signup" className="font-bold px-6 py-3 rounded-xl" style={{ background: 'var(--accent)', color: '#1a1a1a' }}>Join the Team — Sign Up</Link>
+          <Link href="/" className="underline" style={{ color: 'rgba(255,255,255,0.9)' }}>Browse for free</Link>
         </div>
-        <p className="text-xs text-white/60 mt-4 max-w-xl mx-auto">We implement Google AdSense for monetization and support in-app purchases for premium content.</p>
+        <p className="text-xs mt-4 max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>We implement Google AdSense for monetization and support in-app purchases for premium content.</p>
       </section>
 
       {/* Plans moved to bottom; users can browse for free, upgrade if desired */}
 
       {/* FAQ */}
-      <section className="bg-gray-50 py-16 px-4">
+      <section className="py-16 px-4" style={{ background: 'var(--bg-inset)' }}>
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-extrabold text-[#0a1628] mb-8 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-extrabold mb-8 text-center" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>Frequently Asked Questions</h2>
           <div className="space-y-4">
             {FAQS.map(faq => (
-              <div key={faq.q} className="bg-white rounded-xl p-5 shadow-sm">
-                <h3 className="font-bold text-gray-900 mb-2">{faq.q}</h3>
-                <p className="text-sm text-gray-500">{faq.a}</p>
+              <div key={faq.q} className="rounded-xl p-5" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)' }}>
+                <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{faq.q}</h3>
+                <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{faq.a}</p>
               </div>
             ))}
           </div>
@@ -111,10 +114,10 @@ export default function SubscribePage() {
       </section>
 
       {/* M-Pesa note */}
-      <section className="bg-white border-t border-gray-100 py-8 px-4 text-center">
-        <p className="text-gray-500 text-sm">
-          🇰🇪 Paying from Kenya? We accept <strong className="text-gray-800">M-Pesa</strong> — pay with your phone, no card needed.
-          <Link href="/contact" className="text-blue-600 ml-2 hover:underline">Contact us to set up M-Pesa →</Link>
+      <section className="py-8 px-4 text-center" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+          🇰🇪 Paying from Kenya? We accept <strong style={{ color: 'var(--text-secondary)' }}>M-Pesa</strong> — pay with your phone, no card needed.
+          <Link href="/contact" className="ml-2 hover:underline" style={{ color: 'var(--primary)' }}>Contact us to set up M-Pesa →</Link>
         </p>
       </section>
 
@@ -124,35 +127,44 @@ export default function SubscribePage() {
           {PLANS.map(plan => (
             <div
               key={plan.name}
-              className={`bg-white rounded-2xl border-2 ${plan.color} p-7 shadow-sm relative ${plan.primary ? 'shadow-lg scale-[1.02]' : ''} transition-all hover:shadow-md`}
+              className="rounded-2xl p-7 relative transition-all"
+              style={{
+                background: 'var(--bg-surface)',
+                border: `2px solid ${plan.primary ? 'var(--primary)' : 'var(--border)'}`,
+                boxShadow: plan.primary ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
+                transform: plan.primary ? 'scale(1.02)' : undefined,
+              }}
             >
               {plan.badge && (
-                <span className={`absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-1 rounded-full ${plan.primary ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white'}`}>
+                <span
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-1 rounded-full text-white"
+                  style={{ background: plan.primary ? 'var(--primary)' : 'var(--accent)' }}
+                >
                   {plan.badge}
                 </span>
               )}
               <div className="mb-5">
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{plan.name}</p>
+                <p className="text-sm font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>{plan.name}</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-[#0a1628]">{plan.price}</span>
-                  <span className="text-gray-400 text-sm mb-1">/{plan.period}</span>
+                  <span className="text-4xl font-extrabold" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>{plan.price}</span>
+                  <span className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>/{plan.period}</span>
                 </div>
               </div>
               <ul className="space-y-2.5 mb-7">
                 {plan.features.map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-gray-600">
-                    <span className="text-emerald-500 mt-0.5">✓</span>
+                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="mt-0.5" style={{ color: 'var(--success)' }}>✓</span>
                     {f}
                   </li>
                 ))}
               </ul>
               <Link
                 href={plan.href}
-                className={`block w-full text-center font-bold py-3 rounded-xl text-sm transition-colors ${
-                  plan.primary
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'border border-gray-200 hover:bg-gray-50 text-gray-800'
-                }`}
+                className="block w-full text-center font-bold py-3 rounded-xl text-sm transition-colors"
+                style={plan.primary
+                  ? { background: 'var(--primary)', color: 'var(--text-inverse)' }
+                  : { border: '1px solid var(--border)', color: 'var(--text-primary)' }
+                }
               >
                 {plan.cta}
               </Link>

@@ -23,7 +23,7 @@ export default async function JournalistLayout({ children }: { children: React.R
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen" style={{ background: 'var(--bg-base)' }}>
       <Sidebar
         role="journalist"
         user={{ name: profile.name, profile_image: profile.profile_image }}

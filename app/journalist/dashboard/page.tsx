@@ -10,7 +10,7 @@ import { formatDate, formatNumber, formatCurrency } from '@/lib/utils'
 import type { Metadata } from 'next'
 import { MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
 
-export const metadata: Metadata = { title: 'Journalist Dashboard' }
+export const metadata: Metadata = { title: 'Author Dashboard' }
 
 type ArticleRow = { article_id: number; title: string; slug: string; status: string; featured_image: string | null; views: number; earnings: number; created_at: string }
 type EarningsRow = { amount: number; payout_status: string; created_at: string; source: string }
@@ -29,7 +29,7 @@ export default async function JournalistDashboard() {
     } catch { /* ignore */ }
   }
   if (!profile) {
-    profile = { user_id: 3, name: user?.email?.split('@')[0] || 'Journalist', profile_image: null, rank_score: 95, badge_level: 'silver', total_views: 87500 }
+    profile = { user_id: 3, name: user?.email?.split('@')[0] || 'Author', profile_image: null, rank_score: 95, badge_level: 'silver', total_views: 87500 }
   }
 
   let articles: ArticleRow[] = []
@@ -99,8 +99,8 @@ export default async function JournalistDashboard() {
 
   return (
     <>
-      <Topbar title="Journalist Dashboard" user={{ name: profile.name, profile_image: profile.profile_image }}>
-        <Link href="/journalist/create" className="flex items-center gap-2 px-4 py-2.5 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-semibold rounded-xl transition-all shadow-sm hover:shadow">
+      <Topbar title="Author Dashboard" user={{ name: profile.name, profile_image: profile.profile_image }}>
+        <Link href="/journalist/create" className="flex items-center gap-2 px-4 py-2.5 font-semibold rounded-xl transition-all shadow-sm hover:shadow" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
           <span>➕</span> New Article
         </Link>
       </Topbar>
@@ -108,8 +108,8 @@ export default async function JournalistDashboard() {
       <div className="p-6 space-y-6">
         {/* Badges */}
         {badges.length > 0 && (
-          <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-x-auto">
-            <span className="font-bold text-[#1a5c2a] whitespace-nowrap">🏅 Badges</span>
+          <div className="flex items-center gap-3 p-4 rounded-2xl shadow-sm overflow-x-auto" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <span className="font-bold whitespace-nowrap" style={{ color: 'var(--primary)' }}>🏅 Badges</span>
             {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
           </div>
         )}
@@ -125,40 +125,40 @@ export default async function JournalistDashboard() {
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Recent Articles */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <div>
-                <h3 className="font-bold text-gray-900">📰 Your Articles</h3>
-                <p className="text-sm text-gray-500">Manage your content</p>
+                <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📰 Your Articles</h3>
+                <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Manage your content</p>
               </div>
-              <Link href="/journalist/create" className="px-3 py-1.5 bg-[#1a5c2a] text-white text-sm font-semibold rounded-lg hover:bg-[#2d8a47] transition-colors">
+              <Link href="/journalist/create" className="px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
                 ➕ New
               </Link>
             </div>
-            <div className="divide-y divide-gray-50 max-h-[320px] overflow-y-auto">
+            <div className="max-h-[320px] overflow-y-auto" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               {articles.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">
+                <div className="p-8 text-center" style={{ color: 'var(--text-tertiary)' }}>
                   <p className="mb-3">No articles yet</p>
-                  <Link href="/journalist/create" className="inline-block px-4 py-2 bg-[#1a5c2a] text-white font-semibold rounded-lg hover:bg-[#2d8a47] transition-colors">
+                  <Link href="/journalist/create" className="inline-block px-4 py-2 font-semibold rounded-lg transition-colors" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
                     Create your first article
                   </Link>
                 </div>
               ) : articles.slice(0, 6).map(a => (
-                <div key={a.article_id} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                <div key={a.article_id} className="px-6 py-4 flex items-center gap-4 transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   {a.featured_image ? (
                     <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0">
                       <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
                     </div>
                   ) : (
-                    <div className="w-14 h-11 rounded-lg bg-gray-100 flex items-center justify-center text-xl">📰</div>
+                    <div className="w-14 h-11 rounded-lg flex items-center justify-center text-xl" style={{ background: 'var(--bg-muted)' }}>📰</div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 line-clamp-1">{a.title}</p>
-                    <p className="text-sm text-gray-500">{formatDate(a.created_at)} · 👁 {formatNumber(a.views)}</p>
+                    <p className="font-medium line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{formatDate(a.created_at)} · 👁 {formatNumber(a.views)}</p>
                   </div>
                   <div className="text-right">
                     <Badge status={a.status} />
-                    <p className="text-sm font-bold text-[#1a5c2a] mt-1">{formatCurrency(a.earnings)}</p>
+                    <p className="text-sm font-bold mt-1" style={{ color: 'var(--primary)' }}>{formatCurrency(a.earnings)}</p>
                   </div>
                 </div>
               ))}
@@ -166,25 +166,25 @@ export default async function JournalistDashboard() {
           </div>
 
           {/* Earnings Chart */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">💰 Earnings Overview</h3>
-              <p className="text-sm text-gray-500">Last 6 months performance</p>
+          <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>💰 Earnings Overview</h3>
+              <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Last 6 months performance</p>
             </div>
             <div className="p-6">
               <BarChart data={chartData} labels={chartLabels} height={100} />
-              <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-gray-100">
+              <div className="grid grid-cols-3 gap-4 mt-6 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-[#1a5c2a]">{formatCurrency(totalEarnings)}</p>
-                  <p className="text-xs text-gray-500">Total</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(totalEarnings)}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-[#f5c518]">{formatCurrency(monthEarnings)}</p>
-                  <p className="text-xs text-gray-500">This Month</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--warning)' }}>{formatCurrency(monthEarnings)}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>This Month</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-[#1a5c2a]">{formatCurrency(pendingAmount)}</p>
-                  <p className="text-xs text-gray-500">Pending</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(pendingAmount)}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Pending</p>
                 </div>
               </div>
             </div>
@@ -193,27 +193,27 @@ export default async function JournalistDashboard() {
 
         {/* Payout History */}
         {payouts.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">💸 Payout History</h3>
-              <p className="text-sm text-gray-500">Your payment records</p>
+          <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>💸 Payout History</h3>
+              <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Your payment records</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead style={{ background: 'var(--bg-muted)' }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Period</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Your Cut (50%)</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Method</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Period</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Your Cut (50%)</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Method</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {payouts.map((p, i) => (
-                    <tr key={i} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm text-gray-600">{p.period_start} → {p.period_end}</td>
-                      <td className="px-6 py-4 font-bold text-[#1a5c2a]">{formatCurrency(Number(p.journalist_cut))}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 capitalize">{p.payment_method}</td>
+                    <tr key={i} className="transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{p.period_start} → {p.period_end}</td>
+                      <td className="px-6 py-4 font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(Number(p.journalist_cut))}</td>
+                      <td className="px-6 py-4 text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>{p.payment_method}</td>
                       <td className="px-6 py-4"><Badge status={p.status} /></td>
                     </tr>
                   ))}
@@ -224,16 +224,16 @@ export default async function JournalistDashboard() {
         )}
 
         {/* CTA Banner */}
-        <div className="bg-gradient-to-r from-[#1a5c2a] to-[#2d8a47] rounded-2xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg">
+        <div className="rounded-2xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
           <div>
-            <h3 className="text-white font-bold text-lg mb-1">Ready to publish your next story?</h3>
-            <p className="text-white/70 text-sm">Create, submit, and start earning from your journalism today.</p>
+            <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--text-inverse)' }}>Ready to publish your next story?</h3>
+            <p className="text-sm" style={{ color: 'var(--text-inverse)', opacity: 0.7 }}>Create, submit, and start earning from your writing today.</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/journalist/create" className="px-5 py-2.5 bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+            <Link href="/journalist/create" className="px-5 py-2.5 font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5" style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}>
               ✏️ New Article
             </Link>
-            <Link href="/leaderboard" className="px-5 py-2.5 border-2 border-white/40 text-white font-semibold rounded-xl transition-all hover:bg-white/10">
+            <Link href="/leaderboard" className="px-5 py-2.5 font-semibold rounded-xl transition-all hover:bg-white/10" style={{ border: '2px solid rgba(255,255,255,0.4)', color: 'var(--text-inverse)' }}>
               🏆 Leaderboard
             </Link>
           </div>

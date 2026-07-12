@@ -25,17 +25,20 @@ export function CommentsSection({ articleId, initialComments }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800/80 border dark:border-gray-700/50 rounded-2xl shadow-sm p-6 transition-colors">
+    <div
+      className="rounded-2xl p-6 transition-colors"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
+    >
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-base font-bold text-gray-900 dark:text-white">💬 {comments.length} Comments</h3>
+        <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>💬 {comments.length} Comments</h3>
       </div>
 
       {comments.length === 0 ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">No comments yet. Be the first to share your thoughts!</p>
+        <p className="text-sm text-center py-6" style={{ color: 'var(--text-tertiary)' }}>No comments yet. Be the first to share your thoughts!</p>
       ) : (
         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
           {comments.map(comment => (
-            <div key={comment.comment_id} className="flex gap-3 pb-4 border-b border-gray-100 dark:border-gray-700/50 last:border-0 last:pb-0 transition-colors">
+            <div key={comment.comment_id} className="flex gap-3 pb-4 last:border-0 last:pb-0 transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               {comment.user?.profile_image ? (
                 <Image
                   src={comment.user.profile_image}
@@ -51,10 +54,10 @@ export function CommentsSection({ articleId, initialComments }: Props) {
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{comment.user?.name ?? 'Anonymous'}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(comment.created_at)}</span>
+                  <span className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{comment.user?.name ?? 'Anonymous'}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatDate(comment.created_at)}</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words">{comment.comment_text}</p>
+                <p className="text-sm mt-1 whitespace-pre-wrap break-words" style={{ color: 'var(--text-secondary)' }}>{comment.comment_text}</p>
               </div>
             </div>
           ))}

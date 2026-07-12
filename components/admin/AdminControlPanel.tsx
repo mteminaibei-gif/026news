@@ -66,14 +66,14 @@ export function AdminControlPanel() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+    <div className="min-h-screen p-6" style={{ background: 'var(--bg-base)' }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
             Admin Control Panel
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p style={{ color: 'var(--text-tertiary)' }}>
             Manage your platform, users, and systems in real-time
           </p>
         </div>
@@ -86,39 +86,40 @@ export function AdminControlPanel() {
                 label: 'Active Users',
                 value: metrics.activeUsers,
                 icon: Users,
-                color: '#4caf28',
+                color: 'var(--success)',
               },
               {
                 label: 'Articles Today',
                 value: metrics.articlesPublished,
                 icon: BarChart3,
-                color: '#2196f3',
+                color: 'var(--primary)',
               },
               {
                 label: 'Total Views',
                 value: metrics.totalViews.toLocaleString(),
                 icon: Zap,
-                color: '#ff9800',
+                color: 'var(--warning)',
               },
               {
                 label: 'Total Earnings',
                 value: `KES ${Math.round(metrics.totalEarnings).toLocaleString()}`,
                 icon: Database,
-                color: '#9c27b0',
+                color: 'var(--primary-hover)',
               },
             ].map((stat, idx) => {
               const Icon = stat.icon
               return (
                 <div
                   key={idx}
-                  className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                  className="rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                  style={{ background: 'var(--bg-surface)' }}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      <p className="text-sm mb-1" style={{ color: 'var(--text-tertiary)' }}>
                         {stat.label}
                       </p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                         {stat.value}
                       </p>
                     </div>
@@ -136,7 +137,7 @@ export function AdminControlPanel() {
         )}
 
         {/* Tab Navigation */}
-        <div className="mb-8 border-b border-gray-200 dark:border-gray-800">
+        <div className="mb-8" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex gap-4 overflow-x-auto">
             {tabs.map(tab => (
               <button
@@ -165,32 +166,33 @@ export function AdminControlPanel() {
                   data={viewsChartData}
                   title="Article Views"
                   type="line"
-                  color="#4caf28"
+                  color="var(--success)"
                 />
                 <AnimatedChart
                   data={earningsChartData}
                   title="Earnings (KES)"
                   type="bar"
-                  color="#ff9800"
+                  color="var(--warning)"
                 />
 
                 {/* Recent Activity */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
+                  <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
                     Recent Activity
                   </h3>
                   <div className="space-y-3">
                     {metrics.recentActivity.slice(0, 5).map((activity, idx) => (
                       <div
                         key={idx}
-                        className="flex items-start gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl"
+                        className="flex items-start gap-4 p-3 rounded-xl"
+                        style={{ background: 'var(--border)' }}
                       >
-                        <Clock size={16} className="text-green-600 mt-1 flex-shrink-0" />
+                        <Clock size={16} className="mt-1 flex-shrink-0" style={{ color: 'var(--success)' }} />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white truncate">
+                          <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                             {activity.user}
                           </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
                             {new Date(activity.timestamp).toLocaleString()}
                           </p>
                         </div>
@@ -202,19 +204,20 @@ export function AdminControlPanel() {
             )}
 
             {activeTab === 'users' && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
+              <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                       User Management
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
                       Manage user accounts, roles, and permissions
                     </p>
                   </div>
                   <button
                     onClick={() => setShowCreateAccount(!showCreateAccount)}
-                    className="flex items-center gap-2 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold px-4 py-2 rounded-lg transition-all"
+                    className="flex items-center gap-2 text-white font-bold px-4 py-2 rounded-lg transition-all"
+                    style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}
                   >
                     <Plus size={18} />
                     Create Account
@@ -223,12 +226,12 @@ export function AdminControlPanel() {
 
                 {/* Account Creation Form (Collapsible) */}
                 {showCreateAccount && (
-                  <div className="mb-6 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="mb-6 p-6 rounded-xl" style={{ background: 'var(--border)', border: '1px solid var(--border)' }}>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-900 dark:text-white">Create New Account</h4>
+                      <h4 className="font-bold" style={{ color: 'var(--text-primary)' }}>Create New Account</h4>
                       <button
                         onClick={() => setShowCreateAccount(false)}
-                        className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        className="transition-colors" style={{ color: 'var(--text-tertiary)' }}
                       >
                         <X size={20} />
                       </button>
@@ -245,18 +248,18 @@ export function AdminControlPanel() {
 
                 {/* Recently Created Users */}
                 {createdUsers.length > 0 && (
-                  <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3">
+                  <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--primary-light)', border: '1px solid var(--success)' }}>
+                    <h4 className="font-semibold mb-3" style={{ color: 'var(--primary)' }}>
                       ✓ Recently Created Accounts ({createdUsers.length})
                     </h4>
                     <div className="space-y-2">
                       {createdUsers.map((user, idx) => (
                         <div key={idx} className="flex items-center justify-between text-sm">
                           <div>
-                            <p className="font-medium text-green-900 dark:text-green-100">{user.name}</p>
-                            <p className="text-xs text-green-800 dark:text-green-200">{user.email}</p>
+                            <p className="font-medium" style={{ color: 'var(--primary)' }}>{user.name}</p>
+                            <p className="text-xs" style={{ color: 'var(--primary)' }}>{user.email}</p>
                           </div>
-                          <span className="inline-block bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100 px-3 py-1 rounded-full text-xs font-medium">
+                          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium" style={{ background: 'var(--success)', color: 'white' }}>
                             {user.role}
                           </span>
                         </div>
@@ -275,10 +278,11 @@ export function AdminControlPanel() {
                   ].map((item, idx) => (
                     <button
                       key={idx}
-                      className="w-full text-left p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full text-left p-4 rounded-xl transition-colors"
+                      style={{ background: 'var(--border)' }}
                     >
-                      <p className="font-medium text-gray-900 dark:text-white">{item.action}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                      <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{item.action}</p>
+                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{item.description}</p>
                     </button>
                   ))}
                 </div>
@@ -286,8 +290,8 @@ export function AdminControlPanel() {
             )}
 
             {activeTab === 'system' && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
+                <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
                   System Configuration
                 </h3>
                 <div className="space-y-4">
@@ -299,13 +303,15 @@ export function AdminControlPanel() {
                   ].map((setting, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl"
+                      className="flex items-center justify-between p-3 rounded-xl"
+                      style={{ background: 'var(--border)' }}
                     >
-                      <span className="font-medium text-gray-900 dark:text-white">{setting.name}</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{setting.name}</span>
                       <div
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          setting.status ? 'bg-green-600' : 'bg-gray-300'
+                          setting.status ? '' : ''
                         }`}
+                        style={{ background: setting.status ? 'var(--success)' : 'var(--border)' }}
                       />
                     </div>
                   ))}
@@ -314,8 +320,8 @@ export function AdminControlPanel() {
             )}
 
             {activeTab === 'performance' && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
+                <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
                   Performance Metrics
                 </h3>
                 <div className="space-y-3">
@@ -326,9 +332,9 @@ export function AdminControlPanel() {
                     { label: 'API Requests/min', value: '1,234', status: 'good' },
                   ].map((metric, idx) => (
                     <div key={idx} className="flex items-center justify-between">
-                      <span className="text-gray-700 dark:text-gray-300">{metric.label}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{metric.label}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 dark:text-white">{metric.value}</span>
+                        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{metric.value}</span>
                         <div
                           className={`w-2 h-2 rounded-full ${
                             metric.status === 'good' ? 'bg-green-600' : 'bg-yellow-600'
@@ -342,8 +348,8 @@ export function AdminControlPanel() {
             )}
 
             {activeTab === 'security' && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
+                <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
                   Security Settings
                 </h3>
                 <div className="space-y-4">
@@ -366,18 +372,20 @@ export function AdminControlPanel() {
                   ].map((security, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl"
+                      className="flex items-start justify-between p-3 rounded-xl"
+                      style={{ background: 'var(--border)' }}
                     >
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{security.name}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{security.name}</p>
+                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
                           {security.description}
                         </p>
                       </div>
                       <div
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          security.enabled ? 'bg-green-600' : 'bg-gray-300'
+                          security.enabled ? '' : ''
                         }`}
+                        style={{ background: security.enabled ? 'var(--success)' : 'var(--border)' }}
                       />
                     </div>
                   ))}
@@ -389,8 +397,8 @@ export function AdminControlPanel() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* System Status */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
-              <h4 className="font-bold text-gray-900 dark:text-white mb-4">System Status</h4>
+            <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
+              <h4 className="font-bold mb-4" style={{ color: 'var(--text-primary)' }}>System Status</h4>
               <div className="space-y-2">
                 {[
                   { service: 'API Server', status: 'online' },
@@ -399,7 +407,7 @@ export function AdminControlPanel() {
                   { service: 'Email Service', status: 'online' },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{item.service}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{item.service}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-green-600" />
                       <span className="text-xs font-medium text-green-600">Online</span>
@@ -410,14 +418,14 @@ export function AdminControlPanel() {
             </div>
 
             {/* Alerts */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6">
+            <div className="rounded-2xl p-6" style={{ background: 'var(--warning-light)', border: '1px solid var(--warning)' }}>
               <div className="flex gap-3">
-                <AlertCircle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle size={20} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--warning)' }} />
                 <div>
-                  <h4 className="font-bold text-yellow-900 dark:text-yellow-100 mb-1">
+                  <h4 className="font-bold mb-1" style={{ color: 'var(--warning)' }}>
                     Resource Warning
                   </h4>
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <p className="text-sm" style={{ color: 'var(--warning)' }}>
                     Memory usage approaching 80%. Consider scaling resources.
                   </p>
                 </div>

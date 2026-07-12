@@ -26,8 +26,8 @@ export function BarChart({
   data,
   labels,
   height = 80,
-  color = '#e8f5ea',
-  highlightColor = '#1a5c2a',
+  color = 'var(--primary-light)',
+  highlightColor = 'var(--primary)',
 }: BarChartProps) {
   const normalized = normalizeData(data)
   const values = normalized.values
@@ -52,7 +52,7 @@ export function BarChart({
       {computedLabels.length > 0 && (
         <div className="flex justify-between mt-1">
           {computedLabels.map((l, i) => (
-            <span key={i} className="text-[10px] text-gray-400 flex-1 text-center">{l}</span>
+            <span key={i} className="text-[10px] flex-1 text-center" style={{ color: 'var(--text-tertiary)' }}>{l}</span>
           ))}
         </div>
       )}

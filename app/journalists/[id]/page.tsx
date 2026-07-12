@@ -84,7 +84,8 @@ export default async function JournalistProfilePage({ params }: Props) {
 
       {/* Hero banner */}
       <section
-        className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-20 px-4"
+        className="text-white py-20 px-4"
+        style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}
         aria-label={`${journalist.name} profile`}
       >
         <div className="max-w-4xl mx-auto text-center">
@@ -95,31 +96,37 @@ export default async function JournalistProfilePage({ params }: Props) {
                 alt={journalist.name}
                 width={100}
                 height={100}
-                className="rounded-full object-cover ring-4 ring-orange-500"
+                className="rounded-full object-cover"
+                style={{ border: '4px solid var(--accent)' }}
               />
             ) : (
-              <div className="w-[100px] h-[100px] rounded-full bg-white/20 ring-4 ring-orange-500 flex items-center justify-center text-4xl font-black text-white">
+              <div
+                className="w-[100px] h-[100px] rounded-full flex items-center justify-center text-4xl font-black text-white"
+                style={{ background: 'rgba(255,255,255,0.2)', border: '4px solid var(--accent)' }}
+              >
                 {journalist.name.charAt(0)}
               </div>
             )}
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-2">{journalist.name}</h1>
-          <p className="text-orange-400 font-bold uppercase tracking-wider text-sm mb-4">
-            Freelance Journalist · 026News
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>{journalist.name}</h1>
+          <p className="font-bold uppercase tracking-wider text-sm mb-4" style={{ color: 'var(--accent)' }}>
+            Freelance Author · 026News
           </p>
           {journalist.bio && (
-            <p className="text-white/60 max-w-xl mx-auto text-base leading-relaxed">{journalist.bio}</p>
+            <p className="max-w-xl mx-auto text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{journalist.bio}</p>
           )}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             <a
               href={`mailto:${journalist.email}`}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
+              className="font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
+              style={{ background: 'var(--accent)', color: '#1a1a1a' }}
             >
-              Contact Journalist
+              Contact Author
             </a>
             <Link
               href="/subscribe"
-              className="border border-white/30 hover:bg-white/10 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+              className="font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+              style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white' }}
             >
               Follow &amp; Subscribe
             </Link>
@@ -137,12 +144,12 @@ export default async function JournalistProfilePage({ params }: Props) {
       </section>
 
       {/* Stats strip */}
-      <div className="bg-white border-b border-gray-200">
+      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto px-4 py-5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           {stats.map(s => (
             <div key={s.label}>
-              <div className="text-2xl font-extrabold text-[#0a1628]">{s.value}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+              <div className="text-2xl font-extrabold" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>{s.value}</div>
+              <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -150,7 +157,7 @@ export default async function JournalistProfilePage({ params }: Props) {
 
       {/* Articles */}
       <div className="max-w-4xl mx-auto px-4 py-12 w-full">
-        <h2 className="text-xl font-extrabold text-gray-900 mb-6">
+        <h2 className="text-xl font-extrabold mb-6" style={{ color: 'var(--text-primary)', fontFamily: "'Newsreader', Georgia, serif" }}>
           📰 Articles by {journalist.name}
         </h2>
         {articles.length > 0 ? (
@@ -160,7 +167,10 @@ export default async function JournalistProfilePage({ params }: Props) {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl p-10 text-center text-gray-400 shadow-sm">
+          <div
+            className="rounded-xl p-10 text-center"
+            style={{ background: 'var(--bg-surface)', color: 'var(--text-muted)', boxShadow: 'var(--shadow-sm)' }}
+          >
             <div className="text-4xl mb-3">📭</div>
             <p className="font-semibold">No published articles yet.</p>
           </div>

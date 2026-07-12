@@ -82,7 +82,8 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
         <button
           onClick={handleApprove}
           disabled={loading !== null}
-          className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+          className="text-xs font-bold text-white px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+          style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}
         >
           {loading === 'approve' ? '…' : 'Approve'}
         </button>
@@ -92,7 +93,8 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
         <button
           onClick={handleReject}
           disabled={loading !== null}
-          className="text-xs font-semibold bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+          className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+          style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}
         >
           {loading === 'reject' ? '…' : 'Reject'}
         </button>
@@ -101,7 +103,8 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
       <button
         onClick={handleDelete}
         disabled={loading !== null}
-        className="text-xs font-semibold bg-[#fde8e8] hover:bg-[#fbd0d0] text-[#c8102e] px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+          className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
+          style={{ background: 'var(--error-light)', color: 'var(--error)' }}
       >
         {loading === 'delete' ? '…' : 'Delete'}
       </button>

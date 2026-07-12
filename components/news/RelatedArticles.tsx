@@ -37,10 +37,10 @@ export async function RelatedArticles({ currentSlug, categoryName, limit = 3 }: 
   if (related.length === 0) return null
 
   return (
-    <section aria-label="Related articles" className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-800">
-      <h2 className="text-lg font-extrabold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span className="text-orange-500">✨</span> You Might Also Like
-        <span className="ml-auto text-xs font-normal text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+    <section aria-label="Related articles" className="mt-10 pt-8" style={{ borderTop: '1px solid var(--border)' }}>
+      <h2 className="text-lg font-extrabold mb-5 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+        <span style={{ color: 'var(--accent)' }}>✨</span> You Might Also Like
+        <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full" style={{ color: 'var(--text-tertiary)', background: 'var(--bg-muted)' }}>
           Recommended
         </span>
       </h2>
@@ -49,7 +49,8 @@ export async function RelatedArticles({ currentSlug, categoryName, limit = 3 }: 
           <Link
             key={a.article_id}
             href={`/article/${a.slug}`}
-            className="group bg-white dark:bg-gray-800/40 border border-transparent dark:border-gray-850 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            className="group rounded-xl overflow-hidden transition-shadow"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
           >
             <div className="relative aspect-video overflow-hidden bg-gray-105 dark:bg-gray-850 flex items-center justify-center">
               {a.featured_image ? (
@@ -66,15 +67,15 @@ export async function RelatedArticles({ currentSlug, categoryName, limit = 3 }: 
                   <span className="text-sm font-black text-gray-400 dark:text-gray-600 select-none tracking-wider">026NEWS</span>
                 </div>
               )}
-              <div className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded">
+              <div className="absolute top-2 left-2 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: 'var(--accent)' }}>
                 {a.category?.name}
               </div>
             </div>
             <div className="p-3">
-              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+              <h3 className="text-sm font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug" style={{ color: 'var(--text-primary)' }}>
                 {a.title}
               </h3>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 flex items-center gap-1.5">
+              <p className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
                 <span>✍️ {a.author?.name}</span>
                 <span>·</span>
                 <span>{formatDate(a.created_at)}</span>

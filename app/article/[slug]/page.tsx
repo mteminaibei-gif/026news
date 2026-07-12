@@ -19,11 +19,7 @@ import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
 const getSourceHost = (url?: string | null) => {
   if (!url) return null
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return null
-  }
+  try { return new URL(url).hostname.replace(/^www\./, '') } catch { return null }
 }
 
 interface Props { params: Promise<{ slug: string }> }
@@ -46,12 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!data) return {}
   const article = data as unknown as {
-    title: string
-    content: string
-    featured_image: string | null
-    created_at: string
-    author: { name: string } | null
-    category: { name: string } | null
+    title: string; content: string; featured_image: string | null; created_at: string
+    author: { name: string } | null; category: { name: string } | null
   }
 
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
@@ -63,18 +55,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026news'].filter((k): k is string => !!k),
     authors: article.author ? [{ name: article.author.name }] : [],
     openGraph: {
-      title: article.title,
-      description,
-      type: 'article',
-      publishedTime: article.created_at,
+      title: article.title, description, type: 'article', publishedTime: article.created_at,
       authors: article.author ? [article.author.name] : [],
       images: article.featured_image ? [{ url: article.featured_image, width: 1200, height: 630, alt: article.title }] : [],
       url: `${APP_URL}/article/${slug}`,
     },
     twitter: {
-      card: 'summary_large_image',
-      title: article.title,
-      description,
+      card: 'summary_large_image', title: article.title, description,
       images: article.featured_image ? [article.featured_image] : [],
       creator: article.author ? `@${article.author.name.toLowerCase().replace(/\s+/g, '')}` : '@026news',
     },
@@ -83,9 +70,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
-  const supabase  = await createClient()
+  const supabase = await createClient()
 
-  // Fetch article
   const { data: rawArticle } = await supabase
     .from('articles')
     .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
@@ -96,7 +82,6 @@ export default async function ArticlePage({ params }: Props) {
   if (!rawArticle) notFound()
   const article = rawArticle as unknown as ArticleWithAuthor
 
-  // Fetch comments
   const { data: rawComments } = await supabase
     .from('comments')
     .select('comment_id, comment_text, created_at, user:users(name,profile_image)')
@@ -106,7 +91,6 @@ export default async function ArticlePage({ params }: Props) {
     .limit(50)
   const comments = (rawComments ?? []) as unknown as CommentWithUser[]
 
-  // Fetch related articles
   const { data: rawRelated } = await supabase
     .from('articles')
     .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
@@ -118,62 +102,69 @@ export default async function ArticlePage({ params }: Props) {
   const paragraphs = article.content.split('\n\n')
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Navbar />
       <ReadingProgress />
 
-      <div className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-[1fr_300px] gap-8">
-
-        {/* ── Article Main ── */}
+      <div className="max-w-[1200px] mx-auto px-6 py-10 grid lg:grid-cols-[1fr_340px] gap-12">
+        {/* Article Main */}
         <main>
           {/* Breadcrumb */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 flex-wrap">
-            <Link href="/" className="text-[#1a5c2a] hover:underline">Home</Link>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs mb-6 flex-wrap" style={{ color: 'var(--text-tertiary)' }}>
+            <Link href="/" style={{ color: 'var(--primary)' }}>Home</Link>
             <span>/</span>
-            <Link href={`/?category=${article.category?.name}`} className="text-[#1a5c2a] hover:underline">
-              {article.category?.name}
-            </Link>
+            <Link href={`/?category=${article.category?.name}`} style={{ color: 'var(--primary)' }}>{article.category?.name}</Link>
             <span>/</span>
-            <span className="text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{article.title}</span>
+            <span className="truncate max-w-[200px]" style={{ color: 'var(--text-secondary)' }}>{article.title}</span>
           </nav>
 
           {/* Header */}
-          <div className="bg-white dark:bg-gray-800/60 border dark:border-gray-700/40 rounded-2xl shadow-sm p-6 md:p-8 mb-6 transition-colors">
-            <span className={`inline-block text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded mb-4 ${
-              ['Kenya','Africa'].includes(article.category?.name ?? '') ? 'bg-[#c8102e]' : 'bg-[#1a5c2a]'
-            }`}>
+          <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--primary)' }}>
               {article.category?.name}
-            </span>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
+            </p>
+            <h1
+              className="text-2xl md:text-3xl font-semibold leading-tight mb-3"
+              style={{ fontFamily: "'Newsreader', Georgia, serif", color: 'var(--text-primary)' }}
+            >
               {article.title}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-base mb-4 leading-relaxed">
+            <p className="text-base mb-5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               {article.content.substring(0, 140)}...
             </p>
 
             {/* Meta */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 dark:text-gray-500 pb-5 border-b border-gray-100 dark:border-gray-700/50">
-              <span>✍️ <strong className="text-gray-700 dark:text-gray-300">{article.author?.name}</strong></span>
-              <span>🏷️ Author</span>
-              <span>📅 {formatDate(article.created_at)}</span>
-              <span>👁 {formatNumber(article.views)} views</span>
-              <span>⏱ {readingTime(article.content)} min read</span>
+            <div className="flex flex-wrap items-center gap-4 text-sm pb-5" style={{ color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-subtle)' }}>
+              <span className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                  {article.author?.name?.charAt(0) ?? 'S'}
+                </span>
+                <strong style={{ color: 'var(--text-primary)' }}>{article.author?.name}</strong>
+              </span>
+              <span>·</span>
+              <span>{formatDate(article.created_at)}</span>
+              <span>·</span>
+              <span>{formatNumber(article.views)} views</span>
+              <span>·</span>
+              <span>{readingTime(article.content)} min read</span>
               <Badge status={article.monetization_type} />
             </div>
 
+            {/* Source attribution */}
             {article.source_reference && (
-              <div className="mt-5 rounded-3xl border border-[#d4e9d4] bg-[#f4fbf6] dark:bg-[#132318] dark:border-[#224631] p-4 flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-                <div className="font-semibold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-[0.18em] text-[10px]">
+              <div className="mt-5 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 text-sm" style={{ background: 'var(--primary-light)', border: '1px solid var(--border-subtle)' }}>
+                <div className="font-semibold uppercase tracking-wider text-xs" style={{ color: 'var(--primary)' }}>
                   Source attribution
                 </div>
-                <p className="text-sm leading-relaxed flex-1">
-                  This story is linked to its original source. Click through for the full external reference and background.
+                <p className="text-sm leading-relaxed flex-1" style={{ color: 'var(--text-secondary)' }}>
+                  This story is linked to its original source. Click through for the full external reference.
                 </p>
                 <a
                   href={article.source_reference}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#1a5c2a] bg-white dark:bg-[#0f2318] px-4 py-2 text-sm font-semibold text-[#1a5c2a] dark:text-[#4caf28] hover:bg-[#1a5c2a]/5 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                  style={{ border: '1px solid var(--primary)', color: 'var(--primary)', background: 'var(--bg-elevated)' }}
                 >
                   {getSourceHost(article.source_reference) ?? 'Read source'} ↗
                 </a>
@@ -182,25 +173,19 @@ export default async function ArticlePage({ params }: Props) {
 
             {/* Author strip */}
             {article.author && (
-              <div className="flex items-center gap-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
+              <div className="flex items-center gap-4 mt-5 p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
                 {article.author.profile_image ? (
-                  <Image
-                    src={article.author.profile_image}
-                    alt={article.author.name}
-                    width={52}
-                    height={52}
-                    className="rounded-full object-cover shrink-0"
-                  />
+                  <Image src={article.author.profile_image} alt={article.author.name} width={48} height={48} className="rounded-full object-cover shrink-0" />
                 ) : (
-                  <div className="w-[52px] h-[52px] rounded-full bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 flex items-center justify-center text-lg font-bold text-[#1a5c2a] dark:text-[#4caf28] shrink-0">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
                     {article.author.name.charAt(0)}
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-gray-900 dark:text-white">{article.author.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Author · {article.category?.name} Specialist</p>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{article.author.name}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Author · {article.category?.name} Specialist</p>
                   {article.author.bio && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">🌍 {article.author.bio}</p>
+                    <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>{article.author.bio}</p>
                   )}
                 </div>
               </div>
@@ -209,37 +194,34 @@ export default async function ArticlePage({ params }: Props) {
 
           {/* Featured image */}
           {article.featured_image && (
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm mb-6 bg-[#e8f5ea] dark:bg-[#1a2e1e]">
-              <FeaturedImage
-                src={article.featured_image}
-                alt={article.title}
-                priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 900px"
-              />
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-6" style={{ background: 'var(--bg-inset)' }}>
+              <FeaturedImage src={article.featured_image} alt={article.title} priority sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 900px" />
             </div>
           )}
 
           {/* Body */}
-          <div className="bg-white dark:bg-gray-800/60 border dark:border-gray-700/40 rounded-2xl shadow-sm p-6 md:p-8 mb-6 transition-colors">
-            <div className="article-content text-gray-700 dark:text-gray-300 text-base leading-[1.85]">
+          <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="article-content" style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', lineHeight: 1.85, color: 'var(--text-primary)' }}>
               {paragraphs.map((para, i) => (
                 <p key={i} className="mb-5">{para}</p>
               ))}
             </div>
           </div>
 
-          {/* Share bar — client component */}
+          {/* Share bar */}
           <ShareBar title={article.title} slug={article.slug} />
 
           {/* Support / Monetization */}
           <div className="grid sm:grid-cols-2 gap-3 mb-6">
             <a href="https://www.buymeacoffee.com" target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-              ☕ Buy Me a Coffee
+              className="flex items-center justify-center gap-2 font-semibold py-3.5 rounded-xl transition-all"
+              style={{ background: 'var(--accent)', color: 'oklch(15% 0.02 55)' }}>
+              Buy Me a Coffee
             </a>
             <a href="https://www.patreon.com" target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-              🎬 Become a Patron
+              className="flex items-center justify-center gap-2 font-semibold py-3.5 rounded-xl transition-all"
+              style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}>
+              Become a Patron
             </a>
           </div>
 
@@ -250,19 +232,15 @@ export default async function ArticlePage({ params }: Props) {
           <RelatedArticles currentSlug={article.slug} categoryName={article.category?.name} />
         </main>
 
-        {/* ── Sidebar ── */}
-        <aside className="space-y-5">
-          {/* Subscribe widget */}
+        {/* Sidebar */}
+        <aside className="flex flex-col gap-8">
           <SubscribeWidget variant="inline" />
-
-          {/* Ad */}
           <AdBanner slot="sidebar-article" format="rectangle" className="rounded-xl overflow-hidden" label="Sponsored" />
 
-          {/* Related News */}
           {related.length > 0 && (
-            <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-700/50 rounded-xl shadow-sm overflow-hidden transition-colors">
-              <div className="px-4 py-3 bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 border-b-2 border-[#1a5c2a]">
-                <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider">📰 Related News</h3>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Related News</h3>
               </div>
               <div className="p-3">
                 {related.map(r => (
@@ -272,31 +250,31 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           )}
 
-          {/* Author profile sidebar */}
           {article.author && (
-            <div className="bg-white dark:bg-gray-800/40 border dark:border-gray-700/50 rounded-xl shadow-sm p-5 transition-colors">
-              <h3 className="text-sm font-extrabold text-[#1a5c2a] dark:text-[#4caf28] uppercase tracking-wider mb-3">
-                ✍️ More by {article.author.name.split(' ')[0]}
+            <div className="rounded-2xl p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+                More by {article.author.name.split(' ')[0]}
               </h3>
               <div className="flex items-center gap-3 mb-3">
                 {article.author.profile_image ? (
-                  <Image src={article.author.profile_image} alt={article.author.name} width={48} height={48} className="rounded-full object-cover" unoptimized />
+                  <Image src={article.author.profile_image} alt={article.author.name} width={40} height={40} className="rounded-full object-cover" unoptimized />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-[#e8f5ea] dark:bg-[#1a5c2a]/30 flex items-center justify-center text-lg font-bold text-[#1a5c2a] dark:text-[#4caf28]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
                     {article.author.name.charAt(0)}
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-sm text-gray-900 dark:text-white">{article.author.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Author</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{article.author.name}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Author</p>
                 </div>
               </div>
               {article.author.bio && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{article.author.bio.substring(0, 100)}...</p>
+                <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>{article.author.bio.substring(0, 100)}...</p>
               )}
               <Link
                 href={`/journalists/${article.author.user_id}`}
-                className="mt-3 block text-center border border-[#1a5c2a] text-[#1a5c2a] hover:bg-[#1a5c2a] hover:text-white dark:border-[#4caf28] dark:text-[#4caf28] dark:hover:bg-[#4caf28] dark:hover:text-[#0f1a12] text-sm font-semibold py-2 rounded-lg transition-all duration-300"
+                className="block text-center text-sm font-semibold py-2 rounded-lg transition-all no-underline"
+                style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}
               >
                 View Profile
               </Link>

@@ -121,9 +121,12 @@ export default function AdminDashboard() {
   return (
     <>
       {notification && (
-        <div className={`fixed top-24 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold animate-fade-in ${
-          notification.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
-        }`}>
+        <div className="fixed top-24 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold animate-fade-in" style={{
+          borderRadius: 16,
+          ...(notification.type === 'success'
+            ? { background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)' }
+            : { background: 'var(--info)', border: '1px solid var(--info)', color: 'var(--text-inverse)' })
+        }}>
           {notification.message}
         </div>
       )}
@@ -134,27 +137,36 @@ export default function AdminDashboard() {
 
       {/* Tab Navigation */}
       <div className="px-6 pt-6">
-        <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl w-fit">
+        <div className="flex items-center gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--bg-muted)' }}>
           <button
             onClick={() => setActiveView('dashboard')}
-            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              activeView === 'dashboard' ? 'bg-white dark:bg-gray-700 text-[#1a5c2a] dark:text-[#4caf28] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
+            className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 500,
+              ...(activeView === 'dashboard'
+                ? { background: 'var(--primary)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-sm)' }
+                : { background: 'transparent', color: 'var(--text-secondary)' })
+            }}
           >
             📊 Dashboard
           </button>
           <button
             onClick={() => setActiveView('control-panel')}
-            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              activeView === 'control-panel' ? 'bg-white dark:bg-gray-700 text-[#1a5c2a] dark:text-[#4caf28] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
+            className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 500,
+              ...(activeView === 'control-panel'
+                ? { background: 'var(--primary)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-sm)' }
+                : { background: 'transparent', color: 'var(--text-secondary)' })
+            }}
           >
             ⚙️ Control Panel
           </button>
-          <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+          <div className="w-px h-6 mx-1" style={{ background: 'var(--border)' }} />
           <button
             onClick={() => setShowCreateAccountDialog(true)}
-            className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white transition-all flex items-center gap-2"
+            className="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
+            style={{ background: 'var(--primary)', color: 'var(--text-inverse)', borderRadius: 10 }}
           >
             <span>➕ Create</span>
           </button>
@@ -166,8 +178,8 @@ export default function AdminDashboard() {
       {activeView === 'dashboard' && (
         <div className="p-6 space-y-6">
           {loading ? (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div className="w-10 h-10 border-4 border-[#1a5c2a] border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+              <div className="w-10 h-10 border-4 rounded-full animate-spin" style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
             </div>
           ) : (
             <>
@@ -175,36 +187,36 @@ export default function AdminDashboard() {
 
               {/* Stats Grid - Responsive */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
-                <div className="stat-card group">
-                  <div className="stat-icon bg-[#1a5c2a]/10 text-[#1a5c2a]">📰</div>
-                  <div className="stat-content">
-                    <p className="stat-label">Total Articles</p>
-                    <p className="stat-value">{totalArticlesCount.toLocaleString()}</p>
-                    <p className="stat-sub">{published.length} published</p>
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: 20 }}>📰</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Articles</p>
+                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{totalArticlesCount.toLocaleString()}</p>
+                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{published.length} published</p>
                   </div>
                 </div>
-                <div className="stat-card group">
-                  <div className="stat-icon bg-amber-100 text-amber-600">⏳</div>
-                  <div className="stat-content">
-                    <p className="stat-label">Pending Review</p>
-                    <p className="stat-value">{pending.length}</p>
-                    <p className="stat-sub">Awaiting approval</p>
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--warning-light)', color: 'var(--warning)', fontSize: 20 }}>⏳</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pending Review</p>
+                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{pending.length}</p>
+                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>Awaiting approval</p>
                   </div>
                 </div>
-                <div className="stat-card group">
-                  <div className="stat-icon bg-blue-100 text-blue-600">👥</div>
-                  <div className="stat-content">
-                    <p className="stat-label">Total Users</p>
-                    <p className="stat-value">{formatNumber(totalUsers)}</p>
-                    <p className="stat-sub">{journalistsCount} authors</p>
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--info)', color: 'var(--text-inverse)', fontSize: 20 }}>👥</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Users</p>
+                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{formatNumber(totalUsers)}</p>
+                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{journalistsCount} authors</p>
                   </div>
                 </div>
-                <div className="stat-card group">
-                  <div className="stat-icon bg-emerald-100 text-emerald-600">💵</div>
-                  <div className="stat-content">
-                    <p className="stat-label">Revenue</p>
-                    <p className="stat-value">{formatCurrency(totalRevenue)}</p>
-                    <p className="stat-sub">{formatCurrency(pendingPayout)} pending</p>
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--success-light)', color: 'var(--success)', fontSize: 20 }}>💵</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenue</p>
+                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{formatCurrency(totalRevenue)}</p>
+                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{formatCurrency(pendingPayout)} pending</p>
                   </div>
                 </div>
               </div>
@@ -212,13 +224,13 @@ export default function AdminDashboard() {
               {/* Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                 {/* Traffic Chart */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <div>
-                      <h3 className="font-bold text-gray-900">📈 Traffic Overview</h3>
-                      <p className="text-sm text-gray-500">Monthly article views</p>
+                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📈 Traffic Overview</h3>
+                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Monthly article views</p>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full">Live</span>
+                    <span className="px-3 py-1 text-xs font-semibold rounded-full" style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: 'var(--success-light)', color: 'var(--success)' }}>Live</span>
                   </div>
                   <div className="p-6">
                     <BarChart data={[30, 45, 38, 55, 60, 50, 72, 80, 75, 90, 85, 100]} labels={['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']} height={100} />
@@ -226,25 +238,25 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Active Authors */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <div>
-                      <h3 className="font-bold text-gray-900">⭐ Active Authors</h3>
-                      <p className="text-sm text-gray-500">Top performers this month</p>
+                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⭐ Active Authors</h3>
+                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Top performers this month</p>
                     </div>
-                    <Link href="/admin/journalists" className="text-sm font-semibold text-[#1a5c2a] hover:underline">View All</Link>
+                    <Link href="/admin/journalists" className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>View All</Link>
                   </div>
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                     {journalists.slice(0, 4).map(j => (
-                      <div key={j.user_id} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                      <div key={j.user_id} className="px-6 py-4 flex items-center gap-4 transition-colors" onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                         {j.profile_image ? (
-                          <Image src={j.profile_image} alt={j.name} width={44} height={44} className="rounded-full object-cover ring-2 ring-gray-100" />
+                          <Image src={j.profile_image} alt={j.name} width={44} height={44} className="rounded-full object-cover" style={{ boxShadow: '0 0 0 2px var(--border-subtle)' }} />
                         ) : (
-                          <div className="w-11 h-11 rounded-full bg-[#1a5c2a] flex items-center justify-center text-white font-bold">{j.name.charAt(0)}</div>
+                          <div className="rounded-full flex items-center justify-center font-bold" style={{ width: 44, height: 44, background: 'var(--primary)', color: 'var(--text-inverse)' }}>{j.name.charAt(0)}</div>
                         )}
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">{j.name}</p>
-                          <p className="text-sm text-gray-500">{j.email}</p>
+                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
+                          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{j.email}</p>
                         </div>
                         <Badge status={j.status} />
                       </div>
@@ -256,29 +268,29 @@ export default function AdminDashboard() {
               {/* Main Content Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
                 {/* Articles Table */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="lg:col-span-2" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <div>
-                      <h3 className="font-bold text-gray-900">📋 Recent Articles</h3>
-                      <p className="text-sm text-gray-500">Manage and review content</p>
+                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📋 Recent Articles</h3>
+                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Manage and review content</p>
                     </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Article</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Author</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Views</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-muted)' }}>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>#</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Article</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase hidden md:table-cell" style={{ color: 'var(--text-secondary)' }}>Author</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase hidden lg:table-cell" style={{ color: 'var(--text-secondary)' }}>Views</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-50">
+                      <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                         {articles.slice(0, 8).map((a, i) => (
-                          <tr key={a.article_id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 text-sm text-gray-500">{i + 1}</td>
+                          <tr key={a.article_id} className="transition-colors" onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                            <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-tertiary)' }}>{i + 1}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 {a.featured_image && (
@@ -287,13 +299,13 @@ export default function AdminDashboard() {
                                   </div>
                                 )}
                                 <div>
-                                  <p className="font-medium text-gray-900 line-clamp-1 max-w-[200px]">{a.title}</p>
-                                  <p className="text-xs text-gray-500">{a.category?.name}</p>
+                                  <p className="font-medium line-clamp-1" style={{ color: 'var(--text-primary)', maxWidth: 200 }}>{a.title}</p>
+                                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{a.category?.name}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">{a.author?.name}</td>
-                            <td className="px-6 py-4 text-sm text-gray-600 hidden lg:table-cell">👁 {formatNumber(a.views)}</td>
+                            <td className="px-6 py-4 text-sm hidden md:table-cell" style={{ color: 'var(--text-primary)' }}>{a.author?.name}</td>
+                            <td className="px-6 py-4 text-sm hidden lg:table-cell" style={{ color: 'var(--text-primary)' }}>👁 {formatNumber(a.views)}</td>
                             <td className="px-6 py-4"><Badge status={a.status} /></td>
                             <td className="px-6 py-4"><AdminArticleActions articleId={a.article_id} /></td>
                           </tr>
@@ -307,11 +319,11 @@ export default function AdminDashboard() {
                 <div className="space-y-5">
                   {/* Pending Reviews */}
                   {pending.length > 0 && (
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 bg-amber-50 border-b border-amber-100">
-                        <h3 className="font-bold text-amber-800">⏳ Pending Review</h3>
+                    <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                      <div className="px-5 py-4" style={{ background: 'var(--warning-light)', borderBottom: '1px solid var(--warning)' }}>
+                        <h3 className="font-bold" style={{ color: 'var(--warning)' }}>⏳ Pending Review</h3>
                       </div>
-                      <div className="divide-y divide-gray-50">
+                      <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                         {pending.slice(0, 3).map(a => (
                           <div key={a.article_id} className="p-4 flex items-center gap-3">
                             {a.featured_image && (
@@ -320,10 +332,10 @@ export default function AdminDashboard() {
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 text-sm line-clamp-1">{a.title}</p>
-                              <p className="text-xs text-gray-500">By {a.author?.name}</p>
+                              <p className="font-medium text-sm line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
+                              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>By {a.author?.name}</p>
                             </div>
-                            <Link href={`/admin/review/${a.article_id}`} className="px-3 py-1.5 bg-[#1a5c2a] text-white text-xs font-semibold rounded-lg hover:bg-[#2d8a47] transition-colors">
+                            <Link href={`/admin/review/${a.article_id}`} className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
                               Review
                             </Link>
                           </div>
@@ -333,23 +345,23 @@ export default function AdminDashboard() {
                   )}
 
                   {/* Revenue Card */}
-                  <div className="bg-gradient-to-br from-[#1a5c2a] to-[#2d8a47] rounded-2xl p-6 text-white shadow-lg">
+                  <div className="rounded-2xl p-6 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}>
                     <h3 className="font-bold text-lg mb-4">💰 Revenue Summary</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-white/80 text-sm">Total Revenue</span>
+                        <span className="text-sm" style={{ opacity: 0.8 }}>Total Revenue</span>
                         <span className="font-bold text-lg">{formatCurrency(totalRevenue)}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-white/80 text-sm">Pending Payout</span>
-                        <span className="font-semibold text-[#f5c518]">{formatCurrency(pendingPayout)}</span>
+                        <span className="text-sm" style={{ opacity: 0.8 }}>Pending Payout</span>
+                        <span className="font-semibold" style={{ color: 'var(--warning)' }}>{formatCurrency(pendingPayout)}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-white/80 text-sm">Active Authors</span>
+                        <span className="text-sm" style={{ opacity: 0.8 }}>Active Authors</span>
                         <span className="font-bold">{journalistsCount}</span>
                       </div>
                     </div>
-                    <Link href="/admin/earnings" className="mt-5 block w-full py-3 bg-white/20 hover:bg-white/30 text-center rounded-xl font-semibold text-sm transition-colors">
+                    <Link href="/admin/earnings" className="mt-5 block w-full py-3 text-center rounded-xl font-semibold text-sm transition-colors" style={{ background: 'rgba(255,255,255,0.2)' }}>
                       View Payment Report →
                     </Link>
                   </div>
@@ -363,24 +375,6 @@ export default function AdminDashboard() {
       )}
 
       <style jsx>{`
-        .stat-card {
-          @apply bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-start gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1;
-        }
-        .stat-icon {
-          @apply w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0;
-        }
-        .stat-content {
-          @apply flex-1 min-w-0;
-        }
-        .stat-label {
-          @apply text-xs font-semibold text-gray-500 uppercase tracking-wider;
-        }
-        .stat-value {
-          @apply text-2xl font-bold text-gray-900 mt-1;
-        }
-        .stat-sub {
-          @apply text-sm text-gray-500 mt-0.5;
-        }
         @keyframes fade-in-up {
           from {
             opacity: 0;

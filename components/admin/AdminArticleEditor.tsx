@@ -19,8 +19,8 @@ const MONETIZE_OPTIONS = [
 const STATUS_OPTIONS = [
   { value: 'draft',        icon: '💾', label: 'Draft',        desc: 'Save without publishing', color: 'text-gray-600' },
   { value: 'under_review', icon: '🔍', label: 'Under Review', desc: 'Queue for editorial',     color: 'text-amber-600' },
-  { value: 'published',    icon: '🚀', label: 'Published',    desc: 'Live immediately',         color: 'text-[#1a5c2a]' },
-  { value: 'rejected',     icon: '❌', label: 'Rejected',     desc: 'Mark as declined',         color: 'text-[#c8102e]' },
+  { value: 'published',    icon: '🚀', label: 'Published',    desc: 'Live immediately',         color: 'var(--primary)', colorVar: 'var(--primary)' },
+  { value: 'rejected',     icon: '❌', label: 'Rejected',     desc: 'Mark as declined',         color: 'var(--error)', colorVar: 'var(--error)' },
 ]
 
 type Category = { category_id: number; name: string }
@@ -39,8 +39,9 @@ interface ArticleEditorProps {
   backLabel?: string
 }
 
-const fieldCls = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 font-medium outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all placeholder:text-gray-300'
-const labelCls = 'block text-[11px] font-black uppercase tracking-[0.1em] text-gray-400 mb-2'
+const fieldCls = 'w-full border rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all'
+const fieldStyle: React.CSSProperties = { background: 'var(--bg-surface)', borderColor: 'var(--border)', color: 'var(--text-primary)', ['--tw-ring-color' as string]: 'var(--success)' }
+const labelCls = 'block text-[11px] font-black uppercase tracking-[0.1em] mb-2'
 
 const AUTOSAVE_KEY = 'admin_editor_draft'
 
@@ -200,48 +201,48 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   }, [handleSave])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f4fbf6] via-white to-[#fff8e1]">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, var(--primary-light), var(--bg-surface), var(--warning-light))' }}>
 
       {/* ── Sticky action bar ── */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <div className="sticky top-0 z-20 backdrop-blur-md shadow-sm" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             {/* Back link */}
             <a href={backHref}
-              className="text-gray-400 hover:text-[#1a5c2a] text-sm transition-colors shrink-0 hidden sm:block">
+              className="text-sm transition-colors shrink-0 hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>
               ←
             </a>
-            <div className="w-2 h-6 rounded-full bg-gradient-to-b from-[#1a5c2a] to-[#4caf28] shrink-0" />
-            <h1 className="text-sm font-black text-[#1a5c2a] truncate">
+            <div className="w-2 h-6 rounded-full shrink-0" style={{ background: 'linear-gradient(to bottom, var(--primary), var(--success))' }} />
+            <h1 className="text-sm font-black truncate" style={{ color: 'var(--primary)' }}>
               {isEdit ? 'Edit Article' : 'Write New Article'}
             </h1>
             {title && (
-              <span className="text-xs text-gray-400 truncate hidden md:block">— {title}</span>
+              <span className="text-xs truncate hidden md:block" style={{ color: 'var(--text-tertiary)' }}>— {title}</span>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {saved && (
-              <span className="text-xs font-bold text-[#1a5c2a] bg-[#e8f5ea] px-3 py-1 rounded-full animate-fade-in">
+              <span className="text-xs font-bold px-3 py-1 rounded-full animate-fade-in" style={{ color: 'var(--primary)', background: 'var(--border-subtle)' }}>
                 ✅ Saved
               </span>
             )}
             {!saved && lastSaved && (
-              <span className="text-[10px] text-gray-400 hidden sm:block">
+              <span className="text-[10px] hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>
                 autosaved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
-            <span className="text-xs text-gray-400 hidden sm:block">{wordCount} words · {readMins} min</span>
-            <span className="text-[10px] text-gray-300 hidden md:block">Ctrl+S = draft</span>
+            <span className="text-xs hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>{wordCount} words · {readMins} min</span>
+            <span className="text-[10px] hidden md:block" style={{ color: 'var(--text-tertiary)' }}>Ctrl+S = draft</span>
             <button onClick={() => handleSave('draft')} disabled={saving}
-              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-all disabled:opacity-40">
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-40" style={{ color: 'var(--text-tertiary)', background: 'var(--border)' }}>
               💾 Draft
             </button>
             <button onClick={() => handleSave('under_review')} disabled={saving || !title.trim() || !content.trim()}
-              className="text-xs font-bold bg-[#f5c518] hover:bg-[#e6b800] text-[#1a1a1a] px-3 py-1.5 rounded-lg transition-all disabled:opacity-40">
+              className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all disabled:opacity-40" style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}>
               🔍 Review
             </button>
             <button onClick={() => handleSave('published')} disabled={saving || !title.trim() || !content.trim()}
-              className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-4 py-1.5 rounded-lg transition-all hover:shadow-md disabled:opacity-40">
+              className="text-xs font-bold text-white px-4 py-1.5 rounded-lg transition-all hover:shadow-md disabled:opacity-40" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
               {saving ? (imageUploading ? '⏫ Uploading…' : '⏳ Saving…') : '🚀 Publish'}
             </button>
           </div>
@@ -251,7 +252,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
       {/* ── Body ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {saveError && (
-          <div role="alert" className="mb-5 bg-[#fde8e8] border border-[#c8102e]/20 text-[#c8102e] text-sm px-4 py-3 rounded-xl flex items-center gap-2">
+          <div role="alert" className="mb-5 text-sm px-4 py-3 rounded-xl flex items-center gap-2" style={{ background: 'var(--error-light)', border: '1px solid rgba(200, 16, 46, 0.2)', color: 'var(--error)' }}>
             ⚠️ {saveError}
           </div>
         )}
@@ -262,32 +263,32 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
           <div className="space-y-5">
 
             {/* Headline */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <label className={labelCls} htmlFor="ed-title">📰 Headline</label>
+            <div className="rounded-2xl shadow-sm p-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <label className={labelCls} htmlFor="ed-title" style={{ color: 'var(--text-tertiary)' }}>📰 Headline</label>
               <textarea
                 id="ed-title"
                 rows={2}
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Write your headline here…"
-                className="w-full text-2xl md:text-3xl font-black text-gray-900 placeholder:text-gray-200 bg-transparent outline-none resize-none leading-tight"
-                style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                className="w-full text-2xl md:text-3xl font-black bg-transparent outline-none resize-none leading-tight"
+                style={{ color: 'var(--text-primary)', fontFamily: 'Georgia, "Times New Roman", serif' }}
               />
               {title && (
-                <p className="text-xs text-gray-300 mt-2 border-t border-gray-50 pt-2">
+                <p className="text-xs mt-2 pt-2" style={{ color: 'var(--text-tertiary)', borderTop: '1px solid var(--border)' }}>
                   {title.length} characters
                 </p>
               )}
             </div>
 
             {/* Meta row: category + source + tags */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelCls} htmlFor="ed-category">🗂 Category</label>
+                  <label className={labelCls} htmlFor="ed-category" style={{ color: 'var(--text-tertiary)' }}>🗂 Category</label>
                   <select id="ed-category" value={categoryId}
                     onChange={e => setCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
-                    className={fieldCls + ' bg-white'}>
+                    className={fieldCls + ' bg-white'} style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)', ['--tw-ring-color' as string]: 'var(--success)' }}>
                     <option value="">Choose a category…</option>
                     {categories.map(c => (
                       <option key={c.category_id} value={c.category_id}>{c.name}</option>
@@ -297,42 +298,42 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                 <div>
                   <label className={labelCls} htmlFor="ed-tags">
                     🏷 Tags
-                    <span className="font-normal normal-case tracking-normal text-gray-300 ml-1">comma-separated</span>
+                    <span className="font-normal normal-case tracking-normal ml-1" style={{ color: 'var(--text-tertiary)' }}>comma-separated</span>
                   </label>
                   <input id="ed-tags" type="text" value={tags}
                     onChange={e => setTags(e.target.value)}
                     placeholder="Kenya, Politics, Breaking…"
-                    className={fieldCls} />
+                    className={fieldCls} style={fieldStyle} />
                 </div>
                 <div>
                   <label className={labelCls} htmlFor="ed-source">🔗 Source URL</label>
                   <input id="ed-source" type="url" value={sourceRef}
                     onChange={e => setSourceRef(e.target.value)}
                     placeholder="https://original-source.com"
-                    className={fieldCls} />
+                    className={fieldCls} style={fieldStyle} />
                 </div>
               </div>
             </div>
 
             {/* Excerpt */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <label className={labelCls} htmlFor="ed-excerpt">
+            <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <label className={labelCls} htmlFor="ed-excerpt" style={{ color: 'var(--text-tertiary)' }}>
                 📝 Excerpt
-                <span className="font-normal normal-case tracking-normal text-gray-300 ml-2">
+                <span className="font-normal normal-case tracking-normal ml-2" style={{ color: 'var(--text-tertiary)' }}>
                   (shown on article cards — auto-generated if blank)
                 </span>
               </label>
               <textarea id="ed-excerpt" rows={2} value={excerpt}
                 onChange={e => setExcerpt(e.target.value)}
                 placeholder="Brief summary that draws readers in…"
-                className={fieldCls + ' resize-none'} />
+                className={fieldCls + ' resize-none'} style={fieldStyle} />
             </div>
 
             {/* Content editor */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-50 flex items-center justify-between">
-                <label className={labelCls + ' mb-0'}>✍️ Content</label>
-                <span className="text-[11px] text-gray-300">{wordCount} words · ~{readMins} min read</span>
+            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+                <label className={labelCls + ' mb-0'} style={{ color: 'var(--text-tertiary)' }}>✍️ Content</label>
+                <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{wordCount} words · ~{readMins} min read</span>
               </div>
               <div data-color-mode="light" className="editor-wrapper">
                 <MDEditor
@@ -346,21 +347,22 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
             </div>
 
             {/* Monetization */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <label className={labelCls}>💰 Monetization</label>
+            <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <label className={labelCls} style={{ color: 'var(--text-tertiary)' }}>💰 Monetization</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {MONETIZE_OPTIONS.map(opt => (
-                  <label key={opt.value} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer text-center transition-all duration-200 ${
-                    monetization === opt.value
-                      ? 'border-[#1a5c2a] bg-[#f0faf2] shadow-sm'
-                      : 'border-gray-100 hover:border-[#4caf28]/40 hover:bg-[#f9fdf9]'
-                  }`}>
+                  <label key={opt.value} className="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer text-center transition-all duration-200"
+                    style={{
+                      borderColor: monetization === opt.value ? 'var(--primary)' : 'var(--border)',
+                      background: monetization === opt.value ? 'var(--primary-light)' : 'transparent',
+                      boxShadow: monetization === opt.value ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}>
                     <input type="radio" name="monetization" value={opt.value}
                       checked={monetization === opt.value}
                       onChange={() => setMonetization(opt.value)} className="sr-only" />
                     <span className="text-2xl">{opt.icon}</span>
-                    <span className="text-xs font-bold text-gray-800">{opt.label}</span>
-                    <span className="text-[10px] text-gray-400 leading-tight">{opt.desc}</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{opt.label}</span>
+                    <span className="text-[10px] leading-tight" style={{ color: 'var(--text-tertiary)' }}>{opt.desc}</span>
                   </label>
                 ))}
               </div>
@@ -372,11 +374,11 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
           <div className="space-y-4 xl:sticky xl:top-16">
 
             {/* Featured image — drag/drop, click, or URL */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">🖼 Featured Image</h4>
+            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>🖼 Featured Image</h4>
                 <button type="button" onClick={() => setShowUrlInput(v => !v)}
-                  className="text-[10px] font-bold text-[#1a5c2a] hover:underline">
+                  className="text-[10px] font-bold hover:underline" style={{ color: 'var(--primary)' }}>
                   {showUrlInput ? 'Upload file' : 'Paste URL'}
                 </button>
               </div>
@@ -392,11 +394,11 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                       onChange={e => setImageUrlInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handlePasteUrl()}
                       placeholder="https://example.com/image.jpg"
-                      className={fieldCls + ' text-xs'}
+                      className={fieldCls + ' text-xs'} style={fieldStyle}
                       autoFocus
                     />
                     <button type="button" onClick={handlePasteUrl}
-                      className="shrink-0 bg-[#1a5c2a] hover:bg-[#2d8a47] text-white text-xs font-bold px-3 rounded-xl transition-all">
+                      className="shrink-0 text-white text-xs font-bold px-3 rounded-xl transition-all" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
                       Use
                     </button>
                   </div>
@@ -417,7 +419,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                       </button>
                       <button type="button"
                         onClick={() => { setImagePreview(null); setImageFile(null) }}
-                        className="opacity-0 group-hover:opacity-100 bg-[#c8102e] text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-300">
+                        className="opacity-0 group-hover:opacity-100 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-300" style={{ background: 'var(--error)' }}>
                         Remove
                       </button>
                     </div>
@@ -431,28 +433,31 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                     onClick={() => fileInputRef.current?.click()}
                     className={`w-full border-2 border-dashed rounded-xl py-10 flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 ${
                       isDragging
-                        ? 'border-[#1a5c2a] bg-[#e8f5ea] scale-[1.01]'
-                        : 'border-gray-200 hover:border-[#4caf28] hover:bg-[#f9fdf9]'
+                        ? 'scale-[1.01]'
+                        : ''
                     }`}
+                    style={{
+                      borderColor: isDragging ? 'var(--primary)' : 'var(--border)',
+                      background: isDragging ? 'var(--border-subtle)' : 'transparent',
+                    }}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-300 ${
-                      isDragging ? 'bg-[#e8f5ea] scale-110' : 'bg-[#f0faf2]'
-                    }`}>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-300"
+                      style={{ background: isDragging ? 'var(--border-subtle)' : 'var(--primary-light)' }}>
                       {isDragging ? '⬇️' : '📷'}
                     </div>
-                    <p className={`text-sm font-semibold transition-colors ${isDragging ? 'text-[#1a5c2a]' : 'text-gray-400'}`}>
+                    <p className="text-sm font-semibold transition-colors" style={{ color: isDragging ? 'var(--primary)' : 'var(--text-tertiary)' }}>
                       {isDragging ? 'Drop image here' : 'Click or drag image here'}
                     </p>
-                    <p className="text-xs text-gray-300">PNG, JPG, WebP · max 5 MB</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>PNG, JPG, WebP · max 5 MB</p>
                   </div>
                 )}
 
                 {imageError && (
-                  <p className="text-[#c8102e] text-xs mt-2 flex items-center gap-1">⚠️ {imageError}</p>
+                  <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'var(--error)' }}>⚠️ {imageError}</p>
                 )}
                 {!imagePreview && !showUrlInput && (
                   <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="w-full mt-3 bg-[#f0faf2] hover:bg-[#e8f5ea] text-[#1a5c2a] text-xs font-bold py-2.5 rounded-xl transition-all duration-300">
+                    className="w-full mt-3 text-xs font-bold py-2.5 rounded-xl transition-all duration-300" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
                     Choose File
                   </button>
                 )}
@@ -460,52 +465,51 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
             </div>
 
             {/* Publication status */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-50">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">📋 Status</h4>
+            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>📋 Status</h4>
               </div>
               <div className="p-3 space-y-1.5">
                 {STATUS_OPTIONS.map(opt => (
-                  <label key={opt.value} className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                    status === opt.value
-                      ? 'bg-[#f0faf2] ring-1 ring-[#1a5c2a]/20'
-                      : 'hover:bg-gray-50'
-                  }`}>
+                  <label key={opt.value} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200"
+                    style={{
+                      background: status === opt.value ? 'var(--primary-light)' : 'transparent',
+                    }}>
                     <input type="radio" name="pub-status" value={opt.value}
                       checked={status === opt.value} onChange={() => setStatus(opt.value)}
-                      className="accent-[#1a5c2a]" />
+                      style={{ accentColor: 'var(--primary)' }} />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold ${status === opt.value ? opt.color : 'text-gray-700'}`}>
+                      <p className={`text-xs font-bold`} style={{ color: status === opt.value ? (opt.colorVar || 'var(--text-primary)') : 'var(--text-tertiary)' }}>
                         {opt.icon} {opt.label}
                       </p>
-                      <p className="text-[10px] text-gray-400">{opt.desc}</p>
+                      <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{opt.desc}</p>
                     </div>
                   </label>
                 ))}
               </div>
               <div className="p-3 pt-0">
                 <button onClick={() => handleSave()} disabled={saving || !title.trim() || !content.trim()}
-                  className="w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-3 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="w-full text-white font-bold py-3 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
                   {saving ? '⏳ Saving…' : isEdit ? '💾 Save Changes' : '✨ Create Article'}
                 </button>
               </div>
             </div>
 
             {/* Completeness */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            <div className="rounded-2xl shadow-sm p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">✅ Completeness</h4>
-                <span className={`text-sm font-black ${completeness === 100 ? 'text-[#1a5c2a]' : 'text-gray-500'}`}>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>✅ Completeness</h4>
+                <span className={`text-sm font-black`} style={{ color: completeness === 100 ? 'var(--primary)' : 'var(--text-tertiary)' }}>
                   {completeness}%
                 </span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-4">
+              <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: 'var(--border)' }}>
                 <div className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${completeness}%`,
                     background: completeness === 100
-                      ? 'linear-gradient(to right, #1a5c2a, #4caf28)'
-                      : 'linear-gradient(to right, #f5c518, #4caf28)',
+                      ? 'linear-gradient(to right, var(--primary), var(--success))'
+                      : 'linear-gradient(to right, var(--warning), var(--success))',
                   }} />
               </div>
               <div className="grid grid-cols-2 gap-1.5">
@@ -515,9 +519,12 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                   { label: 'Content',   done: content.length > 50 },
                   { label: 'Image',     done: !!imagePreview },
                 ].map(item => (
-                  <div key={item.label} className={`flex items-center gap-1.5 text-xs rounded-lg px-2 py-1.5 ${
-                    item.done ? 'bg-[#f0faf2] text-[#1a5c2a] font-semibold' : 'bg-gray-50 text-gray-400'
-                  }`}>
+                  <div key={item.label} className="flex items-center gap-1.5 text-xs rounded-lg px-2 py-1.5"
+                    style={{
+                      background: item.done ? 'var(--primary-light)' : 'var(--border)',
+                      color: item.done ? 'var(--primary)' : 'var(--text-tertiary)',
+                      fontWeight: item.done ? 600 : 400,
+                    }}>
                     <span className="text-base">{item.done ? '✅' : '○'}</span>
                     {item.label}
                   </div>

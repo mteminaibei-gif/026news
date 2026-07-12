@@ -73,20 +73,20 @@ export default async function AdminEarningsPage() {
     <>
       <Topbar title="Platform Earnings" user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }} />
 
-      <div className="p-6 flex-1 space-y-6">
+      <div className="p-6 flex-1 space-y-6" style={{ background: 'var(--bg-base)' }}>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard label="💰 Total Revenue"      value={formatCurrency(totalRevenue)}     sub="All time"                 accent="green" />
-          <StatCard label="⏳ Pending Payouts"    value={formatCurrency(pendingPayout)}    sub="50% journalist share due" accent="gold"  />
-          <StatCard label="✅ Paid Out"            value={formatCurrency(paidOut * 0.5)}   sub="Journalist share paid"    accent="green" />
+          <StatCard label="⏳ Pending Payouts"    value={formatCurrency(pendingPayout)}    sub="50% author share due" accent="gold"  />
+          <StatCard label="✅ Paid Out"            value={formatCurrency(paidOut * 0.5)}   sub="Author share paid"    accent="green" />
           <StatCard label="🏢 Platform Retained"  value={formatCurrency(platformRetained)} sub="50% service fee"          accent="green" />
         </div>
 
         {/* Monthly chart */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-          <div className="px-5 py-4 border-b border-[#e8f5ea] bg-gradient-to-r from-[#f0faf2] to-white">
-            <h2 className="text-sm font-bold text-[#1a5c2a]">📈 Monthly Revenue Trend</h2>
+        <div className="backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, boxShadow: 'var(--shadow-sm)' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
+            <h2 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>📈 Monthly Revenue Trend</h2>
           </div>
           <div className="px-5 pb-4 pt-3">
             <BarChart data={chartData} labels={chartLabels} height={80} />

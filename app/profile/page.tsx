@@ -224,21 +224,22 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-[#1a5c2a]">Loading profile...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
+        <div style={{ color: 'var(--primary)' }}>Loading profile...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8" style={{ background: 'var(--bg-base)' }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-[#1a5c2a]">My Profile</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>My Profile</h1>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
+            className="flex items-center gap-2 transition-colors"
+            style={{ color: 'var(--text-secondary)' }}
           >
             <LogOut size={18} />
             <span className="text-sm">Sign Out</span>
@@ -249,22 +250,22 @@ export default function ProfilePage() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-4 py-2 rounded-xl font-medium text-sm transition-colors ${
-              activeTab === 'profile'
-                ? 'bg-[#1a5c2a] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className="px-4 py-2 rounded-xl font-medium text-sm transition-colors"
+            style={activeTab === 'profile'
+              ? { background: 'var(--primary)', color: 'var(--text-inverse)' }
+              : { background: 'var(--bg-surface)', color: 'var(--text-secondary)' }
+            }
           >
             <User size={16} className="inline mr-2" />
             Profile
           </button>
           <button
             onClick={() => setActiveTab('comments')}
-            className={`px-4 py-2 rounded-xl font-medium text-sm transition-colors ${
-              activeTab === 'comments'
-                ? 'bg-[#1a5c2a] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className="px-4 py-2 rounded-xl font-medium text-sm transition-colors"
+            style={activeTab === 'comments'
+              ? { background: 'var(--primary)', color: 'var(--text-inverse)' }
+              : { background: 'var(--bg-surface)', color: 'var(--text-secondary)' }
+            }
           >
             <MessageSquare size={16} className="inline mr-2" />
             My Comments ({comments.length})
@@ -273,11 +274,11 @@ export default function ProfilePage() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="bg-white rounded-3xl shadow-lg p-6">
+          <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
             {/* Profile Picture */}
-            <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-100">
+            <div className="flex items-center gap-6 mb-8 pb-8" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200">
+                <div className="w-24 h-24 rounded-full overflow-hidden" style={{ background: 'var(--bg-muted)' }}>
                   {user?.profile_image ? (
                     <Image
                       src={user.profile_image}
@@ -287,15 +288,16 @@ export default function ProfilePage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#1a5c2a]/10">
-                      <User size={40} className="text-[#1a5c2a]/40" />
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--primary-light)' }}>
+                      <User size={40} style={{ color: 'var(--primary)', opacity: 0.4 }} />
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={saving}
-                  className="absolute bottom-0 right-0 bg-[#1a5c2a] text-white p-2 rounded-full hover:bg-[#13411f] transition-colors shadow-lg"
+                  className="absolute bottom-0 right-0 text-white p-2 rounded-full transition-colors"
+                  style={{ background: 'var(--primary)', boxShadow: 'var(--shadow-lg)' }}
                 >
                   <Camera size={16} />
                 </button>
@@ -308,14 +310,17 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{user?.name}</h2>
-                <p className="text-gray-500 text-sm">{user?.email}</p>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{user?.name}</h2>
+                <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="px-3 py-1 bg-[#1a5c2a]/10 text-[#1a5c2a] text-xs font-medium rounded-full capitalize">
+                  <span
+                    className="px-3 py-1 text-xs font-medium rounded-full capitalize"
+                    style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
+                  >
                     {user?.role}
                   </span>
                   {user?.location && (
-                    <span className="flex items-center gap-1 text-gray-400 text-xs">
+                    <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
                       <MapPin size={12} />
                       {user.location}
                     </span>
@@ -326,12 +331,18 @@ export default function ProfilePage() {
 
             {/* Messages */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">
+              <div
+                className="text-sm px-4 py-3 rounded-xl mb-4"
+                style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}
+              >
                 {error}
               </div>
             )}
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 text-sm px-4 py-3 rounded-xl mb-4">
+              <div
+                className="text-sm px-4 py-3 rounded-xl mb-4"
+                style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)' }}
+              >
                 {success}
               </div>
             )}
@@ -340,55 +351,58 @@ export default function ProfilePage() {
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                     Full Name
                   </label>
                   <div className="relative">
-                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your full name"
-                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
+                      style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                     Email
                   </label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                     <input
                       type="email"
                       value={user?.email || ''}
                       disabled
-                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm cursor-not-allowed"
+                      style={{ border: '1px solid var(--border)', background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                   Location
                 </label>
                 <div className="relative">
-                  <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="City, Country"
-                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                    className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
+                    style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                   Bio
                 </label>
                 <textarea
@@ -396,28 +410,30 @@ export default function ProfilePage() {
                   onChange={(e) => setBio(e.target.value)}
                   rows={4}
                   placeholder="Tell us about yourself..."
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none resize-none"
+                  className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none"
+                  style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               {/* Public Profile Toggle */}
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
                 <input
                   type="checkbox"
                   id="isPublic"
                   checked={isPublic}
                   onChange={(e) => setIsPublic(e.target.checked)}
-                  className="w-5 h-5 rounded border-gray-300 text-[#1a5c2a] focus:ring-[#1a5c2a]"
+                  className="w-5 h-5 rounded"
+                  style={{ accentColor: 'var(--primary)' }}
                 />
-                <label htmlFor="isPublic" className="text-sm text-gray-700">
+                <label htmlFor="isPublic" className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                   <strong>Make my profile public</strong>
                   <br />
-                  <span className="text-gray-500">Allow others to see your profile and comments</span>
+                  <span style={{ color: 'var(--text-tertiary)' }}>Allow others to see your profile and comments</span>
                 </label>
               </div>
 
               {/* Member Since */}
-              <div className="flex items-center gap-2 text-gray-400 text-sm pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 text-sm pt-4" style={{ color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)' }}>
                 <Calendar size={14} />
                 <span>Member since {new Date(user?.created_at || '').toLocaleDateString()}</span>
               </div>
@@ -426,7 +442,8 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-[#1a5c2a] hover:bg-[#13411f] text-white font-bold py-4 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 flex items-center justify-center gap-2"
+                className="w-full text-white font-bold py-4 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{ background: 'var(--primary)', boxShadow: 'var(--shadow-lg)' }}
               >
                 {saving ? (
                   <>
@@ -446,29 +463,30 @@ export default function ProfilePage() {
 
         {/* Comments Tab */}
         {activeTab === 'comments' && (
-          <div className="bg-white rounded-3xl shadow-lg p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">My Comments</h2>
+          <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
+            <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>My Comments</h2>
             
             {comments.length === 0 ? (
               <div className="text-center py-12">
-                <MessageSquare size={48} className="mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">You haven&apos;t made any comments yet</p>
-                <Link href="/" className="text-[#1a5c2a] font-medium hover:underline mt-2 inline-block">
+                <MessageSquare size={48} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+                <p style={{ color: 'var(--text-tertiary)' }}>You haven&apos;t made any comments yet</p>
+                <Link href="/" className="font-medium hover:underline mt-2 inline-block" style={{ color: 'var(--primary)' }}>
                   Browse articles and share your thoughts
                 </Link>
               </div>
             ) : (
               <div className="space-y-4">
                 {comments.map((comment) => (
-                  <div key={comment.comment_id} className="p-4 bg-gray-50 rounded-xl">
+                  <div key={comment.comment_id} className="p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
                     <Link
                       href={`/article/${comment.article?.slug}`}
-                      className="font-medium text-[#1a5c2a] hover:underline text-sm"
+                      className="font-medium hover:underline text-sm"
+                      style={{ color: 'var(--primary)' }}
                     >
                       {comment.article?.title || 'Article'}
                     </Link>
-                    <p className="text-gray-700 mt-2">{comment.comment_text}</p>
-                    <p className="text-gray-400 text-xs mt-2">
+                    <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>{comment.comment_text}</p>
+                    <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
                       {new Date(comment.created_at).toLocaleDateString()} at{' '}
                       {new Date(comment.created_at).toLocaleTimeString()}
                     </p>

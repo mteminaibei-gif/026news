@@ -15,16 +15,16 @@ export const ROUTES = {
   ARTICLES: '/search',
   ARTICLE_DETAIL: (slug: string) => `/article/${slug}`,
   
-  // Authors & Journalists
-  JOURNALISTS: '/journalists',
-  JOURNALIST_DETAIL: (id: string | number) => `/journalists/${id}`,
-  JOURNALIST_DASHBOARD: '/journalist/dashboard',
-  JOURNALIST_CREATE: '/journalist/create',
-  JOURNALIST_ARTICLES: '/journalist/articles',
-  JOURNALIST_ANALYTICS: '/journalist/analytics',
-  JOURNALIST_EARNINGS: '/journalist/earnings',
-  JOURNALIST_PROFILE: '/journalist/profile',
-  JOURNALIST_SUBSCRIBERS: '/journalist/subscribers',
+  // Authors
+  AUTHORS: '/journalists',
+  AUTHOR_DETAIL: (id: string | number) => `/journalists/${id}`,
+  AUTHOR_DASHBOARD: '/journalist/dashboard',
+  AUTHOR_CREATE: '/journalist/create',
+  AUTHOR_ARTICLES: '/journalist/articles',
+  AUTHOR_ANALYTICS: '/journalist/analytics',
+  AUTHOR_EARNINGS: '/journalist/earnings',
+  AUTHOR_PROFILE: '/journalist/profile',
+  AUTHOR_SUBSCRIBERS: '/journalist/subscribers',
   
   // Rankings & Leaderboards
   RANKINGS: '/rankings',
@@ -65,7 +65,7 @@ export const NAV_LINKS = [
   { href: ROUTES.HOME + '?category=Tech', label: 'Tech', external: false },
   { href: ROUTES.HOME + '?category=Sports', label: 'Sports', external: false },
   { href: ROUTES.HOME + '?category=Health', label: 'Health', external: false },
-  { href: ROUTES.JOURNALISTS, label: 'Authors', icon: '✍️' },
+  { href: ROUTES.AUTHORS, label: 'Authors', icon: '✍️' },
 ] as const
 
 export const FOOTER_LINKS = {
@@ -81,11 +81,11 @@ export const FOOTER_LINKS = {
   Resources: [
     { href: ROUTES.RANKINGS, label: 'Rankings' },
     { href: ROUTES.LEADERBOARD, label: 'Leaderboard' },
-    { href: ROUTES.JOURNALISTS, label: 'Authors' },
+    { href: ROUTES.AUTHORS, label: 'Authors' },
   ],
   CTA: [
-    { href: ROUTES.SIGNUP, label: 'Become a Journalist', external: false },
-    { href: ROUTES.JOURNALIST_CREATE, label: 'Write an Article', external: false },
+    { href: ROUTES.SIGNUP, label: 'Become an Author', external: false },
+    { href: ROUTES.AUTHOR_CREATE, label: 'Write an Article', external: false },
   ],
 } as const
 
@@ -99,14 +99,14 @@ export const ADMIN_NAV_LINKS = [
   { href: ROUTES.ADMIN_SETTINGS, label: 'Settings', icon: '⚙️' },
 ] as const
 
-export const JOURNALIST_NAV_LINKS = [
-  { href: ROUTES.JOURNALIST_DASHBOARD, label: 'Dashboard', icon: '📊' },
-  { href: ROUTES.JOURNALIST_CREATE, label: 'Write Article', icon: '✏️' },
-  { href: ROUTES.JOURNALIST_ARTICLES, label: 'My Articles', icon: '📰' },
-  { href: ROUTES.JOURNALIST_ANALYTICS, label: 'Analytics', icon: '📈' },
-  { href: ROUTES.JOURNALIST_EARNINGS, label: 'Earnings', icon: '💰' },
-  { href: ROUTES.JOURNALIST_SUBSCRIBERS, label: 'Subscribers', icon: '👥' },
-  { href: ROUTES.JOURNALIST_PROFILE, label: 'Profile', icon: '👤' },
+export const AUTHOR_NAV_LINKS = [
+  { href: ROUTES.AUTHOR_DASHBOARD, label: 'Dashboard', icon: '📊' },
+  { href: ROUTES.AUTHOR_CREATE, label: 'Write Article', icon: '✏️' },
+  { href: ROUTES.AUTHOR_ARTICLES, label: 'My Articles', icon: '📰' },
+  { href: ROUTES.AUTHOR_ANALYTICS, label: 'Analytics', icon: '📈' },
+  { href: ROUTES.AUTHOR_EARNINGS, label: 'Earnings', icon: '💰' },
+  { href: ROUTES.AUTHOR_SUBSCRIBERS, label: 'Subscribers', icon: '👥' },
+  { href: ROUTES.AUTHOR_PROFILE, label: 'Profile', icon: '👤' },
 ] as const
 
 /**

@@ -16,20 +16,13 @@ function ForgotPasswordForm() {
   const [success, setSuccess] = useState('')
   const [devLink, setDevLink] = useState('')
 
-  // Reset password state
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [resetting, setResetting] = useState(false)
 
-  // Verify token on mount
   const [tokenVerified, setTokenVerified] = useState(false)
   const [verifying, setVerifying] = useState(true)
   const [userEmail, setUserEmail] = useState('')
-
-  // If we have a token, verify it first
-  if (token && !tokenVerified && !verifying === false) {
-    // This will be handled in useEffect below
-  }
 
   async function handleRequestReset(e: React.FormEvent) {
     e.preventDefault()
@@ -101,73 +94,55 @@ function ForgotPasswordForm() {
     }
   }
 
-  // If we have a token, verify it
   if (token) {
     return <VerifyToken token={token} />
   }
 
+  const inputStyle = { width: '100%', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', fontSize: 14, background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] py-12 px-4">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
+      <div style={{ maxWidth: 440, width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/">
-            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
+            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} style={{ margin: '0 auto 16px', height: 96, width: 'auto' }} />
           </Link>
-          <h1 className="text-3xl font-bold text-[#1a5c2a] mb-2">Reset Password</h1>
-          <p className="text-gray-600">Enter your email to receive a reset link</p>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>Reset Password</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Enter your email to receive a reset link</p>
         </div>
 
-        {/* Form */}
-        <div className="bg-white rounded-3xl shadow-2xl p-6">
+        <div style={{ background: 'var(--bg-surface)', borderRadius: 24, boxShadow: 'var(--shadow-lg)', padding: 24 }}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">
+            <div style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)', fontSize: 14, padding: '12px 16px', borderRadius: 12, marginBottom: 16 }}>
               {error}
             </div>
           )}
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-600 text-sm px-4 py-3 rounded-xl mb-4">
+            <div style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)', fontSize: 14, padding: '12px 16px', borderRadius: 12, marginBottom: 16 }}>
               {success}
             </div>
           )}
 
-          {/* Dev link for testing */}
           {devLink && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs px-4 py-3 rounded-xl mb-4 break-all">
+            <div style={{ background: 'var(--warning-light)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: 12, padding: '12px 16px', borderRadius: 12, marginBottom: 16, wordBreak: 'break-all' }}>
               <strong>Dev Link:</strong> {devLink}
             </div>
           )}
 
-          <form onSubmit={handleRequestReset} className="space-y-4">
+          <form onSubmit={handleRequestReset} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
-              />
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Email Address</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required style={inputStyle} />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#1a5c2a] hover:bg-[#13411f] text-white font-bold py-4 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20"
-            >
+            <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--primary)', color: 'var(--text-inverse)', fontWeight: 700, padding: '16px 0', borderRadius: 16, fontSize: 14, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
           </form>
 
-          {/* Back to Login */}
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
             Remember your password?{' '}
-            <Link href="/login" className="text-[#1a5c2a] font-semibold hover:underline">
-              Sign In
-            </Link>
+            <Link href="/login" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>Sign In</Link>
           </div>
         </div>
       </div>
@@ -175,7 +150,6 @@ function ForgotPasswordForm() {
   )
 }
 
-// Token verification component
 function VerifyToken({ token }: { token: string }) {
   const router = useRouter()
   const [verifying, setVerifying] = useState(true)
@@ -246,23 +220,23 @@ function VerifyToken({ token }: { token: string }) {
     }
   }
 
+  const inputStyle = { width: '100%', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', fontSize: 14, background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }
+
   if (verifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] py-12 px-4 flex items-center justify-center">
-        <div className="text-[#1a5c2a]">Verifying token...</div>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
+        <div style={{ color: 'var(--primary)' }}>Verifying token...</div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] py-12 px-4">
-        <div className="max-w-md mx-auto text-center">
-          <div className="bg-white rounded-3xl shadow-2xl p-6">
-            <div className="text-red-600 mb-4">{error}</div>
-            <Link href="/forgot-password" className="text-[#1a5c2a] font-semibold hover:underline">
-              Request new reset link
-            </Link>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
+        <div style={{ maxWidth: 440, textAlign: 'center' }}>
+          <div style={{ background: 'var(--bg-surface)', borderRadius: 24, boxShadow: 'var(--shadow-lg)', padding: 24 }}>
+            <div style={{ color: 'var(--error)', marginBottom: 16 }}>{error}</div>
+            <Link href="/forgot-password" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>Request new reset link</Link>
           </div>
         </div>
       </div>
@@ -270,71 +244,42 @@ function VerifyToken({ token }: { token: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] py-12 px-4">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
+      <div style={{ maxWidth: 440, width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/">
-            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
+            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} style={{ margin: '0 auto 16px', height: 96, width: 'auto' }} />
           </Link>
-          <h1 className="text-3xl font-bold text-[#1a5c2a] mb-2">New Password</h1>
-          <p className="text-gray-600">Enter your new password for {userEmail}</p>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>New Password</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Enter your new password for {userEmail}</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-6">
+        <div style={{ background: 'var(--bg-surface)', borderRadius: 24, boxShadow: 'var(--shadow-lg)', padding: 24 }}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">
-              {error}
-            </div>
+            <div style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)', fontSize: 14, padding: '12px 16px', borderRadius: 12, marginBottom: 16 }}>{error}</div>
           )}
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-600 text-sm px-4 py-3 rounded-xl mb-4">
-              {success}
-            </div>
+            <div style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)', fontSize: 14, padding: '12px 16px', borderRadius: 12, marginBottom: 16 }}>{success}</div>
           )}
 
-          <form onSubmit={handleReset} className="space-y-4">
+          <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 6 characters"
-                required
-                minLength={6}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
-              />
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>New Password</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6} style={inputStyle} />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
-              />
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Confirm Password</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm your password" required style={inputStyle} />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#1a5c2a] hover:bg-[#13411f] text-white font-bold py-4 rounded-2xl text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20"
-            >
+            <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--primary)', color: 'var(--text-inverse)', fontWeight: 700, padding: '16px 0', borderRadius: 16, fontSize: 14, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <Link href="/login" className="text-[#1a5c2a] font-semibold hover:underline">
-              Back to Sign In
-            </Link>
+          <div style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
+            <Link href="/login" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>Back to Sign In</Link>
           </div>
         </div>
       </div>
@@ -345,8 +290,8 @@ function VerifyToken({ token }: { token: string }) {
 export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] py-12 px-4 flex items-center justify-center">
-        <div className="text-[#1a5c2a]">Loading...</div>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--primary)' }}>Loading...</div>
       </div>
     }>
       <ForgotPasswordForm />

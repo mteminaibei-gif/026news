@@ -13,7 +13,7 @@ type Profile = {
 }
 type BadgeRow = { badge_type: string; badge_label: string }
 
-const inputCls = 'w-full border border-[#e8f5ea] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#4caf28] focus:ring-2 focus:ring-[#4caf28]/20 transition-all duration-300'
+const inputCls = 'w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-all duration-300'
 
 export default function JournalistProfilePage() {
   const supabase = createClient()
@@ -80,9 +80,9 @@ export default function JournalistProfilePage() {
   if (!profile) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-[#1a5c2a]/50">
-          <div className="w-8 h-8 border-2 border-[#1a5c2a]/30 border-t-[#1a5c2a] rounded-full animate-spin" />
-          <span className="text-sm">Loading profile…</span>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--primary)' }} />
+          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading profile…</span>
         </div>
       </div>
     )
@@ -95,8 +95,8 @@ export default function JournalistProfilePage() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 space-y-5">
 
         {/* Profile hero card */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-          <div className="h-28 bg-gradient-to-r from-[#1a5c2a] via-[#2d8a47] to-[#4caf28]" />
+        <div className="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+          <div className="h-28" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover), var(--accent))' }} />
           <div className="px-6 pb-6">
             <div className="flex items-end gap-4 -mt-10 mb-4">
               {profile.profile_image ? (
@@ -106,13 +106,14 @@ export default function JournalistProfilePage() {
                   className="rounded-full ring-4 ring-white object-cover shrink-0 shadow-md"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full ring-4 ring-white bg-[#e8f5ea] flex items-center justify-center text-2xl font-black text-[#1a5c2a] shrink-0 shadow-md">
+                <div className="w-20 h-20 rounded-full ring-4 ring-white flex items-center justify-center text-2xl font-black shrink-0 shadow-md"
+                  style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
                   {profile.name.charAt(0)}
                 </div>
               )}
               <div className="pb-1">
-                <h2 className="text-lg font-extrabold text-gray-900">{profile.name}</h2>
-                <p className="text-xs text-gray-400">{profile.email}</p>
+                <h2 className="text-lg font-extrabold" style={{ color: 'var(--text-primary)' }}>{profile.name}</h2>
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{profile.email}</p>
               </div>
             </div>
 
@@ -123,7 +124,7 @@ export default function JournalistProfilePage() {
             )}
 
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-[#f5c518] font-bold">🏆 Rank Score: {Math.round(profile.rank_score ?? 0).toLocaleString()}</span>
+              <span className="font-bold" style={{ color: 'var(--warning)' }}>🏆 Rank Score: {Math.round(profile.rank_score ?? 0).toLocaleString()}</span>
               {profile.badge_level && (
                 <BadgePill type={profile.badge_level} label={`Level: ${profile.badge_level}`} />
               )}
@@ -132,72 +133,86 @@ export default function JournalistProfilePage() {
         </div>
 
         {/* Edit form */}
-        <form onSubmit={handleSave} className="bg-white/90 backdrop-blur-sm border border-[#e8f5ea] rounded-2xl shadow-sm p-6 space-y-4 transition-all duration-300 hover:shadow-md">
+        <form onSubmit={handleSave} className="rounded-2xl shadow-sm p-6 space-y-4 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-1 h-5 rounded-full bg-[#1a5c2a]" />
-            <h3 className="text-sm font-bold text-[#1a5c2a]">Edit Profile</h3>
+            <span className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} />
+            <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>Edit Profile</h3>
           </div>
 
           {error && (
-            <div role="alert" className="bg-[#fde8e8] border border-[#c8102e]/20 text-[#c8102e] text-sm px-4 py-3 rounded-xl">
+            <div role="alert" className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
               {error}
             </div>
           )}
           {saved && (
-            <div role="status" className="bg-[#e8f5ea] border border-[#4caf28]/30 text-[#1a5c2a] text-sm px-4 py-3 rounded-xl">
+            <div role="status" className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--primary)' }}>
               ✅ Profile saved successfully.
             </div>
           )}
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} required className={inputCls} />
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Full Name</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} required
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Organization</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Organization</label>
               <input type="text" value={organization} onChange={e => setOrganization(e.target.value)}
-                placeholder="Your news outlet" className={inputCls} />
+                placeholder="Your news outlet"
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Bio</label>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Bio</label>
             <textarea rows={3} value={bio} onChange={e => setBio(e.target.value)}
               placeholder="Tell readers about yourself and what you cover…"
-              className={inputCls + ' resize-none'} />
+              className={inputCls + ' resize-none'}
+              style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Portfolio / Website</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Portfolio / Website</label>
               <input type="url" value={portfolio} onChange={e => setPortfolio(e.target.value)}
-                placeholder="https://yoursite.com" className={inputCls} />
+                placeholder="https://yoursite.com"
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone / M-Pesa</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Phone / M-Pesa</label>
               <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                placeholder="+254..." className={inputCls} />
+                placeholder="+254..."
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">X / Twitter</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>X / Twitter</label>
               <input type="text" value={twitter} onChange={e => setTwitter(e.target.value)}
-                placeholder="@handle" className={inputCls} />
+                placeholder="@handle"
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">LinkedIn</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>LinkedIn</label>
               <input type="url" value={linkedin} onChange={e => setLinkedin(e.target.value)}
-                placeholder="https://linkedin.com/in/…" className={inputCls} />
+                placeholder="https://linkedin.com/in/..."
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-2 border-t border-[#e8f5ea]">
+          <div className="flex items-center gap-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
             <button type="submit" disabled={saving}
-              className="bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50">
+              className="font-bold px-6 py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50"
+              style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
             {saved && (
-              <span className="text-sm text-[#1a5c2a] font-semibold">✓ Saved!</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>✓ Saved!</span>
             )}
           </div>
         </form>

@@ -14,7 +14,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Load from localStorage
     const saved = localStorage.getItem('026news-dark-mode')
     if (saved === 'true') setDarkMode(true)
     setMounted(true)
@@ -24,6 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return
     localStorage.setItem('026news-dark-mode', darkMode.toString())
     const html = document.documentElement
+    html.setAttribute('data-theme', darkMode ? 'dark' : 'light')
     if (darkMode) {
       html.classList.add('dark')
     } else {

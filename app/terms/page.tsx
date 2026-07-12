@@ -27,11 +27,11 @@ const SECTIONS = [
 026News reserves the right to remove any content that violates these standards without prior notice. Repeated violations will result in account termination.`,
   },
   {
-    id: 'journalist-agreement',
-    title: '4. Journalist Agreement',
-    content: `Journalists who publish on 026News grant us a non-exclusive license to display, distribute, and monetize their articles on the platform. Journalists retain full copyright to their work. Payment terms: earnings are calculated monthly and paid on the 1st of each month, subject to a minimum threshold of $10 USD or equivalent.
+    id: 'author-agreement',
+    title: '4. Author Agreement',
+    content: `Authors who publish on 026News grant us a non-exclusive license to display, distribute, and monetize their articles on the platform. Authors retain full copyright to their work. Payment terms: earnings are calculated monthly and paid on the 1st of each month, subject to a minimum threshold of $10 USD or equivalent.
 
-Journalists are responsible for the accuracy of their work and must disclose any conflicts of interest, sponsored content, or affiliate relationships.`,
+Authors are responsible for the accuracy of their work and must disclose any conflicts of interest, sponsored content, or affiliate relationships.`,
   },
   {
     id: 'subscriptions',

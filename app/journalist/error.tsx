@@ -10,7 +10,7 @@ interface Props {
 
 export default function JournalistError({ error, reset }: Props) {
   useEffect(() => {
-    console.error('[Journalist Error]', error)
+    console.error('[Author Error]', error)
   }, [error])
 
   return (
@@ -26,13 +26,15 @@ export default function JournalistError({ error, reset }: Props) {
       <div className="flex gap-3 mt-4">
         <button
           onClick={reset}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
+          className="text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
+          style={{ background: 'var(--primary)' }}
         >
           Try again
         </button>
         <Link
           href="/journalist/dashboard"
-          className="border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+          className="font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+          style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }}
         >
           Back to Dashboard
         </Link>

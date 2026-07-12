@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import Image from 'next/image'
 
 const FOOTER_LINKS = {
   Company: [
     { label: 'About Us', href: '/about' },
-    { label: 'Our Journalists', href: '/journalists' },
+    { label: 'Our Authors', href: '/journalists' },
     { label: 'Advertise', href: '/contact' },
     { label: 'Contact Us', href: '/contact' },
   ],
@@ -12,7 +11,7 @@ const FOOTER_LINKS = {
     { label: 'Subscribe', href: '/subscribe' },
     { label: 'Author Portal', href: '/journalist/dashboard' },
     { label: 'Admin Panel', href: '/admin/dashboard' },
-    { label: 'Become a Writer', href: '/login?mode=signup' },
+    { label: 'Become an Author', href: '/login?mode=signup' },
   ],
   Kenya: [
     { label: 'Kenya News', href: '/?category=Kenya' },
@@ -33,28 +32,25 @@ const FOOTER_LINKS = {
 const SOCIAL_LINKS = [
   { label: 'Twitter / X', href: 'https://twitter.com/026newsblog', icon: 'X' },
   { label: 'Facebook', href: 'https://facebook.com/026newsblog', icon: 'f' },
-  { label: 'YouTube', href: 'https://youtube.com/@026newsblog', icon: '▶' },
-  { label: 'WhatsApp', href: 'https://wa.me/254700000000', icon: '💬' },
+  { label: 'YouTube', href: 'https://youtube.com/@026newsblog', icon: '\u25B6' },
+  { label: 'WhatsApp', href: 'https://wa.me/254700000000', icon: '\uD83D\uDCAC' },
 ]
 
 export function Footer() {
   return (
-    <footer className="bg-white border-t-4 border-[#1a5c2a] mt-12" role="contentinfo">
-      {/* Kenya flag accent bar */}
-      <div className="h-2 bg-gradient-to-r from-[#c8102e] via-[#1a1a1a] to-[#4caf28]" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        {/* Top section with logo and social */}
-        <div className="flex flex-col lg:flex-row gap-8 mb-10 pb-10 border-b border-gray-200">
+    <footer style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }} role="contentinfo">
+      <div className="max-w-[1400px] mx-auto px-6 py-12">
+        <div className="flex flex-col lg:flex-row gap-10 mb-10 pb-10" style={{ borderBottom: '1px solid var(--border)' }}>
           {/* Brand */}
           <div className="lg:w-1/3">
             <Link href="/" aria-label="026NEWS home" className="block mb-4">
-              <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="h-14 w-auto object-contain" />
+              <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                026<span style={{ color: 'var(--primary)' }}>News</span>
+              </span>
             </Link>
-            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+            <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
               Kenya&apos;s premier digital news platform. Breaking news, in-depth analysis, and community journalism from Nairobi and across Africa.
             </p>
-            {/* Social Links - High contrast */}
             <div className="flex gap-2">
               {SOCIAL_LINKS.map(s => (
                 <a
@@ -63,7 +59,12 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-10 h-10 rounded-lg bg-[#1a5c2a] text-white flex items-center justify-center text-sm font-bold hover:bg-[#2d8a47] transition-colors"
+                  className="flex items-center justify-center text-sm font-bold transition-colors"
+                  style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    background: 'var(--primary)',
+                    color: 'var(--bg-elevated)',
+                  }}
                 >
                   {s.icon}
                 </a>
@@ -75,13 +76,17 @@ export function Footer() {
           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6">
             {Object.entries(FOOTER_LINKS).map(([section, links]) => (
               <div key={section}>
-                <h5 className="text-xs font-bold uppercase tracking-wider text-[#1a5c2a] mb-4">
+                <h5 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--primary)' }}>
                   {section}
                 </h5>
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   {links.map(link => (
                     <li key={link.label}>
-                      <Link href={link.href} className="text-sm text-gray-700 hover:text-[#1a5c2a] transition-colors">
+                      <Link
+                        href={link.href}
+                        className="text-sm transition-colors"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         {link.label}
                       </Link>
                     </li>
@@ -94,14 +99,14 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <span className="flex items-center gap-2 text-gray-600">
-            <span>🇰🇪</span>
+          <span className="flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
+            <span>\uD83C\uDDF0\uD83C\uDDEA</span>
             &copy; {new Date().getFullYear()} 026NEWS. All rights reserved.
           </span>
           <div className="flex gap-6">
-            <Link href="/privacy" className="text-gray-600 hover:text-[#1a5c2a] transition-colors">Privacy</Link>
-            <Link href="/terms" className="text-gray-600 hover:text-[#1a5c2a] transition-colors">Terms</Link>
-            <Link href="/contact" className="text-gray-600 hover:text-[#1a5c2a] transition-colors">Contact</Link>
+            <Link href="/privacy" className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>Privacy</Link>
+            <Link href="/terms" className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>Terms</Link>
+            <Link href="/contact" className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>Contact</Link>
           </div>
         </div>
       </div>

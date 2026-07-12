@@ -10,16 +10,25 @@ interface TopbarProps {
 
 export function Topbar({ title, user, children }: TopbarProps) {
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-[#e8f5ea] px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+    <header
+      className="backdrop-blur-md px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20"
+      style={{ background: 'var(--nav-bg)', borderBottom: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
+    >
       {/* Left: Kenya accent bar + title */}
       <div className="flex items-center gap-3">
-        <span className="w-1.5 h-8 rounded-full bg-gradient-to-b from-[#c8102e] via-[#1a1a1a] to-[#4caf28] shrink-0 shadow-sm" />
+        <span
+          className="w-1.5 h-8 rounded-full shrink-0"
+          style={{ background: 'linear-gradient(to bottom, var(--error), var(--text-primary), var(--success))' }}
+        />
         <div>
-          <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#1a5c2a] to-[#2d8a47] bg-clip-text text-transparent">
+          <h1
+            className="text-lg sm:text-xl font-bold"
+            style={{ fontFamily: "'Newsreader', Georgia, serif", color: 'var(--primary)' }}
+          >
             {title}
           </h1>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <div className="w-1 h-1 bg-[#4caf28] rounded-full animate-pulse" />
+          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: 'var(--success)' }} />
             <span>Live Dashboard</span>
           </div>
         </div>
@@ -28,8 +37,8 @@ export function Topbar({ title, user, children }: TopbarProps) {
       <div className="flex items-center gap-3 sm:gap-4">
         {children}
 
-        <span className="text-sm text-gray-600 hidden sm:block font-medium">
-          Welcome, <span className="font-bold bg-gradient-to-r from-[#1a5c2a] to-[#4caf28] bg-clip-text text-transparent">{user.name}</span>
+        <span className="text-sm hidden sm:block font-medium" style={{ color: 'var(--text-secondary)' }}>
+          Welcome, <span className="font-bold" style={{ color: 'var(--primary)' }}>{user.name}</span>
         </span>
 
         {/* Notification bell */}
@@ -53,16 +62,20 @@ export function Topbar({ title, user, children }: TopbarProps) {
                 alt={user.name}
                 width={40}
                 height={40}
-                className="rounded-full object-cover ring-2 ring-[#e8f5ea] group-hover:ring-[#f5c518] transition-all duration-300 shadow-md"
+                className="rounded-full object-cover transition-all duration-300 shadow-md"
+                style={{ border: '2px solid var(--primary-light)' }}
               />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#4caf28] rounded-full border-2 border-white shadow-sm" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ background: 'var(--success)' }} />
             </div>
           ) : (
             <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1a5c2a] to-[#4caf28] flex items-center justify-center text-white text-sm font-bold ring-2 ring-[#e8f5ea] group-hover:ring-[#f5c518] transition-all duration-300 shadow-md">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-300 shadow-md"
+                style={{ background: 'linear-gradient(to bottom right, var(--primary), var(--success))', border: '2px solid var(--primary-light)' }}
+              >
                 {user.name.charAt(0)}
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#4caf28] rounded-full border-2 border-white shadow-sm" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ background: 'var(--success)' }} />
             </div>
           )}
         </Link>

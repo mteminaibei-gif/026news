@@ -77,7 +77,8 @@ export default async function ReviewPage({ params }: Props) {
       >
         <Link
           href="/admin/articles"
-          className="text-sm font-semibold bg-[#f5c518] hover:bg-[#f5c518]/90 text-[#1a1a1a] px-3 py-1.5 rounded-xl transition-all duration-300"
+          className="text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300"
+          style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}
         >
           ← Back to Articles
         </Link>

@@ -96,7 +96,7 @@ export default function SignupPage() {
         })
         const data = await res.json()
         if (!res.ok) { setError(data.error ?? 'Signup failed'); return }
-        setSuccess('Journalist account created! You can now sign in to start publishing.')
+        setSuccess('Author account created! You can now sign in to start publishing.')
         setName(''); setEmail(''); setPassword(''); setBio(''); setOrganization('')
         return
       }
@@ -124,7 +124,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#ecfccb] via-[#bbf7d0] to-[#86efac] py-12 px-4 relative overflow-hidden">
+    <div className="min-h-screen py-12 px-4 relative overflow-hidden" style={{ background: 'var(--bg-base)' }}>
       {/* WhatsApp-style doodle background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large chat bubbles */}
@@ -201,8 +201,8 @@ export default function SignupPage() {
           <Link href="/">
             <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
           </Link>
-          <h1 className="text-3xl font-bold text-[#1a5c2a] mb-2">Join 026NEWS</h1>
-          <p className="text-gray-600">Create your account and start your journey</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--primary)' }}>Join 026NEWS</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Create your account and start your journey</p>
         </div>
 
         {/* Role Selection Cards */}
@@ -212,13 +212,17 @@ export default function SignupPage() {
             onClick={() => { setRole('reader'); setError(''); setSuccess('') }}
             className={`p-4 rounded-2xl border-2 transition-all text-center ${
               role === 'reader'
-                ? 'border-[#1a5c2a] bg-white shadow-lg'
-                : 'border-gray-200 bg-white/60 hover:border-[#4caf28]'
+                ? 'shadow-lg'
+                : 'hover:opacity-80'
             }`}
+            style={{
+              borderColor: role === 'reader' ? 'var(--primary)' : 'var(--border)',
+              background: role === 'reader' ? 'var(--bg-surface)' : 'var(--bg-elevated)',
+            }}
           >
             <div className="text-3xl mb-2">📖</div>
-            <div className="font-bold text-sm text-[#1a5c2a]">Reader</div>
-            <div className="text-xs text-gray-500 mt-1">Browse & comment</div>
+            <div className="font-bold text-sm" style={{ color: 'var(--primary)' }}>Reader</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Browse & comment</div>
           </button>
 
           <button
@@ -226,13 +230,17 @@ export default function SignupPage() {
             onClick={() => { setRole('journalist'); setError(''); setSuccess('') }}
             className={`p-4 rounded-2xl border-2 transition-all text-center ${
               role === 'journalist'
-                ? 'border-[#1a5c2a] bg-white shadow-lg'
-                : 'border-gray-200 bg-white/60 hover:border-[#4caf28]'
+                ? 'shadow-lg'
+                : 'hover:opacity-80'
             }`}
+            style={{
+              borderColor: role === 'journalist' ? 'var(--primary)' : 'var(--border)',
+              background: role === 'journalist' ? 'var(--bg-surface)' : 'var(--bg-elevated)',
+            }}
           >
             <div className="text-3xl mb-2">✍️</div>
-            <div className="font-bold text-sm text-[#1a5c2a]">Author</div>
-            <div className="text-xs text-gray-500 mt-1">Write & publish</div>
+            <div className="font-bold text-sm" style={{ color: 'var(--primary)' }}>Author</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Write & publish</div>
           </button>
 
           <button
@@ -240,40 +248,44 @@ export default function SignupPage() {
             onClick={() => { setRole('admin'); setError(''); setSuccess('') }}
             className={`p-4 rounded-2xl border-2 transition-all text-center ${
               role === 'admin'
-                ? 'border-[#1a5c2a] bg-white shadow-lg'
-                : 'border-gray-200 bg-white/60 hover:border-[#4caf28]'
+                ? 'shadow-lg'
+                : 'hover:opacity-80'
             }`}
+            style={{
+              borderColor: role === 'admin' ? 'var(--primary)' : 'var(--border)',
+              background: role === 'admin' ? 'var(--bg-surface)' : 'var(--bg-elevated)',
+            }}
           >
             <div className="text-3xl mb-2">⚙️</div>
-            <div className="font-bold text-sm text-[#1a5c2a]">Admin</div>
-            <div className="text-xs text-gray-500 mt-1">Manage platform</div>
+            <div className="font-bold text-sm" style={{ color: 'var(--primary)' }}>Admin</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Manage platform</div>
           </button>
         </div>
 
         {/* Role Description */}
-        <div className="bg-white rounded-2xl p-4 mb-6 text-sm">
+        <div className="rounded-2xl p-4 mb-6 text-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
           {role === 'reader' && (
-            <div className="text-gray-600">
-              <strong className="text-[#1a5c2a]">Reader Account</strong> — Browse all articles, 
+            <div style={{ color: 'var(--text-secondary)' }}>
+              <strong style={{ color: 'var(--primary)' }}>Reader Account</strong> — Browse all articles, 
               save favorites, comment on stories, and personalize your news feed.
             </div>
           )}
           {role === 'journalist' && (
-            <div className="text-gray-600">
-              <strong className="text-[#1a5c2a]">Author Account</strong> — Write and publish articles, 
+            <div style={{ color: 'var(--text-secondary)' }}>
+              <strong style={{ color: 'var(--primary)' }}>Author Account</strong> — Write and publish articles, 
               track your earnings, build your audience, and grow your journalist profile.
             </div>
           )}
           {role === 'admin' && (
-            <div className="text-gray-600">
-              <strong className="text-[#1a5c2a]">Admin Account</strong> — Full access to manage 
+            <div style={{ color: 'var(--text-secondary)' }}>
+              <strong style={{ color: 'var(--primary)' }}>Admin Account</strong> — Full access to manage 
               users, content, analytics, and platform settings. Requires authorization secret.
             </div>
           )}
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-3xl shadow-2xl p-6">
+        <div className="rounded-3xl shadow-2xl p-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">
               {error}
@@ -288,7 +300,8 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name - All roles */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                 Full Name *
               </label>
               <input
@@ -297,13 +310,15 @@ export default function SignupPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your full name"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
               />
             </div>
 
             {/* Email - All roles */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                 Email Address *
               </label>
               <input
@@ -312,13 +327,15 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
               />
             </div>
 
             {/* Password - All roles */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                 Password *
               </label>
               <input
@@ -328,13 +345,15 @@ export default function SignupPage() {
                 placeholder={role === 'admin' ? 'Min 8 characters' : 'Min 6 characters'}
                 required
                 minLength={role === 'admin' ? 8 : 6}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
               />
             </div>
 
             {/* Confirm Password - All roles */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                 Confirm Password *
               </label>
               <input
@@ -343,14 +362,16 @@ export default function SignupPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
               />
             </div>
 
             {/* Reader-specific fields */}
             {role === 'reader' && (
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                   Location (optional)
                 </label>
                 <input
@@ -358,7 +379,8 @@ export default function SignupPage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="City, Country"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                  className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
                 />
               </div>
             )}
@@ -367,7 +389,8 @@ export default function SignupPage() {
             {role === 'journalist' && (
               <div className="space-y-3 pt-2">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                     Organization / Outlet *
                   </label>
                   <input
@@ -376,11 +399,13 @@ export default function SignupPage() {
                     onChange={(e) => setOrganization(e.target.value)}
                     placeholder="Your news outlet or publication"
                     required
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                     Short Bio *
                   </label>
                   <textarea
@@ -389,11 +414,13 @@ export default function SignupPage() {
                     rows={3}
                     placeholder="What you cover, your beat and experience"
                     required
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                     Portfolio URL (optional)
                   </label>
                   <input
@@ -401,11 +428,13 @@ export default function SignupPage() {
                     value={portfolio}
                     onChange={(e) => setPortfolio(e.target.value)}
                     placeholder="https://yourportfolio.com"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                     Phone / M-Pesa (optional)
                   </label>
                   <input
@@ -413,7 +442,8 @@ export default function SignupPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+254..."
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
                   />
                 </div>
               </div>
@@ -422,7 +452,8 @@ export default function SignupPage() {
             {/* Admin-specific fields */}
             {role === 'admin' && (
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--text-secondary)' }}>
                   Admin Authorization Secret *
                 </label>
                 <input
@@ -431,9 +462,10 @@ export default function SignupPage() {
                   onChange={(e) => setAdminSecret(e.target.value)}
                   placeholder="Enter admin secret"
                   required
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/20 outline-none"
+                  className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 outline-none"
+                  style={{ borderColor: 'var(--border)' }}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                   Contact your platform owner if you don&apos;t have an admin secret.
                 </p>
               </div>
@@ -443,16 +475,17 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-bold py-4 rounded-2xl text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-[#1a5c2a]/20 active:scale-95 mt-4"
+              className="w-full font-bold py-4 rounded-2xl text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg active:scale-95 mt-4 text-white"
+              style={{ background: 'var(--primary)' }}
             >
               {loading ? '⏳ Creating Account...' : `✓ Create ${role === 'reader' ? 'Reader' : role === 'journalist' ? 'Author' : 'Admin'} Account`}
             </button>
           </form>
 
           {/* Sign In Link */}
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
             Already have an account?{' '}
-            <Link href="/login" className="text-[#1a5c2a] font-semibold hover:underline">
+            <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--primary)' }}>
               Sign In
             </Link>
           </div>

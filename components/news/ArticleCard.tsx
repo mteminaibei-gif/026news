@@ -24,55 +24,40 @@ interface ArticleCardProps {
 
 const getSourceHost = (url?: string | null) => {
   if (!url) return null
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return null
-  }
+  try { return new URL(url).hostname.replace(/^www\./, '') } catch { return null }
 }
 
-function ArticleImage({ src, alt, fill, width, height, className }: {
-  src: string; alt: string; fill?: boolean; width?: number; height?: number; className?: string
+function ArticleImage({ src, alt, fill, className }: {
+  src: string; alt: string; fill?: boolean; className?: string
 }) {
   const [error, setError] = useState(false)
   if (error) return null
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      fill={fill}
-      width={!fill ? width : undefined}
-      height={!fill ? height : undefined}
-      className={className}
-      unoptimized
-      onError={() => setError(true)}
-    />
-  )
+  return <Image src={src} alt={alt} fill={fill} className={className} unoptimized onError={() => setError(true)} />
 }
-
-const KENYA_CATS = ['Kenya', 'Africa', 'Politics', 'Business', 'Health']
 
 const hasValidImage = (url?: string | null) =>
   !!url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))
 
 export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
   const [imgError, setImgError] = useState(false)
-  const isKenya = KENYA_CATS.includes(article.category?.name ?? '')
   const showImage = hasValidImage(article.featured_image) && !imgError
   const sourceHost = getSourceHost(article.source_reference)
 
   const Placeholder = () => (
-    <div className="absolute inset-0 bg-gradient-to-br from-[#1a5c2a]/15 to-[#4caf28]/10 flex items-center justify-center">
-      <span className="text-sm font-black text-[#1a5c2a]/20 dark:text-[#4caf28]/20 select-none tracking-widest uppercase">
-        {article.category?.name ?? '026NEW'}
+    <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'var(--primary-light)' }}>
+      <span className="text-sm font-bold select-none tracking-widest uppercase" style={{ color: 'var(--primary)', opacity: 0.2 }}>
+        {article.category?.name ?? '026News'}
       </span>
     </div>
   )
 
   if (variant === 'horizontal') {
     return (
-      <div className="flex gap-4 py-4 border-b-2 border-[#e8f5ea] dark:border-[#223d29] last:border-0 hover:bg-[#f0faf2] dark:hover:bg-[#1a5c2a]/8 transition-all duration-300 rounded-xl px-3 group">
-        <div className="relative w-24 h-20 shrink-0 rounded-xl overflow-hidden bg-[#f0faf2] dark:bg-[#1a2e1e] shadow-sm group-hover:shadow-md transition-shadow">
+      <div
+        className="flex gap-4 py-4 last:border-0 transition-all duration-200 rounded-xl px-3 group"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        <div className="relative w-24 h-20 shrink-0 rounded-xl overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
           {showImage ? (
             <Image
               src={article.featured_image!}
@@ -86,19 +71,18 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
           ) : <Placeholder />}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${isKenya ? 'bg-[#c8102e] text-white' : 'bg-[#1a5c2a] text-white dark:bg-[#4caf28] dark:text-[#1a1a1a]'}`}>
-              {isKenya ? '🇰🇪 ' : '📰 '}{article.category?.name}
-            </span>
-          </div>
-          <h5 className="text-sm font-bold text-[#1a1a1a] dark:text-[#f8fdf5] leading-snug line-clamp-2 mt-1 mb-2">
-            <Link href={`/article/${article.slug}`} className="hover:text-[#1a5c2a] dark:hover:text-[#4caf28] transition-colors">
+          <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--primary)' }}>
+            {article.category?.name}
+          </p>
+          <h5 className="text-sm font-semibold leading-snug line-clamp-2 mb-1.5" style={{ color: 'var(--text-primary)' }}>
+            <Link href={`/article/${article.slug}`} className="hover:opacity-80 transition-opacity" style={{ color: 'inherit', textDecoration: 'none' }}>
               {article.title}
             </Link>
           </h5>
-          <p className="text-xs text-[#6b7280] dark:text-[#81c784] flex items-center gap-3 font-medium">
-            <span className="flex items-center gap-1">👁 {formatNumber(article.views)}</span>
-            <span className="flex items-center gap-1">📅 {formatDate(article.created_at)}</span>
+          <p className="text-xs flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
+            <span>{formatNumber(article.views)} views</span>
+            <span>·</span>
+            <span>{formatDate(article.created_at)}</span>
           </p>
         </div>
       </div>
@@ -106,9 +90,16 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   }
 
   return (
-    <article className="bg-white dark:bg-[#162319] border-2 border-[#e8f5ea] dark:border-[#223d29] rounded-2xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-[#1a5c2a] dark:hover:border-[#4caf28] transition-all duration-300 group">
-      <Link href={`/article/${article.slug}`}>
-        <div className="relative aspect-video bg-[#f0faf2] dark:bg-[#1a2e1e] overflow-hidden">
+    <article
+      className="rounded-2xl overflow-hidden transition-all duration-300 group"
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        boxShadow: 'var(--card-shadow)',
+      }}
+    >
+      <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div className="relative aspect-video overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
           {showImage ? (
             <Image
               src={article.featured_image!}
@@ -120,69 +111,55 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
               onError={() => setImgError(true)}
             />
           ) : <Placeholder />}
-          {isKenya && (
-            <div className="absolute top-3 left-3 bg-gradient-to-r from-[#c8102e] to-[#a50d25] text-white text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-              🇰🇪 Kenya News
-            </div>
-          )}
-          {/* Kenya flag accent corner */}
-          <div className="absolute top-0 right-0 w-12 h-12">
-            <div className="absolute inset-0 bg-gradient-to-bl from-[#c8102e] via-[#1a1a1a] to-[#1a5c2a] opacity-80 rounded-bl-2xl"></div>
-          </div>
         </div>
       </Link>
-      <div className="p-5">
-        {/* Category badge */}
-        <div className="flex items-center justify-between mb-3">
-          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${isKenya ? 'bg-[#c8102e] text-white' : 'bg-[#1a5c2a] text-white dark:bg-[#4caf28] dark:text-[#1a1a1a]'}`}>
-            {article.category?.name}
-          </span>
-          {sourceHost && (
-            <span className="text-[9px] text-[#6b7280] dark:text-[#81c784] font-medium">
-              {sourceHost}
-            </span>
-          )}
-        </div>
 
-        {/* Title */}
-        <h3 className="font-black text-lg text-[#1a1a1a] dark:text-[#f8fdf5] leading-tight mt-2 mb-3 line-clamp-2 group-hover:text-[#1a5c2a] dark:group-hover:text-[#4caf28] transition-colors">
-          <Link href={`/article/${article.slug}`}>
+      <div className="p-6">
+        <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--primary)' }}>
+          {article.category?.name}
+        </p>
+
+        <h3
+          className="font-semibold text-lg leading-snug mb-2 line-clamp-2"
+          style={{ fontFamily: "'Newsreader', Georgia, serif", color: 'var(--text-primary)' }}
+        >
+          <Link href={`/article/${article.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>
             {article.title}
           </Link>
         </h3>
 
-        {/* Excerpt */}
-        <p className="text-sm text-[#374151] dark:text-[#a5d6aa] line-clamp-2 mb-4 leading-relaxed font-medium">
+        <p className="text-sm line-clamp-2 mb-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
           {article.excerpt?.trim() || article.content.substring(0, 120)}...
         </p>
 
-        {/* Source link */}
         {sourceHost && (
           <a
             href={article.source_reference ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1a5c2a] dark:text-[#4caf28] hover:text-[#2d8a47] dark:hover:text-[#65a30d] mb-4 group/source"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold mb-4 transition-colors"
+            style={{ color: 'var(--primary)' }}
           >
-            <span className="w-2 h-2 bg-[#4caf28] rounded-full"></span>
-            Source: {sourceHost} 
-            <span className="group-hover/source:translate-x-0.5 transition-transform">↗</span>
+            Source: {sourceHost} ↗
           </a>
         )}
 
-        {/* Meta info with Kenya flag accent */}
-        <div className="flex items-center gap-4 text-xs text-[#6b7280] dark:text-[#81c784] pt-4 border-t-2 border-[#e8f5ea] dark:border-[#223d29] font-medium">
-          <span className="flex items-center gap-1.5">
-            <span className="text-sm">✍️</span> 
-            {article.author?.name ?? 'Staff Writer'}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-sm">👁</span> 
-            {formatNumber(article.views)}
-          </span>
-          <span className="ml-auto text-[#1a5c2a] dark:text-[#4caf28] font-bold">
-            {formatDate(article.created_at)}
-          </span>
+        <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
+            >
+              {article.author?.name?.charAt(0) ?? 'S'}
+            </div>
+            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+              {article.author?.name ?? 'Staff Writer'}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatNumber(article.views)} views</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>{formatDate(article.created_at)}</span>
+          </div>
         </div>
       </div>
     </article>

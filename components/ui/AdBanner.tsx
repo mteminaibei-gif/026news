@@ -32,15 +32,15 @@ export function AdBanner({ slot = '1234567890', format = 'auto', className = '',
     // Development / unconfigured placeholder
     return (
       <div
-        className={`flex items-center justify-center bg-gray-100 border border-dashed border-gray-300 rounded-lg text-xs text-gray-400 font-medium ${className}`}
-        style={{ minHeight: 90 }}
+        className={`flex items-center justify-center rounded-lg text-xs font-medium ${className}`}
+        style={{ minHeight: 90, background: 'var(--bg-muted)', border: '1px dashed var(--border)', color: 'var(--text-tertiary)' }}
         role="complementary"
         aria-label="Advertisement placeholder"
       >
         <div className="text-center">
           <div className="text-lg mb-1">📢</div>
           <div>Ad space · {label}</div>
-          <div className="text-[10px] mt-0.5 text-gray-300">Set NEXT_PUBLIC_ADSENSE_ID to enable</div>
+          <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Set NEXT_PUBLIC_ADSENSE_ID to enable</div>
         </div>
       </div>
     )
@@ -48,7 +48,7 @@ export function AdBanner({ slot = '1234567890', format = 'auto', className = '',
 
   return (
     <div className={className} role="complementary" aria-label={label}>
-      <p className="text-[10px] text-gray-400 text-center mb-1 uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] text-center mb-1 uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
       <ins
         ref={adRef}
         className="adsbygoogle block"

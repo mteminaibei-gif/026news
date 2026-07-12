@@ -80,15 +80,18 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
   const KENYA_CATS = ['Kenya', 'Africa', 'Politics', 'Business']
 
   return (
-    <div className="bg-[#1a5c2a] text-white py-2 overflow-hidden border-b-2 border-[#f5c518]/20 relative">
+    <div
+      className="text-white py-2 overflow-hidden relative"
+      style={{ background: 'var(--primary)', borderBottom: '2px solid var(--accent-light)' }}
+    >
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-3">
 
         {/* Badge */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`
-            bg-[#c8102e] text-white px-2.5 py-1 rounded text-[11px] font-black uppercase tracking-wider
-            ${newFlash ? 'animate-pulse-glow' : ''}
-          `}>
+          <span
+            className={`text-white px-2.5 py-1 rounded text-[11px] font-black uppercase tracking-wider ${newFlash ? 'animate-pulse-glow' : ''}`}
+            style={{ background: 'var(--error)' }}
+          >
             {newFlash ? '🆕 NEW' : '🇰🇪 Breaking'}
           </span>
 
@@ -96,9 +99,9 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
           <span className="flex items-center gap-1 shrink-0">
             <span className={`relative flex h-2 w-2 ${isLive ? '' : 'opacity-40'}`}>
               {isLive && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4caf28] opacity-75" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
               )}
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${isLive ? 'bg-[#4caf28]' : 'bg-gray-400'}`} />
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isLive ? '' : 'opacity-40'}`} style={{ background: isLive ? 'var(--success)' : 'var(--text-muted)' }} />
             </span>
           </span>
         </div>
@@ -118,7 +121,7 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
                   href={`/article/${h.slug}`}
                   className="text-sm text-white/80 hover:text-white transition-colors shrink-0 group"
                 >
-                  <span className={`mr-1.5 ${isKenya ? 'text-[#f5c518]' : 'text-[#4caf28]/60'}`}>
+                  <span className={`mr-1.5`} style={{ color: isKenya ? 'var(--accent)' : 'rgba(255,255,255,0.4)' }}>
                     {isKenya ? '🇰🇪' : '●'}
                   </span>
                   <span className="group-hover:underline underline-offset-2">
@@ -137,7 +140,7 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
       </div>
 
       {/* Fade mask on right */}
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#1a5c2a] to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none" style={{ background: 'linear-gradient(to left, var(--primary), transparent)' }} />
     </div>
   )
 }

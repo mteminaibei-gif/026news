@@ -42,13 +42,13 @@ export function RealtimeFeedFetcher({ initialArticlesCount = 0 }: RealtimeFeedFe
   const displayCount = result?.articlesAfter ?? initialArticlesCount
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-[#e8f5ea] p-5 transition-all duration-300 hover:shadow-md">
+    <div className="backdrop-blur-sm rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-[#1a5c2a]">📡 RSS Feed Fetcher</h3>
+        <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>📡 RSS Feed Fetcher</h3>
         <button
           onClick={handleFetch}
           disabled={loading}
-          className="text-xs font-bold bg-[#1a5c2a] hover:bg-[#2d8a47] text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="text-xs font-bold text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}
         >
           {loading ? (
             <>
@@ -70,27 +70,27 @@ export function RealtimeFeedFetcher({ initialArticlesCount = 0 }: RealtimeFeedFe
       {result && (
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <div className="flex-1 bg-[#f0faf2] rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-[#1a5c2a]">{displayCount}</p>
-              <p className="text-xs text-gray-500">Total Articles</p>
+            <div className="flex-1 rounded-xl p-4 text-center" style={{ background: 'var(--primary-light)' }}>
+              <p className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>{displayCount}</p>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total Articles</p>
             </div>
-            <div className="flex-1 bg-[#fff8e1] rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-[#f5c518]">+{result.newArticles}</p>
-              <p className="text-xs text-gray-500">New This Fetch</p>
+            <div className="flex-1 rounded-xl p-4 text-center" style={{ background: 'var(--warning-light)' }}>
+              <p className="text-2xl font-bold" style={{ color: 'var(--warning)' }}>+{result.newArticles}</p>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>New This Fetch</p>
             </div>
-            <div className="flex-1 bg-[#f0faf2] rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-[#1a5c2a]">{result.feeds}</p>
-              <p className="text-xs text-gray-500">Active Feeds</p>
+            <div className="flex-1 rounded-xl p-4 text-center" style={{ background: 'var(--primary-light)' }}>
+              <p className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>{result.feeds}</p>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Active Feeds</p>
             </div>
           </div>
           
           {Object.keys(result.results).length > 0 && (
             <div className="mt-3">
-              <p className="text-xs font-semibold text-gray-500 mb-2">Feed Results:</p>
-              <div className="max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-2 text-xs space-y-1">
+              <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-tertiary)' }}>Feed Results:</p>
+              <div className="max-h-32 overflow-y-auto rounded-lg p-2 text-xs space-y-1" style={{ background: 'var(--border)' }}>
                 {Object.entries(result.results).map(([feed, status]) => (
                   <div key={feed} className="flex justify-between">
-                    <span className="font-medium text-gray-700">{feed}</span>
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{feed}</span>
                     <span className={status.includes('ERROR') ? 'text-red-500' : 'text-green-600'}>
                       {status}
                     </span>
@@ -103,7 +103,7 @@ export function RealtimeFeedFetcher({ initialArticlesCount = 0 }: RealtimeFeedFe
       )}
 
       {!result && !error && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
           Click &quot;Fetch Now&quot; to pull latest articles from RSS feeds. New articles will be added in real-time.
         </p>
       )}

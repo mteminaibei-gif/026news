@@ -44,12 +44,12 @@ export function SubscribeWidget({ variant = 'card' }: Props) {
 
   if (variant === 'card') {
     return (
-      <div className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] rounded-xl p-5 text-center text-white">
+      <div className="rounded-xl p-5 text-center text-white" style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}>
         <h4 className="font-bold mb-1">Subscribe for Full Access</h4>
-        <p className="text-white/60 text-sm mb-4">Unlimited access to premium freelance journalism.</p>
+        <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>Unlimited access to premium freelance journalism.</p>
 
         {status === 'success' ? (
-          <p className="text-emerald-400 text-sm font-semibold py-2">{message}</p>
+          <p className="text-sm font-semibold py-2" style={{ color: 'var(--success)' }}>{message}</p>
         ) : (
           <form onSubmit={handleSubscribe} noValidate>
             <input
@@ -62,19 +62,19 @@ export function SubscribeWidget({ variant = 'card' }: Props) {
               className="w-full px-3 py-2 rounded-lg text-sm text-gray-900 mb-2 outline-none focus:ring-2 focus:ring-orange-400"
             />
             {status === 'error' && (
-              <p className="text-red-400 text-xs mb-2">{message}</p>
+              <p className="text-xs mb-2" style={{ color: 'var(--error)' }}>{message}</p>
             )}
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg text-sm transition-colors disabled:opacity-60"
+              className="w-full text-white font-bold py-2 rounded-lg text-sm transition-colors disabled:opacity-60"
+              style={{ background: 'var(--accent)' }}
             >
               {status === 'loading' ? 'Subscribing…' : 'Subscribe Now'}
             </button>
           </form>
         )}
-
-        <p className="text-white/40 text-xs mt-3">
+        <p className="text-xs mt-3" style={{ color: 'rgba(255,255,255,0.6)' }}>
           Or <Link href="/subscribe" className="underline hover:text-white">view plans →</Link>
         </p>
       </div>
@@ -83,11 +83,11 @@ export function SubscribeWidget({ variant = 'card' }: Props) {
 
   // inline variant used inside article sidebar
   return (
-    <div className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] rounded-xl p-5 text-white text-center">
+    <div className="rounded-xl p-5 text-white text-center" style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}>
       <h4 className="font-bold mb-1">Subscribe for Full Access</h4>
-      <p className="text-white/60 text-sm mb-3">Unlimited access to premium content.</p>
+      <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.6)' }}>Unlimited access to premium content.</p>
       {status === 'success' ? (
-        <p className="text-emerald-400 text-sm font-semibold">{message}</p>
+        <p className="text-sm font-semibold" style={{ color: 'var(--success)' }}>{message}</p>
       ) : (
         <form onSubmit={handleSubscribe} noValidate className="space-y-2">
           <input
@@ -99,11 +99,12 @@ export function SubscribeWidget({ variant = 'card' }: Props) {
             aria-label="Email address for subscription"
             className="w-full px-3 py-2 rounded-lg text-sm text-gray-900 outline-none focus:ring-2 focus:ring-orange-400"
           />
-          {status === 'error' && <p className="text-red-400 text-xs">{message}</p>}
+          {status === 'error' && <p className="text-xs" style={{ color: 'var(--error)' }}>{message}</p>}
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg text-sm transition-colors disabled:opacity-60"
+            className="w-full text-white font-bold py-2 rounded-lg text-sm transition-colors disabled:opacity-60"
+            style={{ background: 'var(--accent)' }}
           >
             {status === 'loading' ? 'Subscribing…' : 'Subscribe Now'}
           </button>

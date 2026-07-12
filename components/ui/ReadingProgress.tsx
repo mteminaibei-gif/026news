@@ -20,8 +20,8 @@ export function ReadingProgress() {
 
   return (
     <div
-      className="fixed top-16 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-orange-500 to-blue-600 transition-all duration-200 z-40 shadow-lg"
-      style={{ width: `${progress}%` }}
+      className="fixed top-16 left-0 right-0 h-1 transition-all duration-200 z-40"
+      style={{ width: `${progress}%`, background: 'linear-gradient(to right, var(--primary), var(--accent), var(--primary))', boxShadow: 'var(--shadow-md)' }}
       role="progressbar"
       aria-valuenow={Math.round(progress)}
       aria-valuemin={0}

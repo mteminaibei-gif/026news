@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-[#f0fdf4] via-white to-[#fef7cd]">
+    <div className="flex min-h-screen" style={{ background: 'var(--bg-base)' }}>
       {/* Collapsible Sidebar */}
       <Sidebar
         role="admin"

@@ -8,14 +8,63 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loadingText?: string
 }
 
-const variants = {
-  primary: 'bg-gradient-to-r from-[#1a5c2a] to-[#2d8a47] hover:from-[#2d8a47] hover:to-[#4caf28] text-white shadow-lg shadow-[#1a5c2a]/25 hover:shadow-xl hover:shadow-[#1a5c2a]/35',
-  kenya: 'bg-gradient-to-r from-[#1a5c2a] via-[#2d8a47] to-[#4caf28] hover:from-[#2d8a47] hover:via-[#4caf28] hover:to-[#65a30d] text-white shadow-lg shadow-[#1a5c2a]/30 hover:shadow-2xl hover:shadow-[#1a5c2a]/40',
-  gold: 'bg-gradient-to-r from-[#f5c518] to-[#d4a010] hover:from-[#d4a010] hover:to-[#ca8a04] text-[#1a1a1a] font-bold shadow-lg shadow-[#f5c518]/30 hover:shadow-xl hover:shadow-[#f5c518]/40',
-  secondary: 'bg-white dark:bg-[#162319] hover:bg-[#f9fafb] dark:hover:bg-[#1a2e1e] text-[#1a5c2a] dark:text-[#4caf28] border-2 border-[#e8f5ea] dark:border-[#223d29] hover:border-[#1a5c2a] dark:hover:border-[#4caf28] shadow-sm hover:shadow-md',
-  ghost: 'bg-transparent hover:bg-[#f0faf2] dark:hover:bg-[#1a5c2a]/15 text-[#1a5c2a] dark:text-[#4caf28] hover:text-[#2d8a47] dark:hover:text-[#65a30d]',
-  danger: 'bg-gradient-to-r from-[#c8102e] to-[#a50d25] hover:from-[#a50d25] hover:to-[#991b1b] text-white shadow-lg shadow-[#c8102e]/25 hover:shadow-xl hover:shadow-[#c8102e]/35',
-  success: 'bg-gradient-to-r from-[#16a34a] to-[#15803d] hover:from-[#15803d] hover:to-[#166534] text-white shadow-lg shadow-[#16a34a]/25 hover:shadow-xl hover:shadow-[#16a34a]/35',
+const variantStyles: Record<string, React.CSSProperties> = {
+  primary: {
+    background: 'linear-gradient(to right, var(--primary), var(--primary-hover))',
+    color: '#fff',
+  },
+  kenya: {
+    background: 'linear-gradient(to right, var(--primary), var(--primary-hover), var(--success))',
+    color: '#fff',
+  },
+  gold: {
+    background: 'linear-gradient(to right, var(--warning), #d4a010, #ca8a04)',
+    color: 'var(--text-primary)',
+    fontWeight: 700,
+  },
+  secondary: {
+    background: 'var(--bg-surface)',
+    color: 'var(--primary)',
+    border: '2px solid var(--border-subtle)',
+  },
+  ghost: {
+    background: 'transparent',
+    color: 'var(--primary)',
+  },
+  danger: {
+    background: 'linear-gradient(to right, var(--error), #a50d25, #991b1b)',
+    color: '#fff',
+  },
+  success: {
+    background: 'linear-gradient(to right, #16a34a, #15803d, #166534)',
+    color: '#fff',
+  },
+}
+
+const variantHoverStyles: Record<string, React.CSSProperties> = {
+  primary: {
+    background: 'linear-gradient(to right, var(--primary-hover), var(--success))',
+  },
+  kenya: {
+    background: 'linear-gradient(to right, var(--primary-hover), var(--success), #65a30d)',
+  },
+  gold: {
+    background: 'linear-gradient(to right, #d4a010, #ca8a04)',
+  },
+  secondary: {
+    background: 'var(--bg-inset)',
+    borderColor: 'var(--primary)',
+  },
+  ghost: {
+    background: 'rgba(26, 92, 42, 0.15)',
+    color: 'var(--primary-hover)',
+  },
+  danger: {
+    background: 'linear-gradient(to right, #a50d25, #991b1b)',
+  },
+  success: {
+    background: 'linear-gradient(to right, #15803d, #166534)',
+  },
 }
 
 const sizes = {
@@ -34,8 +83,17 @@ export function Button({
   disabled,
   children,
   className,
+  style,
   ...props
 }: ButtonProps) {
+  const [isHovered, setIsHovered] = React.useState(false)
+
+  const mergedStyle: React.CSSProperties = {
+    ...variantStyles[variant],
+    ...(isHovered ? variantHoverStyles[variant] : {}),
+    ...style,
+  }
+
   return (
     <button
       disabled={disabled || isLoading}
@@ -43,14 +101,19 @@ export function Button({
         'relative inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-300 overflow-hidden group',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
         'hover:-translate-y-0.5 active:scale-95',
-        'focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]/30 dark:focus:ring-[#4caf28]/30 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#0f1410]',
-        variants[variant],
+        'focus:outline-none focus:ring-2 focus:ring-offset-2',
         sizes[size],
         className
       )}
+      style={{
+        ...mergedStyle,
+        ['--tw-ring-color' as string]: 'rgba(26, 92, 42, 0.3)',
+        ['--tw-ring-offset-color' as string]: 'var(--bg-surface)',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       {...props}
     >
-      {/* Kenya flag inspired shimmer effect for primary/kenya variants */}
       {(variant === 'primary' || variant === 'kenya') && (
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 ease-out" />
       )}

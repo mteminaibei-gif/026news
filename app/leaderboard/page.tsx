@@ -8,8 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import { formatNumber, formatCurrency } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Journalist Leaderboard — 026News',
-  description: 'Top-ranked journalists on 026News ranked by article views and earnings.',
+  title: 'Author Leaderboard — 026News',
+  description: 'Top-ranked authors on 026News ranked by article views and earnings.',
 }
 
 type LeaderRow = {
@@ -56,13 +56,16 @@ export default async function LeaderboardPage() {
   const rest  = enriched.slice(3)
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-14 px-4 text-center">
-        <h1 className="text-4xl font-extrabold mb-3">🏆 Journalist Leaderboard</h1>
-        <p className="text-white/60 max-w-xl mx-auto">
+      <section
+        className="text-white py-14 px-4 text-center"
+        style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}
+      >
+        <h1 className="text-4xl font-extrabold mb-3" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>🏆 Author Leaderboard</h1>
+        <p className="max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>
           Ranked by total views and earnings. Badges awarded automatically at milestone thresholds.
         </p>
       </section>
@@ -76,20 +79,28 @@ export default async function LeaderboardPage() {
               <Link
                 key={j.user_id}
                 href={`/journalists/${j.user_id}`}
-                className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-6 text-center relative overflow-hidden group ${i === 0 ? 'ring-2 ring-yellow-400' : ''}`}
+                className="rounded-2xl transition-all p-6 text-center relative overflow-hidden group"
+                style={{
+                  background: 'var(--bg-surface)',
+                  boxShadow: 'var(--shadow-sm)',
+                  border: i === 0 ? '2px solid var(--accent)' : '1px solid var(--border-subtle)',
+                }}
               >
                 <div className="text-3xl mb-3">{MEDAL[i]}</div>
                 {j.profile_image ? (
-                  <Image src={j.profile_image} alt={j.name} width={72} height={72} className="rounded-full object-cover mx-auto mb-3 ring-2 ring-gray-100" />
+                  <Image src={j.profile_image} alt={j.name} width={72} height={72} className="rounded-full object-cover mx-auto mb-3" style={{ border: '2px solid var(--border-subtle)' }} />
                 ) : (
-                  <div className="w-18 h-18 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center text-2xl font-black text-gray-500" style={{ width: 72, height: 72 }}>
+                  <div
+                    className="w-18 h-18 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-black"
+                    style={{ width: 72, height: 72, background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}
+                  >
                     {j.name.charAt(0)}
                   </div>
                 )}
-                <p className="font-extrabold text-gray-900 group-hover:text-blue-600 transition-colors">{j.name}</p>
-                <p className="text-xs text-gray-400 mt-1">{j.article_count} articles</p>
-                <p className="text-sm font-bold text-blue-600 mt-1">👁 {formatNumber(j.total_views)}</p>
-                <p className="text-xs text-emerald-600 font-semibold">{formatCurrency(j.total_earnings)}</p>
+                <p className="font-extrabold transition-colors" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{j.article_count} articles</p>
+                <p className="text-sm font-bold mt-1" style={{ color: 'var(--primary)' }}>👁 {formatNumber(j.total_views)}</p>
+                <p className="text-xs font-semibold" style={{ color: 'var(--success)' }}>{formatCurrency(j.total_earnings)}</p>
                 {j.badges.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-1 mt-3">
                     {j.badges.slice(0, 2).map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
@@ -101,43 +112,50 @@ export default async function LeaderboardPage() {
         )}
 
         {/* Full table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">All Rankings</h2>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>All Rankings</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                <tr className="text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-inset)', color: 'var(--text-muted)' }}>
                   <th className="px-4 py-2.5 text-left w-10">#</th>
-                  <th className="px-4 py-2.5 text-left">Journalist</th>
+                  <th className="px-4 py-2.5 text-left">Author</th>
                   <th className="px-4 py-2.5 text-right">Views</th>
                   <th className="px-4 py-2.5 text-right">Articles</th>
                   <th className="px-4 py-2.5 text-right">Earnings</th>
                   <th className="px-4 py-2.5 text-left">Badges</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {enriched.map((j, i) => (
-                  <tr key={j.user_id} className={`hover:bg-gray-50 transition-colors ${i < 3 ? 'bg-yellow-50/30' : ''}`}>
-                    <td className="px-4 py-3 font-black text-gray-300 text-base">
+                  <tr
+                    key={j.user_id}
+                    className="transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-subtle)', background: i < 3 ? 'var(--accent-light)' : 'transparent' }}
+                  >
+                    <td className="px-4 py-3 font-black text-base" style={{ color: 'var(--text-muted)' }}>
                       {i < 3 ? MEDAL[i] : i + 1}
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/journalists/${j.user_id}`} className="flex items-center gap-2.5 hover:text-blue-600 transition-colors">
+                      <Link href={`/journalists/${j.user_id}`} className="flex items-center gap-2.5 transition-colors" style={{ color: 'var(--text-primary)' }}>
                         {j.profile_image ? (
                           <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                            style={{ background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}
+                          >
                             {j.name.charAt(0)}
                           </div>
                         )}
-                        <span className="font-semibold text-gray-900">{j.name}</span>
+                        <span className="font-semibold">{j.name}</span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-700">{formatNumber(j.total_views)}</td>
-                    <td className="px-4 py-3 text-right text-gray-500">{j.article_count}</td>
-                    <td className="px-4 py-3 text-right font-bold text-emerald-600">{formatCurrency(j.total_earnings)}</td>
+                    <td className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--text-secondary)' }}>{formatNumber(j.total_views)}</td>
+                    <td className="px-4 py-3 text-right" style={{ color: 'var(--text-tertiary)' }}>{j.article_count}</td>
+                    <td className="px-4 py-3 text-right font-bold" style={{ color: 'var(--success)' }}>{formatCurrency(j.total_earnings)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {j.badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
@@ -146,7 +164,7 @@ export default async function LeaderboardPage() {
                   </tr>
                 ))}
                 {enriched.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No journalists ranked yet.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'var(--text-muted)' }}>No authors ranked yet.</td></tr>
                 )}
               </tbody>
             </table>
@@ -154,8 +172,8 @@ export default async function LeaderboardPage() {
         </div>
 
         {/* Badge legend */}
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">🏅 Badge Thresholds</h3>
+        <div className="rounded-xl p-5" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)' }}>
+          <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>🏅 Badge Thresholds</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { type: 'bronze',   label: '🥉 Bronze',   req: '1,000 views' },
@@ -163,9 +181,9 @@ export default async function LeaderboardPage() {
               { type: 'gold',     label: '🥇 Gold',     req: '100,000 views' },
               { type: 'platinum', label: '💎 Platinum', req: '1,000,000 views' },
             ].map(b => (
-              <div key={b.type} className="text-center p-3 rounded-lg bg-gray-50">
+              <div key={b.type} className="text-center p-3 rounded-lg" style={{ background: 'var(--bg-inset)' }}>
                 <BadgePill type={b.type} label={b.label} />
-                <p className="text-xs text-gray-400 mt-1.5">{b.req}</p>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>{b.req}</p>
               </div>
             ))}
           </div>

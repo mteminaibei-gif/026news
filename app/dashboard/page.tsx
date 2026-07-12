@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ArticleCard } from '@/components/news/ArticleCard'
-import { formatNumber, formatDate } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 
-// Disable static generation
 export const dynamic = 'force-dynamic'
 
 interface Article {
@@ -25,7 +24,7 @@ interface Article {
   category?: { name: string } | null
 }
 
-interface Journalist {
+interface Author {
   user_id: number
   name: string
   bio: string | null
@@ -38,17 +37,17 @@ export default function DashboardPage() {
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [articles, setArticles] = useState<Article[]>([])
-  const [journalists, setJournalists] = useState<Journalist[]>([])
+  const [authors, setAuthors] = useState<Author[]>([])
   const [loading, setLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
-  const [activeTab, setActiveTab] = useState<'feed' | 'journalists' | 'saved'>('feed')
+  const [activeTab, setActiveTab] = useState<'feed' | 'authors' | 'saved'>('feed')
   const loaderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     checkUser()
     fetchArticles()
-    fetchJournalists()
+    fetchAuthors()
   }, [])
 
   async function checkUser() {
@@ -82,7 +81,7 @@ export default function DashboardPage() {
     }
   }
 
-  async function fetchJournalists() {
+  async function fetchAuthors() {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -92,13 +91,12 @@ export default function DashboardPage() {
         .limit(8)
 
       if (error) throw error
-      setJournalists(data as Journalist[])
+      setAuthors(data as Author[])
     } catch (err) {
-      console.error('Error fetching journalists:', err)
+      console.error('Error fetching authors:', err)
     }
   }
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!hasMore || loading) return
 
@@ -124,12 +122,12 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a5c2a] mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading...</p>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--primary)', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+            <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
           </div>
         </div>
       </div>
@@ -137,56 +135,57 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-base)' }}>
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#0a1628] to-[#1a3a6e] text-white py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-4">
-            Welcome back, {user.email?.split('@')[0] || 'Reader'}! 👋
+      <section style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', color: 'var(--text-inverse)', padding: '64px 16px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 800, marginBottom: 16, fontFamily: "'Newsreader', Georgia, serif" }}>
+            Welcome back, {user.email?.split('@')[0] || 'Reader'}!
           </h1>
-          <p className="text-white/70 text-lg">
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.125rem' }}>
             Your personalized news feed and connection to African journalism.
-            Stay informed with articles curated for your region.
           </p>
         </div>
       </section>
 
-      <div className="flex-1 max-w-6xl mx-auto px-4 py-8">
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto">
+      <div style={{ flex: 1, maxWidth: 1200, margin: '0 auto', padding: '32px 16px' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 32, overflowX: 'auto' }}>
           {[
             { id: 'feed', label: 'Latest News', icon: '📰' },
-            { id: 'journalists', label: 'Journalists', icon: '✨' },
+            { id: 'authors', label: 'Live Authors', icon: '✨' },
             { id: 'saved', label: 'Saved Articles', icon: '📚' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                activeTab === tab.id
-                  ? 'bg-[#1a5c2a] text-white shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
+              style={{
+                padding: '12px 24px',
+                borderRadius: 12,
+                fontWeight: 600,
+                transition: 'all 0.2s',
+                background: activeTab === tab.id ? 'var(--primary)' : 'var(--bg-surface)',
+                color: activeTab === tab.id ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                border: `1px solid ${activeTab === tab.id ? 'var(--primary)' : 'var(--border)'}`,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
             >
-              <span className="mr-2">{tab.icon}</span>
+              <span style={{ marginRight: 8 }}>{tab.icon}</span>
               {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Feed Column */}
-          <div className={`lg:col-span-2 space-y-6 ${activeTab === 'feed' ? 'block' : 'hidden'}`}>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>📰</span> Latest Articles
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32 }}>
+          <div style={{ display: activeTab === 'feed' ? 'block' : 'none' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 24 }}>
+              Latest Articles
             </h2>
 
             {articles.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl">
-                <p className="text-gray-500">Loading articles...</p>
+              <div style={{ textAlign: 'center', padding: '64px 0', background: 'var(--bg-surface)', borderRadius: 16 }}>
+                <p style={{ color: 'var(--text-secondary)' }}>Loading articles...</p>
               </div>
             ) : (
               <>
@@ -194,50 +193,42 @@ export default function DashboardPage() {
                   <ArticleCard key={article.article_id} article={article} variant="default" />
                 ))}
                 {loading && (
-                  <div className="text-center py-8 text-gray-500 animate-pulse">
+                  <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-secondary)' }}>
                     Loading more articles...
                   </div>
                 )}
-                <div ref={loaderRef} className="h-10" />
+                <div ref={loaderRef} style={{ height: 40 }} />
               </>
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Live Journalists Widget */}
-            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 ${activeTab === 'journalists' ? 'block' : 'hidden'}`}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-                Live Journalists
+          <div style={{ display: activeTab === 'authors' ? 'block' : 'none' }}>
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--success)', animation: 'pulse 2s infinite' }} />
+                Live Authors
               </h2>
 
-              <div className="space-y-4">
-                {journalists.map(j => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {authors.map(j => (
                   <Link
                     key={j.user_id}
                     href={`/journalists/${j.user_id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#f0faf2] dark:hover:bg-gray-700 transition-colors"
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 12, textDecoration: 'none', color: 'inherit', transition: 'background 0.2s' }}
                   >
                     {j.profile_image ? (
-                      <Image
-                        src={j.profile_image}
-                        alt={j.name}
-                        width={48}
-                        height={48}
-                        className="rounded-full object-cover"
-                      />
+                      <Image src={j.profile_image} alt={j.name} width={48} height={48} style={{ borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-[#1a5c2a]/10 flex items-center justify-center text-[#1a5c2a] font-bold text-lg">
+                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 700, fontSize: 18 }}>
                         {j.name.charAt(0)}
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-white truncate">{j.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">{j.article_count} articles</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.name}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{j.article_count} articles</span>
                         {j.status === 'online' && (
-                          <span className="text-xs text-green-600 font-medium">● Online</span>
+                          <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 500 }}>● Online</span>
                         )}
                       </div>
                     </div>
@@ -245,20 +236,21 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {journalists.length > 0 && (
+              {authors.length > 0 && (
                 <Link
                   href="/journalists"
-                  className="block w-full mt-4 text-center bg-[#1a5c2a] hover:bg-[#2d8a47] text-white font-semibold py-2.5 rounded-xl transition-colors"
+                  style={{ display: 'block', width: '100%', marginTop: 16, textAlign: 'center', background: 'var(--primary)', color: 'var(--text-inverse)', fontWeight: 600, padding: '10px 0', borderRadius: 12, textDecoration: 'none', transition: 'opacity 0.2s' }}
                 >
-                  View All Journalists
+                  View All Authors
                 </Link>
               )}
             </div>
+          </div>
 
-            {/* Saved Articles (Placeholder) */}
-            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 ${activeTab === 'saved' ? 'block' : 'hidden'}`}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Saved Articles</h2>
-              <p className="text-gray-500 text-center py-8">Your saved articles will appear here</p>
+          <div style={{ display: activeTab === 'saved' ? 'block' : 'none' }}>
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Saved Articles</h2>
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '32px 0' }}>Your saved articles will appear here</p>
             </div>
           </div>
         </div>
