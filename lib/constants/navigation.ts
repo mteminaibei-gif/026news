@@ -12,8 +12,11 @@ export const ROUTES = {
   TERMS: '/terms',
   
   // Articles
-  ARTICLES: '/search',
+  ARTICLES: '/articles',
   ARTICLE_DETAIL: (slug: string) => `/article/${slug}`,
+  NEWS: '/news',
+  SOURCES: '/sources',
+  RADIO: '/radio',
   
   // Authors
   AUTHORS: '/journalists',
@@ -58,13 +61,10 @@ export const ROUTES = {
 
 export const NAV_LINKS = [
   { href: ROUTES.HOME, label: 'Home', icon: '🏠' },
-  { href: ROUTES.HOME + '?category=Kenya', label: '🇰🇪 Kenya', external: false },
-  { href: ROUTES.HOME + '?category=Africa', label: '🌍 Africa', external: false },
-  { href: ROUTES.HOME + '?category=Politics', label: 'Politics', external: false },
-  { href: ROUTES.HOME + '?category=Business', label: 'Business', external: false },
-  { href: ROUTES.HOME + '?category=Tech', label: 'Tech', external: false },
-  { href: ROUTES.HOME + '?category=Sports', label: 'Sports', external: false },
-  { href: ROUTES.HOME + '?category=Health', label: 'Health', external: false },
+  { href: ROUTES.SOURCES, label: 'Sources', icon: '📡' },
+  { href: ROUTES.NEWS, label: 'News', icon: '📰' },
+  { href: ROUTES.ARTICLES, label: 'Articles', icon: '📑' },
+  { href: ROUTES.RADIO, label: 'Radio', icon: '📻' },
   { href: ROUTES.AUTHORS, label: 'Authors', icon: '✍️' },
 ] as const
 

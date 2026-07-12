@@ -8,7 +8,7 @@ import { ArticleCard } from '@/components/news/ArticleCard'
 import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
 import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
 import { formatNumber } from '@/lib/utils'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, Flame, BarChart2, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { MOCK_CATEGORIES, MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
 import type { Metadata } from 'next'
@@ -16,7 +16,8 @@ import type { PostgrestResponse } from '@supabase/supabase-js'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
 export const metadata: Metadata = {
-  title: 'Breaking News, Analysis & Freelance Journalism',
+  title: '026News — Breaking News, Analysis & Freelance Journalism',
+  description: 'Kenya\'s leading digital news platform. Breaking news, in-depth analysis, and freelance journalism from across Africa.',
 }
 
 type AuthorRow = { user_id: number; name: string; profile_image: string | null }
@@ -86,7 +87,9 @@ export default async function HomePage({ searchParams }: Props) {
     !(a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa')
   )
 
-  const featured = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } => Boolean((a as unknown as Record<string, unknown>).featured))
+  const featured = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } =>
+    Boolean((a as unknown as Record<string, unknown>).featured)
+  )
   const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'citizen', 'standard', 'capital', 'star', 'business daily']
   const isPriority = (a: ArticleWithAuthor) => {
     const candidates = [a.source_name, a.source_reference, a.source_url, a.author?.name]
@@ -111,62 +114,190 @@ export default async function HomePage({ searchParams }: Props) {
     ? articles.filter(a => a.category?.name === categoryParam)
     : [...sortByPriorityThenViews(kenyaArticles), ...sortByPriorityThenViews(africaArticles), ...sortByPriorityThenViews(otherArticles)]
 
+  const breakingHeadlines = trending.map(a => ({
+    article_id: a.article_id, title: a.title, slug: a.slug, created_at: a.created_at, category: a.category ?? null,
+  }))
+
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+    <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <Navbar />
 
-      {/* Breaking ticker */}
-      <BreakingNewsTicker initialHeadlines={trending.map(a => ({
-        article_id: a.article_id, title: a.title, slug: a.slug, created_at: a.created_at, category: a.category ?? null,
-      }))} />
+      {/* Breaking News Ticker */}
+      <BreakingNewsTicker initialHeadlines={breakingHeadlines} />
 
-      {/* Hero */}
+      {/* Hero Carousel */}
       {!categoryParam && <HeroCarousel articles={heroSlides as never} />}
 
-      {/* Main content grid */}
-      <div className="main-layout max-w-[1400px] mx-auto px-6 py-12 grid gap-12" style={{ gridTemplateColumns: '1fr 340px' }}>
+      {/* Feed Tabs */}
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px', marginBottom: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingBottom: 16,
+            borderBottom: '1px solid var(--border-subtle)',
+            marginBottom: 24,
+          }}
+        >
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+            {categoryParam ? `${categoryParam} News` : 'For You'}
+          </h2>
+          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12, padding: 4 }}>
+            <button
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                border: 'none',
+                background: 'var(--primary)',
+                color: 'var(--bg-elevated)',
+                cursor: 'pointer',
+              }}
+            >
+              For You
+            </button>
+            <button
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              Recent
+            </button>
+            <button
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              Popular
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 48 }}>
         <main>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold" style={{ letterSpacing: '-0.01em' }}>
-              {categoryParam ? `${categoryParam} News` : 'Latest News'}
-            </h2>
-            <div className="feed-tabs flex gap-1 p-1 rounded-xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <button className="feed-tab active px-4 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}>All</button>
-              <button className="feed-tab px-4 py-1.5 rounded-lg text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Trending</button>
-              <button className="feed-tab px-4 py-1.5 rounded-lg text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Latest</button>
-            </div>
+          {/* Featured Article (First hero slide) */}
+          {heroSlides[0] && (
+            <Link
+              key={heroSlides[0].article_id}
+              href={`/article/${heroSlides[0].slug}`}
+              style={{
+                display: 'block',
+                marginBottom: 32,
+                borderRadius: 16,
+                overflow: 'hidden',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-surface)',
+                textDecoration: 'none',
+              }}
+            >
+              <div style={{ position: 'relative', height: 400 }}>
+                <Image
+                  src={heroSlides[0].featured_image || 'https://picsum.photos/id/1000/800/450'}
+                  alt={heroSlides[0].title}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  sizes="100vw"
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24 }}>
+                  {heroSlides[0].category?.name && (
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: 999,
+                      background: 'var(--accent)',
+                      color: '#fff',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 8,
+                    }}>
+                      {heroSlides[0].category.name}
+                    </span>
+                  )}
+                  <h2 style={{
+                    fontSize: '2rem',
+                    fontWeight: 700,
+                    color: '#fff',
+                    fontFamily: "'Newsreader', Georgia, serif",
+                    lineHeight: 1.25,
+                    marginBottom: 8,
+                  }}>
+                    {heroSlides[0].title}
+                  </h2>
+                  <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', marginBottom: 12, maxWidth: 700 }}>
+                    {heroSlides[0].content.slice(0, 180).replace(/\n/g, ' ')}...
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {heroSlides[0].author?.profile_image ? (
+                      <Image src={heroSlides[0].author.profile_image} alt={heroSlides[0].author.name} width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} unoptimized />
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 700, fontSize: 12 }}>
+                        {heroSlides[0].author?.name?.charAt(0) ?? 'S'}
+                      </div>
+                    )}
+                    <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                      {heroSlides[0].author?.name ?? 'Staff Writer'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                      · {formatNumber(heroSlides[0].views)} views
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
+
+          {/* Article Grid - 2 columns */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            {displayArticles.slice(0, 8).map(article => (
+              <ArticleCard key={article.article_id} article={article} variant="default" />
+            ))}
           </div>
 
+          {/* Infinite Scroll Articles */}
           <ArticlesList initialArticles={displayArticles} categoryFilterName={categoryParam} />
-
-          {spotlight.length > 0 && (
-            <>
-              <h2 className="text-xl font-bold mt-12 mb-6">Spotlight</h2>
-              <div className="space-y-6">
-                {spotlight.map(article => (
-                  <ArticleCard key={article.article_id} article={article} variant="horizontal" />
-                ))}
-              </div>
-            </>
-          )}
         </main>
 
         {/* Sidebar */}
-        <aside className="flex flex-col gap-8">
-          {/* Trending */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          {/* Trending Now */}
           {trending.length > 0 && (
-            <div className="sidebar-section p-6 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-5 flex items-center gap-2">
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <TrendingUp size={16} style={{ color: 'var(--accent)' }} />
                 Trending Now
               </h3>
-              <div className="flex flex-col gap-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {trending.map((a, i) => (
-                  <Link key={a.article_id} href={`/article/${a.slug}`} className="trending-item flex gap-3 items-start no-underline" style={{ color: 'inherit' }}>
-                    <span className="trending-number text-2xl font-bold" style={{ color: 'var(--text-tertiary)', minWidth: 28, lineHeight: 1 }}>{i + 1}</span>
-                    <div className="trending-content flex-1">
-                      <p className="trending-item-title text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.title}</p>
-                      <p className="trending-item-meta text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{formatNumber(a.views)} views · {a.category?.name}</p>
+                  <Link key={a.article_id} href={`/article/${a.slug}`} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', textDecoration: 'none', color: 'inherit' }}>
+                    <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-tertiary)', minWidth: 28, lineHeight: 1 }}>{i + 1}</span>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.4, color: 'var(--text-primary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {a.title}
+                      </p>
+                      <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                        {formatNumber(a.views)} views · {a.category?.name}
+                      </p>
                     </div>
                   </Link>
                 ))}
@@ -174,22 +305,45 @@ export default async function HomePage({ searchParams }: Props) {
             </div>
           )}
 
+          {/* Rising Stories */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Flame size={16} style={{ color: 'var(--accent)' }} />
+              Rising Stories
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { title: 'New Exoplanet Discovery Sparks Debate', trend: '+245%', category: 'Science' },
+                { title: 'Kenya\'s Tech Hub Expansion Plans', trend: '+180%', category: 'Tech' },
+                { title: 'East African Trade Agreement Update', trend: '+156%', category: 'Business' },
+                { title: 'Climate Summit Key Takeaways', trend: '+132%', category: 'Science' },
+                { title: 'Youth Employment Initiative Results', trend: '+98%', category: 'Politics' },
+              ].map((story, i) => (
+                <div key={i} style={{ padding: 12, borderRadius: 12, background: 'var(--bg-inset)', cursor: 'pointer', transition: 'background 0.15s' }}>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.35, marginBottom: 4 }}>
+                    {story.title}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>{story.category}</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--success)' }}>{story.trend}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Newsletter */}
           <SubscribeWidget />
 
           {/* Categories */}
-          <div className="sidebar-section p-6 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-5 flex items-center gap-2">
-              <svg width="16" height="16" fill="none" stroke="var(--accent)" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-              Categories
-            </h3>
-            <div className="flex flex-wrap gap-2">
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Categories</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {categories.map(cat => (
                 <Link
                   key={cat.category_id}
                   href={`/?category=${cat.name}`}
-                  className="category-tag px-3.5 py-1.5 rounded-full text-xs font-medium transition-all no-underline"
-                  style={{ background: 'var(--category-bg)', color: 'var(--text-secondary)' }}
+                  style={{ padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500, background: 'var(--bg-muted)', color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s' }}
                 >
                   {cat.name}
                 </Link>
@@ -199,29 +353,26 @@ export default async function HomePage({ searchParams }: Props) {
 
           {/* Top Authors */}
           {authors.length > 0 && (
-            <div className="sidebar-section p-6 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-5 flex items-center gap-2">
-                <svg width="16" height="16" fill="none" stroke="var(--accent)" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                Top Authors
-              </h3>
-              <div className="flex flex-col gap-4">
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Top Authors</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {authors.map(j => (
-                  <Link key={j.user_id} href={`/journalists/${j.user_id}`} className="flex items-center gap-3 no-underline" style={{ color: 'inherit' }}>
+                  <Link key={j.user_id} href={`/journalists/${j.user_id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, textDecoration: 'none', color: 'inherit' }}>
                     {j.profile_image ? (
-                      <Image src={j.profile_image} alt={j.name} width={32} height={32} className="rounded-full object-cover shrink-0" unoptimized />
+                      <Image src={j.profile_image} alt={j.name} width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} unoptimized />
                     ) : (
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 700, fontSize: 12 }}>
                         {j.name.charAt(0)}
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Author</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{j.name}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Author</p>
                     </div>
                   </Link>
                 ))}
               </div>
-              <Link href="/leaderboard" className="block text-center text-xs font-semibold mt-4 pt-4 no-underline" style={{ color: 'var(--primary)', borderTop: '1px solid var(--border-subtle)' }}>
+              <Link href="/leaderboard" style={{ display: 'block', textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'var(--primary)', paddingTop: 16, borderTop: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
                 View Full Leaderboard →
               </Link>
             </div>

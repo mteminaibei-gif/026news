@@ -8,18 +8,7 @@ import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
-
-const NAV_LINKS = [
-  { href: '/',                   label: 'Home' },
-  { href: '/?category=Kenya',    label: 'Kenya' },
-  { href: '/?category=Africa',   label: 'Africa' },
-  { href: '/?category=Politics', label: 'Politics' },
-  { href: '/?category=Business', label: 'Business' },
-  { href: '/?category=Tech',     label: 'Tech' },
-  { href: '/?category=Sports',   label: 'Sports' },
-  { href: '/?category=Health',   label: 'Health' },
-  { href: '/journalists',        label: 'Authors' },
-]
+import { NAV_LINKS } from '@/lib/constants/navigation'
 
 const NAVBAR_H = 64
 
@@ -82,14 +71,15 @@ export function Navbar() {
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">
             {NAV_LINKS.map(link => {
+              const href = link.href as string
               const isActive =
-                link.href === '/'
-                  ? pathname === '/' && !link.href.includes('category')
-                  : pathname?.startsWith(link.href.split('?')[0]) && link.href !== '/'
+                href === '/'
+                  ? pathname === '/' && !href.includes('category')
+                  : pathname?.startsWith(href.split('?')[0]) && href !== '/'
               return (
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  key={href}
+                  href={href}
                   className={cn(
                     'text-sm font-medium transition-colors duration-200',
                     isActive
