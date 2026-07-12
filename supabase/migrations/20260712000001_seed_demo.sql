@@ -202,12 +202,12 @@ BEGIN
     INSERT INTO auth.users (
       instance_id, id, aud, role, email, encrypted_password,
       email_confirmed_at, raw_user_meta_data, created_at, updated_at,
-      confirmation_token, recovery_token
+      confirmation_token, recovery_token, email_change, email_change_token_new
     ) VALUES (
       '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
       'admin@026newsblog.com',       extensions.crypt('Password123!', extensions.gen_salt('bf')), now(),
-      '{"name":"Site Admin","role":"admin"}'::jsonb, now(), now(), '', ''
-    ) RETURNING id INTO v_admin;
+      '{"name":"Site Admin","role":"admin"}'::jsonb, now(), now(), '', '', '', ''
+      ) RETURNING id INTO v_admin;
   ELSE
     SELECT id INTO v_admin FROM auth.users WHERE email = 'admin@026newsblog.com';
   END IF;
@@ -217,12 +217,12 @@ BEGIN
     INSERT INTO auth.users (
       instance_id, id, aud, role, email, encrypted_password,
       email_confirmed_at, raw_user_meta_data, created_at, updated_at,
-      confirmation_token, recovery_token
+      confirmation_token, recovery_token, email_change, email_change_token_new
     ) VALUES (
       '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
       'journalist@026newsblog.com',       extensions.crypt('Password123!', extensions.gen_salt('bf')), now(),
-      '{"name":"Jane Reporter","role":"journalist"}'::jsonb, now(), now(), '', ''
-    ) RETURNING id INTO v_journ;
+      '{"name":"Jane Reporter","role":"journalist"}'::jsonb, now(), now(), '', '', '', ''
+      ) RETURNING id INTO v_journ;
   ELSE
     SELECT id INTO v_journ FROM auth.users WHERE email = 'journalist@026newsblog.com';
   END IF;
@@ -232,12 +232,12 @@ BEGIN
     INSERT INTO auth.users (
       instance_id, id, aud, role, email, encrypted_password,
       email_confirmed_at, raw_user_meta_data, created_at, updated_at,
-      confirmation_token, recovery_token
+      confirmation_token, recovery_token, email_change, email_change_token_new
     ) VALUES (
       '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
       'reader@026newsblog.com',       extensions.crypt('Password123!', extensions.gen_salt('bf')), now(),
-      '{"name":"Sam Reader","role":"reader"}'::jsonb, now(), now(), '', ''
-    ) RETURNING id INTO v_reader;
+      '{"name":"Sam Reader","role":"reader"}'::jsonb, now(), now(), '', '', '', ''
+      ) RETURNING id INTO v_reader;
   ELSE
     SELECT id INTO v_reader FROM auth.users WHERE email = 'reader@026newsblog.com';
   END IF;

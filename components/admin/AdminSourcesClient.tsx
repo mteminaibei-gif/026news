@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 type FeedRow = {
   feed_id:      number
@@ -46,9 +47,29 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
     setRunning(true)
     setFetchResult(null)
     try {
-      const res  = await fetch('/api/cron/fetch-feeds')
-      const data = await res.json()
-      setFetchResult(`✅ Done — ${data.inserted} inserted, ${data.skipped} skipped across ${data.feeds} feeds.`)
+      // Use the admin endpoint (authenticated) rather than the cron endpoint,
+      // which is guarded by CRON_SECRET and returns 401 without a Bearer token.
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
+      const res  = await fetch('/api/admin/fetch-feeds', { method: 'POST', headers })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok || !data) {
+        setFetchResult(`❌ Fetch failed (${res.status}) — check server logs.`)
+      } else {
+        const feeds    = data.feeds ?? 0
+        const inserted = data.inserted ?? 0
+        const skipped  = data.skipped ?? 0
+        const errors   = data.errors ?? 0
+        setFetchResult(
+          `✅ Done — ${inserted} inserted, ${skipped} skipped` +
+          (errors ? `, ${errors} errors` : '') +
+          ` across ${feeds} feeds.`
+        )
+      }
       router.refresh()
     } catch {
       setFetchResult('❌ Fetch failed — check server logs.')
