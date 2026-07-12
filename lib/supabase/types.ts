@@ -322,12 +322,13 @@ export interface Database {
       }
       saved_articles: {
         Row: {
-          save_id: number
+          saved_id: number
           user_id: number
           article_id: number
-          created_at: string
+          saved_at: string
+          notes: string | null
         }
-        Insert: Omit<Database['public']['Tables']['saved_articles']['Row'], 'save_id' | 'created_at'>
+        Insert: Omit<Database['public']['Tables']['saved_articles']['Row'], 'saved_id' | 'saved_at'>
         Update: Partial<Database['public']['Tables']['saved_articles']['Insert']>
       }
       audit_log: {

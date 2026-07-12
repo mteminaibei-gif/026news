@@ -83,12 +83,15 @@ export function useSignUp() {
       email, password, name, bio = '', organization = '', portfolio = '', phone = '',
     }: { email: string; password: string; name: string; bio?: string; organization?: string; portfolio?: string; phone?: string }) => {
       const supabase = createClient()
-      const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) throw error
       const combinedBio = `${bio}\n\nOrganization: ${organization || '-'}\nPortfolio: ${portfolio || '-'}\nPhone: ${phone || '-'}`
-      await supabase.from('users').insert({
-        name, email, password_hash: '', role: 'journalist', bio: combinedBio, status: 'active',
-      } as never)
+      // The handle_new_user trigger (DB) creates the public.users row from
+      // raw_user_meta_data, so we pass profile fields via options.data.
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name, role: 'journalist', bio: combinedBio } },
+      })
+      if (error) throw error
       return data
     },
     onSuccess: () => {
