@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { MOCK_ARTICLES } from '@/lib/mock-data'
+import { useUser } from '@/lib/hooks/useAuth'
 
 const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
 const SORT_OPTIONS = ['Most Recent', 'Most Popular', 'Most Discussed']
@@ -43,6 +45,8 @@ const MOST_DISCUSSED = NEWS_FEED.slice(0, 5).sort(() => Math.random() - 0.5).map
 }))
 
 export default function NewsPage() {
+  const router = useRouter()
+  const { data: user } = useUser()
   const [activeCategory, setActiveCategory] = useState('All')
   const [sortBy, setSortBy] = useState('Most Recent')
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
@@ -58,6 +62,10 @@ export default function NewsPage() {
   })
 
   const toggleBookmark = (id: number) => {
+    if (!user) {
+      router.push('/login?redirect=/news')
+      return
+    }
     setBookmarked(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)

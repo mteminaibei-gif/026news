@@ -12,7 +12,6 @@ const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
 const MONETIZE_OPTIONS = [
   { value: 'free',      icon: '🆓', label: 'Free',         desc: 'Public access' },
-  { value: 'paywall',   icon: '🔒', label: 'Paywall',      desc: 'Subscribers only' },
   { value: 'sponsored', icon: '🤝', label: 'Sponsored',    desc: 'Sponsored content' },
   { value: 'ad',        icon: '📢', label: 'Ad-supported', desc: 'Serves ad units' },
 ]

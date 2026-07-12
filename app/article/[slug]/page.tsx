@@ -3,13 +3,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { Badge } from '@/components/ui/Badge'
 import { ArticleCard } from '@/components/news/ArticleCard'
 import { RelatedArticles } from '@/components/news/RelatedArticles'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { CommentsSection } from '@/components/news/CommentsSection'
 import { ShareBar } from '@/components/news/ShareBar'
-import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
+import { SaveArticleButton } from '@/components/news/SaveArticleButton'
 import { ReadingProgress } from '@/components/ui/ReadingProgress'
 import { FeaturedImage } from '@/components/ui/FeaturedImage'
 import { createClient } from '@/lib/supabase/server'
@@ -147,7 +146,6 @@ export default async function ArticlePage({ params }: Props) {
               <span>{formatNumber(article.views)} views</span>
               <span>·</span>
               <span>{readingTime(article.content)} min read</span>
-              <Badge status={article.monetization_type} />
             </div>
 
             {/* Source attribution */}
@@ -211,18 +209,9 @@ export default async function ArticlePage({ params }: Props) {
           {/* Share bar */}
           <ShareBar title={article.title} slug={article.slug} />
 
-          {/* Support / Monetization */}
-          <div className="grid sm:grid-cols-2 gap-3 mb-6">
-            <a href="https://www.buymeacoffee.com" target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 font-semibold py-3.5 rounded-xl transition-all"
-              style={{ background: 'var(--accent)', color: 'oklch(15% 0.02 55)' }}>
-              Buy Me a Coffee
-            </a>
-            <a href="https://www.patreon.com" target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 font-semibold py-3.5 rounded-xl transition-all"
-              style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}>
-              Become a Patron
-            </a>
+          {/* Save to catalog */}
+          <div className="mb-6">
+            <SaveArticleButton articleId={article.article_id} slug={article.slug} />
           </div>
 
           {/* Comments */}
@@ -234,7 +223,6 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* Sidebar */}
         <aside className="flex flex-col gap-8">
-          <SubscribeWidget variant="inline" />
           <AdBanner slot="sidebar-article" format="rectangle" className="rounded-xl overflow-hidden" label="Sponsored" />
 
           {related.length > 0 && (

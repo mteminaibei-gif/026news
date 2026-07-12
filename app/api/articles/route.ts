@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
     const content            = sanitize(String(body.content ?? '')).substring(0, 100_000)
     const category           = sanitize(String(body.category ?? '')).substring(0, 100)
     const source_reference   = String(body.source_reference ?? '').substring(0, 500)
-    const monetization_type  = ['free', 'paywall', 'sponsored', 'ad'].includes(String(body.monetization_type))
+    const monetization_type  = ['free', 'sponsored', 'ad'].includes(String(body.monetization_type))
       ? String(body.monetization_type) : 'free'
     const action             = body.action === 'submit' ? 'submit' : 'draft'
     const featured_image     = String(body.featured_image ?? '').substring(0, 1000) || null

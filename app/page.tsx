@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer'
 import { ArticlesList } from '@/components/news/ArticlesList'
 import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { ArticleCard } from '@/components/news/ArticleCard'
-import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
 import { formatNumber } from '@/lib/utils'
 import { TrendingUp, Flame, BarChart2, Clock } from 'lucide-react'
@@ -332,8 +332,8 @@ export default async function HomePage({ searchParams }: Props) {
             </div>
           </div>
 
-          {/* Newsletter */}
-          <SubscribeWidget />
+          {/* Sponsored */}
+          <AdBanner slot="home-newsletter" format="rectangle" className="rounded-xl overflow-hidden" label="Sponsored" />
 
           {/* Categories */}
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>

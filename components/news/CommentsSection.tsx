@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { CommentForm } from './CommentForm'
+import { useUser } from '@/lib/hooks/useAuth'
 import { formatDate } from '@/lib/utils'
 
 interface CommentWithUser {
@@ -19,6 +22,8 @@ interface Props {
 
 export function CommentsSection({ articleId, initialComments }: Props) {
   const [comments, setComments] = useState<CommentWithUser[]>(initialComments)
+  const { data: user, isLoading } = useUser()
+  const pathname = usePathname()
 
   const handleCommentPosted = (newComment: CommentWithUser) => {
     setComments(prev => [newComment, ...prev])
@@ -64,8 +69,26 @@ export function CommentsSection({ articleId, initialComments }: Props) {
         </div>
       )}
 
-      {/* Wired comment form */}
-      <CommentForm articleId={articleId} onCommentPosted={handleCommentPosted} />
+      {/* Comment form — registration required */}
+      {isLoading || user ? (
+        <CommentForm articleId={articleId} onCommentPosted={handleCommentPosted} />
+      ) : (
+        <div
+          className="mt-4 rounded-2xl p-6 text-center transition-colors"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+        >
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Sign in to join the conversation and share your thoughts.
+          </p>
+          <Link
+            href={`/login?redirect=${pathname ?? '/article'}`}
+            className="inline-flex items-center justify-center gap-2 font-semibold py-3 px-6 rounded-xl text-sm transition-all"
+            style={{ background: 'var(--primary)', color: 'var(--bg-elevated)', textDecoration: 'none' }}
+          >
+            Sign In to Comment
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

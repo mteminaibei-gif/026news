@@ -42,6 +42,8 @@ export default function DashboardPage() {
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
   const [activeTab, setActiveTab] = useState<'feed' | 'authors' | 'saved'>('feed')
+  const [savedArticles, setSavedArticles] = useState<Article[]>([])
+  const [savedLoading, setSavedLoading] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -119,6 +121,34 @@ export default function DashboardPage() {
       }
     }
   }, [hasMore, loading, offset])
+
+  useEffect(() => {
+    if (activeTab === 'saved' && user) loadSaved()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user])
+
+  async function loadSaved() {
+    setSavedLoading(true)
+    try {
+      const res = await fetch('/api/saved-articles')
+      const json = await res.json()
+      const saved = json.data ?? []
+      if (saved.length === 0) {
+        setSavedArticles([])
+        return
+      }
+      const ids = saved.map((s: any) => s.article_id)
+      const { data } = await supabase
+        .from('articles')
+        .select('article_id, title, slug, featured_image, category:categories(name)')
+        .in('article_id', ids)
+      setSavedArticles((data as unknown as Article[]) ?? [])
+    } catch {
+      setSavedArticles([])
+    } finally {
+      setSavedLoading(false)
+    }
+  }
 
   if (!user) {
     return (
@@ -250,7 +280,34 @@ export default function DashboardPage() {
           <div style={{ display: activeTab === 'saved' ? 'block' : 'none' }}>
             <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Saved Articles</h2>
-              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '32px 0' }}>Your saved articles will appear here</p>
+
+              {savedLoading ? (
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '32px 0' }}>Loading your catalog...</p>
+              ) : savedArticles.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '32px 0' }}>
+                  You haven&apos;t saved any articles yet. Tap “Save” on any story to build your catalog.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {savedArticles.map(a => (
+                    <Link
+                      key={a.article_id}
+                      href={`/article/${a.slug}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 12, textDecoration: 'none', color: 'inherit', background: 'var(--bg-inset)', transition: 'opacity 0.2s' }}
+                    >
+                      {a.featured_image ? (
+                        <Image src={a.featured_image} alt={a.title} width={64} height={48} style={{ borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 64, height: 48, borderRadius: 8, background: 'var(--bg-muted)', flexShrink: 0 }} />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</p>
+                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{a.category?.name}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

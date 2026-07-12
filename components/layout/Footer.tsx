@@ -8,7 +8,6 @@ const FOOTER_LINKS = {
     { label: 'Contact Us', href: '/contact' },
   ],
   Platform: [
-    { label: 'Subscribe', href: '/subscribe' },
     { label: 'Author Portal', href: '/journalist/dashboard' },
     { label: 'Admin Panel', href: '/admin/dashboard' },
     { label: 'Become an Author', href: '/login?mode=signup' },
@@ -43,9 +42,9 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row gap-10 mb-10 pb-10" style={{ borderBottom: '1px solid var(--border)' }}>
           {/* Brand */}
           <div className="lg:w-1/3">
-            <Link href="/" aria-label="026NEWS home" className="block mb-4">
+            <Link href="/" aria-label="026Newsblog home" className="block mb-4">
               <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                026<span style={{ color: 'var(--primary)' }}>News</span>
+                026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
               </span>
             </Link>
             <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
@@ -101,7 +100,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
           <span className="flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
             <span>\uD83C\uDDF0\uD83C\uDDEA</span>
-            &copy; {new Date().getFullYear()} 026NEWS. All rights reserved.
+            &copy; {new Date().getFullYear()} 026Newsblog. All rights reserved.
           </span>
           <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>Privacy</Link>

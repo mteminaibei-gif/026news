@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { Navbar } from '@/components/layout/Navbar'
 
 type SignupRole = 'reader' | 'journalist' | 'admin'
 
@@ -124,7 +124,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 relative overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+    <>
+      <Navbar />
+      <div className="min-h-screen py-12 px-4 relative overflow-hidden" style={{ background: 'var(--bg-base)' }}>
       {/* WhatsApp-style doodle background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large chat bubbles */}
@@ -198,10 +200,12 @@ export default function SignupPage() {
       <div className="max-w-lg mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/">
-            <Image src="/logo.svg" alt="026NEWS" width={200} height={60} className="mx-auto h-24 w-auto mb-4" />
+           <Link href="/" className="inline-block mb-4">
+            <span className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
+            </span>
           </Link>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--primary)' }}>Join 026NEWS</h1>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--primary)' }}>Join 026Newsblog</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Create your account and start your journey</p>
         </div>
 
@@ -492,5 +496,6 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

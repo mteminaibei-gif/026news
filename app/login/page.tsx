@@ -73,7 +73,7 @@ function LoginForm() {
 
         <div style={{ position: 'relative', zIndex: 1 }}>
           <span className="text-2xl font-bold" style={{ color: 'oklch(95% 0.005 175)' }}>
-            026<span style={{ color: 'oklch(65% 0.12 175)' }}>News</span>
+            026<span style={{ color: 'oklch(65% 0.12 175)' }}>Newsblog</span>
           </span>
         </div>
 
@@ -103,7 +103,7 @@ function LoginForm() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              026<span style={{ color: 'var(--primary)' }}>News</span>
+               026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
             </span>
           </div>
 

@@ -7,7 +7,7 @@ import { MOCK_USERS } from '@/lib/mock-data'
 
 export const metadata: Metadata = {
   title: 'About Us',
-  description: '026News is a next-generation news platform combining aggregated global journalism with a thriving community of freelance contributors across Africa and the world.',
+  description: '026Newsblog is a next-generation news platform combining aggregated global journalism with a thriving community of freelance contributors across Africa and the world.',
 }
 
 const STATS = [
@@ -21,7 +21,7 @@ const VALUES = [
   { icon: '🎯', title: 'Accuracy First', desc: 'Every article is fact-checked and sourced. We cite our references and correct errors transparently.' },
   { icon: '✊', title: 'Author Empowerment', desc: 'We pay fair rates, provide analytics, and give journalists the tools to build sustainable careers.' },
   { icon: '🌍', title: 'Africa-Centered', desc: 'We amplify African voices, stories, and perspectives that are underrepresented in global media.' },
-  { icon: '🔓', title: 'Open Access', desc: 'Core news is always free. Premium subscriptions unlock exclusive analysis and ad-free reading.' },
+  { icon: '🔓', title: 'Open Access', desc: 'All news is free to read. Create an account to comment, save articles, and build your personal news catalog.' },
   { icon: '🔒', title: 'Privacy by Design', desc: 'We collect only what we need, never sell your data, and give you full control over your account.' },
   { icon: '⚡', title: 'Real-Time Journalism', desc: 'Live breaking news, realtime comments, and instant notifications keep you ahead of the story.' },
 ]
@@ -77,21 +77,21 @@ export default function AboutPage() {
         <div>
           <h2 className="text-2xl font-extrabold mb-4" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>Our Mission</h2>
           <p className="leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
-            026News is a next-generation media platform that combines aggregated global news with
+            026Newsblog is a next-generation media platform that combines aggregated global news with
             original freelance journalism. We believe the best stories come from people who live them —
             local journalists, analysts, and contributors from across the African continent and beyond.
           </p>
           <p className="leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
-            Our platform gives journalists tools to publish, monetize their work through subscriptions
-            and sponsored content, and build a loyal audience. Readers get breaking news, deep analysis,
-            and a direct connection to the journalists they trust.
+            Our platform gives journalists tools to publish, monetize their work through sponsored content
+            and ads, and build a loyal audience. Every article is free to read — readers just need an
+            account to comment, save stories, and build their own news catalog.
           </p>
           <Link
-            href="/subscribe"
+            href="/articles"
             className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-colors"
             style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
           >
-            Join 026News →
+            Browse Stories →
           </Link>
         </div>
         <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>

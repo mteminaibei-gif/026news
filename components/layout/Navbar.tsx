@@ -81,7 +81,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">
+          <nav className="hidden lg:flex flex-1 items-center justify-center gap-8" aria-label="Main navigation">
             {NAV_LINKS.map(link => {
               const href = link.href as string
               const isActive =

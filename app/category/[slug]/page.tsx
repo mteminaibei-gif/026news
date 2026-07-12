@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ArticleCard } from '@/components/news/ArticleCard'
-import { SubscribeWidget } from '@/components/ui/SubscribeWidget'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { MOCK_ARTICLES, MOCK_CATEGORIES } from '@/lib/mock-data'
 import { formatNumber, formatDate } from '@/lib/utils'
 import { TrendingUp, MessageSquare, Clock } from 'lucide-react'
@@ -208,8 +208,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
               </div>
             </div>
 
-            {/* Newsletter CTA */}
-            <SubscribeWidget />
+            {/* Sponsored */}
+            <AdBanner slot="sidebar-category" format="rectangle" className="rounded-xl overflow-hidden" label="Sponsored" />
           </aside>
         </div>
       </div>
