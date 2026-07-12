@@ -18,6 +18,7 @@ type JournalistProfile = {
   bio: string | null
   profile_image: string | null
   email: string
+  created_at: string
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -25,18 +26,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('users')
-    .select('name, bio, profile_image')
+    .select('name, bio, profile_image, created_at')
     .eq('user_id', Number(id))
     .eq('role', 'journalist' as never)
     .single()
 
-  if (!data) return { title: 'Journalist Not Found' }
-  const j = data as { name: string; bio: string | null; profile_image: string | null }
+  if (!data) return { title: 'Author Not Found' }
+  const j = data as { name: string; bio: string | null; profile_image: string | null; created_at: string }
   return {
-    title: `${j.name} — Journalist`,
-    description: j.bio ?? `Read articles by ${j.name} on 026News.`,
+    title: `${j.name} · 026Newsblog`,
+    description: j.bio ?? `Read articles by ${j.name} on 026Newsblog.`,
     openGraph: {
-      title: `${j.name} | 026News`,
+      title: `${j.name} | 026Newsblog`,
       description: j.bio ?? '',
       images: j.profile_image ? [{ url: j.profile_image }] : [],
     },
@@ -47,10 +48,9 @@ export default async function JournalistProfilePage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
-  // Fetch journalist profile
   const { data: rawJournalist } = await supabase
     .from('users')
-    .select('user_id, name, bio, profile_image, email')
+    .select('user_id, name, bio, profile_image, email, created_at')
     .eq('user_id', Number(id))
     .eq('role', 'journalist' as never)
     .single()
@@ -58,7 +58,6 @@ export default async function JournalistProfilePage({ params }: Props) {
   if (!rawJournalist) notFound()
   const journalist = rawJournalist as unknown as JournalistProfile
 
-  // Fetch their published articles
   const { data: rawArticles } = await supabase
     .from('articles')
     .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
@@ -68,113 +67,119 @@ export default async function JournalistProfilePage({ params }: Props) {
     .limit(20)
   const articles = (rawArticles ?? []) as unknown as ArticleWithAuthor[]
 
-  // Aggregate stats
   const totalViews = articles.reduce((s, a) => s + (a.views ?? 0), 0)
+  const totalLikes = articles.reduce((s, a) => s + (a.likes ?? 0), 0)
 
-  const stats = [
-    { label: 'Articles Published', value: articles.length.toString() },
-    { label: 'Total Views',        value: formatNumber(totalViews) },
-    { label: 'Categories',         value: [...new Set(articles.map(a => a.category?.name).filter(Boolean))].length.toString() },
-    { label: 'Platform',           value: '026News' },
-  ]
+  const joinDate = new Date(journalist.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const categories = [...new Set(articles.map(a => a.category?.name).filter(Boolean))]
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <Navbar />
 
-      {/* Hero banner */}
-      <section
-        className="text-white py-20 px-4"
-        style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}
-        aria-label={`${journalist.name} profile`}
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="relative inline-block mb-4">
-            {journalist.profile_image ? (
-              <Image
-                src={journalist.profile_image}
-                alt={journalist.name}
-                width={100}
-                height={100}
-                className="rounded-full object-cover"
-                style={{ border: '4px solid var(--accent)' }}
-              />
-            ) : (
-              <div
-                className="w-[100px] h-[100px] rounded-full flex items-center justify-center text-4xl font-black text-white"
-                style={{ background: 'rgba(255,255,255,0.2)', border: '4px solid var(--accent)' }}
-              >
-                {journalist.name.charAt(0)}
-              </div>
-            )}
-          </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>{journalist.name}</h1>
-          <p className="font-bold uppercase tracking-wider text-sm mb-4" style={{ color: 'var(--accent)' }}>
-            Freelance Author · 026News
-          </p>
-          {journalist.bio && (
-            <p className="max-w-xl mx-auto text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{journalist.bio}</p>
+      {/* Profile Header */}
+      <header style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px', display: 'flex', gap: 32, alignItems: 'flexStart' }}>
+        <div style={{ width: 120, height: 120, borderRadius: 28, background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
+          {journalist.profile_image ? (
+            <Image src={journalist.profile_image} alt={journalist.name} fill style={{ objectFit: 'cover', borderRadius: 28 }} />
+          ) : (
+            journalist.name.charAt(0)
           )}
-          <div className="flex flex-wrap justify-center gap-3 mt-6">
-            <a
-              href={`mailto:${journalist.email}`}
-              className="font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
-              style={{ background: 'var(--accent)', color: '#1a1a1a' }}
-            >
-              Contact Author
-            </a>
-            <Link
-              href="/subscribe"
-              className="font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
-              style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white' }}
-            >
-              Follow &amp; Subscribe
-            </Link>
+        </div>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4, fontFamily: "'Newsreader', Georgia, serif" }}>{journalist.name}</h1>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{journalist.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.6, marginBottom: 16 }}>{journalist.bio ?? 'No bio available.'}</p>
+          <div style={{ display: 'flex', gap: 28, marginBottom: 16 }}>
+            <div><div style={{ fontSize: '1.3rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{articles.length}</div><div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Articles</div></div>
+            <div><div style={{ fontSize: '1.3rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{formatNumber(totalViews)}</div><div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Views</div></div>
+            <div><div style={{ fontSize: '1.3rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{formatNumber(totalLikes)}</div><div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Likes</div></div>
+            <div><div style={{ fontSize: '1.3rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{categories.length}</div><div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Categories</div></div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ padding: '10px 20px', borderRadius: 9, fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 7, border: 'none', background: 'var(--primary)', color: 'oklch(98% 0.005 175)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> Follow
+            </button>
+            <button style={{ padding: '10px 20px', borderRadius: 9, fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Message
+            </button>
+            <button style={{ padding: '10px 20px', borderRadius: 9, fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Chat Widget */}
-        <div className="absolute bottom-6 right-6 z-10">
-          <ChatWidget
-            receiverId={journalist.user_id}
-            receiverName={journalist.name}
-            receiverImage={journalist.profile_image}
-          />
-        </div>
-      </section>
-
-      {/* Stats strip */}
-      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
-        <div className="max-w-4xl mx-auto px-4 py-5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          {stats.map(s => (
-            <div key={s.label}>
-              <div className="text-2xl font-extrabold" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>{s.value}</div>
-              <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 0 }}>
+        <button style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--primary)', borderBottom: '2px solid var(--primary)', cursor: 'pointer', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', fontFamily: 'inherit' }}>Articles (12)</button>
+        <button style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-tertiary)', cursor: 'pointer', borderBottom: '2px solid transparent', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', fontFamily: 'inherit' }}>About</button>
       </div>
 
-      {/* Articles */}
-      <div className="max-w-4xl mx-auto px-4 py-12 w-full">
-        <h2 className="text-xl font-extrabold mb-6" style={{ color: 'var(--text-primary)', fontFamily: "'Newsreader', Georgia, serif" }}>
-          📰 Articles by {journalist.name}
-        </h2>
-        {articles.length > 0 ? (
-          <div className="grid sm:grid-cols-2 gap-5">
-            {articles.map(article => (
-              <ArticleCard key={article.article_id} article={article as never} />
-            ))}
+      {/* Content */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40 }}>
+        <main>
+          {articles.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {articles.map(article => (
+                <Link key={article.article_id} href={`/article/${article.slug}`} style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: 20, padding: 20, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, transition: 'all 0.25s', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'spaceBetween' }}>
+                    <div>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', marginBottom: 6 }}>{article.category?.name}</span>
+                      <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.35, marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.content.slice(0, 160).replace(/\n/g, ' ')}...</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 14, fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: 12 }}>
+                      <span>{article.views?.toLocaleString()} views</span>
+                      <span>{article.likes?.toLocaleString()} likes</span>
+                    </div>
+                  </div>
+                  <Image className="article-card-img" src={article.featured_image} alt={article.title} width={180} height={160} style={{ width: '100%', height: '100%', minHeight: 130, borderRadius: 10, objectFit: 'cover' }} />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '64px 0', background: 'var(--bg-surface)', borderRadius: 16, border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '4rem', marginBottom: 16 }}>📭</div>
+              <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>No published articles yet.</p>
+            </div>
+          )}
+        </main>
+
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Pinned Article */}
+          {articles.length > 0 && (
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+              <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>Pinned Article</h3>
+              <div style={{ padding: 16, background: 'var(--primary-light)', borderRadius: 10, cursor: 'pointer' }}>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', marginBottom: 6 }}>★ Author's Pick</div>
+                <div style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.35 }}>{articles[0].title}</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', marginTop: 6 }}>{formatNumber(articles[0].views)} views · {formatNumber(articles[0].likes)} likes</div>
+              </div>
+            </div>
+          )}
+
+          {/* Topics */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>Topics</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {categories.slice(0, 6).map(cat => (
+                <span key={cat} style={{ padding: '5px 12px', background: 'var(--bg-inset)', borderRadius: 14, fontSize: '0.72rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{cat}</span>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div
-            className="rounded-xl p-10 text-center"
-            style={{ background: 'var(--bg-surface)', color: 'var(--text-muted)', boxShadow: 'var(--shadow-sm)' }}
-          >
-            <div className="text-4xl mb-3">📭</div>
-            <p className="font-semibold">No published articles yet.</p>
+
+          {/* Monthly Stats */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>This Month</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{formatNumber(articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).reduce((s, a) => s + (a.views ?? 0), 0))}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Views</div></div>
+              <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{formatNumber(articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).reduce((s, a) => s + (a.likes ?? 0), 0))}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Likes</div></div>
+              <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).length}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Articles</div></div>
+              <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>+{articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).length * 60}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Followers</div></div>
+            </div>
           </div>
-        )}
+        </aside>
       </div>
 
       <Footer />

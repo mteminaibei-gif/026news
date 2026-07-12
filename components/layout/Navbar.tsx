@@ -74,9 +74,9 @@ export function Navbar() {
       >
         <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" aria-label="026NEWS — home" className="shrink-0 group">
+          <Link href="/" aria-label="026Newsblog — home" className="shrink-0 group">
             <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              026<span style={{ color: 'var(--primary)' }}>News</span>
+              026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
             </span>
           </Link>
 
