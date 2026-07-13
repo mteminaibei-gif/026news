@@ -33,6 +33,8 @@ export default function SignupPage() {
     setErrors((e) => ({ ...e, [key]: '', general: '' }))
   }
 
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setGeneralError('')
@@ -43,10 +45,18 @@ export default function SignupPage() {
     if (!form.email.trim()) localErrors.email = 'Email is required.'
     if (form.password.length < 8)
       localErrors.password = 'Password must be at least 8 characters.'
+    else if (!PASSWORD_REGEX.test(form.password))
+      localErrors.password = 'Password must include uppercase, lowercase, and a number.'
     if (form.password !== form.confirmPassword)
       localErrors.confirmPassword = 'Passwords do not match.'
     if (role === 'journalist' && !form.organization.trim())
       localErrors.organization = 'Organization is required for journalists.'
+    if (role === 'journalist' && !form.portfolioUrl.trim())
+      localErrors.portfolio = 'Portfolio URL is required for journalists.'
+    else if (role === 'journalist' && form.portfolioUrl.trim()) {
+      try { new URL(form.portfolioUrl.trim().startsWith('http') ? form.portfolioUrl.trim() : `https://${form.portfolioUrl.trim()}`) }
+      catch { localErrors.portfolio = 'Please enter a valid URL.' }
+    }
     if (Object.keys(localErrors).length) {
       setErrors(localErrors)
       return
@@ -146,7 +156,7 @@ export default function SignupPage() {
                 type="password"
                 value={form.password}
                 onChange={(e) => update('password', e.target.value)}
-                placeholder="At least 8 characters"
+                placeholder="Upper, lower & number required"
                 autoComplete="new-password"
               />
               {errors.password && <em className="field-error">{errors.password}</em>}
@@ -189,6 +199,9 @@ export default function SignupPage() {
                     onChange={(e) => update('portfolioUrl', e.target.value)}
                     placeholder="https://your-work.com"
                   />
+                  {errors.portfolio && (
+                    <em className="field-error">{errors.portfolio}</em>
+                  )}
                 </label>
               </>
             )}

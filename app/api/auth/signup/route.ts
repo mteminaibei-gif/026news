@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
         organization: organization.trim() || null,
         portfolio: portfolio.trim() || null,
         phone: phone.trim() || null,
-      } : null,
+      } : {},
     }
 
     const { error: profileError } = await admin
