@@ -18,9 +18,11 @@ interface Props {
   initialLikes?: number
   initialSaves?: number
   commentCount?: number
+  variant?: 'float' | 'inline'
 }
 
-export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSaves = 0, commentCount = 0 }: Props) {
+export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSaves = 0, commentCount = 0, variant = 'float' }: Props) {
+  const isInline = variant === 'inline'
   const router = useRouter()
   const { data: user } = useUser()
   const { liked, count: likeCount, toggle: toggleLike } = useLike(articleId, initialLikes, `/article/${slug}`)
@@ -34,7 +36,7 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
     fetch('/api/saved-articles')
       .then(r => r.json())
       .then(d => {
-        const f = (d.data ?? []).find((s: any) => s.article_id === articleId)
+        const f = (d.data ?? []).find((s: { article_id: number; saved_id: number }) => s.article_id === articleId)
         if (active && f) {
           setSavedId(f.saved_id)
           setSaved(true)
@@ -101,22 +103,26 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
   }
 
   return (
-    <div className="float-bar">
+    <div className={isInline ? 'inline-bar' : 'float-bar'}>
       <button className={`float-btn ${liked ? 'active' : ''}`} onClick={toggleLike} aria-label="Like article">
         <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
+        {isInline && <span>Like</span>}
         <span className="float-btn-count">{compact(likeCount)}</span>
       </button>
       <button className="float-btn" onClick={scrollToComments} aria-label="View comments">
         <MessageCircle size={20} />
+        {isInline && <span>Comment</span>}
         <span className="float-btn-count">{compact(commentCount)}</span>
       </button>
       <div className="float-divider" />
       <button className={`float-btn ${saved ? 'saved' : ''}`} onClick={toggleSave} disabled={busy} aria-label="Save article">
         <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
+        {isInline && <span>Save</span>}
         <span className="float-btn-count">{compact(saveCount)}</span>
       </button>
       <button className="float-btn" onClick={share} aria-label="Share article">
         <Share2 size={20} />
+        {isInline && <span>Share</span>}
       </button>
     </div>
   )

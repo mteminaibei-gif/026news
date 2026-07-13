@@ -67,9 +67,13 @@ export default async function HomePage({ searchParams }: Props) {
   const sourced = rawArticles
     .filter(a => (a as unknown as Record<string, unknown>).is_aggregated === true)
     .slice(0, Math.max(0, limits.sourced))
-  const articles: ArticleWithAuthor[] = [...inhouse, ...sourced].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
+  const articles: ArticleWithAuthor[] = [...inhouse, ...sourced].sort((a, b) => {
+    // In-house (original) posts are surfaced before aggregated/RSS content.
+    const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+    const bi = (b as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+    if (ai !== bi) return ai - bi
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
 
   const categories: CategoryRow[] = await safeQuery(async () => {
     const response = await supabase.from('categories').select('category_id, name') as PostgrestResponse<CategoryRow>
@@ -109,6 +113,15 @@ export default async function HomePage({ searchParams }: Props) {
       return (b.views ?? 0) - (a.views ?? 0)
     })
 
+  // Prioritise in-house (non-aggregated) posts, then newest-first.
+  const prioritizeInhouse = (arr: ArticleWithAuthor[]) =>
+    [...arr].sort((a, b) => {
+      const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+      const bi = (b as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+      if (ai !== bi) return ai - bi
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+
   const heroSlides = [
     ...featured,
     ...sortByPriorityThenViews(kenyaArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
@@ -116,9 +129,11 @@ export default async function HomePage({ searchParams }: Props) {
     ...sortByPriorityThenViews(otherArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
   ].slice(0, 7)
 
-  const baseArticles = categoryParam
-    ? articles.filter(a => a.category?.name === categoryParam)
-    : [...sortByPriorityThenViews(kenyaArticles), ...sortByPriorityThenViews(africaArticles), ...sortByPriorityThenViews(otherArticles)]
+  const baseArticles = prioritizeInhouse(
+    categoryParam
+      ? articles.filter(a => a.category?.name === categoryParam)
+      : [...sortByPriorityThenViews(kenyaArticles), ...sortByPriorityThenViews(africaArticles), ...sortByPriorityThenViews(otherArticles)]
+  )
 
   const feedArticles =
     sortParam === 'recent'
@@ -127,9 +142,8 @@ export default async function HomePage({ searchParams }: Props) {
         ? [...baseArticles].sort((a, b) => b.views - a.views)
         : baseArticles
 
-  // Top Stories — the latest published articles
-  const topStories = [...articles]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  // Top Stories — in-house posts first, then the latest published articles
+  const topStories = prioritizeInhouse([...articles])
     .slice(0, 6)
 
   const tabHref = (s: 'foryou' | 'recent' | 'popular') => {

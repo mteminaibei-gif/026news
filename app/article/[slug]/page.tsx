@@ -105,7 +105,14 @@ const ARTICLE_CSS = `
 .article-view .float-bar { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background: var(--bg-elevated); border:1px solid var(--border); border-radius:16px; padding:10px 20px; display:flex; align-items:center; gap:6px; box-shadow: var(--card-hover-shadow); z-index:40; }
 .article-view .float-btn { width:40px; height:40px; border-radius:10px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color: var(--text-secondary); transition: all 0.15s; position:relative; }
 .article-view .float-btn:hover { background: var(--bg-inset); color: var(--text-primary); }
-.article-view .float-btn.active { color: var(--error); }
+.article-view .float-btn.active { color: #e23b3b; filter: drop-shadow(0 0 7px rgba(226,59,59,0.6)); }
+.article-view .float-btn.active svg { fill: #e23b3b; animation: like-pop 0.28s ease; }
+@keyframes like-pop { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+.article-view .inline-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:14px 16px; margin:28px 0 8px; background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius:14px; position:relative; }
+.article-view .inline-bar .float-btn { width:auto; height:auto; padding:8px 14px; border-radius:10px; gap:6px; font-size:0.85rem; font-weight:600; }
+.article-view .inline-bar .float-btn svg { width:18px; height:18px; }
+.article-view .inline-bar .float-btn-count { position:static; margin-left:2px; font-size:0.78rem; }
+.article-view .inline-bar .float-divider { width:1px; height:22px; background: var(--border); margin:0 4px; transform:none; }
 .article-view .float-btn.saved { color: var(--accent); }
 .article-view .float-btn svg { width:20px; height:20px; }
 .article-view .float-btn-count { position:absolute; top:4px; right:4px; font-size:0.55rem; font-weight:700; color: var(--text-tertiary); }
@@ -292,6 +299,16 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           )}
 
+          {/* Engagement actions — placed immediately below the post */}
+          <ArticleFloatBar
+            variant="inline"
+            articleId={article.article_id}
+            slug={article.slug}
+            initialLikes={likes}
+            initialSaves={article.save_count ?? 0}
+            commentCount={comments.length}
+          />
+
           {/* Author card */}
           {article.author && (
             <div className="author-card">
@@ -346,14 +363,6 @@ export default async function ArticlePage({ params }: Props) {
           )}
         </div>
       </article>
-
-      <ArticleFloatBar
-        articleId={article.article_id}
-        slug={article.slug}
-        initialLikes={likes}
-        initialSaves={article.save_count ?? 0}
-        commentCount={comments.length}
-      />
 
       <Footer />
     </div>

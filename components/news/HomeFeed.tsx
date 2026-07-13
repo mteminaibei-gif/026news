@@ -12,6 +12,17 @@ interface Props {
 
 const PAGE = 12
 
+// In-house (non-aggregated) posts surface before aggregated/RSS content,
+// then newest-first.
+function sortInhouseFirst(list: ArticleWithAuthor[]): ArticleWithAuthor[] {
+  return [...list].sort((a, b) => {
+    const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+    const bi = (b as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+    if (ai !== bi) return ai - bi
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+}
+
 export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
   const [articles, setArticles] = useState<ArticleWithAuthor[]>(initialArticles)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -28,6 +39,8 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
   useEffect(() => { loadedRef.current = initialArticles.length }, [initialArticles])
 
   useEffect(() => {
+    // Sync initial articles (server-sorted in-house-first) into state
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setArticles(initialArticles)
   }, [initialArticles])
 
@@ -40,20 +53,17 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
     }
 
     async function fetchArticleWithRetry(articleId: number, attempts = 3, delay = 250) {
-      let lastData: any = null
+      let lastData: ArticleWithAuthor | null = null
       for (let i = 0; i < attempts; i++) {
-        const res: any = await supabase
+        const { data, error } = await supabase
           .from('articles')
           .select('*, author:users(user_id,name,profile_image,bio), category:categories(name), journalist:journalists(user_id,name,avatar_url,bio)')
           .eq('article_id', articleId)
           .single()
 
-        const data = res?.data
-        const error = res?.error
-
         if (!error && data) {
-          lastData = data
-          if ((data as any).content && (data as any).author) return lastData
+          lastData = data as unknown as ArticleWithAuthor
+          if (lastData.content && lastData.author) return lastData
         }
         await sleep(delay)
       }
@@ -73,7 +83,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
           if (categoryFilterName && art.category?.name !== categoryFilterName) return
           setArticles((prev) => {
             if (prev.some((a) => a.article_id === art.article_id)) return prev
-            return [art, ...prev]
+            return sortInhouseFirst([art, ...prev])
           })
         }
       )
@@ -93,8 +103,8 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
             return
           }
           setArticles((prev) => {
-            if (!prev.some((a) => a.article_id === art.article_id)) return [art, ...prev]
-            return prev.map((a) => (a.article_id === art.article_id ? art : a))
+            if (!prev.some((a) => a.article_id === art.article_id)) return sortInhouseFirst([art, ...prev])
+            return sortInhouseFirst(prev.map((a) => (a.article_id === art.article_id ? art : a)))
           })
         }
       )
@@ -137,7 +147,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
         setArticles((prev) => {
           const ids = new Set(prev.map((a) => a.article_id))
           const fresh = rows.filter((r) => !ids.has(r.article_id))
-          return fresh.length ? [...prev, ...fresh] : prev
+          return fresh.length ? sortInhouseFirst([...prev, ...fresh]) : prev
         })
       }
     } catch {
@@ -192,7 +202,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
         setArticles((prev) => {
           const ids = new Set(prev.map((a) => a.article_id))
           const fresh = (data as ArticleWithAuthor[]).filter((a) => !ids.has(a.article_id))
-          return fresh.length ? [...fresh, ...prev] : prev
+          return fresh.length ? sortInhouseFirst([...fresh, ...prev]) : prev
         })
       }
     }, 45000)

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Users, Zap, AlertCircle, Database, Shield, BarChart3, Clock, Plus, X } from 'lucide-react'
+import { Settings, Users, Zap, AlertCircle, Database, Shield, BarChart3, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeAnalytics } from '@/lib/hooks/useRealtimeAnalytics'
 import { AnimatedChart } from './AnalyticsChart'
-import { AccountCreationForm } from './AccountCreationForm'
+import { UserManagementTable } from './UserManagementTable'
 
 interface TabConfig {
   id: string
@@ -58,8 +58,6 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
 
 export function AdminControlPanel() {
   const [activeTab, setActiveTab] = useState('overview')
-  const [showCreateAccount, setShowCreateAccount] = useState(false)
-  const [createdUsers, setCreatedUsers] = useState<any[]>([])
   const { metrics } = useRealtimeAnalytics()
 
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
@@ -74,6 +72,8 @@ export function AdminControlPanel() {
   useEffect(() => {
     (async () => {
       const supabase = createClient()
+      // site_settings is managed via migrations and not present in the generated types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase.from('site_settings') as any)
         .select('value')
         .eq('key', 'system_config')
@@ -87,6 +87,8 @@ export function AdminControlPanel() {
   const saveSystem = useCallback(async () => {
     setSavingSystem(true)
     const supabase = createClient()
+    // site_settings is managed via migrations and not present in the generated types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from('site_settings') as any)
       .upsert({ key: 'system_config', value: systemConfig, updated_at: new Date().toISOString() })
     setSavingSystem(false)
@@ -107,9 +109,18 @@ export function AdminControlPanel() {
     <div className="min-h-screen p-6" style={{ background: 'var(--bg-base)' }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Admin Control Panel</h1>
-          <p style={{ color: 'var(--text-tertiary)' }}>Manage your platform, users, and systems in real-time</p>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Admin Control Panel</h1>
+            <p style={{ color: 'var(--text-tertiary)' }}>Manage your platform, users, and systems in real-time</p>
+          </div>
+          <span
+            className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{ background: 'var(--success-light)', color: 'var(--success)', border: '1px solid var(--success)' }}
+          >
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--success)' }} />
+            Live · Auto-syncing
+          </span>
         </div>
 
         {/* Quick Stats */}
@@ -148,8 +159,8 @@ export function AdminControlPanel() {
                 onClick={() => setActiveTab(tab.id)}
                 className="px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-all whitespace-nowrap"
                 style={{
-                  borderBottom: activeTab === tab.id ? '2px solid var(--success)' : '2px solid transparent',
-                  color: activeTab === tab.id ? 'var(--success)' : 'var(--text-tertiary)',
+                  borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
+                  color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)',
                 }}
               >
                 {tab.icon}
@@ -186,68 +197,7 @@ export function AdminControlPanel() {
             )}
 
             {activeTab === 'users' && (
-              <div className="rounded-2xl p-6 shadow-lg" style={{ background: 'var(--bg-surface)' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>User Management</h3>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Manage user accounts, roles, and permissions</p>
-                  </div>
-                  <button
-                    onClick={() => setShowCreateAccount(!showCreateAccount)}
-                    className="flex items-center gap-2 font-bold px-4 py-2 rounded-lg transition-all"
-                    style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))', color: 'var(--text-inverse)' }}
-                  >
-                    <Plus size={18} />
-                    Create Account
-                  </button>
-                </div>
-
-                {showCreateAccount && (
-                  <div className="mb-6 p-6 rounded-xl" style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)' }}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold" style={{ color: 'var(--text-primary)' }}>Create New Account</h4>
-                      <button onClick={() => setShowCreateAccount(false)} className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>
-                        <X size={20} />
-                      </button>
-                    </div>
-                    <AccountCreationForm
-                      onSuccess={(user) => { setCreatedUsers([user, ...createdUsers]); setShowCreateAccount(false) }}
-                      onClose={() => setShowCreateAccount(false)}
-                    />
-                  </div>
-                )}
-
-                {createdUsers.length > 0 && (
-                  <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--primary-light)', border: '1px solid var(--success)' }}>
-                    <h4 className="font-semibold mb-3" style={{ color: 'var(--primary)' }}>✓ Recently Created Accounts ({createdUsers.length})</h4>
-                    <div className="space-y-2">
-                      {createdUsers.map((user, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-sm">
-                          <div>
-                            <p className="font-medium" style={{ color: 'var(--primary)' }}>{user.name}</p>
-                            <p className="text-xs" style={{ color: 'var(--primary)' }}>{user.email}</p>
-                          </div>
-                          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium" style={{ background: 'var(--success)', color: '#fff' }}>{user.role}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  {[
-                    { action: 'Suspend user', description: 'Temporarily disable account' },
-                    { action: 'Change role', description: 'Update user role/permissions' },
-                    { action: 'Reset password', description: 'Force password reset' },
-                    { action: 'Merge accounts', description: 'Combine duplicate accounts' },
-                  ].map((item, idx) => (
-                    <button key={idx} className="w-full text-left p-4 rounded-xl transition-colors hover:opacity-90" style={{ background: 'var(--bg-muted)' }}>
-                      <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{item.action}</p>
-                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{item.description}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <UserManagementTable />
             )}
 
             {activeTab === 'system' && (
