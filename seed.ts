@@ -41,7 +41,7 @@ const ACCOUNTS = [
   {
     email:    'bot@026news.com',
     password: crypto.randomUUID(), // random — this account is never signed in
-    name:     'News Bot',
+    name:     'News Assistant',
     role:     'journalist',
     bio:      'Automated aggregator account for RSS feeds.',
   },

@@ -120,8 +120,8 @@ export async function GET(req: NextRequest) {
     { auth: { persistSession: false } }
   )
 
-  // Find a default "aggregated" author — look for user with name "News Bot"
-  // (create one in your DB: INSERT INTO users(name,email,role,password_hash) VALUES('News Bot','bot@026news.com','journalist',''))
+  // Find a default "aggregated" author — look for user with name "News Assistant"
+  // (create one in your DB: INSERT INTO users(name,email,role,password_hash) VALUES('News Assistant','bot@026news.com','journalist',''))
   const { data: botUser } = await supabase
     .from('users')
     .select('user_id')
