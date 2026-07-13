@@ -176,7 +176,7 @@ export default async function JournalistProfilePage({ params }: Props) {
           {/* Monthly Stats */}
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
             <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>This Month</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10 }}>
               <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{formatNumber(articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).reduce((s, a) => s + (a.views ?? 0), 0))}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Views</div></div>
               <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{formatNumber(articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).reduce((s, a) => s + (a.likes ?? 0), 0))}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Likes</div></div>
               <div style={{ padding: 12, background: 'var(--bg-inset)', borderRadius: 9, textAlign: 'center' }}><div style={{ fontSize: '1.1rem', fontWeight: 700, fontFeatureSettings: 'tnum' }}>{articles.filter(a => new Date(a.created_at).getMonth() === new Date().getMonth()).length}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Articles</div></div>

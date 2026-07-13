@@ -131,7 +131,7 @@ export default function AuthorApplyPage() {
                 Tell us a bit about yourself to get started.
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={labelStyle}>First Name</label>
                   <input style={inputStyle} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" />
@@ -234,7 +234,7 @@ export default function AuthorApplyPage() {
                 Review the benefits and submit your application.
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '0.75rem', marginBottom: '1.5rem' }}>
                 {[
                   { icon: '💰', title: '70% Revenue Share', desc: 'Keep the majority of your earnings' },
                   { icon: '📊', title: 'Analytics Dashboard', desc: 'Track your article performance' },

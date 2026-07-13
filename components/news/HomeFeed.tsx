@@ -34,6 +34,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
   const hasMoreRef = useRef(true)
   const loadedRef = useRef(initialArticles.length)
   const loadMoreRef = useRef<() => void>(() => {})
+  const lastInteractionRef = useRef(0)
 
   useEffect(() => { hasMoreRef.current = hasMore }, [hasMore])
   useEffect(() => { loadedRef.current = initialArticles.length }, [initialArticles])
@@ -160,28 +161,73 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
 
   useEffect(() => { loadMoreRef.current = loadMore }, [loadMore])
 
-  // Auto-scroll the feed (loops to top), paused on hover; loads more near bottom
+  // Auto-scroll the feed (loops to top after a brief pause at the end).
+  // Paused on hover (fine pointers) and on any user interaction (touch / wheel /
+  // keyboard); resumes automatically after a short idle period. Frame-rate
+  // independent so it scrolls at a consistent speed on any device.
   useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduce) return
+
+    const PX_PER_SEC = 48
+    const RESUME_DELAY = 3500
+    const END_PAUSE = 1400
     let raf = 0
-    const SPEED = 0.4
-    const step = () => {
-      const el = scrollRef.current
-      if (el && !pausedRef.current && el.scrollHeight > el.clientHeight + 4) {
+    let last = performance.now()
+    let endPauseUntil = 0
+
+    const tick = (now: number) => {
+      const dt = Math.min(now - last, 80)
+      last = now
+      const idle = now - lastInteractionRef.current > RESUME_DELAY
+      if (el && !pausedRef.current && idle && el.scrollHeight > el.clientHeight + 4) {
         const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight)
         if (distanceFromBottom <= 80) {
           if (hasMoreRef.current && !loadingMoreRef.current) {
             loadMoreRef.current()
           } else if (!hasMoreRef.current) {
-            el.scrollTop = 0
+            if (endPauseUntil === 0) {
+              endPauseUntil = now + END_PAUSE
+            } else if (now >= endPauseUntil) {
+              el.scrollTop = 0
+              endPauseUntil = 0
+            }
           }
         } else {
-          el.scrollTop += SPEED
+          el.scrollTop += (dt / 1000) * PX_PER_SEC
+          endPauseUntil = 0
         }
       }
-      raf = requestAnimationFrame(step)
+      raf = requestAnimationFrame(tick)
     }
-    raf = requestAnimationFrame(step)
+    raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
+  }, [])
+
+  // Track manual interaction so auto-scroll pauses while the user scrolls.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const mark = () => {
+      lastInteractionRef.current = performance.now()
+    }
+    const opts = { passive: true } as AddEventListenerOptions
+    el.addEventListener('wheel', mark, opts)
+    el.addEventListener('touchstart', mark, opts)
+    el.addEventListener('touchmove', mark, opts)
+    el.addEventListener('pointerdown', mark)
+    el.addEventListener('keydown', mark)
+    return () => {
+      el.removeEventListener('wheel', mark)
+      el.removeEventListener('touchstart', mark)
+      el.removeEventListener('touchmove', mark)
+      el.removeEventListener('pointerdown', mark)
+      el.removeEventListener('keydown', mark)
+    }
   }, [])
 
   // Auto-refresh: pull the newest published posts and prioritise them
@@ -226,8 +272,8 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
     <div
       ref={scrollRef}
       className="home-feed-scroll"
-      onMouseEnter={() => { pausedRef.current = true }}
-      onMouseLeave={() => { pausedRef.current = false }}
+      onMouseEnter={() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) pausedRef.current = true }}
+      onMouseLeave={() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) pausedRef.current = false }}
     >
       <div className="article-feed">
         {articles.map((article) => (

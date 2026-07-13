@@ -316,7 +316,7 @@ export default function OnboardingPage() {
 
               {applyAuthor && (
                 <div style={{ display: 'grid', gap: 12, marginBottom: 18, animation: 'ob-fade-in 0.4s var(--ease-out-expo)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10 }}>
                     <input style={inputStyle} placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                     <input style={inputStyle} placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>

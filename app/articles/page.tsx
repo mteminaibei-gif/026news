@@ -245,7 +245,7 @@ export default async function ArticlesPage() {
               })()}
 
               {/* Article Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 'var(--space-lg)' }}>
                 {rest.map((article) => {
                   const byline = article.source_name ?? article.author?.name ?? 'Staff'
                   return (

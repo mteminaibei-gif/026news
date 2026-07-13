@@ -30,32 +30,47 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('articles')
-    .select('title, excerpt, content, featured_image, created_at, author:users(name), category:categories(name)')
+    .select('title, excerpt, content, featured_image, created_at, tags, author:users(name), category:categories(name)')
     .eq('slug', slug)
     .single()
 
   if (!data) return {}
   const article = data as unknown as {
-    title: string; excerpt: string | null; content: string; featured_image: string | null; created_at: string
+    title: string; excerpt: string | null; content: string; featured_image: string | null; created_at: string; tags: string[] | null
     author: { name: string } | null; category: { name: string } | null
   }
 
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
-  const description = (article.excerpt || article.content).slice(0, 160)
+  const description = ((article.excerpt || article.content) ?? '').slice(0, 160)
 
   return {
     title: article.title,
     description,
-    keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026news'].filter((k): k is string => !!k),
+    keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026news']
+      .filter((k): k is string => !!k)
+      .concat(article.tags ?? []),
     authors: article.author ? [{ name: article.author.name }] : [],
+    alternates: { canonical: `/article/${slug}` },
+    robots: { index: true, follow: true },
     openGraph: {
-      title: article.title, description, type: 'article', publishedTime: article.created_at,
-      authors: article.author ? [article.author.name] : [],
-      images: article.featured_image ? [{ url: article.featured_image, width: 1200, height: 630, alt: article.title }] : [],
+      title: article.title,
+      description,
+      type: 'article',
       url: `${APP_URL}/article/${slug}`,
+      siteName: '026Newsblog',
+      locale: 'en_KE',
+      publishedTime: article.created_at,
+      section: article.category?.name ?? undefined,
+      tags: article.tags ?? undefined,
+      authors: article.author ? [article.author.name] : [],
+      images: article.featured_image
+        ? [{ url: article.featured_image, width: 1200, height: 630, alt: article.title }]
+        : [],
     },
     twitter: {
-      card: 'summary_large_image', title: article.title, description,
+      card: 'summary_large_image',
+      title: article.title,
+      description,
       images: article.featured_image ? [article.featured_image] : [],
       creator: article.author ? `@${article.author.name.toLowerCase().replace(/\s+/g, '')}` : '@026news',
     },
@@ -222,12 +237,40 @@ export default async function ArticlePage({ params }: Props) {
       ? 'Image via 026News'
       : null
 
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+  const seoDescription = ((article.excerpt || article.content) ?? '').slice(0, 160)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    description: seoDescription,
+    image: article.featured_image ? [article.featured_image] : [],
+    datePublished: article.created_at,
+    dateModified: (article as unknown as { updated_at?: string }).updated_at ?? article.created_at,
+    author: article.author
+      ? { '@type': 'Person', name: article.author.name }
+      : { '@type': 'Organization', name: '026Newsblog' },
+    publisher: {
+      '@type': 'Organization',
+      name: '026Newsblog',
+      logo: { '@type': 'ImageObject', url: `${APP_URL}/favicon.svg` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${APP_URL}/article/${article.slug}` },
+    articleSection: article.category?.name ?? undefined,
+    keywords: article.tags?.join(', '),
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Navbar />
       <ReadingProgress />
 
       <style dangerouslySetInnerHTML={{ __html: ARTICLE_CSS }} />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <article className="article-view">
         <div className="article-layout">
@@ -298,6 +341,12 @@ export default async function ArticlePage({ params }: Props) {
               ))}
             </div>
           )}
+
+          {/* Proudly Made in Kenya */}
+          <div className="made-in-kenya">
+            <span className="ke-flag" aria-hidden="true">🇰🇪</span>
+            <span>Proudly Made in Kenya</span>
+          </div>
 
           {/* Engagement actions — placed immediately below the post */}
           <ArticleFloatBar

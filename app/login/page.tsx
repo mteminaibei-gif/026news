@@ -57,7 +57,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="auth-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', flex: 1, width: '100%' }}>
+    <div className="auth-layout grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, width: '100%' }}>
       {/* Left Panel: Branding */}
       <div
         className="auth-brand hidden lg:flex"
@@ -100,7 +100,7 @@ function LoginForm() {
       </div>
 
       {/* Right Panel: Form */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48, background: 'var(--bg-elevated)' }}>
+      <div className="p-6 lg:p-12" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
@@ -203,21 +203,6 @@ function LoginForm() {
             ))}
           </div>
 
-          {/* Demo */}
-          <div className="mt-6 p-4 rounded-xl" style={{ background: 'var(--primary-light)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--primary)' }}>Demo Account</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--text-tertiary)' }}>Author:</span>
-                <button onClick={() => { setEmail('journalist@demo.com'); setPassword('demo123') }} className="font-semibold" style={{ color: 'var(--primary)' }}>journalist@demo.com</button>
-              </div>
-              <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--text-tertiary)' }}>Admin:</span>
-                <button onClick={() => { setEmail('admin@demo.com'); setPassword('demo123') }} className="font-semibold" style={{ color: 'var(--error)' }}>admin@demo.com</button>
-              </div>
-              <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Password: demo123</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
