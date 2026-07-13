@@ -35,45 +35,70 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
   const { filter: rawFilter } = await searchParams
   const filter: Filter = (FILTERS as readonly string[]).includes(rawFilter ?? '') ? (rawFilter as Filter) : 'all'
 
-  const supabase = await createClient()
+  let supabase: Awaited<ReturnType<typeof createClient>>
+  try {
+    supabase = await createClient()
+  } catch {
+    return (
+      <>
+        <Topbar title="Articles Management" user={{ name: 'Admin', profile_image: null }} />
+        <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
+          <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
+            <p className="text-lg font-semibold mb-2">Unable to connect to database</p>
+            <p className="text-sm">Please try refreshing the page.</p>
+          </div>
+        </div>
+      </>
+    )
+  }
 
   const { data: { user } } = await supabase.auth.getUser()
   const { data: rawAdmin } = await supabase
     .from('users').select('name, profile_image').eq('email', user?.email ?? '').single()
   const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
-  const [
-    { count: totalCount },
-    { count: publishedCount },
-    { count: reviewCount },
-    { count: draftCount },
-    { count: rejectedCount },
-  ] = await Promise.all([
-    supabase.from('articles').select('*', { count: 'exact', head: true }),
-    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'published'),
-    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'under_review'),
-    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'draft'),
-    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+  const safeCount = async (eq?: { col: string; val: string }) => {
+    try {
+      let q = supabase.from('articles').select('article_id', { count: 'exact', head: true })
+      if (eq) q = q.eq(eq.col, eq.val)
+      const { count } = await q
+      return count ?? 0
+    } catch {
+      return 0
+    }
+  }
+
+  const [totalCount, publishedCount, reviewCount, draftCount, rejectedCount] = await Promise.all([
+    safeCount(),
+    safeCount({ col: 'status', val: 'published' }),
+    safeCount({ col: 'status', val: 'under_review' }),
+    safeCount({ col: 'status', val: 'draft' }),
+    safeCount({ col: 'status', val: 'rejected' }),
   ])
 
   const counts: Record<string, number> = {
-    all:          totalCount ?? 0,
-    published:    publishedCount ?? 0,
-    under_review: reviewCount ?? 0,
-    draft:        draftCount ?? 0,
-    rejected:     rejectedCount ?? 0,
+    all:          totalCount,
+    published:    publishedCount,
+    under_review: reviewCount,
+    draft:        draftCount,
+    rejected:     rejectedCount,
   }
 
-  let query = supabase
-    .from('articles')
-    .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, author:users(name,profile_image), category:categories(name)')
-    .order('created_at', { ascending: false })
-    .limit(100)
+  let articles: ArticleRow[] = []
+  try {
+    let query = supabase
+      .from('articles')
+      .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, author:users(name,profile_image), category:categories(name)')
+      .order('created_at', { ascending: false })
+      .limit(100)
 
-  if (filter !== 'all') query = query.eq('status', filter)
+    if (filter !== 'all') query = query.eq('status', filter)
 
-  const { data: rawArticles } = await query
-  const articles = (rawArticles ?? []) as unknown as ArticleRow[]
+    const { data: rawArticles } = await query
+    articles = (rawArticles ?? []) as unknown as ArticleRow[]
+  } catch {
+    articles = []
+  }
 
   const stats = [
     { label: 'Total',        value: counts.all,          color: 'var(--primary)' },
