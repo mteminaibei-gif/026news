@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
 
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RadioProvider>
               {children}
               <CookieConsent />
+              <SpeedInsights />
             </RadioProvider>
           </QueryProvider>
         </ThemeProvider>
