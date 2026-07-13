@@ -294,13 +294,12 @@ export function Navbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(v => !v)}
-              className="lg:hidden"
+              className="lg:hidden flex items-center justify-center"
               style={{
                 width: 40, height: 40, borderRadius: 10,
                 border: '1px solid var(--border)',
                 background: 'var(--bg-surface)',
                 cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--text-secondary)',
                 transition: 'all 0.2s',
               }}
@@ -317,14 +316,14 @@ export function Navbar() {
       <div
         aria-hidden="true"
         onClick={closeMobile}
-        className="lg:hidden fixed inset-0 z-40 transition-opacity duration-300"
+        className={cn(
+          'lg:hidden fixed inset-0 z-40 transition-opacity duration-300',
+          mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        )}
         style={{
-          display: mobileOpen ? 'block' : 'none',
           top: NAVBAR_H,
           background: 'oklch(0% 0 0 / 0.4)',
           backdropFilter: 'blur(4px)',
-          opacity: mobileOpen ? 1 : 0,
-          pointerEvents: mobileOpen ? 'auto' : 'none',
         }}
       />
 
@@ -332,9 +331,11 @@ export function Navbar() {
       <nav
         id="mobile-nav"
         aria-label="Mobile navigation"
-        className="lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain"
+        className={cn(
+          'lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain',
+          mobileOpen ? 'flex' : 'hidden'
+        )}
         style={{
-          display: mobileOpen ? 'flex' : 'none',
           width: 320, maxWidth: '85vw',
           background: 'var(--bg-surface)',
           boxShadow: 'var(--shadow-xl)',

@@ -3,15 +3,25 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { useRadio } from '@/components/radio/RadioProvider'
-import { RADIO_STATIONS } from '@/lib/radio/stations'
+import { KENYA_STATIONS, GLOBAL_STATIONS } from '@/lib/radio/stations'
+import type { RadioStation } from '@/lib/radio/stations'
 
-const PODCASTS = [
-  { title: 'The Daily Brief', author: '026 Groove', episodes: 324, duration: '28 min', coverColor: '#0f766e' },
-  { title: 'Kenya Talk', author: '026 Sonic', episodes: 156, duration: '45 min', coverColor: '#0891b2' },
-  { title: 'Tech Pulse Africa', author: '026 Indie', episodes: 89, duration: '35 min', coverColor: '#ea580c' },
-  { title: 'Sports Zone', author: '026 Beat', episodes: 210, duration: '40 min', coverColor: '#db2777' },
-  { title: 'Morning Vibes', author: '026 Soul', episodes: 445, duration: '55 min', coverColor: '#dc2626' },
-  { title: 'Business Today', author: '026 Fluid', episodes: 178, duration: '32 min', coverColor: '#7c3aed' },
+const KENYA_PODCASTS = [
+  { title: 'Kenya Talks', author: 'NRG Radio', episodes: 186, duration: '45 min', coverColor: '#e11d48' },
+  { title: 'The Trend Factory', author: 'Capital FM', episodes: 98, duration: '38 min', coverColor: '#0f766e' },
+  { title: 'Stories of Africa', author: 'Radio Citizen', episodes: 142, duration: '52 min', coverColor: '#16a34a' },
+  { title: 'Tech Pulse Africa', author: 'Kiss 100', episodes: 89, duration: '35 min', coverColor: '#db2777' },
+  { title: 'On the Pitch KE', author: 'Radio Jambo', episodes: 210, duration: '40 min', coverColor: '#0891b2' },
+  { title: 'Biz Breakfast', author: 'Classic 105', episodes: 178, duration: '32 min', coverColor: '#ea580c' },
+]
+
+const GLOBAL_PODCASTS = [
+  { title: 'The Daily', author: 'The New York Times', episodes: 1240, duration: '25 min', coverColor: '#2563eb' },
+  { title: 'BBC Global News', author: 'BBC World Service', episodes: 980, duration: '30 min', coverColor: '#7c3aed' },
+  { title: 'How I Built This', author: 'NPR', episodes: 410, duration: '50 min', coverColor: '#ca8a04' },
+  { title: 'TED Talks Daily', author: 'TED', episodes: 1560, duration: '15 min', coverColor: '#dc2626' },
+  { title: 'The Economist Asks', author: 'The Economist', episodes: 320, duration: '28 min', coverColor: '#16a34a' },
+  { title: 'Waveform', author: 'MrMobile & dbrand', episodes: 265, duration: '60 min', coverColor: '#0891b2' },
 ]
 
 const RECENTLY_PLAYED = [
@@ -23,8 +33,139 @@ const RECENTLY_PLAYED = [
 
 export default function RadioPage() {
   const { currentStation, isPlaying, volume, status, playStation, toggle, setVolume } = useRadio()
-  const nowPlaying = currentStation ?? RADIO_STATIONS[0]
+  const nowPlaying = currentStation ?? KENYA_STATIONS[0]
   const isThisPlaying = currentStation?.id === nowPlaying.id && isPlaying
+
+  const renderStations = (stations: RadioStation[]) =>
+    stations.map(station => {
+      const active = currentStation?.id === station.id
+      return (
+        <div
+          key={station.id}
+          className="hover-lift"
+          style={{
+            background: active ? 'var(--primary-light)' : 'var(--bg-surface)',
+            borderRadius: '16px',
+            padding: 'var(--space-lg)',
+            border: `1px solid ${active ? station.color : 'var(--border-subtle)'}`,
+            boxShadow: 'var(--card-shadow)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+          onClick={() => playStation(station)}
+        >
+          <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-md)' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: `${station.color}22`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: station.color }}>
+                {station.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
+              </span>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                {station.name}
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                {station.genre}
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  animation: 'livePulse 1.5s ease-in-out infinite',
+                }}
+              />
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#22c55e', textTransform: 'uppercase' }}>
+                Live
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {station.listeners.toLocaleString()} listeners
+            </span>
+            <button
+              onClick={e => { e.stopPropagation(); playStation(station) }}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                border: 'none',
+                background: active ? station.color : 'var(--bg-inset)',
+                color: active ? '#fff' : 'var(--text-primary)',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}
+              aria-label={`Play ${station.name}`}
+            >
+              {active && isPlaying ? '⏸' : '▶'}
+            </button>
+          </div>
+        </div>
+      )
+    })
+
+  const renderPodcasts = (podcasts: typeof KENYA_PODCASTS) =>
+    podcasts.map(podcast => (
+      <div
+        key={podcast.title}
+        className="hover-lift"
+        style={{
+          background: 'var(--bg-surface)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--card-shadow)',
+        }}
+      >
+        <div
+          style={{
+            height: '140px',
+            background: `linear-gradient(135deg, ${podcast.coverColor} 0%, ${podcast.coverColor}88 100%)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span style={{ fontSize: '2.5rem' }}>🎧</span>
+        </div>
+        <div style={{ padding: 'var(--space-md)' }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            {podcast.title}
+          </h3>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            {podcast.author}
+          </p>
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {podcast.episodes} episodes
+            </span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {podcast.duration} avg
+            </span>
+          </div>
+        </div>
+      </div>
+    ))
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
@@ -254,165 +395,76 @@ export default function RadioPage() {
             </div>
           </div>
 
-          {/* Station Grid */}
+          {/* Kenyan Radio (prioritised) */}
           <section style={{ marginBottom: 'var(--space-2xl)' }}>
-            <h2
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-display)',
-                marginBottom: 'var(--space-lg)',
-              }}
-            >
-              All Stations
-            </h2>
-            <div className="radio-stations-grid">
-              {RADIO_STATIONS.map(station => {
-                const active = currentStation?.id === station.id
-                return (
-                  <div
-                    key={station.id}
-                    className="hover-lift"
-                    style={{
-                      background: active ? 'var(--primary-light)' : 'var(--bg-surface)',
-                      borderRadius: '16px',
-                      padding: 'var(--space-lg)',
-                      border: `1px solid ${active ? station.color : 'var(--border-subtle)'}`,
-                      boxShadow: 'var(--card-shadow)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onClick={() => playStation(station)}
-                  >
-                    <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-md)' }}>
-                      <div
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          background: `${station.color}22`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: station.color }}>
-                          {station.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
-                        </span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                          {station.name}
-                        </h3>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {station.genre}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span
-                          style={{
-                            width: '7px',
-                            height: '7px',
-                            borderRadius: '50%',
-                            background: '#22c55e',
-                            animation: 'livePulse 1.5s ease-in-out infinite',
-                          }}
-                        />
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#22c55e', textTransform: 'uppercase' }}>
-                          Live
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {station.listeners.toLocaleString()} listeners
-                      </span>
-                      <button
-                        onClick={e => { e.stopPropagation(); playStation(station) }}
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          border: 'none',
-                          background: active ? station.color : 'var(--bg-inset)',
-                          color: active ? '#fff' : 'var(--text-primary)',
-                          cursor: 'pointer',
-                          fontSize: '0.8rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.2s',
-                        }}
-                        aria-label={`Play ${station.name}`}
-                      >
-                        {active && isPlaying ? '⏸' : '▶'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 'var(--space-lg)' }}>
+              <h2
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                Kenyan Radio
+              </h2>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Live from Nairobi &amp; across Kenya</span>
             </div>
+            <div className="radio-stations-grid">{renderStations(KENYA_STATIONS)}</div>
           </section>
 
-          {/* Popular Podcasts */}
+          {/* Global Radio */}
           <section style={{ marginBottom: 'var(--space-2xl)' }}>
-            <h2
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-display)',
-                marginBottom: 'var(--space-lg)',
-              }}
-            >
-              Popular Podcasts
-            </h2>
-            <div className="radio-podcasts-grid">
-              {PODCASTS.map(podcast => (
-                <div
-                  key={podcast.title}
-                  className="hover-lift"
-                  style={{
-                    background: 'var(--bg-surface)',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-subtle)',
-                    boxShadow: 'var(--card-shadow)',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '140px',
-                      background: `linear-gradient(135deg, ${podcast.coverColor} 0%, ${podcast.coverColor}88 100%)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <span style={{ fontSize: '2.5rem' }}>🎧</span>
-                  </div>
-                  <div style={{ padding: 'var(--space-md)' }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                      {podcast.title}
-                    </h3>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>
-                      {podcast.author}
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {podcast.episodes} episodes
-                      </span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {podcast.duration} avg
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 'var(--space-lg)' }}>
+              <h2
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                Global Radio
+              </h2>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Worldwide streams</span>
             </div>
+            <div className="radio-stations-grid">{renderStations(GLOBAL_STATIONS)}</div>
+          </section>
+
+          {/* Kenya Podcasts */}
+          <section style={{ marginBottom: 'var(--space-2xl)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 'var(--space-lg)' }}>
+              <h2
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                Kenya Podcasts
+              </h2>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Made in Kenya</span>
+            </div>
+            <div className="radio-podcasts-grid">{renderPodcasts(KENYA_PODCASTS)}</div>
+          </section>
+
+          {/* Global Podcasts */}
+          <section style={{ marginBottom: 'var(--space-2xl)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 'var(--space-lg)' }}>
+              <h2
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                Global Podcasts
+              </h2>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>From around the world</span>
+            </div>
+            <div className="radio-podcasts-grid">{renderPodcasts(GLOBAL_PODCASTS)}</div>
           </section>
 
           {/* Recently Played */}
