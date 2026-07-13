@@ -3,16 +3,182 @@ import { createClient } from '@/lib/supabase/server'
 
 type Profile = { user_id: number; role: string }
 
-// DELETE /api/admin/articles?id=123 — admin delete an article
-export async function DELETE(req: NextRequest) {
+// GET /api/admin/articles — list all articles with filtering & pagination
+export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { data: rawProfile } = await supabase
+      .from('users').select('role').eq('email', user.email ?? '').single()
+    const profile = rawProfile as unknown as Profile | null
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const url = new URL(req.url)
+    const status = url.searchParams.get('status')       // published | under_review | rejected | draft | expired
+    const type = url.searchParams.get('type')           // inhouse | sourced
+    const category = url.searchParams.get('category_id')
+    const search = url.searchParams.get('search')
+    const tag = url.searchParams.get('tag')
+    const page = Math.max(1, Number(url.searchParams.get('page')) || 1)
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 25))
+    const offset = (page - 1) * limit
+
+    let query = supabase
+      .from('articles')
+      .select('article_id, title, slug, status, featured_image, views, earnings, created_at, published_at, is_aggregated, source_name, category_id, author_id, tags, excerpt, like_count, share_count, save_count, featured, author:users(user_id, name, profile_image), category:categories(name, slug)', { count: 'exact' })
+
+    if (status === 'expired') {
+      query = query.lt('published_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).eq('status', 'published')
+    } else if (status) {
+      query = query.eq('status', status)
+    }
+
+    if (type === 'inhouse') query = query.eq('is_aggregated', false)
+    else if (type === 'sourced') query = query.eq('is_aggregated', true)
+
+    if (category) query = query.eq('category_id', Number(category))
+
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%`)
+    }
+
+    if (tag) {
+      query = query.contains('tags', [tag])
+    }
+
+    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
+    if (error) throw error
+
+    return NextResponse.json({
+      articles: data ?? [],
+      total: count ?? 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count ?? 0) / limit),
+    })
+  } catch (err) {
+    console.error('[GET /api/admin/articles]', err)
+    return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 })
+  }
+}
+
+// PATCH /api/admin/articles — bulk update status, category, tags, featured, expire
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: rawProfile } = await supabase
       .from('users').select('user_id, role').eq('email', user.email ?? '').single()
+    const profile = rawProfile as unknown as Profile | null
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const body = await req.json()
+    const { ids, action, status, category_id, tags, featured, expires_at } = body as {
+      ids: number[]
+      action?: string
+      status?: string
+      category_id?: number | null
+      tags?: string[]
+      featured?: boolean
+      expires_at?: string | null
+    }
+
+    if (!ids?.length) {
+      return NextResponse.json({ error: 'ids array is required' }, { status: 400 })
+    }
+
+    // Build update payload
+    const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+
+    if (action === 'approve' || status) {
+      update.status = action === 'approve' ? 'published' : status
+      if (update.status === 'published') update.published_at = new Date().toISOString()
+    } else if (action === 'reject') {
+      update.status = 'rejected'
+    } else if (action === 'expire') {
+      update.status = 'expired'
+    } else if (action === 'feature') {
+      update.featured = featured ?? true
+    } else if (action === 'unfeature') {
+      update.featured = false
+    }
+
+    if (category_id !== undefined) update.category_id = category_id
+    if (tags !== undefined) update.tags = tags
+    if (expires_at !== undefined) update.published_at = expires_at // reuse for expiry
+
+    // Update each article
+    let updated = 0
+    for (const id of ids) {
+      const { error } = await supabase
+        .from('articles')
+        .update(update as never)
+        .eq('article_id', id)
+      if (!error) updated++
+    }
+
+    // Handle bulk delete
+    if (action === 'delete') {
+      updated = 0
+      for (const id of ids) {
+        await supabase.from('analytics').delete().eq('article_id', id)
+        await supabase.from('comments').delete().eq('article_id', id)
+        await supabase.from('review_workflow').delete().eq('article_id', id)
+        await supabase.from('earnings').delete().eq('article_id', id)
+        await supabase.from('article_tag_mappings').delete().eq('article_id', id)
+        const { error } = await supabase.from('articles').delete().eq('article_id', id)
+        if (!error) updated++
+      }
+    }
+
+    // Also handle single article PATCH (backwards compat)
+    if (!ids.length && body.id) {
+      const singleUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      if (status) singleUpdate.status = status
+      if (category_id !== undefined) singleUpdate.category_id = category_id
+      if (tags !== undefined) singleUpdate.tags = tags
+      if (featured !== undefined) singleUpdate.featured = featured
+      const { error } = await supabase
+        .from('articles')
+        .update(singleUpdate as never)
+        .eq('article_id', body.id)
+      if (error) throw error
+      updated = 1
+    }
+
+    return NextResponse.json({ success: true, updated })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('PUBLISH_LIMIT_REACHED')) {
+      return NextResponse.json(
+        { error: 'Publish limit reached. Raise the limit in the dashboard.' },
+        { status: 429 },
+      )
+    }
+    console.error('[PATCH /api/admin/articles]', err)
+    return NextResponse.json({ error: 'Failed to update articles' }, { status: 500 })
+  }
+}
+
+// DELETE /api/admin/articles?id=123 — admin delete an article
+export async function DELETE(req: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: rawProfile } = await supabase
+      .from('users').select('role').eq('email', user.email ?? '').single()
     const profile = rawProfile as unknown as Profile | null
     if (!profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -21,11 +187,11 @@ export async function DELETE(req: NextRequest) {
     const id = new URL(req.url).searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
-    // Delete dependent rows first to avoid FK constraint errors
     await supabase.from('analytics').delete().eq('article_id', Number(id))
     await supabase.from('comments').delete().eq('article_id', Number(id))
     await supabase.from('review_workflow').delete().eq('article_id', Number(id))
     await supabase.from('earnings').delete().eq('article_id', Number(id))
+    await supabase.from('article_tag_mappings').delete().eq('article_id', Number(id))
 
     const { error } = await supabase.from('articles').delete().eq('article_id', Number(id))
     if (error) throw error
@@ -34,43 +200,5 @@ export async function DELETE(req: NextRequest) {
   } catch (err) {
     console.error('[DELETE /api/admin/articles]', err)
     return NextResponse.json({ error: 'Failed to delete article' }, { status: 500 })
-  }
-}
-
-// PATCH /api/admin/articles — update article status (reject / suspend)
-export async function PATCH(req: NextRequest) {
-  try {
-    const supabase = await createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('email', user.email ?? '').single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    const { id, status } = await req.json()
-    if (!id || !status) return NextResponse.json({ error: 'id and status are required' }, { status: 400 })
-
-    const { error } = await supabase
-      .from('articles')
-      .update({ status, updated_at: new Date().toISOString() } as never)
-      .eq('article_id', Number(id))
-    if (error) throw error
-
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    if (msg.includes('PUBLISH_LIMIT_REACHED')) {
-      return NextResponse.json(
-        { error: 'In-house publish limit reached. Raise the limit in the dashboard Publish Limits card.' },
-        { status: 429 },
-      )
-    }
-    console.error('[PATCH /api/admin/articles]', err)
-    return NextResponse.json({ error: 'Failed to update article' }, { status: 500 })
   }
 }

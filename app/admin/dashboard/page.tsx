@@ -10,6 +10,7 @@ import { AdminJournalistActions } from '@/components/admin/AdminJournalistAction
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
 import { AdminControlPanel } from '@/components/admin/AdminControlPanel'
+import { ArticleManager } from '@/components/admin/ArticleManager'
 import { AccountCreationDialog } from '@/components/admin/AccountCreationDialog'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
   const [admin, setAdmin] = useState<{ name: string; profile_image: string | null }>({ name: 'Admin', profile_image: null })
   const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'dashboard' | 'control-panel'>('dashboard')
+  const [activeView, setActiveView] = useState<'dashboard' | 'articles' | 'control-panel'>('dashboard')
   const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false)
 
   const fetchData = useCallback(async () => {
@@ -206,6 +207,18 @@ export default function AdminDashboard() {
           >
             ⚙️ Control Panel
           </button>
+          <button
+            onClick={() => setActiveView('articles')}
+            className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 500,
+              ...(activeView === 'articles'
+                ? { background: 'var(--primary)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-sm)' }
+                : { background: 'transparent', color: 'var(--text-secondary)' })
+            }}
+          >
+            📋 Articles
+          </button>
           <div className="w-px h-6 mx-1" style={{ background: 'var(--border)' }} />
           <button
             onClick={() => setShowCreateAccountDialog(true)}
@@ -218,6 +231,20 @@ export default function AdminDashboard() {
       </div>
 
       {activeView === 'control-panel' && <AdminControlPanel />}
+
+      {activeView === 'articles' && (
+        <div className="p-6">
+          <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>📋 Article Management</h3>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Manage all articles — approve, categorize, tag, feature, expire, or delete</p>
+            </div>
+            <div className="p-6">
+              <ArticleManager />
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeView === 'dashboard' && (
         <div className="p-6 space-y-6">
@@ -526,7 +553,7 @@ function ArticleTable({ title, icon, rows, limit }: { title: string; icon: strin
                 <div className="shrink-0"><Badge status={a.status} /></div>
 
                 {/* Actions */}
-                <div className="shrink-0"><AdminArticleActions articleId={a.article_id} /></div>
+                <div className="shrink-0"><AdminArticleActions articleId={a.article_id} currentStatus={a.status} /></div>
               </li>
             )
           })}
