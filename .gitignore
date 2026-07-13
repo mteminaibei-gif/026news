@@ -44,3 +44,6 @@ next-env.d.ts
 
 # sentry
 .sentryclirc
+
+# generated logs
+supabase-migration.log
