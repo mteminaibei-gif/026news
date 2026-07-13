@@ -50,7 +50,7 @@ function VerifyEmailInner() {
       <div style={{ width: '100%', maxWidth: 480, textAlign: 'center' }}>
         <Link href="/" style={{ display: 'inline-block', marginBottom: 40 }}>
           <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
+             026<span style={{ color: '#e23b3b' }}>Newsblog</span>
           </span>
         </Link>
 

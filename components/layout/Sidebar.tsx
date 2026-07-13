@@ -83,7 +83,7 @@ export function Sidebar({ role, user }: SidebarProps) {
           <Link href="/" aria-label="026NEWS home" className="flex items-center gap-2 no-underline">
             {!isCollapsed && (
               <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                026<span style={{ color: 'var(--primary)' }}>News</span>
+                 026<span style={{ color: '#e23b3b' }}>News</span>
               </span>
             )}
           </Link>

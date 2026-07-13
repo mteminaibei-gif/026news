@@ -131,7 +131,7 @@ export default function OnboardingPage() {
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <Link href="/">
             <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
+               026<span style={{ color: '#e23b3b' }}>Newsblog</span>
             </span>
           </Link>
         </div>

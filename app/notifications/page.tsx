@@ -1,129 +1,117 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { createClient } from '@/lib/supabase/client'
+import {
+  useNotifications,
+  type AppNotification,
+  type NotificationType,
+} from '@/lib/hooks/useNotifications'
+import { timeAgo } from '@/lib/utils'
 
-type Filter = 'all' | 'likes' | 'comments' | 'follows' | 'mentions' | 'system'
-
-interface Notification {
-  id: string
-  type: 'like' | 'comment' | 'follow' | 'mention' | 'system'
-  text: string
-  detail?: string
-  time: string
-  read: boolean
-  thumbnail?: string
-}
+type Filter = 'all' | 'submissions' | 'comments' | 'system'
 
 const FILTERS: { label: string; value: Filter }[] = [
   { label: 'All', value: 'all' },
-  { label: 'Likes', value: 'likes' },
+  { label: 'Submissions', value: 'submissions' },
   { label: 'Comments', value: 'comments' },
-  { label: 'Follows', value: 'follows' },
-  { label: 'Mentions', value: 'mentions' },
   { label: 'System', value: 'system' },
 ]
 
-const MOCK_NOTIFICATIONS: { group: string; items: Notification[] }[] = [
-  {
-    group: 'Today',
-    items: [
-      { id: '1', type: 'like', text: 'Sarah Kimani liked your article', detail: '"Kenya\'s Tech Boom in 2026"', time: '2 min ago', read: false },
-      { id: '2', type: 'comment', text: 'James Odhiambo commented on your article', detail: '"Election Coverage Trends"', time: '18 min ago', read: false },
-      { id: '3', type: 'follow', text: 'Amina Hassan started following you', time: '1 hour ago', read: true },
-      { id: '4', type: 'mention', text: 'Peter Mwangi mentioned you in a comment', detail: '"Best journalism practices"', time: '3 hours ago', read: false },
-    ],
-  },
-  {
-    group: 'Yesterday',
-    items: [
-      { id: '5', type: 'like', text: 'David Kipchoge liked your article', detail: '"Sports Funding in East Africa"', time: '1 day ago', read: true },
-      { id: '6', type: 'system', text: 'Your article has been approved for publication', time: '1 day ago', read: true },
-      { id: '7', type: 'comment', text: 'Grace Wanjiku replied to your comment', time: '1 day ago', read: true },
-    ],
-  },
-  {
-    group: 'This Week',
-    items: [
-      { id: '8', type: 'follow', text: 'Brian Otieno started following you', time: '3 days ago', read: true },
-      { id: '9', type: 'like', text: '12 people liked your article', detail: '"AI in African Newsrooms"', time: '5 days ago', read: true },
-      { id: '10', type: 'system', text: 'Your weekly analytics report is ready', time: '6 days ago', read: true },
-    ],
-  },
-]
-
-const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
-  like: { bg: 'var(--error-light)', color: 'var(--error)' },
-  comment: { bg: 'var(--primary-light)', color: 'var(--primary)' },
-  follow: { bg: 'var(--accent-light)', color: 'var(--accent)' },
-  mention: { bg: 'var(--success-light)', color: 'var(--success)' },
-  system: { bg: 'var(--bg-inset)', color: 'var(--text-tertiary)' },
+const TYPE_META: Record<NotificationType, { icon: string; bg: string; color: string }> = {
+  new_submission:     { icon: '📝', bg: 'var(--primary-light)', color: 'var(--primary)' },
+  approved:           { icon: '✅', bg: 'var(--success-light)', color: 'var(--success)' },
+  rejected:           { icon: '❌', bg: 'var(--error-light)', color: 'var(--error)' },
+  revision_requested: { icon: '🔄', bg: 'var(--warning-light)', color: 'var(--warning)' },
+  new_comment:        { icon: '💬', bg: 'var(--accent-light)', color: 'var(--accent)' },
+  new_user:           { icon: '🆕', bg: 'var(--success-light)', color: 'var(--success)' },
+  system:             { icon: '🔔', bg: 'var(--bg-inset)', color: 'var(--text-tertiary)' },
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  like: '\u2764',
-  comment: '\uD83D\uDCAC',
-  follow: '\uD83D\uDC64',
-  mention: '\uD83D\uDCDD',
-  system: '\u2699',
+function groupKey(ts: string): string {
+  const d = new Date(ts)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfYesterday = new Date(startOfToday)
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1)
+  const startOfWeek = new Date(startOfToday)
+  startOfWeek.setDate(startOfWeek.getDate() - 7)
+
+  if (d >= startOfToday) return 'Today'
+  if (d >= startOfYesterday) return 'Yesterday'
+  if (d >= startOfWeek) return 'This Week'
+  return 'Earlier'
+}
+
+function matchesFilter(n: AppNotification, f: Filter): boolean {
+  if (f === 'all') return true
+  if (f === 'submissions') return n.type === 'new_submission'
+  if (f === 'comments') return n.type === 'new_comment'
+  if (f === 'system') return n.type === 'system' || n.type === 'new_user'
+  return true
 }
 
 export default function NotificationsPage() {
   const [activeFilter, setActiveFilter] = useState<Filter>('all')
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
+  const [userId, setUserId] = useState<number | null>(null)
+  const [role, setRole] = useState<'admin' | 'journalist' | 'reader'>('reader')
+  const [loadingUser, setLoadingUser] = useState(true)
 
-  const markAllRead = () => {
-    setNotifications(prev =>
-      prev.map(group => ({
-        ...group,
-        items: group.items.map(item => ({ ...item, read: true })),
-      }))
-    )
+  useEffect(() => {
+    ;(async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoadingUser(false)
+        return
+      }
+      const { data: profile } = await supabase
+        .from('users')
+        .select('user_id, role')
+        .eq('auth_id', user.id)
+        .single()
+      if (profile) {
+        setUserId((profile as { user_id: number }).user_id)
+        setRole((profile as { role: string }).role as typeof role)
+      }
+      setLoadingUser(false)
+    })()
+  }, [])
+
+  const { notifications, unreadCount, markAllRead, markRead } =
+    useNotifications(userId ?? 0, role)
+
+  const visible = notifications.filter((n) => matchesFilter(n, activeFilter))
+  const groups: { key: string; items: AppNotification[] }[] = []
+  for (const n of visible) {
+    const key = groupKey(n.timestamp)
+    let g = groups.find((x) => x.key === key)
+    if (!g) {
+      g = { key, items: [] }
+      groups.push(g)
+    }
+    g.items.push(n)
   }
-
-  const filtered = activeFilter === 'all'
-    ? notifications
-    : notifications
-        .map(group => ({
-          ...group,
-          items: group.items.filter(n => {
-            if (activeFilter === 'likes') return n.type === 'like'
-            if (activeFilter === 'comments') return n.type === 'comment'
-            if (activeFilter === 'follows') return n.type === 'follow'
-            if (activeFilter === 'mentions') return n.type === 'mention'
-            if (activeFilter === 'system') return n.type === 'system'
-            return true
-          }),
-        }))
-        .filter(group => group.items.length > 0)
-
-  const totalUnread = notifications.reduce(
-    (acc, group) => acc + group.items.filter(n => !n.read).length,
-    0
-  )
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
       <Navbar />
 
       <main className="flex-1 w-full" style={{ maxWidth: '720px', marginInline: 'auto', paddingInline: 'var(--space-md)' }}>
-        {/* Header */}
         <div
           className="flex items-center justify-between"
           style={{ paddingBlock: 'var(--space-xl)', borderBottom: '1px solid var(--border-subtle)', marginBottom: 'var(--space-lg)' }}
         >
           <div>
-            <h1
-              className="font-serif"
-              style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}
-            >
+            <h1 className="font-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Notifications
             </h1>
-            {totalUnread > 0 && (
+            {unreadCount > 0 && (
               <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                {totalUnread} unread notification{totalUnread !== 1 ? 's' : ''}
+                {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -136,9 +124,8 @@ export default function NotificationsPage() {
           </button>
         </div>
 
-        {/* Filter pills */}
         <div className="flex gap-2 flex-wrap" style={{ marginBottom: 'var(--space-xl)' }}>
-          {FILTERS.map(f => (
+          {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setActiveFilter(f.value)}
@@ -160,110 +147,64 @@ export default function NotificationsPage() {
           ))}
         </div>
 
-        {/* Notifications list */}
-        {filtered.length === 0 ? (
-          <div
-            className="text-center"
-            style={{
-              paddingBlock: 'var(--space-3xl)',
-              borderRadius: '16px',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>
-              {'\uD83D\uDD14'}
-            </div>
-            <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-xs)' }}>
-              No notifications
-            </p>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>
-              You&apos;re all caught up! Check back later for updates.
-            </p>
+        {loadingUser ? (
+          <p style={{ color: 'var(--text-tertiary)', paddingBlock: 'var(--space-2xl)' }}>Loading…</p>
+        ) : userId === null ? (
+          <div className="text-center" style={{ paddingBlock: 'var(--space-3xl)', borderRadius: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Sign in to see notifications</p>
+            <Link href="/login?redirect=/notifications" className="font-medium hover:underline" style={{ color: 'var(--primary)' }}>Log in</Link>
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="text-center" style={{ paddingBlock: 'var(--space-3xl)', borderRadius: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>🔔</div>
+            <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-xs)' }}>No notifications</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>You&apos;re all caught up! Check back later for updates.</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {filtered.map(group => (
-              <div key={group.group}>
-                <h2
-                  className="font-semibold uppercase"
-                  style={{
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.08em',
-                    color: 'var(--text-tertiary)',
-                    marginBottom: 'var(--space-sm)',
-                  }}
-                >
-                  {group.group}
+            {groups.map((group) => (
+              <div key={group.key}>
+                <h2 className="font-semibold uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-tertiary)', marginBottom: 'var(--space-sm)' }}>
+                  {group.key}
                 </h2>
-                <div
-                  className="rounded-xl overflow-hidden"
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-subtle)',
-                  }}
-                >
-                  {group.items.map((item, i) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-3"
-                      style={{
-                        padding: '0.875rem 1rem',
-                        borderBottom: i < group.items.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                        background: !item.read ? 'var(--primary-light)' : 'transparent',
-                        transition: 'background 0.15s',
-                      }}
-                    >
-                      {/* Unread dot */}
-                      <div style={{ width: '8px', height: '8px', marginTop: '7px', flexShrink: 0, borderRadius: '9999px', background: !item.read ? 'var(--primary)' : 'transparent' }} />
-
-                      {/* Icon */}
-                      <div
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '10px',
-                          background: TYPE_COLORS[item.type]?.bg ?? 'var(--bg-inset)',
-                          color: TYPE_COLORS[item.type]?.color ?? 'var(--text-secondary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.95rem',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {TYPE_ICONS[item.type]}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: !item.read ? 600 : 400, lineHeight: 1.4 }}>
-                          {item.text}
-                        </p>
-                        {item.detail && (
-                          <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: '2px', fontStyle: 'italic' }}>
-                            {item.detail}
+                <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                  {group.items.map((item, i) => {
+                    const meta = TYPE_META[item.type] ?? TYPE_META.system
+                    const inner = (
+                      <>
+                        <div style={{ width: '8px', height: '8px', marginTop: '7px', flexShrink: 0, borderRadius: '9999px', background: !item.read ? 'var(--primary)' : 'transparent' }} />
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: meta.bg, color: meta.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', flexShrink: 0 }}>
+                          {meta.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: !item.read ? 600 : 400, lineHeight: 1.4 }}>
+                            {item.message}
                           </p>
-                        )}
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                          {item.time}
-                        </p>
+                          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            {timeAgo(item.timestamp)}
+                          </p>
+                        </div>
+                      </>
+                    )
+                    const style = {
+                      padding: '0.875rem 1rem',
+                      borderBottom: i < group.items.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                      background: !item.read ? 'var(--primary-light)' : 'transparent',
+                      transition: 'background 0.15s',
+                    }
+                    if (item.link) {
+                      return (
+                        <Link key={item.id} href={item.link} onClick={() => markRead(item.id)} className="flex items-start gap-3" style={style} >
+                          {inner}
+                        </Link>
+                      )
+                    }
+                    return (
+                      <div key={item.id} className="flex items-start gap-3" style={style}>
+                        {inner}
                       </div>
-
-                      {/* Optional thumbnail */}
-                      {item.thumbnail && (
-                        <div
-                          style={{
-                            width: '48px',
-                            height: '36px',
-                            borderRadius: '6px',
-                            background: 'var(--bg-inset)',
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ))}

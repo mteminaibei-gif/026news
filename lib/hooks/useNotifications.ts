@@ -3,148 +3,125 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-export interface Notification {
+export type NotificationType =
+  | 'new_submission'
+  | 'approved'
+  | 'rejected'
+  | 'revision_requested'
+  | 'new_comment'
+  | 'new_user'
+  | 'system'
+
+export interface AppNotification {
   id: string
-  type:
-    | 'article_approved'
-    | 'article_rejected'
-    | 'revision_requested'
-    | 'new_comment'
-    | 'new_submission'
-    | 'new_user'
+  type: NotificationType
+  title: string
   message: string
-  articleId?: number
-  userId?: number
-  timestamp: string
+  link?: string | null
   read: boolean
+  timestamp: string
 }
 
-export function useNotifications(userId: number, role: 'admin' | 'journalist' | 'reader') {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount]     = useState(0)
+type Row = {
+  notification_id: number
+  type: string
+  title: string
+  message: string
+  link: string | null
+  read: boolean
+  created_at: string
+}
 
-  function push(n: Omit<Notification, 'timestamp' | 'read'>) {
-    const notif: Notification = { ...n, timestamp: new Date().toISOString(), read: false }
-    setNotifications(prev => [notif, ...prev.slice(0, 49)]) // keep last 50
-    setUnreadCount(c => c + 1)
+function mapRow(r: Row): AppNotification {
+  return {
+    id: String(r.notification_id),
+    type: (r.type as NotificationType) ?? 'system',
+    title: r.title,
+    message: r.message,
+    link: r.link,
+    read: r.read,
+    timestamp: r.created_at,
+  }
+}
+
+/**
+ * Reads the user's persisted notifications from the `notifications` table and
+ * subscribes to Realtime INSERTs so new ones arrive instantly. Mark actions
+ * persist back to the database (RLS ensures a user only touches their own rows).
+ */
+export function useNotifications(userId: number, role: 'admin' | 'journalist' | 'reader') {
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  function recalc(items: AppNotification[]) {
+    setNotifications(items)
+    setUnreadCount(items.filter((n) => !n.read).length)
   }
 
   useEffect(() => {
-    if (!userId || role === 'reader') return
-
+    if (!userId) return
     const supabase = createClient()
-    const channels: ReturnType<typeof supabase.channel>[] = []
+    let active = true
 
-    // ── JOURNALIST: watch review_workflow for decisions on their articles ──
-    if (role === 'journalist') {
-      const reviewChannel = supabase
-        .channel(`notifications:journalist:${userId}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'review_workflow' },
-          async (payload) => {
-            const review = payload.new as {
-              article_id: number
-              action: string
-              review_notes: string
-            }
+    ;(async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50)
 
-            const { data: rawArticle } = await supabase
-              .from('articles')
-              .select('title, author_id')
-              .eq('article_id', review.article_id)
-              .single()
-            const article = rawArticle as unknown as { title: string; author_id: number } | null
+      if (!active) return
+      const mapped = ((data ?? []) as Row[]).map(mapRow)
+      recalc(mapped)
+    })()
 
-            if (article?.author_id !== userId) return
-
-            const actionLabels: Record<string, string> = {
-              approved:           '✅ Your article was approved and published!',
-              rejected:           '❌ Your article was rejected.',
-              revision_requested: '🔄 Revision requested on your article.',
-            }
-
-            push({
-              id:        `review-${Date.now()}`,
-              type:      review.action as Notification['type'],
-              message:   `${actionLabels[review.action] ?? review.action}: "${article.title}"`,
-              articleId: review.article_id,
-            })
-          }
-        )
-        .subscribe()
-
-      channels.push(reviewChannel)
-    }
-
-    // ── ADMIN: watch new article submissions ──
-    if (role === 'admin') {
-      const submissionChannel = supabase
-        .channel(`notifications:admin:submissions:${userId}`)
-        .on(
-          'postgres_changes',
-          {
-            event:  'UPDATE',
-            schema: 'public',
-            table:  'articles',
-            filter: `status=eq.under_review`,
-          },
-          (payload) => {
-            const article = payload.new as { article_id: number; title: string }
-            push({
-              id:        `submission-${Date.now()}`,
-              type:      'new_submission',
-              message:   `📝 New article pending review: "${article.title}"`,
-              articleId: article.article_id,
-            })
-          }
-        )
-        .subscribe()
-
-      channels.push(submissionChannel)
-
-      // ── ADMIN: watch new user registrations (INSERT on users table) ──
-      const newUserChannel = supabase
-        .channel(`notifications:admin:new-users:${userId}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'users' },
-          (payload) => {
-            const newUser = payload.new as {
-              user_id: number
-              name: string
-              email: string
-              role: string
-            }
-            const roleLabel = newUser.role === 'journalist' ? 'Author' : newUser.role
-            push({
-              id:      `new-user-${Date.now()}`,
-              type:    'new_user',
-              message: `🆕 New ${roleLabel} registered: ${newUser.name || newUser.email}`,
-              userId:  newUser.user_id,
-            })
-          }
-        )
-        .subscribe()
-
-      channels.push(newUserChannel)
-    }
+    const channel = supabase
+      .channel(`notifications:user:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const n = mapRow(payload.new as Row)
+          setNotifications((prev) => [n, ...prev].slice(0, 50))
+          setUnreadCount((c) => c + 1)
+        }
+      )
+      .subscribe()
 
     return () => {
-      channels.forEach(ch => supabase.removeChannel(ch))
+      active = false
+      supabase.removeChannel(channel)
     }
-  }, [userId, role]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, role])
 
   function markAllRead() {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     setUnreadCount(0)
+    if (!userId) return
+    const supabase = createClient()
+    supabase
+      .from('notifications')
+      .update({ read: true } as never)
+      .eq('user_id', userId)
+      .eq('read', false)
   }
 
   function markRead(id: string) {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
-    setUnreadCount(c => Math.max(0, c - 1))
+    setUnreadCount((c) => Math.max(0, c - 1))
+    const supabase = createClient()
+    supabase
+      .from('notifications')
+      .update({ read: true } as never)
+      .eq('notification_id', Number(id))
   }
 
   return { notifications, unreadCount, markAllRead, markRead }

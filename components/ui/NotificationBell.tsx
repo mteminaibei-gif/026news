@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useNotifications } from '@/lib/hooks/useNotifications'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useNotifications, type NotificationType } from '@/lib/hooks/useNotifications'
 import { timeAgo } from '@/lib/utils'
 
 interface NotificationBellProps {
@@ -9,21 +11,26 @@ interface NotificationBellProps {
   role: 'admin' | 'journalist' | 'reader'
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  article_approved: '✅',
-  article_rejected: '❌',
+const TYPE_ICONS: Record<NotificationType, string> = {
+  new_submission: '📝',
+  approved: '✅',
+  rejected: '❌',
   revision_requested: '🔄',
   new_comment: '💬',
-  new_submission: '📝',
+  new_user: '🆕',
+  system: '🔔',
 }
 
-/**
- * Real-time notification bell for admin and journalist dashboards.
- * Uses Supabase Realtime via useNotifications hook.
- */
 export function NotificationBell({ userId, role }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
-  const { notifications, unreadCount, markAllRead } = useNotifications(userId, role)
+  const router = useRouter()
+  const { notifications, unreadCount, markAllRead, markRead } = useNotifications(userId, role)
+
+  function openNotification(n: { id: string; link?: string | null }) {
+    markRead(n.id)
+    if (n.link) router.push(n.link)
+    setOpen(false)
+  }
 
   return (
     <div className="relative">
@@ -48,10 +55,8 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
 
       {open && (
         <>
-          {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
 
-          {/* Dropdown */}
           <div
             className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
             role="dialog"
@@ -77,10 +82,11 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
                   <p className="text-xs mt-1">You&apos;re all caught up!</p>
                 </div>
               ) : (
-                notifications.slice(0, 10).map(n => (
-                  <div
+                notifications.slice(0, 10).map((n) => (
+                  <button
                     key={n.id}
-                    className={`px-4 py-3 flex gap-3 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}
+                    onClick={() => openNotification(n)}
+                    className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}
                   >
                     <span className="text-lg shrink-0 mt-0.5">
                       {TYPE_ICONS[n.type] ?? '📬'}
@@ -92,18 +98,20 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
                     {!n.read && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5" aria-label="Unread" />
                     )}
-                  </div>
+                  </button>
                 ))
               )}
             </div>
 
-            {notifications.length > 0 && (
-              <div className="px-4 py-2.5 border-t border-gray-100 text-center">
-                <button className="text-xs font-semibold text-blue-500 hover:text-blue-700">
-                  View all notifications
-                </button>
-              </div>
-            )}
+            <div className="px-4 py-2.5 border-t border-gray-100 text-center">
+              <Link
+                href="/notifications"
+                className="text-xs font-semibold text-blue-500 hover:text-blue-700"
+                onClick={() => setOpen(false)}
+              >
+                View all notifications
+              </Link>
+            </div>
           </div>
         </>
       )}

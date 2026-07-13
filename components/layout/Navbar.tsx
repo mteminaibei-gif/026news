@@ -76,7 +76,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" aria-label="026Newsblog — home" className="shrink-0 group">
             <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              026<span style={{ color: 'var(--primary)' }}>Newsblog</span>
+               026<span style={{ color: '#e23b3b' }}>Newsblog</span>
             </span>
           </Link>
 
