@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { HomeArticleCard } from './HomeArticleCard'
 import { createClient } from '@/lib/supabase/client'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
@@ -10,10 +10,22 @@ interface Props {
   categoryFilterName?: string | null
 }
 
+const PAGE = 12
+
 export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
   const [articles, setArticles] = useState<ArticleWithAuthor[]>(initialArticles)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
+  const loadingMoreRef = useRef(false)
+  const hasMoreRef = useRef(true)
+  const loadedRef = useRef(initialArticles.length)
+  const loadMoreRef = useRef<() => void>(() => {})
+
+  useEffect(() => { hasMoreRef.current = hasMore }, [hasMore])
+  useEffect(() => { loadedRef.current = initialArticles.length }, [initialArticles])
 
   useEffect(() => {
     setArticles(initialArticles)
@@ -100,15 +112,61 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
     }
   }, [categoryFilterName])
 
-  // Auto-scroll the feed (loops to top), paused on hover
+  // Infinite scroll: load the next page of published articles
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+    try {
+      const supabase = createClient()
+      const from = loadedRef.current
+      let query = supabase
+        .from('articles')
+        .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
+        .eq('status', 'published' as never)
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE - 1)
+      if (categoryFilterName) {
+        query = query.eq('category', categoryFilterName as never)
+      }
+      const { data } = await query
+      const rows = (data ?? []) as ArticleWithAuthor[]
+      loadedRef.current = from + rows.length
+      if (rows.length < PAGE) setHasMore(false)
+      if (rows.length) {
+        setArticles((prev) => {
+          const ids = new Set(prev.map((a) => a.article_id))
+          const fresh = rows.filter((r) => !ids.has(r.article_id))
+          return fresh.length ? [...prev, ...fresh] : prev
+        })
+      }
+    } catch {
+      /* no-op */
+    } finally {
+      setLoadingMore(false)
+      loadingMoreRef.current = false
+    }
+  }, [categoryFilterName])
+
+  useEffect(() => { loadMoreRef.current = loadMore }, [loadMore])
+
+  // Auto-scroll the feed (loops to top), paused on hover; loads more near bottom
   useEffect(() => {
     let raf = 0
     const SPEED = 0.25
     const step = () => {
       const el = scrollRef.current
       if (el && !pausedRef.current && el.scrollHeight > el.clientHeight + 4) {
-        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-        el.scrollTop = atBottom ? 0 : el.scrollTop + SPEED
+        const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight)
+        if (distanceFromBottom <= 80) {
+          if (hasMoreRef.current && !loadingMoreRef.current) {
+            loadMoreRef.current()
+          } else if (!hasMoreRef.current) {
+            el.scrollTop = 0
+          }
+        } else {
+          el.scrollTop += SPEED
+        }
       }
       raf = requestAnimationFrame(step)
     }
@@ -166,6 +224,9 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
           <HomeArticleCard key={article.article_id} article={article} />
         ))}
       </div>
+
+      {loadingMore && <p className="home-feed-status">Loading more stories…</p>}
+      {!hasMore && articles.length > 0 && <p className="home-feed-status">You&rsquo;re all caught up</p>}
     </div>
   )
 }

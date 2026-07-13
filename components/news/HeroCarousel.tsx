@@ -91,10 +91,10 @@ export function HeroCarousel({ articles }: Props) {
         {/* Content (bottom-left) */}
         <div
           key={current}
+          className="hero-content"
           style={{
             position: 'absolute',
             bottom: 0, left: 0, right: 0,
-            padding: '48px',
             maxWidth: 820,
             animation: 'heroFadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both',
           }}
@@ -249,9 +249,6 @@ export function HeroCarousel({ articles }: Props) {
             transition: all 0.3s;
           }
           .hero-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
-          @media (max-width: 640px) {
-            .hero-slideshow > div[style*="padding: 48px"] { padding: 24px !important; }
-          }
         `}</style>
       </section>
     </div>

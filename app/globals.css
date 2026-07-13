@@ -559,6 +559,13 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 .home-feed-scroll::-webkit-scrollbar { width: 8px; }
 .home-feed-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
 
+.home-feed-status {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  padding: 14px 0 4px;
+}
+
 .top-stories-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -911,4 +918,20 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 
 @media (prefers-reduced-motion: reduce) {
   .page-spinner { animation-duration: 2s; }
+}
+
+/* ── Hero slideshow content fit ────────────────────────── */
+.hero-content {
+  padding: 48px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .hero-content {
+    padding: 24px 20px 64px;
+  }
+  .hero-content h1 {
+    font-size: 1.7rem !important;
+  }
 }
