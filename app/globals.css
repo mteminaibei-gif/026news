@@ -885,7 +885,7 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 
 /* ── /news feed auto-scroll ─────────────────────────── */
 .news-feed-scroll {
-  height: 100%;
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -905,7 +905,7 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
     overflow-y: auto;
   }
   .news-feed-scroll {
-    height: auto;
+    max-height: none;
     overflow-y: visible;
   }
 }
