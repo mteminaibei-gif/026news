@@ -84,18 +84,22 @@ export function useSignUp() {
     }: { email: string; password: string; name: string; bio?: string; organization?: string; portfolio?: string; phone?: string }) => {
       const supabase = createClient()
       const combinedBio = `${bio}\n\nOrganization: ${organization || '-'}\nPortfolio: ${portfolio || '-'}\nPhone: ${phone || '-'}`
+      const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
       // The handle_new_user trigger (DB) creates the public.users row from
       // raw_user_meta_data, so we pass profile fields via options.data.
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { name, role: 'journalist', bio: combinedBio } },
+        options: {
+          data: { name, role: 'journalist', bio: combinedBio },
+          emailRedirectTo: `${APP_URL}/api/auth/callback?next=/verify-email`,
+        },
       })
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      router.push('/login?message=Check your email to confirm your account.')
+    onSuccess: (_data, variables) => {
+      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
     },
   })
 }

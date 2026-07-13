@@ -1,32 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
-type UserProfile = { role: string }
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
-// GET /api/auth/callback — handles Supabase OAuth redirect
-export async function GET(req: NextRequest) {
-  const { searchParams, origin } = new URL(req.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+/**
+ * Single callback for Supabase auth flows:
+ *  - OAuth (Google etc.) → `?code=...`
+ *  - Email confirmation → `?token_hash=...&type=signup`
+ *
+ * After exchanging/verifying, we redirect. Email signups are sent to the
+ * verify-email page (which shows the success state and then routes the user
+ * to their profile); everything else goes to `next` (default home).
+ */
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url)
+  const code = url.searchParams.get('code')
+  const token_hash = url.searchParams.get('token_hash')
+  const type = url.searchParams.get('type')
+  const email = url.searchParams.get('email')
+  const next = url.searchParams.get('next') ?? '/'
+  const origin = url.origin
 
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+  let response = NextResponse.redirect(
+    `${origin}${next.startsWith('/') ? next : '/'}`,
+  )
 
-    if (!error) {
-      const { data: { user } } = await supabase.auth.getUser()
-      const { data: rawProfile } = await supabase
-        .from('users')
-        .select('role')
-        .eq('email', user?.email ?? '')
-        .single()
-      const profile = rawProfile as unknown as UserProfile | null
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value)
+          response.cookies.set(name, value, options)
+        })
+      },
+    },
+  })
 
-      if (profile?.role === 'admin')      return NextResponse.redirect(`${origin}/admin/dashboard`)
-      if (profile?.role === 'journalist') return NextResponse.redirect(`${origin}/journalist/dashboard`)
-      return NextResponse.redirect(`${origin}${next}`)
+  try {
+    if (code) {
+      await supabase.auth.exchangeCodeForSession(code)
+    } else if (token_hash && type) {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash,
+        type: type as never,
+        ...(email ? { email } : {}),
+      } as never)
+
+      if (error) {
+        response = NextResponse.redirect(`${origin}/login?error=verification_failed`)
+      } else {
+        const target = new URL('/verify-email', origin)
+        target.searchParams.set('verified', '1')
+        if (email) target.searchParams.set('email', email)
+        response = NextResponse.redirect(target.toString())
+      }
     }
+  } catch {
+    response = NextResponse.redirect(`${origin}/login?error=verification_failed`)
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+  return response
 }

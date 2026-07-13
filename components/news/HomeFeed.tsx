@@ -153,7 +153,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
   // Auto-scroll the feed (loops to top), paused on hover; loads more near bottom
   useEffect(() => {
     let raf = 0
-    const SPEED = 0.25
+    const SPEED = 0.4
     const step = () => {
       const el = scrollRef.current
       if (el && !pausedRef.current && el.scrollHeight > el.clientHeight + 4) {

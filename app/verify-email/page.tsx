@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -21,6 +21,14 @@ function VerifyEmailInner() {
   const [success, setSuccess] = useState(verified)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendMsg, setResendMsg] = useState('')
+  const router = useRouter()
+
+  // After a successful confirmation, send the reader to their profile.
+  useEffect(() => {
+    if (!success) return
+    const t = setTimeout(() => router.push('/profile'), 4000)
+    return () => clearTimeout(t)
+  }, [success, router])
 
   async function resend() {
     if (resendCooldown > 0 || !email) return
@@ -121,12 +129,15 @@ function VerifyEmailInner() {
               ))}
             </div>
 
-            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 28px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 700, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', textDecoration: 'none', marginBottom: 10 }}>
-              🎉 Start Exploring
+            <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 28px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 700, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', textDecoration: 'none', marginBottom: 10 }}>
+              🎉 Go to my profile
             </Link>
-            <Link href="/profile" style={{ display: 'block', width: '100%', padding: '13px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}>
-              Set up your profile first
+            <Link href="/" style={{ display: 'block', width: '100%', padding: '13px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}>
+              Browse news instead
             </Link>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 14 }}>
+              Redirecting you to your profile…
+            </p>
           </div>
         )}
       </div>

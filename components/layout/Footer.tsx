@@ -30,7 +30,7 @@ const FOOTER_LINKS = {
 
 const SOCIAL_LINKS = [
   { label: 'Twitter / X', href: 'https://twitter.com/026newsblog', icon: 'X' },
-  { label: 'Facebook', href: 'https://facebook.com/026newsblog', icon: 'f' },
+  { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61591846443015', icon: 'f' },
   { label: 'YouTube', href: 'https://youtube.com/@026newsblog', icon: '\u25B6' },
   { label: 'WhatsApp', href: 'https://wa.me/254700000000', icon: '\uD83D\uDCAC' },
 ]
