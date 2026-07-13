@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, PenLine, Newspaper, TrendingUp, Users, User,
-  Settings, Globe, BarChart3, Wallet, Home, FileText
+  Settings, Globe, BarChart3, Wallet, Home, FileText, Mail
 } from 'lucide-react'
 
 interface NavItem { href: string; label: string; icon: React.ReactNode }
@@ -32,8 +32,9 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/journalists', label: 'Authors',    icon: <FileText size={18} /> },
   { href: '/admin/sources',     label: 'Sources',    icon: <Globe size={18} /> },
   { href: '/admin/users',       label: 'Users',      icon: <Users size={18} /> },
-  { href: '/admin/analytics',   label: 'Analytics',  icon: <TrendingUp size={18} /> },
+  { href: '/admin/analytics',   label: 'Analytics',   icon: <TrendingUp size={18} /> },
   { href: '/admin/earnings',    label: 'Earnings',   icon: <Wallet size={18} /> },
+  { href: '/admin/gmail',       label: 'Gmail Inbox', icon: <Mail size={18} /> },
   { href: '/admin/settings',    label: 'Settings',   icon: <Settings size={18} /> },
 ]
 
