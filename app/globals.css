@@ -553,6 +553,7 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 }
 
 .home-feed-scroll {
+  max-height: 72vh;
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: none;
