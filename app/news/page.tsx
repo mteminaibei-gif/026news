@@ -134,7 +134,7 @@ export default function NewsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Navbar />
 
       <main style={{ flex: 1 }}>
@@ -239,7 +239,7 @@ export default function NewsPage() {
         </section>
 
         {/* Main Content */}
-        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32 }}>
+        <section style={{ flex: 1, minHeight: 0, maxWidth: 1100, margin: '0 auto', padding: '32px 16px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32 }}>
           {/* Feed */}
           <div
             ref={scrollRef}
