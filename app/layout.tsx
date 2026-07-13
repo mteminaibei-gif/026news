@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
+import StyledJsxRegistry from './registry';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
 
@@ -91,8 +92,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <QueryProvider>
             <RadioProvider>
-              {children}
-              <CookieConsent />
+              <StyledJsxRegistry>
+                {children}
+                <CookieConsent />
+              </StyledJsxRegistry>
             </RadioProvider>
           </QueryProvider>
         </ThemeProvider>

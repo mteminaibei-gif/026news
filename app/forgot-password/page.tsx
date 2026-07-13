@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -160,7 +160,7 @@ function VerifyToken({ token }: { token: string }) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
 
-  useState(() => {
+  useEffect(() => {
     async function verify() {
       try {
         const res = await fetch(`/api/auth/forgot-password?token=${token}`)
