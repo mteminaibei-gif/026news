@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
 import { fetchFullArticleContent } from '@/lib/rss/fulltext'
 import crypto from 'crypto'
@@ -85,38 +86,27 @@ function makeUniqueSlug(title: string, hash: string): string {
 // ── Route handler ─────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
   
-  if (!SUPABASE_URL || !SUPABASE_ANON) {
+  if (!SUPABASE_URL) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
   }
 
-  // Use anon client for auth check
-  const supabase = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON)
-
-  // Check admin authorization via auth header
-  const authHeader = req.headers.get('authorization')
-  if (authHeader) {
-    supabase.auth.setSession({
-      access_token: authHeader.replace('Bearer ', ''),
-      refresh_token: ''
-    })
-  }
-
-  // Check user
+  // Use cookie-based client for auth check
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Verify user is admin using anon client (we'll use service role for writes)
-  const { data: userData } = await supabase
+  // Verify user is admin
+  const { data: rawUserData } = await supabase
     .from('users')
     .select('role')
     .eq('email', user.email ?? '')
     .single()
+  const userData = rawUserData as { role: string } | null
 
   if (!userData || userData.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
