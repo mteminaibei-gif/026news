@@ -471,7 +471,8 @@ function ArticleTable({ title, icon, rows, limit }: { title: string; icon: strin
           <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Published {title.toLowerCase()} will appear here.</p>
         </div>
       ) : (
-        <ul className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--border-strong) transparent' }}>
+          <ul className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
           {shown.map((a) => {
             const name = a.author?.name ?? a.source_name ?? '—'
             const initials = name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '—'
@@ -530,6 +531,7 @@ function ArticleTable({ title, icon, rows, limit }: { title: string; icon: strin
             )
           })}
         </ul>
+        </div>
       )}
     </div>
   )

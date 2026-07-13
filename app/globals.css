@@ -549,18 +549,15 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 }
 
 .home-feed-scroll {
-  max-height: 72vh;
   overflow-y: auto;
   padding-right: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: none;
   scroll-behavior: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-.home-feed-scroll::-webkit-scrollbar { width: 8px; }
-.home-feed-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+.home-feed-scroll::-webkit-scrollbar { width: 0; background: transparent; }
 
 .home-feed-status {
   text-align: center;
