@@ -4,6 +4,8 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 
 function LoginForm() {
   const params = useSearchParams()
@@ -55,7 +57,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="auth-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '100vh', width: '100%' }}>
+    <div className="auth-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', flex: 1, width: '100%' }}>
       {/* Left Panel: Branding */}
       <div
         className="auth-brand hidden lg:flex"
@@ -110,8 +112,8 @@ function LoginForm() {
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Sign In</h2>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Don&apos;t have an account?{' '}
-              <Link href="/onboarding" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create one</Link>
+               New to 026NEWS?{' '}
+               <Link href="/signup" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create an account</Link>
             </p>
           </div>
 
@@ -224,12 +226,16 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
-        <div style={{ color: 'var(--text-tertiary)' }}>Loading...</div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Navbar />
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
+          <div style={{ color: 'var(--text-tertiary)' }}>Loading...</div>
+        </div>
+      }>
+        <LoginForm />
+      </Suspense>
+      <Footer />
+    </div>
   )
 }

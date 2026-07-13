@@ -1,31 +1,117 @@
-'use client'
-
-import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { MOCK_ARTICLES, MOCK_CATEGORIES, MOCK_USERS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import type { PostgrestResponse } from '@supabase/supabase-js'
+
+type ArticleRow = {
+  article_id: number
+  slug: string
+  title: string
+  content: string
+  excerpt: string | null
+  featured_image: string | null
+  views: number
+  created_at: string
+  tags: string[] | null
+  source_name: string | null
+  author: { name: string; profile_image: string | null } | null
+  category: { name: string } | null
+}
+
+type CategoryRow = { category_id: number; name: string }
 
 const FILTER_TABS = ['All Time', 'This Month', 'This Week', 'Today'] as const
 
 const RISING_STORIES = [
   { title: 'New Exoplanet Discovery Sparks Debate', trend: '+245%', category: 'Science' },
-  { title: 'Kenya&apos;s Tech Hub Expansion Plans', trend: '+180%', category: 'Tech' },
+  { title: 'Kenya’s Tech Hub Expansion Plans', trend: '+180%', category: 'Tech' },
   { title: 'East African Trade Agreement Update', trend: '+156%', category: 'Business' },
   { title: 'Climate Summit Key Takeaways', trend: '+132%', category: 'Science' },
   { title: 'Youth Employment Initiative Results', trend: '+98%', category: 'Politics' },
 ]
 
-const CATEGORIES = ['Politics', 'Business', 'Tech', 'Science', 'Entertainment', 'Sports']
+async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try { return await fn() } catch { return fallback }
+}
 
-export default function ArticlesPage() {
-  const [activeFilter, setActiveFilter] = useState<typeof FILTER_TABS[number]>('All Time')
-  const [email, setEmail] = useState('')
+function initials(name: string): string {
+  return name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '—'
+}
 
-  const publishedArticles = MOCK_ARTICLES.filter(a => a.status === 'published')
-  const featured = publishedArticles[0]
-  const articles = publishedArticles.slice(1)
+function ArticleThumb({ src, alt, height }: { src: string | null; alt: string; height: number }) {
+  if (src) {
+    return (
+      <div style={{ position: 'relative', height }}>
+        <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} />
+      </div>
+    )
+  }
+  return (
+    <div
+      style={{
+        height,
+        background: 'linear-gradient(135deg, var(--primary-light), var(--bg-inset))',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 28,
+      }}
+    >
+      📰
+    </div>
+  )
+}
+
+function AuthorAvatar({ src, name }: { src: string | null; name: string }) {
+  if (src) {
+    return <Image src={src} alt={name} width={28} height={28} style={{ borderRadius: '50%' }} />
+  }
+  return (
+    <div
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: '50%',
+        background: 'var(--primary)',
+        color: 'var(--text-inverse)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 11,
+        fontWeight: 700,
+      }}
+    >
+      {initials(name)}
+    </div>
+  )
+}
+
+export default async function ArticlesPage() {
+  const supabase = await createClient()
+
+  const articles = await safeQuery(async () => {
+    const res = await supabase
+      .from('articles')
+      .select(
+        'article_id, slug, title, content, excerpt, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)',
+      )
+      .eq('status', 'published' as never)
+      .order('views', { ascending: false })
+      .limit(48) as PostgrestResponse<ArticleRow>
+    if (res.error) throw res.error
+    return res.data ?? []
+  }, [] as ArticleRow[])
+
+  const categories = await safeQuery(async () => {
+    const res = await supabase.from('categories').select('category_id, name').order('name') as PostgrestResponse<CategoryRow>
+    if (res.error) throw res.error
+    return res.data ?? []
+  }, [] as CategoryRow[])
+
+  const featured = articles[0]
+  const rest = articles.slice(1)
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
@@ -52,29 +138,26 @@ export default function ArticlesPage() {
               Most Popular Articles
             </h1>
             <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.7)', maxWidth: '600px' }}>
-              The stories that matter most to our readers
+              The stories that matter most to our readers — from our newsroom and leading publications.
             </p>
 
             {/* Filter Tabs */}
             <div className="flex gap-2" style={{ marginTop: 'var(--space-xl)' }}>
-              {FILTER_TABS.map(tab => (
-                <button
+              {FILTER_TABS.map((tab, i) => (
+                <span
                   key={tab}
-                  onClick={() => setActiveFilter(tab)}
                   style={{
                     padding: '8px 20px',
                     borderRadius: '9999px',
                     border: 'none',
                     fontSize: '0.85rem',
                     fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    background: activeFilter === tab ? '#ffffff' : 'rgba(255,255,255,0.15)',
-                    color: activeFilter === tab ? 'var(--primary)' : 'rgba(255,255,255,0.85)',
+                    background: i === 0 ? '#ffffff' : 'rgba(255,255,255,0.15)',
+                    color: i === 0 ? 'var(--primary)' : 'rgba(255,255,255,0.85)',
                   }}
                 >
                   {tab}
-                </button>
+                </span>
               ))}
             </div>
           </div>
@@ -86,95 +169,11 @@ export default function ArticlesPage() {
             {/* Left Column */}
             <div>
               {/* Featured Article */}
-              {featured && (
-                <Link
-                  href={`/article/${featured.slug}`}
-                  className="hover-lift"
-                  style={{
-                    display: 'block',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    background: 'var(--bg-surface)',
-                    boxShadow: 'var(--card-shadow)',
-                    border: '1px solid var(--border-subtle)',
-                    marginBottom: 'var(--space-2xl)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <div style={{ position: 'relative', height: '400px' }}>
-                    <Image
-                      src={featured.featured_image}
-                      alt={featured.title}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
-                      }}
-                    />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'var(--space-xl)' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          padding: '4px 12px',
-                          borderRadius: '9999px',
-                          background: 'var(--accent)',
-                          color: '#ffffff',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          marginBottom: 'var(--space-sm)',
-                        }}
-                      >
-                        {featured.category?.name}
-                      </span>
-                      <h2
-                        style={{
-                          fontSize: '1.75rem',
-                          fontWeight: 700,
-                          color: '#ffffff',
-                          fontFamily: "'Newsreader', Georgia, serif",
-                          lineHeight: 1.3,
-                          marginBottom: 'var(--space-sm)',
-                        }}
-                      >
-                        {featured.title}
-                      </h2>
-                      <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-md)' }}>
-                        {featured.content.slice(0, 150)}...
-                      </p>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <Image
-                            src={featured.author?.profile_image || ''}
-                            alt={featured.author?.name || ''}
-                            width={28}
-                            height={28}
-                            style={{ borderRadius: '50%' }}
-                          />
-                          <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
-                            {featured.author?.name}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
-                          {featured.views.toLocaleString()} views
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              )}
-
-              {/* Article Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)' }}>
-                {articles.map(article => (
+              {featured && (() => {
+                const byline = featured.source_name ?? featured.author?.name ?? 'Staff'
+                return (
                   <Link
-                    key={article.article_id}
-                    href={`/article/${article.slug}`}
+                    href={`/article/${featured.slug}`}
                     className="hover-lift"
                     style={{
                       display: 'block',
@@ -183,123 +182,171 @@ export default function ArticlesPage() {
                       background: 'var(--bg-surface)',
                       boxShadow: 'var(--card-shadow)',
                       border: '1px solid var(--border-subtle)',
+                      marginBottom: 'var(--space-2xl)',
                       textDecoration: 'none',
                     }}
                   >
-                    {/* Thumbnail */}
-                    <div style={{ position: 'relative', height: '180px' }}>
-                      <Image
-                        src={article.featured_image}
-                        alt={article.title}
-                        fill
-                        style={{ objectFit: 'cover' }}
+                    <div style={{ position: 'relative', height: '400px' }}>
+                      <ArticleThumb src={featured.featured_image} alt={featured.title} height={400} />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
+                        }}
                       />
-                    </div>
-
-                    <div style={{ padding: 'var(--space-lg)' }}>
-                      {/* Category Badge */}
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          padding: '3px 10px',
-                          borderRadius: '9999px',
-                          background: 'var(--primary-light)',
-                          color: 'var(--primary)',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                          marginBottom: 'var(--space-sm)',
-                        }}
-                      >
-                        {article.category?.name}
-                      </span>
-
-                      {/* Title */}
-                      <h3
-                        style={{
-                          fontSize: '1.05rem',
-                          fontWeight: 700,
-                          color: 'var(--text-primary)',
-                          fontFamily: "'Newsreader', Georgia, serif",
-                          lineHeight: 1.35,
-                          marginBottom: 'var(--space-sm)',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {article.title}
-                      </h3>
-
-                      {/* Excerpt */}
-                      <p
-                        style={{
-                          fontSize: '0.82rem',
-                          color: 'var(--text-secondary)',
-                          lineHeight: 1.5,
-                          marginBottom: 'var(--space-md)',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {article.content.slice(0, 100)}...
-                      </p>
-
-                      {/* Author Row */}
-                      <div className="flex items-center gap-2" style={{ marginBottom: 'var(--space-sm)' }}>
-                        <Image
-                          src={article.author?.profile_image || ''}
-                          alt={article.author?.name || ''}
-                          width={22}
-                          height={22}
-                          style={{ borderRadius: '50%' }}
-                        />
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                          {article.author?.name}
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'var(--space-xl)' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '4px 12px',
+                            borderRadius: '9999px',
+                            background: 'var(--accent)',
+                            color: '#ffffff',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: 'var(--space-sm)',
+                          }}
+                        >
+                          {featured.category?.name ?? 'Articles'}
                         </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          &middot; {article.created_at}
-                        </span>
-                      </div>
-
-                      {/* Stats Row */}
-                      <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-sm)' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {'\u{1F441}'} {article.views.toLocaleString()}
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {'\u{1F4AC}'} {article.comments?.length || 0}
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {'\u{1F44D}'} {Math.floor(article.views * 0.03)}
-                        </span>
-                      </div>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-1">
-                        {article.tags?.slice(0, 3).map(tag => (
-                          <span
-                            key={tag}
-                            style={{
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                              background: 'var(--bg-inset)',
-                              color: 'var(--text-tertiary)',
-                              fontSize: '0.68rem',
-                              fontWeight: 500,
-                            }}
-                          >
-                            {tag}
+                        <h2
+                          style={{
+                            fontSize: '1.75rem',
+                            fontWeight: 700,
+                            color: '#ffffff',
+                            fontFamily: "'Newsreader', Georgia, serif",
+                            lineHeight: 1.3,
+                            marginBottom: 'var(--space-sm)',
+                          }}
+                        >
+                          {featured.title}
+                        </h2>
+                        <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-md)' }}>
+                          {(featured.excerpt || featured.content).slice(0, 150)}...
+                        </p>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <AuthorAvatar src={featured.author?.profile_image ?? null} name={byline} />
+                            <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                              {byline}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
+                            {featured.views.toLocaleString()} views
                           </span>
-                        ))}
+                        </div>
                       </div>
                     </div>
                   </Link>
-                ))}
+                )
+              })()}
+
+              {/* Article Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)' }}>
+                {rest.map((article) => {
+                  const byline = article.source_name ?? article.author?.name ?? 'Staff'
+                  return (
+                    <Link
+                      key={article.article_id}
+                      href={`/article/${article.slug}`}
+                      className="hover-lift"
+                      style={{
+                        display: 'block',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        background: 'var(--bg-surface)',
+                        boxShadow: 'var(--card-shadow)',
+                        border: '1px solid var(--border-subtle)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {/* Thumbnail */}
+                      <div style={{ position: 'relative', height: '180px' }}>
+                        <ArticleThumb src={article.featured_image} alt={article.title} height={180} />
+                      </div>
+
+                      <div style={{ padding: 'var(--space-lg)' }}>
+                        {/* Category Badge */}
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '3px 10px',
+                            borderRadius: '9999px',
+                            background: 'var(--primary-light)',
+                            color: 'var(--primary)',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            marginBottom: 'var(--space-sm)',
+                          }}
+                        >
+                          {article.category?.name ?? 'Articles'}
+                        </span>
+
+                        {/* Title */}
+                        <h3
+                          style={{
+                            fontSize: '1.05rem',
+                            fontWeight: 700,
+                            color: 'var(--text-primary)',
+                            fontFamily: "'Newsreader', Georgia, serif",
+                            lineHeight: 1.35,
+                            marginBottom: 'var(--space-sm)',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {article.title}
+                        </h3>
+
+                        {/* Excerpt */}
+                        <p
+                          style={{
+                            fontSize: '0.82rem',
+                            color: 'var(--text-secondary)',
+                            lineHeight: 1.5,
+                            marginBottom: 'var(--space-md)',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {(article.excerpt || article.content).slice(0, 100)}...
+                        </p>
+
+                        {/* Author Row */}
+                        <div className="flex items-center gap-2" style={{ marginBottom: 'var(--space-sm)' }}>
+                          <AuthorAvatar src={article.author?.profile_image ?? null} name={byline} />
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                            {byline}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            &middot; {new Date(article.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        {/* Stats Row */}
+                        <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-sm)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {'👁'} {article.views.toLocaleString()}
+                          </span>
+                          {article.tags?.[0] && (
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
+                              #{article.tags[0]}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
 
@@ -351,22 +398,10 @@ export default function ArticlesPage() {
                         {story.title}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            color: 'var(--text-muted)',
-                            fontWeight: 500,
-                          }}
-                        >
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                           {story.category}
                         </span>
-                        <span
-                          style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            color: 'var(--success)',
-                          }}
-                        >
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--success)' }}>
                           {story.trend}
                         </span>
                       </div>
@@ -397,10 +432,10 @@ export default function ArticlesPage() {
                   Categories
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map(cat => (
+                  {categories.map((cat) => (
                     <Link
-                      key={cat}
-                      href={`/category/${cat.toLowerCase()}`}
+                      key={cat.category_id}
+                      href={`/category/${cat.name.toLowerCase()}`}
                       style={{
                         padding: '6px 16px',
                         borderRadius: '9999px',
@@ -412,7 +447,7 @@ export default function ArticlesPage() {
                         transition: 'all 0.2s',
                       }}
                     >
-                      {cat}
+                      {cat.name}
                     </Link>
                   ))}
                 </div>
@@ -445,8 +480,6 @@ export default function ArticlesPage() {
                   <input
                     type="email"
                     placeholder="Enter your email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
                     style={{
                       padding: '10px 14px',
                       borderRadius: '10px',

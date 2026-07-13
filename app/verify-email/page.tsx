@@ -4,6 +4,8 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 
 const confettiColors = ['#f2545b', '#f4a259', '#25a18e', '#3a86ff', '#8338ec', '#ffbe0b']
 const confettiPieces = Array.from({ length: 50 }).map((_, i) => ({
@@ -36,7 +38,7 @@ function VerifyEmailInner() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
       <div style={{ width: '100%', maxWidth: 480, textAlign: 'center' }}>
         <Link href="/" style={{ display: 'inline-block', marginBottom: 40 }}>
           <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -147,10 +149,14 @@ function VerifyEmailInner() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)', color: 'var(--text-tertiary)' }}>Loading…</div>
-    }>
-      <VerifyEmailInner />
-    </Suspense>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Navbar />
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)', color: 'var(--text-tertiary)' }}>Loading…</div>
+      }>
+        <VerifyEmailInner />
+      </Suspense>
+      <Footer />
+    </div>
   )
 }

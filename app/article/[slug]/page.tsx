@@ -3,14 +3,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { ArticleCard } from '@/components/news/ArticleCard'
-import { RelatedArticles } from '@/components/news/RelatedArticles'
-import { AdBanner } from '@/components/ui/AdBanner'
-import { CommentsSection } from '@/components/news/CommentsSection'
-import { ShareBar } from '@/components/news/ShareBar'
-import { SaveArticleButton } from '@/components/news/SaveArticleButton'
 import { ReadingProgress } from '@/components/ui/ReadingProgress'
-import { FeaturedImage } from '@/components/ui/FeaturedImage'
+import { ArticleFloatBar } from '@/components/news/ArticleFloatBar'
+import { ArticleComments } from '@/components/news/ArticleComments'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -35,18 +30,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('articles')
-    .select('title, content, featured_image, created_at, author:users(name), category:categories(name)')
+    .select('title, excerpt, content, featured_image, created_at, author:users(name), category:categories(name)')
     .eq('slug', slug)
     .single()
 
   if (!data) return {}
   const article = data as unknown as {
-    title: string; content: string; featured_image: string | null; created_at: string
+    title: string; excerpt: string | null; content: string; featured_image: string | null; created_at: string
     author: { name: string } | null; category: { name: string } | null
   }
 
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
-  const description = article.content.substring(0, 155)
+  const description = (article.excerpt || article.content).slice(0, 160)
 
   return {
     title: article.title,
@@ -67,6 +62,95 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+const ARTICLE_CSS = `
+.article-view { font-family: 'Space Grotesk', system-ui, sans-serif; }
+.article-view .article-layout { max-width: 780px; margin: 0 auto; padding: 48px 24px 110px; }
+.article-view .article-header { margin-bottom: 40px; }
+.article-view .article-category { display:inline-block; padding:5px 14px; background: var(--primary-light); color: var(--primary); font-size:0.72rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border-radius:5px; margin-bottom:16px; }
+.article-view .article-title { font-family:'Newsreader',Georgia,serif; font-size: clamp(2rem,5vw,2.8rem); font-weight:700; line-height:1.2; margin-bottom:16px; letter-spacing:-0.01em; text-wrap: balance; }
+.article-view .article-subtitle { font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-style:italic; color: var(--text-secondary); line-height:1.5; margin-bottom:24px; max-width:60ch; }
+.article-view .article-meta { display:flex; align-items:center; justify-content:space-between; padding:16px 0; border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle); gap:12px; flex-wrap:wrap; }
+.article-view .article-author-row { display:flex; align-items:center; gap:12px; }
+.article-view .author-avatar { width:44px; height:44px; border-radius:12px; background: linear-gradient(135deg, oklch(50% 0.14 220), oklch(45% 0.12 200)); display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; color: oklch(98% 0.005 175); }
+.article-view .author-info { display:flex; flex-direction:column; }
+.article-view .author-name { font-size:0.88rem; font-weight:600; color: var(--text-primary); }
+.article-view .author-detail { font-size:0.75rem; color: var(--text-tertiary); }
+.article-view .article-meta-right { display:flex; align-items:center; gap:16px; }
+.article-view .meta-item { font-size:0.78rem; color: var(--text-tertiary); display:flex; align-items:center; gap:4px; }
+.article-view .article-cover { width:100%; border-radius:16px; margin-bottom:40px; overflow:hidden; background: var(--bg-inset); }
+.article-view .article-cover img { width:100%; height:auto; display:block; }
+.article-view .article-cover-caption { text-align:center; font-size:0.75rem; color: var(--text-tertiary); font-style:italic; margin-top:10px; }
+.article-view .article-body { font-family:'Newsreader',Georgia,serif; font-size:1.15rem; line-height:1.85; color: var(--text-primary); }
+.article-view .article-body p { margin-bottom:1.5em; max-width:65ch; }
+.article-view .article-body h2 { font-family:'Space Grotesk',system-ui,sans-serif; font-size:1.6rem; font-weight:700; margin-top:2.5em; margin-bottom:0.8em; letter-spacing:-0.01em; }
+.article-view .article-body h3 { font-family:'Space Grotesk',system-ui,sans-serif; font-size:1.25rem; font-weight:600; margin-top:2em; margin-bottom:0.6em; }
+.article-view .article-body blockquote { padding:20px 28px; margin:2em 0; background: var(--bg-inset); border-radius:12px; font-style:italic; color: var(--text-secondary); font-size:1.1rem; position:relative; }
+.article-view .article-body blockquote::before { content:'"'; position:absolute; top:8px; left:12px; font-size:3rem; color: var(--primary); opacity:0.3; font-family:Georgia,serif; line-height:1; }
+.article-view .article-body ul, .article-view .article-body ol { margin:1.5em 0; padding-left:1.5em; }
+.article-view .article-body li { margin-bottom:0.6em; }
+.article-view .article-body img { width:100%; border-radius:12px; margin:2em 0; }
+.article-view .article-body a { color: var(--primary); text-decoration:underline; text-underline-offset:3px; }
+.article-view .article-tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:40px; padding-top:24px; border-top:1px solid var(--border-subtle); }
+.article-view .article-tag { padding:5px 14px; background: var(--bg-inset); border-radius:16px; font-size:0.75rem; font-weight:500; color: var(--text-secondary); text-decoration:none; transition: all 0.15s; }
+.article-view .article-tag:hover { background: var(--primary-light); color: var(--primary); }
+.article-view .author-card { margin-top:40px; padding:28px; background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius:16px; display:flex; gap:20px; align-items:flex-start; }
+.article-view .author-card-avatar { width:56px; height:56px; border-radius:14px; background: linear-gradient(135deg, oklch(50% 0.14 220), oklch(45% 0.12 200)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700; color: oklch(98% 0.005 175); flex-shrink:0; }
+.article-view .author-card-info { flex:1; }
+.article-view .author-card-name { font-size:1rem; font-weight:700; margin-bottom:4px; }
+.article-view .author-card-bio { font-size:0.85rem; color: var(--text-secondary); line-height:1.5; margin-bottom:12px; }
+.article-view .author-card-stats { display:flex; gap:16px; font-size:0.75rem; color: var(--text-tertiary); flex-wrap:wrap; }
+.article-view .author-card-stats strong { color: var(--text-primary); font-weight:600; }
+.article-view .author-card-btn { padding:9px 20px; border-radius:8px; background: var(--primary); color: oklch(98% 0.005 175); border:none; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; transition: all 0.2s; flex-shrink:0; align-self:center; }
+.article-view .author-card-btn:hover { background: var(--primary-hover); }
+.article-view .float-bar { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background: var(--bg-elevated); border:1px solid var(--border); border-radius:16px; padding:10px 20px; display:flex; align-items:center; gap:6px; box-shadow: var(--card-hover-shadow); z-index:40; }
+.article-view .float-btn { width:40px; height:40px; border-radius:10px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color: var(--text-secondary); transition: all 0.15s; position:relative; }
+.article-view .float-btn:hover { background: var(--bg-inset); color: var(--text-primary); }
+.article-view .float-btn.active { color: var(--error); }
+.article-view .float-btn.saved { color: var(--accent); }
+.article-view .float-btn svg { width:20px; height:20px; }
+.article-view .float-btn-count { position:absolute; top:4px; right:4px; font-size:0.55rem; font-weight:700; color: var(--text-tertiary); }
+.article-view .float-divider { width:1px; height:24px; background: var(--border); margin:0 6px; }
+.article-view .comments-section { margin-top:48px; padding-top:40px; border-top:1px solid var(--border-subtle); }
+.article-view .comments-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.article-view .comments-title { font-size:1.2rem; font-weight:700; font-family:'Space Grotesk',system-ui,sans-serif; }
+.article-view .comments-count { font-size:0.82rem; color: var(--text-tertiary); }
+.article-view .comment-input-wrap { display:flex; gap:12px; margin-bottom:32px; }
+.article-view .comment-input-avatar { width:36px; height:36px; border-radius:10px; background: linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220)); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color: oklch(98% 0.005 175); flex-shrink:0; }
+.article-view .comment-input-body { flex:1; }
+.article-view .comment-thread { display:flex; flex-direction:column; gap:24px; }
+.article-view .comment { display:flex; gap:12px; }
+.article-view .comment-avatar { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700; color: oklch(98% 0.005 175); flex-shrink:0; }
+.article-view .comment-body { flex:1; }
+.article-view .comment-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.article-view .comment-name { font-size:0.82rem; font-weight:600; }
+.article-view .comment-time { font-size:0.7rem; color: var(--text-tertiary); }
+.article-view .comment-text { font-size:0.88rem; line-height:1.55; color: var(--text-secondary); margin-bottom:8px; white-space:pre-wrap; }
+.article-view .comment-actions { display:flex; gap:12px; }
+.article-view .comment-action { display:flex; align-items:center; gap:4px; font-size:0.72rem; color: var(--text-tertiary); cursor:pointer; background:none; border:none; font-family:inherit; transition: color 0.15s; }
+.article-view .comment-action:hover { color: var(--primary); }
+.article-view .comment-action svg { width:13px; height:13px; }
+.article-view .related-section { margin-top:56px; padding-top:40px; border-top:1px solid var(--border-subtle); }
+.article-view .related-title { font-size:1.1rem; font-weight:700; margin-bottom:24px; }
+.article-view .related-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:20px; }
+.article-view .related-card { border-radius:14px; overflow:hidden; background: var(--bg-surface); border:1px solid var(--border-subtle); transition: all 0.25s var(--ease-out-expo); cursor:pointer; text-decoration:none; color:inherit; display:block; }
+.article-view .related-card:hover { transform: translateY(-3px); box-shadow: var(--card-hover-shadow); border-color: var(--border); }
+.article-view .related-card-img { width:100%; height:140px; object-fit:cover; }
+.article-view .related-card-body { padding:16px; }
+.article-view .related-card-category { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color: var(--primary); margin-bottom:6px; }
+.article-view .related-card-title { font-family:'Newsreader',Georgia,serif; font-size:0.95rem; font-weight:600; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
+.article-view .related-card-meta { font-size:0.7rem; color: var(--text-tertiary); }
+@media (max-width: 768px) {
+  .article-view .article-layout { padding: 32px 16px 110px; }
+  .article-view .article-title { font-size:1.8rem; }
+  .article-view .article-body { font-size:1.05rem; }
+  .article-view .article-meta { flex-direction:column; gap:12px; align-items:flex-start; }
+  .article-view .related-grid { grid-template-columns: 1fr; }
+  .article-view .author-card { flex-direction:column; }
+  .article-view .float-bar { bottom:16px; padding:8px 14px; }
+  .article-view .float-btn { width:36px; height:36px; }
+}
+`
+
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
@@ -79,197 +163,197 @@ export default async function ArticlePage({ params }: Props) {
     .single()
 
   if (!rawArticle) notFound()
-  const article = rawArticle as unknown as ArticleWithAuthor
+  const article = rawArticle as unknown as ArticleWithAuthor & {
+    excerpt: string | null
+    tags: string[] | null
+    reading_time_minutes: number | null
+    likes: number | null
+    like_count: number | null
+    save_count: number | null
+    source_name: string | null
+    source_url: string | null
+  }
 
-  const { data: rawComments } = await supabase
-    .from('comments')
-    .select('comment_id, comment_text, created_at, user:users(name,profile_image)')
-    .eq('article_id', article.article_id)
-    .eq('status', 'visible' as never)
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const authorId = article.author?.user_id
+
+  const [{ data: rawComments }, { data: rawRelated }, authorStats] = await Promise.all([
+    supabase
+      .from('comments')
+      .select('comment_id, comment_text, created_at, user:users(name,profile_image)')
+      .eq('article_id', article.article_id)
+      .eq('status', 'visible' as never)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    article.category_id
+      ? supabase
+          .from('articles')
+          .select('article_id, title, slug, featured_image, excerpt, views, author:users(name), category:categories(name)')
+          .eq('status', 'published' as never)
+          .eq('category_id', article.category_id)
+          .neq('slug', slug)
+          .limit(3)
+      : Promise.resolve({ data: [], error: null } as any),
+    authorId
+      ? supabase.from('articles').select('views', { count: 'exact' }).eq('author_id', authorId).eq('status', 'published' as never)
+      : Promise.resolve({ data: null, count: 0 } as any),
+  ])
+
   const comments = (rawComments ?? []) as unknown as CommentWithUser[]
+  const related = (rawRelated ?? []) as unknown as Array<{
+    article_id: number; title: string; slug: string; featured_image: string | null
+    excerpt: string | null; views: number; author: { name: string } | null; category: { name: string } | null
+  }>
+  const authorArticleCount = authorStats?.count ?? 0
 
-  const { data: rawRelated } = await supabase
-    .from('articles')
-    .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-    .eq('status', 'published' as never)
-    .neq('slug', slug)
-    .limit(4)
-  const related = (rawRelated ?? []) as unknown as ArticleWithAuthor[]
-
-  const paragraphs = article.content.split('\n\n')
+  const paragraphs = (article.content || '').split('\n\n').filter(Boolean)
+  const readTime = article.reading_time_minutes ?? readingTime(article.content)
+  const likes = article.like_count ?? article.likes ?? 0
+  const authorInitials = (article.author?.name ?? 'S').split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()
+  const coverCaption = article.source_name
+    ? `Source: ${article.source_name}`
+    : article.featured_image
+      ? 'Image via 026News'
+      : null
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Navbar />
       <ReadingProgress />
 
-      <div className="max-w-[1200px] mx-auto px-6 py-10 grid lg:grid-cols-[1fr_340px] gap-12">
-        {/* Article Main */}
-        <main>
-          {/* Breadcrumb */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs mb-6 flex-wrap" style={{ color: 'var(--text-tertiary)' }}>
-            <Link href="/" style={{ color: 'var(--primary)' }}>Home</Link>
-            <span>/</span>
-            <Link href={`/?category=${article.category?.name}`} style={{ color: 'var(--primary)' }}>{article.category?.name}</Link>
-            <span>/</span>
-            <span className="truncate max-w-[200px]" style={{ color: 'var(--text-secondary)' }}>{article.title}</span>
-          </nav>
+      <style dangerouslySetInnerHTML={{ __html: ARTICLE_CSS }} />
 
+      <article className="article-view">
+        <div className="article-layout">
           {/* Header */}
-          <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--primary)' }}>
-              {article.category?.name}
-            </p>
-            <h1
-              className="text-2xl md:text-3xl font-semibold leading-tight mb-3"
-              style={{ fontFamily: "'Newsreader', Georgia, serif", color: 'var(--text-primary)' }}
-            >
-              {article.title}
-            </h1>
-            <p className="text-base mb-5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {article.content.substring(0, 140)}...
-            </p>
+          <header className="article-header">
+            {article.category?.name && <span className="article-category">{article.category.name}</span>}
+            <h1 className="article-title">{article.title}</h1>
+            {article.excerpt && <p className="article-subtitle">{article.excerpt}</p>}
 
-            {/* Meta */}
-            <div className="flex flex-wrap items-center gap-4 text-sm pb-5" style={{ color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-subtle)' }}>
-              <span className="flex items-center gap-1.5">
-                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                  {article.author?.name?.charAt(0) ?? 'S'}
-                </span>
-                <strong style={{ color: 'var(--text-primary)' }}>{article.author?.name}</strong>
-              </span>
-              <span>·</span>
-              <span>{formatDate(article.created_at)}</span>
-              <span>·</span>
-              <span>{formatNumber(article.views)} views</span>
-              <span>·</span>
-              <span>{readingTime(article.content)} min read</span>
-            </div>
-
-            {/* Source attribution */}
-            {article.source_reference && (
-              <div className="mt-5 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 text-sm" style={{ background: 'var(--primary-light)', border: '1px solid var(--border-subtle)' }}>
-                <div className="font-semibold uppercase tracking-wider text-xs" style={{ color: 'var(--primary)' }}>
-                  Source attribution
-                </div>
-                <p className="text-sm leading-relaxed flex-1" style={{ color: 'var(--text-secondary)' }}>
-                  This story is linked to its original source. Click through for the full external reference.
-                </p>
-                <a
-                  href={article.source_reference}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-                  style={{ border: '1px solid var(--primary)', color: 'var(--primary)', background: 'var(--bg-elevated)' }}
-                >
-                  {getSourceHost(article.source_reference) ?? 'Read source'} ↗
-                </a>
-              </div>
-            )}
-
-            {/* Author strip */}
-            {article.author && (
-              <div className="flex items-center gap-4 mt-5 p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
-                {article.author.profile_image ? (
-                  <Image src={article.author.profile_image} alt={article.author.name} width={48} height={48} className="rounded-full object-cover shrink-0" />
+            <div className="article-meta">
+              <div className="article-author-row">
+                {article.author?.profile_image ? (
+                  <Image src={article.author.profile_image} alt={article.author.name} width={44} height={44} className="author-avatar" style={{ borderRadius: 12, objectFit: 'cover' } as any} />
                 ) : (
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                    {article.author.name.charAt(0)}
-                  </div>
+                  <div className="author-avatar">{authorInitials}</div>
                 )}
-                <div>
-                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{article.author.name}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Author · {article.category?.name} Specialist</p>
-                  {article.author.bio && (
-                    <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>{article.author.bio}</p>
-                  )}
+                <div className="author-info">
+                  <span className="author-name">{article.author?.name ?? '026News'}</span>
+                  <span className="author-detail">
+                    Published {formatDate(article.created_at)} · {readTime} min read
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
+              <div className="article-meta-right">
+                <span className="meta-item">
+                  <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  {formatNumber(article.views)} views
+                </span>
+                <span className="meta-item">
+                  <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  {formatNumber(likes)}
+                </span>
+              </div>
+            </div>
+          </header>
 
-          {/* Featured image */}
+          {/* Cover */}
           {article.featured_image && (
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-6" style={{ background: 'var(--bg-inset)' }}>
-              <FeaturedImage src={article.featured_image} alt={article.title} priority sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 900px" />
+            <figure className="article-cover">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={article.featured_image} alt={article.title} />
+              {coverCaption && <figcaption className="article-cover-caption">{coverCaption}</figcaption>}
+            </figure>
+          )}
+
+          {/* Source link for aggregated articles */}
+          {article.source_url && (
+            <div className="mb-8 rounded-xl p-4 text-sm" style={{ background: 'var(--primary-light)', border: '1px solid var(--border-subtle)' }}>
+              <span className="font-semibold uppercase tracking-wider text-xs" style={{ color: 'var(--primary)' }}>Source attribution · </span>
+              <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--primary)' }}>
+                {getSourceHost(article.source_url)} ↗
+              </a>
             </div>
           )}
 
           {/* Body */}
-          <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-            <div className="article-content" style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', lineHeight: 1.85, color: 'var(--text-primary)' }}>
-              {paragraphs.map((para, i) => (
-                <p key={i} className="mb-5">{para}</p>
+          <div className="article-body">
+            {paragraphs.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+
+          {/* Tags */}
+          {article.tags && article.tags.length > 0 && (
+            <div className="article-tags">
+              {article.tags.map(t => (
+                <Link key={t} href={`/?tag=${encodeURIComponent(t)}`} className="article-tag">#{t}</Link>
               ))}
             </div>
-          </div>
-
-          {/* Share bar */}
-          <ShareBar title={article.title} slug={article.slug} />
-
-          {/* Save to catalog */}
-          <div className="mb-6">
-            <SaveArticleButton articleId={article.article_id} slug={article.slug} />
-          </div>
-
-          {/* Comments */}
-          <CommentsSection articleId={article.article_id} initialComments={comments} />
-
-          {/* Related articles */}
-          <RelatedArticles currentSlug={article.slug} categoryName={article.category?.name} />
-        </main>
-
-        {/* Sidebar */}
-        <aside className="flex flex-col gap-8">
-          <AdBanner slot="sidebar-article" format="rectangle" className="rounded-xl overflow-hidden" label="Sponsored" />
-
-          {related.length > 0 && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Related News</h3>
-              </div>
-              <div className="p-3">
-                {related.map(r => (
-                  <ArticleCard key={r.article_id} article={r as never} variant="horizontal" />
-                ))}
-              </div>
-            </div>
           )}
 
+          {/* Author card */}
           {article.author && (
-            <div className="rounded-2xl p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-                More by {article.author.name.split(' ')[0]}
-              </h3>
-              <div className="flex items-center gap-3 mb-3">
-                {article.author.profile_image ? (
-                  <Image src={article.author.profile_image} alt={article.author.name} width={40} height={40} className="rounded-full object-cover" unoptimized />
-                ) : (
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                    {article.author.name.charAt(0)}
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{article.author.name}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Author</p>
+            <div className="author-card">
+              {article.author.profile_image ? (
+                <Image src={article.author.profile_image} alt={article.author.name} width={56} height={56} className="author-card-avatar" style={{ borderRadius: 14, objectFit: 'cover' } as any} />
+              ) : (
+                <div className="author-card-avatar">{authorInitials}</div>
+              )}
+              <div className="author-card-info">
+                <h3 className="author-card-name">{article.author.name}</h3>
+                {article.author.bio && <p className="author-card-bio">{article.author.bio}</p>}
+                <div className="author-card-stats">
+                  <span><strong>{formatNumber(article.views)}</strong> views on this article</span>
+                  <span><strong>{authorArticleCount}</strong> articles</span>
                 </div>
               </div>
-              {article.author.bio && (
-                <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>{article.author.bio.substring(0, 100)}...</p>
+              {article.author.user_id && (
+                <Link href={`/journalists/${article.author.user_id}`} className="author-card-btn" style={{ textDecoration: 'none' }}>
+                  View Profile
+                </Link>
               )}
-              <Link
-                href={`/journalists/${article.author.user_id}`}
-                className="block text-center text-sm font-semibold py-2 rounded-lg transition-all no-underline"
-                style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}
-              >
-                View Profile
-              </Link>
             </div>
           )}
-        </aside>
-      </div>
+
+          {/* Comments */}
+          <section id="comments" className="comments-section">
+            <ArticleComments articleId={article.article_id} initialComments={comments} />
+          </section>
+
+          {/* Related */}
+          {related.length > 0 && (
+            <section className="related-section">
+              <h2 className="related-title">More from 026News</h2>
+              <div className="related-grid">
+                {related.map(r => (
+                  <Link key={r.article_id} href={`/article/${r.slug}`} className="related-card">
+                    {r.featured_image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="related-card-img" src={r.featured_image} alt={r.title} />
+                    ) : (
+                      <div className="related-card-img" style={{ background: 'var(--bg-inset)' }} />
+                    )}
+                    <div className="related-card-body">
+                      {r.category?.name && <span className="related-card-category">{r.category.name}</span>}
+                      <h3 className="related-card-title">{r.title}</h3>
+                      <span className="related-card-meta">{r.author?.name ?? '026News'} · {readTime} min read</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </article>
+
+      <ArticleFloatBar
+        articleId={article.article_id}
+        slug={article.slug}
+        initialLikes={likes}
+        initialSaves={article.save_count ?? 0}
+        commentCount={comments.length}
+      />
 
       <Footer />
     </div>

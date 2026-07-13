@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/utils'
+import { fetchFullArticleContent } from '@/lib/rss/fulltext'
 import crypto from 'crypto'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -187,13 +188,23 @@ export async function POST(req: NextRequest) {
           finalImageUrl = await fetchOgImage(item.link)
         }
 
+        // Pull the full article body when the feed only supplies a short summary
+        let fullContent: string | null = null
+        if (item.description.length < 600) {
+          fullContent = await fetchFullArticleContent(item.link)
+        }
+        const contentText = fullContent || item.description || item.title
+        const excerptText = (item.description || fullContent || '').substring(0, 200)
+        const pubDate = new Date(item.pubDate)
+        const publishedAt = isNaN(pubDate.getTime()) ? new Date() : pubDate
+
         const { error: insertError } = await adminSupabase
           .from('articles')
           .insert({
             title: item.title,
             slug,
-            content: item.description || item.title,
-            excerpt: item.description.substring(0, 200),
+            content: contentText,
+            excerpt: excerptText,
             source_reference: item.link,
             source_url: item.link,
             source_name: feed.name,
@@ -205,7 +216,7 @@ export async function POST(req: NextRequest) {
             monetization_type: 'free',
             featured_image: finalImageUrl,
             featured: false,
-            published_at: new Date(item.pubDate).toISOString(),
+            published_at: publishedAt.toISOString(),
           } as never)
 
         if (insertError) {
