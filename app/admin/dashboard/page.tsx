@@ -498,7 +498,7 @@ function ArticleTable({ title, icon, rows, limit }: { title: string; icon: strin
           <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Published {title.toLowerCase()} will appear here.</p>
         </div>
       ) : (
-        <div className="max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--border-strong) transparent' }}>
+        <div className="max-h-[600px] overflow-y-auto">
           <ul className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
           {shown.map((a) => {
             const name = a.author?.name ?? a.source_name ?? '—'

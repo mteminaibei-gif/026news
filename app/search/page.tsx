@@ -169,7 +169,7 @@ export default function SearchPage() {
         </form>
 
         {/* Category filter chips */}
-        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
           <button
             onClick={() => setActiveCategory('all')}
             className="px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap"

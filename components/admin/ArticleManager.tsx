@@ -214,7 +214,7 @@ export function ArticleManager() {
           </div>
 
           {/* Rows */}
-          <div className="max-h-[700px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+          <div className="max-h-[700px] overflow-y-auto">
             {articles.map((a, idx) => (
               <div
                 key={a.article_id}
