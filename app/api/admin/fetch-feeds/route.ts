@@ -147,6 +147,15 @@ export async function POST(req: NextRequest) {
     .eq('is_active', true)
   const feeds = (rawFeeds ?? []) as unknown as Feed[]
 
+  // Respect the admin-set sourced/RSS publish limit (0 = unlimited)
+  const { data: limitRow } = await adminSupabase
+    .from('site_settings').select('value').eq('key', 'publish_limits').maybeSingle()
+  const sourcedLimit = Number((limitRow?.value as { sourced?: number } | null)?.sourced ?? 0)
+  const { count: currentSourced } = await adminSupabase
+    .from('articles').select('*', { count: 'exact', head: true })
+    .eq('is_aggregated', true).eq('status', 'published')
+  let remainingSourced = sourcedLimit > 0 ? Math.max(0, sourcedLimit - (currentSourced ?? 0)) : Number.POSITIVE_INFINITY
+
   let totalInserted = 0
   let totalSkipped = 0
   let totalErrors = 0
@@ -182,6 +191,13 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         if (existing) { skipped++; continue }
+
+        // Stop pulling sourced articles once the admin-set limit is reached
+        if (sourcedLimit > 0 && remainingSourced <= 0) {
+          skipped++
+          results[feed.name] = 'sourced limit reached'
+          continue
+        }
 
         let finalImageUrl = item.imageUrl
         if (!finalImageUrl && item.link) {
@@ -224,6 +240,7 @@ export async function POST(req: NextRequest) {
           else { console.error(`insert error:`, insertError.message) }
         } else {
           inserted++
+          if (sourcedLimit > 0) remainingSourced--
         }
       }
 

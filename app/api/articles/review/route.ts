@@ -63,6 +63,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, article_id: id, status: newStatus, action: reviewAction })
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('PUBLISH_LIMIT_REACHED')) {
+      return NextResponse.json(
+        { error: 'In-house publish limit reached. Ask an admin to raise the limit in the dashboard Publish Limits card.' },
+        { status: 429 },
+      )
+    }
     console.error('[POST /api/articles/review]', err)
     return NextResponse.json({ error: 'Failed to process review' }, { status: 500 })
   }

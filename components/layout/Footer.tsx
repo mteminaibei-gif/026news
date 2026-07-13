@@ -69,6 +69,11 @@ export function Footer() {
                 </a>
               ))}
             </div>
+
+            <div className="made-in-kenya" style={{ justifyContent: 'flex-start', marginTop: 16 }}>
+              <span className="ke-flag" aria-hidden="true">🇰🇪</span>
+              <span>Proudly Made in Kenya</span>
+            </div>
           </div>
 
           {/* Links sections */}

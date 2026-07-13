@@ -62,6 +62,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(article, { status: 201 })
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('PUBLISH_LIMIT_REACHED')) {
+      return NextResponse.json(
+        { error: 'In-house publish limit reached. Raise the limit in the dashboard Publish Limits card.' },
+        { status: 429 },
+      )
+    }
     console.error('[POST /api/admin/articles/edit]', err)
     return NextResponse.json({ error: 'Failed to create article' }, { status: 500 })
   }
@@ -128,6 +135,13 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(article)
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('PUBLISH_LIMIT_REACHED')) {
+      return NextResponse.json(
+        { error: 'In-house publish limit reached. Raise the limit in the dashboard Publish Limits card.' },
+        { status: 429 },
+      )
+    }
     console.error('[PUT /api/admin/articles/edit]', err)
     return NextResponse.json({ error: 'Failed to update article' }, { status: 500 })
   }

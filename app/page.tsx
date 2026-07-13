@@ -57,16 +57,15 @@ export default async function HomePage({ searchParams }: Props) {
     if (r.error) throw r.error
     return r.data
   }, null)
-  const limits = (limitsRes?.value ?? { inhouse: 10, sourced: 10 }) as { inhouse: number; sourced: number }
+  const limits = (limitsRes?.value ?? { inhouse: 0, sourced: 0 }) as { inhouse: number; sourced: number }
 
   // Organise the published posts by the saved limit: cap in-house and
   // sourced/RSS articles separately, then show newest first overall.
-  const inhouse = rawArticles
-    .filter(a => (a as unknown as Record<string, unknown>).is_aggregated !== true)
-    .slice(0, Math.max(0, limits.inhouse))
-  const sourced = rawArticles
-    .filter(a => (a as unknown as Record<string, unknown>).is_aggregated === true)
-    .slice(0, Math.max(0, limits.sourced))
+  // A limit of 0 (or unset) means unlimited.
+  const inhouseList = rawArticles.filter(a => (a as unknown as Record<string, unknown>).is_aggregated !== true)
+  const sourcedList = rawArticles.filter(a => (a as unknown as Record<string, unknown>).is_aggregated === true)
+  const inhouse = limits.inhouse > 0 ? inhouseList.slice(0, limits.inhouse) : inhouseList
+  const sourced = limits.sourced > 0 ? sourcedList.slice(0, limits.sourced) : sourcedList
   const articles: ArticleWithAuthor[] = [...inhouse, ...sourced].sort((a, b) => {
     // In-house (original) posts are surfaced before aggregated/RSS content.
     const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0

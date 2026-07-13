@@ -63,6 +63,13 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('PUBLISH_LIMIT_REACHED')) {
+      return NextResponse.json(
+        { error: 'In-house publish limit reached. Raise the limit in the dashboard Publish Limits card.' },
+        { status: 429 },
+      )
+    }
     console.error('[PATCH /api/admin/articles]', err)
     return NextResponse.json({ error: 'Failed to update article' }, { status: 500 })
   }

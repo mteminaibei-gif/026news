@@ -29,6 +29,7 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
   const [saved, setSaved] = useState(false)
   const [savedId, setSavedId] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -90,15 +91,21 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
   }
 
   const share = async () => {
-    const url = window.location.href
-    try {
-      if (navigator.share) {
+    const url = `${window.location.origin}/article/${slug}`
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
         await navigator.share({ title: document.title, url })
-      } else {
-        await navigator.clipboard.writeText(url)
+        return
+      } catch {
+        return // user dismissed the share sheet
       }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch {
-      /* user dismissed */
+      /* clipboard unavailable */
     }
   }
 
@@ -122,7 +129,7 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
       </button>
       <button className="float-btn" onClick={share} aria-label="Share article">
         <Share2 size={20} />
-        {isInline && <span>Share</span>}
+        {isInline && <span>{copied ? 'Copied!' : 'Share'}</span>}
       </button>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface RealtimeFeedFetcherProps {
   initialArticlesCount?: number
@@ -22,9 +23,14 @@ export function RealtimeFeedFetcher({ initialArticlesCount = 0 }: RealtimeFeedFe
     setLoading(true)
     setError(null)
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
       const res = await fetch('/api/admin/fetch-feeds', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       })
       const data = await res.json()
       if (!res.ok) {

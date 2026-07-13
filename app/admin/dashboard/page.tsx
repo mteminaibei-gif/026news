@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const [sourcedArticles, setSourcedArticles] = useState<ArticleRow[]>([])
   const [journalists, setJournalists] = useState<JournalistRow[]>([])
   const [totalArticlesCount, setTotalArticlesCount] = useState(0)
-  const [publishLimits, setPublishLimits] = useState<{ inhouse: number; sourced: number }>({ inhouse: 10, sourced: 10 })
+  const [publishLimits, setPublishLimits] = useState<{ inhouse: number; sourced: number }>({ inhouse: 0, sourced: 0 })
   const [savingLimits, setSavingLimits] = useState(false)
   const [journalistsCount, setJournalistsCount] = useState(0)
   const [totalUsers, setTotalUsers] = useState(0)
@@ -88,8 +88,8 @@ export default function AdminDashboard() {
       if (settingsRes.data?.value) {
         const v = settingsRes.data.value as { inhouse?: number; sourced?: number }
         setPublishLimits({
-          inhouse: Number(v.inhouse ?? 10),
-          sourced: Number(v.sourced ?? 10),
+          inhouse: Number(v.inhouse ?? 0),
+          sourced: Number(v.sourced ?? 0),
         })
       }
 
@@ -318,7 +318,7 @@ export default function AdminDashboard() {
                     <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <div>
                         <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⚙️ Publish Limits</h3>
-                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Max published articles surfaced per source type</p>
+                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Max published articles surfaced per source type (0 = unlimited)</p>
                       </div>
                       <button
                         onClick={saveLimits}
@@ -445,7 +445,8 @@ export default function AdminDashboard() {
 
 function ArticleTable({ title, icon, rows, limit }: { title: string; icon: string; rows: ArticleRow[]; limit: number }) {
   const published = rows.filter((r) => r.status === 'published')
-  const shown = published.slice(0, limit)
+  const unlimited = !limit || limit <= 0
+  const shown = unlimited ? published : published.slice(0, limit)
   const extra = Math.max(0, published.length - shown.length)
   return (
     <div>
@@ -455,8 +456,8 @@ function ArticleTable({ title, icon, rows, limit }: { title: string; icon: strin
           <div>
             <h4 className="font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{title}</h4>
             <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              {published.length} published · showing {Math.min(limit, published.length)}
-              {extra > 0 ? <span style={{ color: 'var(--warning)' }}> ({extra} beyond limit)</span> : ''}
+              {published.length} published · {unlimited ? 'showing all' : `showing ${shown.length}`}
+              {!unlimited && extra > 0 ? <span style={{ color: 'var(--warning)' }}> ({extra} beyond limit)</span> : ''}
             </p>
           </div>
         </div>

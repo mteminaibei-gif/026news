@@ -342,12 +342,6 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           )}
 
-          {/* Proudly Made in Kenya */}
-          <div className="made-in-kenya">
-            <span className="ke-flag" aria-hidden="true">🇰🇪</span>
-            <span>Proudly Made in Kenya</span>
-          </div>
-
           {/* Engagement actions — placed immediately below the post */}
           <ArticleFloatBar
             variant="inline"
