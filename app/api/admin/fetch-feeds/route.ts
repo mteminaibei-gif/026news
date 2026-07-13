@@ -10,34 +10,60 @@ type Feed = { feed_id: number; name: string; feed_url: string; category_id: numb
 type RssItem = { title: string; link: string; description: string; pubDate: string; imageUrl: string | null }
 
 // ── Helpers ───────────────────────────────────────────────────
+function extractImageUrl(block: string, rawDesc: string): string | null {
+  const enclosure    = block.match(/enclosure[^>]+url=["']([^"']+)["']/i)
+  const mediaContent = block.match(/media:content[^>]+url=["']([^"']+)["']/i)
+  const mediaThumbn  = block.match(/media:thumbnail[^>]+url=["']([^"']+)["']/i)
+  const imgInDesc    = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i)
+  const figImg       = rawDesc.match(/<figure[^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["']/i)
+  const linkImg      = rawDesc.match(/<a[^>]+href=["']([^"']+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^"']*)?)["']/i)
+  const atomEnc      = block.match(/<link[^>]+rel=["']enclosure["'][^>]+href=["']([^"']+)["']/i)
+  const atomImage    = block.match(/<link[^>]+rel=["']image["'][^>]+href=["']([^"']+)["']/i)
+  return enclosure?.[1] ?? mediaContent?.[1] ?? mediaThumbn?.[1] ?? figImg?.[1] ?? imgInDesc?.[1] ?? linkImg?.[1] ?? atomEnc?.[1] ?? atomImage?.[1] ?? null
+}
+
+function extractBlock(block: string, tag: string): string {
+  const m = block.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`, 'i'))
+         || block.match(new RegExp(`<${tag}[^>]*>([^<]*)<\\/${tag}>`, 'i'))
+  return m?.[1]?.trim() ?? ''
+}
+
 function parseRssXml(xml: string): RssItem[] {
   const items: RssItem[] = []
-  const itemMatches = xml.matchAll(/<item[^>]*>([\s\S]*?)<\/item>/gi)
-  for (const match of itemMatches) {
+
+  const rssMatches = xml.matchAll(/<item[^>]*>([\s\S]*?)<\/item>/gi)
+  for (const match of rssMatches) {
     const block = match[1]
-    const title = decode(extract(block, 'title'))
-    const link = extract(block, 'link') || extract(block, 'guid')
-    const desc = decode(stripHtml(extract(block, 'description') || extract(block, 'summary')))
-    const pubDate = extract(block, 'pubDate') || extract(block, 'published') || new Date().toISOString()
-
-    const enclosure = block.match(/enclosure[^>]+url="([^"]+)"/i)
-    const mediaContent = block.match(/media:content[^>]+url="([^"]+)"/i)
-    const mediaThumbnail = block.match(/media:thumbnail[^>]+url="([^"]+)"/i)
-    const imgInDesc = (extract(block, 'description') || '').match(/<img[^>]+src="([^"]+)"/i)
-
-    const imageUrl = enclosure?.[1] ?? mediaContent?.[1] ?? mediaThumbnail?.[1] ?? imgInDesc?.[1] ?? null
-
+    const title   = decode(extractBlock(block, 'title'))
+    const link    = extractBlock(block, 'link') || extractBlock(block, 'guid')
+    const rawDesc = extractBlock(block, 'description') || extractBlock(block, 'summary')
+    const desc    = decode(stripHtml(rawDesc))
+    const pubDate = extractBlock(block, 'pubDate') || extractBlock(block, 'published') || new Date().toISOString()
+    const imageUrl = extractImageUrl(block, rawDesc)
     if (title && link) {
       items.push({ title: title.substring(0, 300), link, description: desc.substring(0, 1000), pubDate, imageUrl })
     }
   }
-  return items
-}
 
-function extract(block: string, tag: string): string {
-  const m = block.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`, 'i')) ||
-            block.match(new RegExp(`<${tag}[^>]*>([^<]*)<\\/${tag}>`, 'i'))
-  return m?.[1]?.trim() ?? ''
+  if (items.length === 0) {
+    const atomMatches = xml.matchAll(/<entry[^>]*>([\s\S]*?)<\/entry>/gi)
+    for (const match of atomMatches) {
+      const block = match[1]
+      const title   = decode(extractBlock(block, 'title'))
+      const altLink = block.match(/<link[^>]+rel=["']alternate["'][^>]+href=["']([^"']+)["']/i)
+      const anyLink = block.match(/<link[^>]+href=["']([^"']+)["']/i)
+      const link    = altLink?.[1] || anyLink?.[1] || extractBlock(block, 'id')
+      const rawDesc = extractBlock(block, 'content') || extractBlock(block, 'summary')
+      const desc    = decode(stripHtml(rawDesc))
+      const pubDate = extractBlock(block, 'published') || extractBlock(block, 'updated') || new Date().toISOString()
+      const imageUrl = extractImageUrl(block, rawDesc)
+      if (title && link) {
+        items.push({ title: title.substring(0, 300), link, description: desc.substring(0, 1000), pubDate, imageUrl })
+      }
+    }
+  }
+
+  return items
 }
 
 function stripHtml(html: string): string {
@@ -77,6 +103,23 @@ async function fetchOgImage(url: string): Promise<string | null> {
 
 function contentHash(title: string, url: string): string {
   return crypto.createHash('sha256').update(`${title}|${url}`).digest('hex').substring(0, 32)
+}
+
+function normalizeImageUrl(raw: string, articleUrl: string): string {
+  try {
+    const domainMatch = raw.match(/^(https?:\/\/[^/]+)\1(.*)$/)
+    if (domainMatch) raw = domainMatch[1] + domainMatch[2]
+    if (raw.startsWith('//')) return 'https:' + raw
+    if (raw.startsWith('/') && articleUrl) {
+      const base = new URL(articleUrl)
+      return base.origin + raw
+    }
+    if (!raw.startsWith('http')) {
+      if (articleUrl) return new URL(raw, articleUrl).href
+      return 'https://' + raw
+    }
+    return raw
+  } catch { return raw }
 }
 
 function makeUniqueSlug(title: string, hash: string): string {
@@ -192,6 +235,9 @@ export async function POST(req: NextRequest) {
         let finalImageUrl = item.imageUrl
         if (!finalImageUrl && item.link) {
           finalImageUrl = await fetchOgImage(item.link)
+        }
+        if (finalImageUrl) {
+          finalImageUrl = normalizeImageUrl(finalImageUrl, item.link)
         }
 
         // Pull the full article body when the feed only supplies a short summary
