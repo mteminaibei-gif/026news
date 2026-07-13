@@ -132,7 +132,7 @@ export default async function HomePage({ searchParams }: Props) {
     categoryParam
       ? articles.filter(a => a.category?.name === categoryParam)
       : [...sortByPriorityThenViews(kenyaArticles), ...sortByPriorityThenViews(africaArticles), ...sortByPriorityThenViews(otherArticles)]
-  )
+  ).filter((a, i, self) => i === self.findIndex(b => b.article_id === a.article_id))
 
   const feedArticles =
     sortParam === 'recent'

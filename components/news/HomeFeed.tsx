@@ -276,8 +276,8 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
       onMouseLeave={() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) pausedRef.current = false }}
     >
       <div className="article-feed">
-        {articles.map((article) => (
-          <HomeArticleCard key={article.article_id} article={article} />
+        {articles.map((article, index) => (
+          <HomeArticleCard key={`${article.article_id}-${index}`} article={article} />
         ))}
       </div>
 
