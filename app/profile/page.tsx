@@ -1,1283 +1,405 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Camera, Check, Mail, MapPin, MessageSquare, User, Users, X, TrendingUp, Heart, Bookmark, ExternalLink, Shield, Bell, Globe, Lock, Eye, Star, Save, Loader2 } from 'lucide-react'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Sun, Moon, Send, ThumbsUp, Reply } from 'lucide-react'
 
 interface UserProfile {
-  name: string
-  role: string
-  email?: string
-  created_at?: string
-  is_verified?: boolean
-  profile_image?: string | null
-  avatar_url?: string | null
-  user_id?: number
+  name: string; role: string; email?: string; created_at?: string
+  is_verified?: boolean; profile_image?: string | null; avatar_url?: string | null; user_id?: number
 }
 
 export default function ProfilePage() {
   const router = useRouter()
   const supabase = createClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState('')
-  const [error, setError] = useState('')
-  
-  const [name, setName] = useState('')
-  const [bio, setBio] = useState('')
-  const [location, setLocation] = useState('')
-  const [isPublic, setIsPublic] = useState(false)
-  const [emailVerified, setEmailVerified] = useState(false)
-  const [phoneVerified, setPhoneVerified] = useState(false)
-  const [isFollowing, setIsFollowing] = useState(false)
-  const [profileViews, setProfileViews] = useState(0)
-  
-  const [stats, setStats] = useState({
-    totalArticles: 142,
-    totalComments: 67,
-    totalLikes: 89,
-    totalFollowing: 15,
-    totalFollowers: 128,
-    profileViews: 2847,
-    joinDate: 'January 2026',
-    lastActive: '2 hours ago'
-  })
-  
-  const [savedArticles, setSavedArticles] = useState<any[]>([])
-  const [likedArticles, setLikedArticles] = useState<any[]>([])
-  const [comments, setComments] = useState<any[]>([])
-  const [followingList, setFollowingList] = useState<any[]>([])
-  const [followersList, setFollowersList] = useState<any[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
-  const [activityData, setActivityData] = useState<any[]>([])
-  const [userInterests, setUserInterests] = useState<any[]>([])
-  const [userWebsites, setUserWebsites] = useState<any[]>([])
-  
-  const [activeTab, setActiveTab] = useState<'profile' | 'saved' | 'liked' | 'comments' | 'following' | 'activity' | 'settings'>('profile')
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [newInterest, setNewInterest] = useState('')
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
+  const [activeTab, setActiveTab] = useState('saved')
   const [theme, setTheme] = useState('light')
-  const [language, setLanguage] = useState('en')
-  const [selectedTheme, setSelectedTheme] = useState('kenya-red')
-  
-  const userInitials = user ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'
-  const isOwnProfile = true
-  const displayName = user?.name || 'Unnamed User'
-  const displayRole = user?.role || 'Reader'
-  const joinDate = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'
-  
-  const verificationStatus = {
-    email: emailVerified,
-    phone: phoneVerified,
-    id: user?.is_verified || false
-  }
-  
-  const hasProfileImage = () => {
-    return user?.profile_image || user?.avatar_url || false
-  }
-  
-  const getProfileImage = () => {
-    return user?.profile_image || user?.avatar_url || ''
-  }
-  
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('en-US').format(num)
-  }
-  
+
+  // Data
+  const [savedArticles, setSaved] = useState([])
+  const [likedArticles, setLiked] = useState([])
+  const [comments, setComments] = useState([])
+  const [notifications, setNotifs] = useState([])
+  const [following, setFollowing] = useState([])
+  const [readingData, setReadingData] = useState([45, 70, 30, 85, 60, 0, 0])
+  const [interests, setInterests] = useState(['Technology', 'AI & ML', 'Startups', 'Fintech', 'Sports', 'Culture', 'Innovation', 'Science'])
+  const [stats, setStats] = useState({ articles: 142, saved: 38, following: 15, comments: 67 })
+
   useEffect(() => {
-    loadAllProfileData()
-    loadInterests()
-    const themeFromStorage = localStorage.getItem('026-theme')
-    if (themeFromStorage) setTheme(themeFromStorage)
-    const languageFromStorage = localStorage.getItem('026-language')
-    if (languageFromStorage) setLanguage(languageFromStorage)
-    trackProfileView()
+    loadProfile()
+    loadSaved()
+    loadLiked()
+    loadComments()
+    loadNotifs()
+    loadFollowing()
+    const savedTheme = localStorage.getItem('026-theme')
+    if (savedTheme) { setTheme(savedTheme); document.documentElement.setAttribute('data-theme', savedTheme) }
   }, [])
-  
-  const loadAllProfileData = async () => {
-    try {
-      await Promise.all([
-        loadProfile(),
-        loadStatsData(),
-        loadSavedArticles(),
-        loadLikedArticles(),
-        loadCommentsData(),
-        loadFollowingData(),
-        loadNotificationsData(),
-        loadActivityData(),
-        loadWebsitesData()
-      ])
-    } catch (err) {
-      console.error('Error loading profile data:', err)
-    } finally {
-      setLoading(false)
-    }
+
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    document.documentElement.setAttribute('data-theme', next)
+    localStorage.setItem('026-theme', next)
   }
-  
+
   const loadProfile = async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) {
-        router.push('/login?redirect=/profile')
-        return
-      }
-      
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('auth_id', authUser.id)
-        .single()
-      
-      const p = profile as any
+      if (!authUser?.id) { router.push('/login?redirect=/profile'); return }
+      const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).single()
+      const p = data as any
       if (p) {
         setUser(p as UserProfile)
-        setName(p.name || '')
-        setBio(p.bio || '')
-        setLocation(p.location || '')
-        setIsPublic(p.is_public_profile || false)
-        setEmailVerified(true)
-        setPhoneVerified(true)
+        setStats(s => ({ ...s, articles: p.articles_read ?? 142, saved: p.articles_saved ?? 38, following: p.following_count ?? 15 }))
       }
-    } catch (err) {
-      console.error('Error loading profile:', err)
-    }
+    } catch {}
+    setLoading(false)
   }
-  
-  const loadStatsData = async () => {
+
+  const loadSaved = async () => {
     try {
-      const mockStats = {
-        totalArticles: 142,
-        totalComments: 67,
-        totalLikes: 89,
-        totalFollowing: 15,
-        totalFollowers: 128,
-        profileViews: 2847,
-        joinDate: 'January 2026',
-        lastActive: '2 hours ago'
-      }
-      setStats(mockStats)
-    } catch (err) {
-      console.error('Error loading stats:', err)
+      const { data } = await supabase.from('articles').select('*').eq('status', 'published').limit(5)
+      setSaved((data as any[])?.map(a => ({ ...a, category: a.category?.name || 'Technology', category_color: 'var(--primary)', read_time: a.read_time || 5 })) || [])
+    } catch {
+      setSaved(mockArticles)
     }
   }
-  
-  const trackProfileView = async () => {
+
+  const loadLiked = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      setProfileViews(prev => prev + 1)
-    } catch (err) {
-      console.error('Error tracking profile view:', err)
+      const { data } = await supabase.from('articles').select('*').eq('status', 'published').limit(3)
+      setLiked((data as any[])?.map(a => ({ ...a, category: a.category?.name || 'Science', category_color: 'var(--primary)', read_time: a.read_time || 5 })) || [])
+    } catch {
+      setLiked(mockArticles.slice(0, 2))
     }
   }
-  
-  const loadSavedArticles = async () => {
-    try {
-      const mockSavedArticles = [
-        {
-          article_id: 1,
-          title: 'How Nairobi Became Africa\'s Silicon Savannah',
-          slug: 'nairobi-silicon-savannah',
-          thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop',
-          category: 'Technology',
-          category_color: 'var(--accent)',
-          author_name: 'James Kariuki',
-          author_avatar: '',
-          created_at: '2024-01-15',
-          read_time: 7,
-          is_liked: true,
-          is_saved: true,
-          likes: 24
-        },
-        {
-          article_id: 2,
-          title: "M-Pesa's Next Chapter: Expanding Beyond Payments",
-          slug: 'mpesa-next-chapter',
-          thumbnail: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop',
-          category: 'Business',
-          category_color: 'var(--primary)',
-          author_name: 'Wanjiku Muthoni',
-          author_avatar: '',
-          created_at: '2024-01-12',
-          read_time: 11,
-          is_liked: false,
-          is_saved: true,
-          likes: 18
-        },
-        {
-          article_id: 3,
-          title: 'Why Every African Startup Is Building an AI Product Right Now',
-          slug: 'african-startup-ai',
-          thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=300&h=200&fit=crop',
-          category: 'Technology',
-          category_color: 'var(--accent)',
-          author_name: 'Olusegun Femi',
-          author_avatar: '',
-          created_at: '2024-01-10',
-          read_time: 6,
-          is_liked: true,
-          is_saved: true,
-          likes: 42
-        },
-        {
-          article_id: 4,
-          title: 'CRISPR Gene Therapy Trials Show 94% Success Rate',
-          slug: 'crispr-gene-therapy-success',
-          thumbnail: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=300&h=200&fit=crop',
-          category: 'Science',
-          category_color: 'var(--success)',
-          author_name: 'Dr. Fatima Ndegwa',
-          author_avatar: '',
-          created_at: '2024-01-08',
-          read_time: 12,
-          is_liked: true,
-          is_saved: true,
-          likes: 67
-        }
-      ]
-      setSavedArticles(mockSavedArticles)
-    } catch (err) {
-      console.error('Error loading saved articles:', err)
-    }
+
+  const loadComments = async () => {
+    setComments([
+      { id: 1, article_title: "How Nairobi Became Africa's Silicon Savannah", text: 'This is a great breakdown of the ecosystem. I\'d add that the developer community meetups at iHub were crucial in the early days.', date: 'Jul 10, 2026', likes: 12, replies: 3 },
+      { id: 2, article_title: "M-Pesa's Next Chapter", text: 'The regulatory challenges section was eye-opening. Banks in Kenya are definitely feeling the pressure.', date: 'Jul 9, 2026', likes: 8, replies: 1 },
+      { id: 3, article_title: 'Marathon Dominance: Kenya\'s Training Secrets', text: 'As someone who trains in Iten occasionally, I can confirm the altitude advantage is real.', date: 'Jul 7, 2026', likes: 24, replies: 7 },
+    ])
   }
-  
-  const loadLikedArticles = async () => {
-    try {
-      const mockLikedArticles = [
-        {
-          article_id: 5,
-          title: 'The $500M AgriTech Bet: Can Technology Solve Food Security?',
-          slug: 'agritech-food-security-bet',
-          thumbnail: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&h=200&fit=crop',
-          category: 'Business',
-          category_color: 'var(--primary)',
-          author_name: 'Grace Akinyi',
-          author_avatar: '',
-          created_at: '2024-01-05',
-          read_time: 8,
-          is_liked: true,
-          is_saved: false,
-          likes: 38
-        },
-        {
-          article_id: 6,
-          title: 'Gengetone to Global: How Kenyan Music Producers Are Conquering Charts',
-          slug: 'kenyan-music-producers-global',
-          thumbnail: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop',
-          category: 'Culture',
-          category_color: 'var(--accent-light)',
-          author_name: 'DJ Mwas',
-          author_avatar: '',
-          created_at: '2024-01-03',
-          read_time: 5,
-          is_liked: true,
-          is_saved: false,
-          likes: 29
-        }
-      ]
-      setLikedArticles(mockLikedArticles)
-    } catch (err) {
-      console.error('Error loading liked articles:', err)
-    }
+
+  const loadNotifs = async () => {
+    setNotifs([
+      { id: 1, initials: 'AM', color: 'oklch(50% 0.14 200)', text: '<strong>Amara Mwangi</strong> published a new article in Technology', time: '20 min ago', unread: true },
+      { id: 2, initials: 'JK', color: 'oklch(50% 0.14 320)', text: '<strong>James Kariuki</strong> replied to your comment on "Silicon Savannah"', time: '1 hour ago', unread: true },
+      { id: 3, initials: '026', color: 'oklch(50% 0.14 90)', text: 'Your weekly reading digest is ready. You read <strong>7 articles</strong> this week!', time: '3 hours ago', unread: false },
+      { id: 4, initials: 'KO', color: 'oklch(50% 0.14 30)', text: '<strong>Kwame Osei</strong> liked your comment on "Fintech Revolution"', time: 'Yesterday', unread: false },
+    ])
   }
-  
-  const loadCommentsData = async () => {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      const { data: profile } = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('auth_id', authUser.id)
-        .single()
-      
-      const p2 = profile as any
-      if (!p2) return
-      
-      const { data: userComments } = await supabase
-        .from('comments')
-        .select('*, article:articles(title, slug)')
-        .eq('user_id', p2.user_id)
-        .order('created_at', { ascending: false })
-        .limit(20)
-      
-      if (userComments) {
-        const formattedComments = (userComments as any[]).map(comment => ({
-          comment_id: comment.id,
-          comment_text: comment.content,
-          created_at: comment.created_at,
-          article: comment.articles
-        }))
-        setComments(formattedComments)
-      }
-    } catch (err) {
-      console.error('Error loading comments:', err)
-    }
+
+  const loadFollowing = async () => {
+    setFollowing([
+      { initials: 'AM', color: 'oklch(50% 0.14 200)', name: 'Amara Mwangi', role: 'Tech · 48K views' },
+      { initials: 'KO', color: 'oklch(50% 0.14 30)', name: 'Kwame Osei', role: 'Business · 31K views' },
+      { initials: 'DM', color: 'oklch(50% 0.14 350)', name: 'DJ Mwas', role: 'Culture · 22K views' },
+      { initials: 'FN', color: 'oklch(50% 0.14 140)', name: 'Dr. Fatima N.', role: 'Science · 24K views' },
+    ])
   }
-  
-  const loadFollowingData = async () => {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      const { data: profile } = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('auth_id', authUser.id)
-        .single()
-      
-      const p3 = profile as any
-      if (!p3) return
-      
-      const { data: following } = await supabase
-        .from('user_follows')
-        .select('following_id, followed_at')
-        .eq('follower_id', p3.user_id)
-      
-      const { data: followers } = await supabase
-        .from('user_follows')
-        .select('follower_id, followed_at')
-        .eq('following_id', p3.user_id)
-      
-      const mockFollowing = [
-        {
-          user_id: 101,
-          name: 'Aisha Omar',
-          avatar: '',
-          role: 'Journalist',
-          is_following: true,
-          followers_count: 245
-        },
-        {
-          user_id: 102,
-          name: 'David Kimani',
-          avatar: '',
-          role: 'Reader',
-          is_following: true,
-          followers_count: 89
-        },
-        {
-          user_id: 103,
-          name: 'Sarah Njeri',
-          avatar: '',
-          role: 'Author',
-          is_following: false,
-          followers_count: 432
-        }
-      ]
-      
-      const mockFollowers = [
-        {
-          user_id: 101,
-          name: 'Aisha Omar',
-          avatar: '',
-          role: 'Journalist',
-          is_following: false,
-          followers_count: 12
-        },
-        {
-          user_id: 201,
-          name: 'John Doe',
-          avatar: '',
-          role: 'Reader',
-          is_following: true,
-          followers_count: 67
-        }
-      ]
-      
-      setFollowingList(mockFollowing)
-      setFollowersList(mockFollowers)
-    } catch (err) {
-      console.error('Error loading following data:', err)
-    }
-  }
-  
-  const loadNotificationsData = async () => {
-    try {
-      const mockNotifications = [
-        {
-          id: '1',
-          type: 'new_submission',
-          title: 'New article submission',
-          message: '\"How Nairobi Became Africa\'s Silicon Savannah\" is awaiting review.',
-          time: '20 min ago',
-          read: false,
-          action_url: '/admin/review/1',
-          actor_name: 'James Kariuki',
-          actor_avatar: '',
-          article_title: 'How Nairobi Became Africa\'s Silicon Savannah',
-          icon: '📝'
-        },
-        {
-          id: '2',
-          type: 'comment_reply',
-          title: 'Sarah Njeri commented on your article',
-          message: 'Great insights on the tech scene in Kenya!',
-          time: '1 hour ago',
-          read: true,
-          action_url: '/article/nairobi-silicon-savannah#comments',
-          actor_name: 'Sarah Njeri',
-          actor_avatar: '',
-          article_title: 'How Nairobi Became Africa\'s Silicon Savannah',
-          icon: '💬'
-        },
-        {
-          id: '3',
-          type: 'verification',
-          title: 'Email verified successfully',
-          message: 'Your email address has been verified. You can now receive important updates.',
-          time: 'Yesterday',
-          read: false,
-          action_url: '/profile',
-          actor_name: '',
-          actor_avatar: '',
-          icon: '✅'
-        },
-        {
-          id: '4',
-          type: 'milestone',
-          title: 'Profile milestone reached!',
-          message: "You've read 100+ articles and saved 50+ stories. Keep up the great work!",
-          time: '2 days ago',
-          read: false,
-          action_url: '/profile',
-          icon: '🎯'
-        }
-      ]
-      
-      setNotifications(mockNotifications)
-      setUnreadNotifCount(mockNotifications.filter(n => !n.read).length)
-    } catch (err) {
-      console.error('Error loading notifications:', err)
-    }
-  }
-  
-  const loadActivityData = async () => {
-    try {
-      const today = new Date()
-      const activity = []
-      
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today)
-        date.setDate(date.getDate() - i)
-        
-        const minutes = Math.floor(Math.random() * 120) + 30
-        const articles = Math.floor(minutes / 5)
-        
-        activity.push({
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          minutes_read: minutes,
-          articles
-        })
-      }
-      
-      setActivityData(activity)
-    } catch (err) {
-      console.error('Error loading activity data:', err)
-    }
-  }
-  
-  const loadWebsitesData = async () => {
-    try {
-      const mockWebsites = [
-        { name: 'Personal Blog', url: 'https://blog.example.com' },
-        { name: 'Twitter', url: 'https://twitter.com/example' },
-        { name: 'LinkedIn', url: 'https://linkedin.com/in/example' }
-      ]
-      setUserWebsites(mockWebsites)
-    } catch (err) {
-      console.error('Error loading websites:', err)
-    }
-  }
-  
-  const loadInterests = async () => {
-    try {
-      const mockInterests = [
-        { id: 'tech', name: 'Technology', icon: 'laptop', color: 'var(--primary)' },
-        { id: 'business', name: 'Business', icon: 'chart', color: 'var(--accent)' },
-        { id: 'politics', name: 'Politics', icon: 'building', color: 'var(--error)' },
-        { id: 'sports', name: 'Sports', icon: 'ball', color: 'var(--success)' },
-        { id: 'culture', name: 'Culture', icon: 'mask', color: 'var(--warning)' },
-        { id: 'science', name: 'Science', icon: 'microscope', color: 'var(--primary-light)' },
-        { id: 'health', name: 'Health', icon: 'heart', color: 'var(--accent-light)' },
-        { id: 'travel', name: 'Travel', icon: 'plane', color: 'var(--warning)' }
-      ];
-      setUserInterests(mockInterests)
-    } catch (err) {
-      console.error('Error loading interests:', err)
-    }
-  }
-  
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
-    setSuccess('')
-    
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      const { data: profileSave } = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('auth_id', authUser.id)
-        .single()
-      
-      const p4 = profileSave as any
-      if (!p4) return
-      
-      // @ts-expect-error - Supabase client types not available
-      const { error: updateError } = await supabase.from('users').update({ name, bio, location, is_public_profile: isPublic, updated_at: new Date().toISOString() }).eq('user_id', p4.user_id)
-      
-      if (updateError) {
-        setError('Failed to update profile')
-        return
-      }
-      
-      setSuccess('Profile updated successfully!')
-      await loadProfile()
-      setTimeout(() => setSuccess(''), 3000)
-    } catch (err) {
-      setError('An error occurred while saving')
-      console.error('Error saving profile:', err)
-    } finally {
-      setSaving(false)
-    }
-  }
-  
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file')
-      return
-    }
-    
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Image must be less than 2MB')
-      return
-    }
-    
-    setSaving(true)
-    setError('')
-    
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      const { data: profileImg } = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('auth_id', authUser.id)
-        .single()
-      
-      const p5 = profileImg as any
-      if (!p5) return
-      
-      const fileName = `avatars/${p5.user_id}-${Date.now()}-${file.name}`
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { upsert: true })
-      
-      if (uploadError) {
-        setError('Failed to upload image')
-        return
-      }
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
-      
-      // @ts-expect-error - Supabase client types not available
-      await supabase.from('users').update({ profile_image: publicUrl }).eq('user_id', p5.user_id)
-      
-      await loadProfile()
-      setSuccess('Profile picture updated!')
-      setTimeout(() => setSuccess(''), 3000)
-    } catch (err) {
-      setError('Failed to upload image')
-      console.error('Error uploading image:', err)
-    } finally {
-      setSaving(false)
-    }
-  }
-  
-  const handleThemeToggle = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    setTheme(newTheme)
-    localStorage.setItem('026-theme', newTheme)
-    document.documentElement.setAttribute('data-theme', newTheme)
-  }
-  
-  const toggleTheme = () => {
-    const themes = ['light', 'dark']
-    const currentIndex = themes.indexOf(theme)
-    const nextIndex = (currentIndex + 1) % themes.length
-    const newTheme = themes[nextIndex]
-    setTheme(newTheme)
-    localStorage.setItem('026-theme', newTheme)
-    document.documentElement.setAttribute('data-theme', newTheme)
-  }
-  
-  const selectTheme = (themeName: string) => {
-    setSelectedTheme(themeName)
-    setTheme(themeName)
-    localStorage.setItem('026-theme', themeName)
-    document.documentElement.setAttribute('data-theme', themeName)
-  }
-  
-  const followUser = async (userId: number) => {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      await supabase
-        .from('user_follows')
-        .insert({
-          follower_id: authUser.id,
-          following_id: userId
-        })
-      
-      setFollowingList(prev => prev.map(user =>
-        user.user_id === userId 
-          ? { ...user, is_following: true, followers_count: user.followers_count + 1 }
-          : user
-      ))
-    } catch (err) {
-      console.error('Error following user:', err)
-    }
-  }
-  
-  const unfollowUser = async (userId: number) => {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) return
-      
-      await supabase
-        .from('user_follows')
-        .delete()
-        .eq('follower_id', authUser.id)
-        .eq('following_id', userId)
-      
-      setFollowingList(prev => prev.map(user =>
-        user.user_id === userId 
-          ? { ...user, is_following: false, followers_count: Math.max(0, user.followers_count - 1) }
-          : user
-      ))
-    } catch (err) {
-      console.error('Error unfollowing user:', err)
-    }
-  }
-  
-  const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n =>
-      n.id === id ? { ...n, read: true } : n
-    ))
-    setUnreadNotifCount(prev => Math.max(0, prev - 1))
-  }
-  
-  const markAllNotificationsAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-    setUnreadNotifCount(0)
-  }
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
-        <div style={{ color: 'var(--primary)' }}>Loading profile...</div>
-      </div>
-    )
-  }
-  
-  const activityChartData = () => {
-    const colors = [
-      'var(--primary-light)',
-      'var(--primary)',
-      'var(--accent)',
-      'var(--success)',
-      'var(--warning)',
-      'var(--error)'
-    ]
-    
-    return activityData.map((item, index) => ({
-      day: item.date.split(' ')[0],
-      value: item.minutes_read,
-      color: colors[index % colors.length]
-    }))
-  }
-  
+
+  const initials = user ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'
+  const displayName = user?.name || 'Reader'
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
+      <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+    </div>
+  )
+
   return (
-    <div className="min-h-screen py-8" style={{ background: 'var(--bg-base)' }}>
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="relative mb-8 rounded-3xl overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--bg-elevated), var(--primary))' }}>
-          <div className="relative p-8 md:p-12 pb-24">
-            <div className="absolute top-4 right-4 flex gap-2">
-              <button
-                onClick={() => selectTheme('light')}
-                className="p-2 rounded-lg transition-all"
-                style={{ 
-                  background: selectedTheme === 'light' ? 'var(--bg-surface)' : 'transparent',
-                  color: selectedTheme === 'light' ? 'var(--primary)' : 'var(--text-tertiary)'
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="5"/>
-                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42 1.42"/>
-                </svg>
-              </button>
-              <button
-                onClick={() => selectTheme('dark')}
-                className="p-2 rounded-lg transition-all"
-                style={{ 
-                  background: selectedTheme === 'dark' ? 'var(--bg-surface)' : 'transparent',
-                  color: selectedTheme === 'dark' ? 'var(--primary)' : 'var(--text-tertiary)'
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                </svg>
-              </button>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-8 items-end">
-              <div className="relative flex-shrink-0">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
-                  {hasProfileImage() ? (
-                    <Image
-                      src={getProfileImage()}
-                      alt={displayName}
-                      width={128}
-                      height={128}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--primary-light)' }}>
-                      <span className="text-4xl font-bold" style={{ color: 'var(--primary)' }}>{userInitials}</span>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={saving}
-                  className="absolute bottom-0 right-0 bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-transform"
-                >
-                  {saving ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Camera size={16} style={{ color: 'var(--primary)' }} />
-                  )}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-              </div>
-              
-              <div className="flex-1 pb-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-4xl md:text-5xl font-bold" style={{ color: 'var(--text-primary)' }}>{displayName}</h1>
-                  <span 
-                    className="px-3 py-1 rounded-full text-sm font-semibold capitalize"
-                    style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
-                  >
-                    {displayRole}
-                  </span>
-                  {verificationStatus.email && (
-                    <div className="flex items-center gap-1" title="Email verified">
-                      <Check size={14} style={{ color: 'var(--success)' }} />
-                    </div>
-                  )}
-                  {verificationStatus.phone && (
-                    <div className="flex items-center gap-1" title="Phone verified">
-                      <Check size={14} style={{ color: 'var(--success)' }} />
-                    </div>
-                  )}
-                </div>
-                <p className="text-lg mb-4" style={{ color: 'var(--text-secondary)' }}>{displayName}@example.com</p>
-                <div className="flex flex-wrap items-center gap-6 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>Joined {joinDate}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{formatNumber(stats.profileViews)} profile views</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <User size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{stats.totalFollowing} following</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{stats.totalFollowers} followers</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex-shrink-0">
-                {isOwnProfile ? (
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="px-6 py-3 rounded-2xl font-medium transition-all flex items-center gap-2"
-                    style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 5H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h5m2-6h5m2-6v9a2 2 0 0 1-2 2h-5M8 9l3 3 3-3M8 12l3 3 3-3"/>
-                    </svg>
-                    Edit Profile
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setIsFollowing(!isFollowing)}
-                    disabled={saving}
-                    className="px-6 py-3 rounded-2xl font-medium transition-all flex items-center gap-2"
-                    style={isFollowing 
-                      ? { background: 'var(--bg-inset)', color: 'var(--text-primary)', border: '1px solid var(--border)' }
-                      : { background: 'var(--primary)', color: 'var(--bg-elevated)' }
-                    }
-                  >
-                    {isFollowing ? (
-                      <>
-                        <X size={16} />
-                        Following
-                      </>
-                    ) : (
-                      <>
-                        <Users size={16} />
-                        Follow
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {error && (
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
-                  {error}
-                </div>
-              </div>
-            )}
-            {success && (
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)' }}>
-                  {success}
-                </div>
-              </div>
-            )}
+    <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
+      {/* Nav */}
+      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60, padding: '0 24px' }}>
+          <Link href="/" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>
+            <span style={{ color: 'var(--primary)' }}>026</span>Newsblog
+          </Link>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button onClick={toggleTheme} className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            <button className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', position: 'relative' }}>
+              <MessageSquare size={18} />
+              <span style={{ position: 'absolute', top: 7, right: 7, width: 7, height: 7, background: 'var(--error)', borderRadius: '50%', border: '2px solid var(--bg-base)' }} />
+            </button>
+            <button className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', position: 'relative' }}>
+              <Bell size={18} />
+              <span style={{ position: 'absolute', top: 7, right: 7, width: 7, height: 7, background: 'var(--error)', borderRadius: '50%', border: '2px solid var(--bg-base)' }} />
+            </button>
           </div>
         </div>
-        
-        <div className="flex overflow-x-auto mb-6 pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      </nav>
+
+      {/* Profile Header */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 28, marginBottom: 32 }}>
+          <div style={{ width: 96, height: 96, borderRadius: 24, background: 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
+            {initials}
+          </div>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>{displayName}</h1>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{displayName.toLowerCase().replace(/\s/g, '')} · Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Jan 2026'}</p>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.55, marginBottom: 16 }}>
+              Tech enthusiast and avid reader. Interested in AI, startups, and the future of East African innovation.
+            </p>
+            <div style={{ display: 'flex', gap: 20, alignItems: 'center', fontSize: '0.82rem' }}>
+              <span><strong style={{ fontWeight: 700 }}>{stats.articles}</strong> <span style={{ color: 'var(--text-tertiary)' }}>articles read</span></span>
+              <span><strong style={{ fontWeight: 700 }}>{stats.saved}</strong> <span style={{ color: 'var(--text-tertiary)' }}>saved</span></span>
+              <span><strong style={{ fontWeight: 700 }}>{stats.following}</strong> <span style={{ color: 'var(--text-tertiary)' }}>following</span></span>
+              <span><strong style={{ fontWeight: 700 }}>{stats.comments}</strong> <span style={{ color: 'var(--text-tertiary)' }}>comments</span></span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0, paddingTop: 8 }}>
+            <Link href="/settings" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <Settings size={15} /> Settings
+            </Link>
+            <button style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: 'none', color: 'oklch(98% 0.005 175)', background: 'var(--primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              Edit Profile
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)' }}>
           {[
-            { key: 'profile', label: 'Profile', icon: User },
-            { key: 'saved', label: 'Saved Articles', icon: Bookmark },
-            { key: 'liked', label: 'Liked', icon: Heart },
-            { key: 'comments', label: 'Comments', icon: MessageSquare },
-            { key: 'following', label: 'Following', icon: Users },
-            { key: 'activity', label: 'Activity', icon: TrendingUp },
-            { key: 'settings', label: 'Settings', icon: Shield }
-          ].map((tab) => {
-            const Icon = tab.icon
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className="flex items-center gap-2 px-4 py-3 font-medium text-sm transition-all whitespace-nowrap"
-                style={activeTab === tab.key
-                  ? { color: 'var(--primary)', borderBottom: '2px solid var(--primary)', background: 'var(--bg-surface)' }
-                  : { color: 'var(--text-tertiary)', background: 'transparent' }
-                }
-              >
-                <Icon size={16} />
-                <span>{tab.label}</span>
-                {(tab.key === 'saved' || tab.key === 'liked' || tab.key === 'comments') && (
-                  <span className="px-2 py-1 text-xs rounded-full font-semibold" style={{ 
-                    background: activeTab === tab.key ? 'var(--primary-light)' : 'var(--bg-inset)',
-                    color: activeTab === tab.key ? 'var(--primary)' : 'var(--text-tertiary)'
-                  }}>
-                    {tab.key === 'saved' ? stats.totalArticles : tab.key === 'liked' ? stats.totalLikes : stats.totalComments}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-              <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Profile Information</h2>
-              <div className="space-y-4">
-                {bio ? (
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{bio}</p>
-                ) : (
-                  <div className="text-sm italic" style={{ color: 'var(--text-muted)' }}>No bio available...</div>
-                )}
-                
-                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  <MapPin size={14} />
-                  {location || 'Location not set'}
-                </div>
-              </div>
-              
-              <div className="mt-6 pt-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-                <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Verification Status</h3>
-                <div className="flex flex-wrap gap-2">
-                  {verificationStatus.email && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
-                      <Check size={12} />
-                      Email Verified
-                    </div>
-                  )}
-                  {verificationStatus.phone && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
-                      <Check size={12} />
-                      Phone Verified
-                    </div>
-                  )}
-                  {verificationStatus.id && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                      <Shield size={12} />
-                      ID Verified
-                    </div>
-                  )}
-                  {!(verificationStatus.email || verificationStatus.phone || verificationStatus.id) && (
-                    <div className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Please verify your account</div>
-                  )}
-                </div>
-              </div>
-              
-              {userWebsites.length > 0 && (
-                <div className="mt-6 pt-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Web & Social</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {userWebsites.map((website, index) => (
-                      <a
-                        key={index}
-                        href={website.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors hover:scale-105"
-                        style={{ background: 'var(--bg-inset)', color: 'var(--text-secondary)' }}
-                      >
-                        <ExternalLink size={12} />
-                        {website.name}
-                      </a>
-                    ))}
-                  </div>
-                </div>
+            { id: 'saved', label: 'Saved', icon: Bookmark, count: stats.saved },
+            { id: 'liked', label: 'Liked', icon: Heart, count: 89 },
+            { id: 'comments', label: 'Comments', icon: MessageSquare, count: stats.comments },
+            { id: 'history', label: 'History', icon: null, count: null },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: activeTab === tab.id ? 600 : 500, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)', cursor: 'pointer', borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}>
+              {tab.icon && <tab.icon size={15} />}
+              {tab.label}
+              {tab.count != null && (
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: activeTab === tab.id ? 'var(--primary-light)' : 'var(--bg-inset)', color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)' }}>{tab.count}</span>
               )}
-            </div>
-            
-            {userInterests.length > 0 && (
-              <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Interests</h2>
-                <div className="flex flex-wrap gap-2">
-                  {userInterests.map((interest, index) => (
-                    <div
-                      key={interest.id}
-                      className="px-3 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 cursor-pointer"
-                      style={{ 
-                        background: interest.color || 'var(--bg-inset)',
-                        color: 'var(--text-secondary)'
-                      }}
-                    >
-                      {interest.icon && <span className="mr-2">{interest.icon}</span>}
-                      {interest.name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Notifications</h2>
-                {unreadNotifCount > 0 && (
-                  <button
-                    onClick={markAllNotificationsAsRead}
-                    className="text-xs font-medium hover:underline"
-                    style={{ color: 'var(--primary)' }}
-                  >
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3">
-                {notifications.slice(0, 5).map((notification) => (
-                  <div
-                    key={notification.id}
-                    onClick={() => markNotificationAsRead(notification.id)}
-                    className={`flex gap-3 p-3 rounded-xl transition-all cursor-pointer ${!notification.read ? 'bg-gradient-to-r from-blue-50 to-transparent border-l-4 border-blue-500' : ''}`}
-                    style={!notification.read ? { background: 'var(--primary-light)' } : {}}
-                  >
-                    <div className="text-lg">{notification.icon}</div>
-                    <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{notification.title}</p>
-                      <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{notification.message}</p>
-                      <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{notification.time}</p>
-                    </div>
-                  </div>
-                ))}
-                {notifications.length === 0 && (
-                  <div className="text-center py-8">
-                    <Bell size={32} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
-                    <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>No notifications yet</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {activeTab === 'settings' && (
-              <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Theme Settings</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => selectTheme('light')}
-                    className="p-2 rounded-lg border-2 transition-all"
-                    style={{ 
-                      borderColor: selectedTheme === 'light' ? 'var(--primary)' : 'var(--border)',
-                      background: selectedTheme === 'light' ? 'var(--primary-light)' : 'var(--bg-surface)'
-                    }}
-                  >
-                    <div className="w-6 h-6 rounded-full mb-1 mx-auto" style={{ background: 'white', border: '1px solid var(--border)' }}></div>
-                    <div className="text-xs font-medium" style={{ color: selectedTheme === 'light' ? 'var(--primary)' : 'var(--text-secondary)' }}>Light</div>
-                  </button>
-                  <button
-                    onClick={() => selectTheme('dark')}
-                    className="p-2 rounded-lg border-2 transition-all"
-                    style={{ 
-                      borderColor: selectedTheme === 'dark' ? 'var(--primary)' : 'var(--border)',
-                      background: selectedTheme === 'dark' ? 'var(--bg-elevated)' : 'var(--bg-surface)'
-                    }}
-                  >
-                    <div className="w-6 h-6 rounded-full mb-1 mx-auto" style={{ background: 'var(--bg-base)', border: '1px solid var(--border)' }}></div>
-                    <div className="text-xs font-medium" style={{ color: selectedTheme === 'dark' ? 'var(--primary)' : 'var(--text-secondary)' }}>Dark</div>
-                  </button>
-                  <button
-                    onClick={() => selectTheme('kenya-red')}
-                    className="p-2 rounded-lg border-2 transition-all"
-                    style={{ 
-                      borderColor: selectedTheme === 'kenya-red' ? 'var(--kenya-red)' : 'var(--border)',
-                      background: selectedTheme === 'kenya-red' ? 'var(--kenya-red)' : 'var(--bg-surface)'
-                    }}
-                  >
-                    <div className="w-6 h-6 rounded-full mb-1 mx-auto" style={{ background: 'var(--kenya-red)' }}></div>
-                    <div className="text-xs font-medium" style={{ color: selectedTheme === 'kenya-red' ? 'white' : 'var(--text-secondary)' }}>Kenya Red</div>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="lg:col-span-2">
-            {activeTab === 'profile' && (
-              <div className="space-y-8">
-                <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-                  <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Latest Activity</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
-                        </div>
-                        <div>
-                          <div className="font-medium" style={{ color: 'var(--text-primary)' }}>{stats.profileViews} profile views this month</div>
-                          <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Profile engagement increased</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>+12%</div>
-                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>vs last month</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                          <User size={16} style={{ color: 'var(--success)' }} />
-                        </div>
-                        <div>
-                          <div className="font-medium" style={{ color: 'var(--text-primary)' }}>{stats.totalFollowing} following</div>
-                          <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Connections growing</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold" style={{ color: 'var(--success)' }}>+5%</div>
-                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>vs last month</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                          <Heart size={16} style={{ color: 'var(--warning)' }} />
-                        </div>
-                        <div>
-                          <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Love Score: 89%</div>
-                          <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Community engagement</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold" style={{ color: 'var(--warning)' }}>+23%</div>
-                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>vs last month</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-                  <h2 className="text-lg font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Reading Activity</h2>
-                  <div className="flex justify-between mb-4 text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                    <span>This week's reading minutes</span>
-                    <span>{stats.totalArticles} articles read</span>
-                  </div>
-                  <div className="flex items-end justify-between h-32 gap-2">
-                    {activityChartData().map((item, index) => {
-                      const height = Math.max(20, (item.value / 120) * 100)
-                      return (
-                        <div key={index} className="flex flex-col items-center flex-1">
-                          <div 
-                            className="w-full rounded-t-lg transition-all duration-500 hover:opacity-80"
-                            style={{ 
-                              height: `${height}%`,
-                              background: item.color
-                            }}
-                          />
-                          <span className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>{item.day}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-                
-                {activeTab === 'profile' && (
-                  <div className="rounded-3xl p-6" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-lg)' }}>
-                    <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Account Type</h2>
-                    <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--primary-light)' }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                          <Shield size={20} style={{ color: 'var(--primary)' }} />
-                        </div>
-                        <div>
-                          <div className="font-semibold" style={{ color: 'var(--primary)' }}>Premium (Free)</div>
-                          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>All features available</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Last updated</div>
-                        <div className="text-sm font-medium" style={{ color: 'var(--primary)' }}>Today</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {activeTab === 'saved' && (
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Saved Articles</h2>
-                {savedArticles.map((article) => (
-                  <Link
-                    key={article.article_id}
-                    href={`/article/${article.slug}`}
-                    className="block rounded-2xl p-6 transition-all hover:shadow-lg"
-                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
-                  >
-                    <div className="flex gap-4">
-                      <Image
-                        src={article.thumbnail}
-                        alt={article.title}
-                        width={140}
-                        height={100}
-                        className="rounded-xl object-cover"
-                        unoptimized
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <span 
-                            className="text-xs font-semibold px-2 py-1 rounded-full"
-                            style={{ background: `${article.category_color}20`, color: article.category_color }}
-                          >
-                            {article.category}
-                          </span>
-                          {article.is_liked && (
-                            <Heart size={16} fill="currentColor" className="text-red-500" />
-                          )}
-                        </div>
-                        <h3 className="font-bold mb-2 line-clamp-2" style={{ color: 'var(--text-primary)' }}>{article.title}</h3>
-                        <p className="text-sm mb-2" style={{ color: 'var(--text-tertiary)' }}>by {article.author_name}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{article.created_at} • {article.read_time} min read</span>
-                          <button className="px-3 py-2 rounded-lg text-sm font-medium transition-colors" style={{ color: 'var(--primary)', background: 'var(--primary-light)' }}>Read →</button>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-            
-            {activeTab === 'liked' && (
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Liked Articles</h2>
-                {likedArticles.map((article) => (
-                  <div key={article.article_id} className="rounded-2xl p-6 transition-all hover:shadow-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                    <div className="flex gap-4">
-                      <Image
-                        src={article.thumbnail}
-                        alt={article.title}
-                        width={140}
-                        height={100}
-                        className="rounded-xl object-cover"
-                        unoptimized
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <span 
-                            className="text-xs font-semibold px-2 py-1 rounded-full"
-                            style={{ background: `${article.category_color}20`, color: article.category_color }}
-                          >
-                            {article.category}
-                          </span>
-                          {article.is_liked && (
-                            <Heart size={16} fill="currentColor" className="text-red-500" />
-                          )}
-                        </div>
-                        <h3 className="font-bold mb-2 line-clamp-2" style={{ color: 'var(--text-primary)' }}>{article.title}</h3>
-                        <p className="text-sm mb-2" style={{ color: 'var(--text-tertiary)' }}>by {article.author_name}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{article.created_at} • {article.read_time} min read</span>
-                          <Link href={`/article/${article.slug}`}>
-                            <button className="px-3 py-2 rounded-lg text-sm font-medium transition-colors" style={{ color: 'var(--primary)', background: 'var(--primary-light)' }}>Read →</button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 40 }}>
+        <main>
+          {/* Saved Tab */}
+          {activeTab === 'saved' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {savedArticles.map((a: any, i) => (
+                <Link key={i} href={`/article/${a.slug || '#'}`} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 18, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer' }}>
+                  <Image src={a.featured_image || a.thumbnail || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop'} alt={a.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.category || 'Technology'}</span>
+                      <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.title}</h3>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.author_name || a.author || 'Staff'}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved Jul 10 · {a.read_time || 7} min read</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
+                          <Heart size={13} fill="currentColor" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Liked Tab */}
+          {activeTab === 'liked' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {likedArticles.map((a: any, i) => (
+                <Link key={i} href={`/article/${a.slug || '#'}`} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 18, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer', opacity: 0.85 }}>
+                  <Image src={a.featured_image || a.thumbnail || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&h=200&fit=crop'} alt={a.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.category || 'Science'}</span>
+                      <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.title}</h3>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.author_name || a.author || 'Staff'}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked Jul 10 · {a.read_time || 7} min read</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
+                          <Heart size={13} fill="currentColor" />
+                        </button>
+                        <button className="card-action" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-subtle)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>
+                          <Bookmark size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Comments Tab */}
+          {activeTab === 'comments' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {comments.map(c => (
+                <div key={c.id} style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MessageSquare size={12} /> Commented on <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{c.article_title}</span>
+                  </div>
+                  <p style={{ fontSize: '0.88rem', lineHeight: 1.55, color: 'var(--text-primary)', marginBottom: 10 }}>{c.text}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                    <span>{c.date}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}><ThumbsUp size={13} /> {c.likes} likes</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}><Reply size={13} /> {c.replies} replies</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* History Tab */}
+          {activeTab === 'history' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, opacity: 0.7 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 18, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
+                <Image src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300&h=200&fit=crop" alt="" width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>Technology</span>
+                    <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0' }}>AI-Powered Journalism Is Reshaping How Stories Reach Readers</h3>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Amara Mwangi</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Read today · 5 min read</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Sidebar */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Notifications */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Bell size={16} style={{ color: 'var(--accent)' }} /> Notifications
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {notifications.map(n => (
+                <div key={n.id} style={{ display: 'flex', gap: 10, padding: 10, borderRadius: 9, background: n.unread ? 'var(--bg-inset)' : 'transparent', cursor: 'pointer', position: 'relative', paddingLeft: n.unread ? 16 : 10 }}>
+                  {n.unread && <span style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', width: 5, height: 5, background: 'var(--primary)', borderRadius: '50%' }} />}
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: n.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
+                    {n.initials}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.78rem', lineHeight: 1.4, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: n.text }} />
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{n.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MessageSquare size={16} style={{ color: 'var(--accent)' }} /> Messages
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '12px 12px 12px 4px', background: 'var(--bg-inset)', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>Hey! Loved your comment on the M-Pesa article. Want to connect?</div>
+              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '12px 12px 4px 12px', background: 'var(--primary)', color: 'oklch(98% 0.005 175)', fontSize: '0.78rem', lineHeight: 1.4, alignSelf: 'flex-end' }}>Thanks! Absolutely, I'm always up for discussing fintech trends.</div>
+              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '12px 12px 12px 4px', background: 'var(--bg-inset)', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>Great! I'm writing a piece on crypto regulation next week. Would love your input.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <input type="text" placeholder="Type a message..." style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', fontSize: '0.78rem', fontFamily: 'inherit', color: 'var(--text-primary)', outline: 'none' }} />
+              <button style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--primary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Send size={15} style={{ color: 'oklch(98% 0.005 175)' }} />
+              </button>
+            </div>
+          </div>
+
+          {/* Following */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users size={16} style={{ color: 'var(--accent)' }} /> Following
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {following.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: f.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>{f.initials}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{f.name}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>{f.role}</div>
+                  </div>
+                  <button style={{ padding: '5px 12px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 600, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>Following</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Reading Activity */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TrendingUp size={16} style={{ color: 'var(--accent)' }} /> Reading This Week
+            </h3>
+            <ReadingChart data={readingData} />
+          </div>
+
+          {/* Interests */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Star size={16} style={{ color: 'var(--accent)' }} /> Your Interests
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {interests.map((interest, i) => (
+                <span key={i} style={{ padding: '5px 12px', background: 'var(--bg-inset)', borderRadius: 16, fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', cursor: 'pointer' }}>{interest}</span>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )
 }
+
+function ReadingChart({ data }: { data: number[] }) {
+  const max = Math.max(...data)
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, padding: '8px 0' }}>
+        {data.map((val, i) => (
+          <div key={i} style={{ flex: 1, borderRadius: 3, background: val > 0 ? 'var(--primary-light)' : 'var(--bg-inset)', height: val > 0 ? `${Math.max(8, (val / max) * 100)}%` : '8px', opacity: val > 0 ? 1 : 0.3, minHeight: 4, transition: 'background 0.15s' }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+      </div>
+    </div>
+  )
+}
+
+function TrendingUp(props: any) { return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> }
+function Users(props: any) { return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> }
+
+const mockArticles = [
+  { title: "How Nairobi Became Africa's Silicon Savannah", slug: 'nairobi-silicon-savannah', featured_image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop', category: 'Technology', category_color: 'var(--primary)', author_name: 'James Kariuki', read_time: 7 },
+  { title: "M-Pesa's Next Chapter: Expanding Beyond Payments", slug: 'mpesa-next-chapter', featured_image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop', category: 'Business', category_color: 'var(--primary)', author_name: 'Wanjiku Muthoni', read_time: 11 },
+  { title: 'Why Every African Startup Is Building an AI Product', slug: 'african-startups-ai', featured_image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=300&h=200&fit=crop', category: 'Technology', category_color: 'var(--primary)', author_name: 'Olusegun Femi', read_time: 6 },
+  { title: 'Gengetone to Global: Kenyan Music Conquering Charts', slug: 'gengetone-global', featured_image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop', category: 'Culture', category_color: 'var(--primary)', author_name: 'DJ Mwas', read_time: 5 },
+  { title: 'Marathon Dominance: Inside Kenya\'s Training Methods', slug: 'marathon-dominance', featured_image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=300&h=200&fit=crop', category: 'Sports', category_color: 'var(--primary)', author_name: 'Eliud Sang', read_time: 9 },
+]

@@ -58,3 +58,107 @@ Would push these migrations:
  • 20240715_auth_enhancements.sql
  • 20260708_kenya_rss_feeds.sql
 Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20240710000000_region_prioritization.sql
+ • 20240710000001_saved_articles.sql
+ • 20240711_add_auth_id_to_users.sql
+ • 20240711_fix_rss_feeds.sql
+ • 20240711_fix_users_rls_insert.sql
+ • 20240711_schema_enhancements.sql
+ • 20240715_auth_enhancements.sql
+ • 20260708_kenya_rss_feeds.sql
+ • 20260712_reconcile_schema.sql
+ • 20260712_seed_demo.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Remote database is up to date.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Remote database is up to date.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Remote database is up to date.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Remote database is up to date.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713030000_add_last_login.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713040000_likes_table_and_categories.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713050000_gmail_integration.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713060000_notifications_and_triggers.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713120000_users_realtime.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713120000_users_realtime.sql
+ • 20260713140000_publish_limits.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713120000_users_realtime.sql
+ • 20260713140000_publish_limits.sql
+ • 20260713150000_add_social_links.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713120000_users_realtime.sql
+ • 20260713140000_publish_limits.sql
+ • 20260713150000_add_social_links.sql
+ • 20260713160000_create_journalists_table.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713170000_fix_view_security.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713180000_gmail_rls.sql
+Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713180000_gmail_rls.sql
+ • 20260713190000_fix_submission_notification_trigger.sql
+Finished supabase db push.

@@ -190,7 +190,7 @@ export default async function AdminAnalyticsPage() {
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                 {topArticles.map((a, i) => (
-                  <tr key={a.article_id} className="transition-all duration-300 animate-fade-in group/row" onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')} style={{ borderColor: 'var(--border-subtle)', animationDelay: `${0.4 + i * 0.05}s` }}>
+                  <tr key={a.article_id} className="transition-all duration-300 animate-fade-in group/row hover:[background:var(--bg-muted)]" style={{ borderColor: 'var(--border-subtle)', animationDelay: `${0.4 + i * 0.05}s` }}>
                     <td className="px-2 sm:px-4 py-3 font-black text-lg" style={{ color: 'var(--text-tertiary)' }}>{i + 1}</td>
                     <td className="px-2 sm:px-4 py-3">
                       <div className="flex items-center gap-2 sm:gap-3">
@@ -200,7 +200,7 @@ export default async function AdminAnalyticsPage() {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <Link href={`/article/${a.slug}`} className="font-bold line-clamp-1 max-w-[120px] sm:max-w-[220px] block transition-colors duration-300 text-xs sm:text-sm" style={{ color: 'var(--text-primary)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--success)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}>
+                          <Link href={`/article/${a.slug}`} className="font-bold line-clamp-1 max-w-[120px] sm:max-w-[220px] block transition-colors duration-300 text-xs sm:text-sm hover:text-[var(--success)]" style={{ color: 'var(--text-primary)' }}>
                             {a.title}
                           </Link>
                           <span className="text-[10px] sm:text-xs font-semibold" style={{ color: 'var(--warning)' }}>{a.category?.name}</span>

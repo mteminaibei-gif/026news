@@ -561,6 +561,9 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
   scroll-behavior: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  background: var(--bg-surface);
+  border-radius: 12px;
+  padding: 8px;
 }
 
 .home-feed-scroll::-webkit-scrollbar { display: none; }
@@ -903,6 +906,9 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
   .home-feed-scroll {
     max-height: calc(100dvh - 150px);
     overflow-y: auto;
+    background: var(--bg-surface);
+    border-radius: 12px;
+    padding: 8px;
   }
   .news-feed-scroll {
     max-height: none;

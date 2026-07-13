@@ -193,7 +193,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                   </thead>
                   <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                     {articles.map(a => (
-                      <tr key={a.article_id} className="transition-all duration-300" style={{ borderColor: 'var(--border-subtle)' }} onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                      <tr key={a.article_id} className="transition-all duration-300 hover:[background:var(--bg-muted)]" style={{ borderColor: 'var(--border-subtle)' }}>
 
                         {/* Article */}
                         <td className="px-2 md:px-4 py-3">
