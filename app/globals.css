@@ -148,9 +148,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar (hidden but scrollable) ──────────────────── */
-html { scrollbar-width: none; }
-::-webkit-scrollbar { width: 0; height: 0; }
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--primary-hover); }
+
+/* Hide scrollbar utility */
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
 
 /* ── Focus styles ───────────────────────────────────────── */
 :focus-visible {
@@ -547,12 +556,13 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: none;
+  -ms-overflow-style: none;
   scroll-behavior: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-.home-feed-scroll::-webkit-scrollbar { width: 0; background: transparent; }
+.home-feed-scroll::-webkit-scrollbar { display: none; }
 
 .home-feed-status {
   text-align: center;
