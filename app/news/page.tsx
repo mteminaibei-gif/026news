@@ -1,36 +1,11 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { MOCK_ARTICLES } from '@/lib/mock-data'
-import { useUser } from '@/lib/hooks/useAuth'
+import { NewsFeed } from '@/components/news/NewsFeed'
+import { createClient } from '@/lib/supabase/server'
+import type { ArticleWithAuthor } from '@/lib/supabase/types'
+import type { PostgrestResponse } from '@supabase/supabase-js'
 
 const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
-const SORT_OPTIONS = ['Most Recent', 'Most Popular', 'Most Discussed']
-
-const NEWS_FEED = MOCK_ARTICLES.filter(a => a.status === 'published').map((a, i) => ({
-  ...a,
-  thumbnail: a.featured_image || `https://picsum.photos/id/${10 + i}/400/250`,
-  category: a.category?.name ?? 'General',
-  excerpt: a.content.slice(0, 140).replace(/\n/g, ' ') + '...',
-  authorName: a.author?.name ?? 'Staff',
-  authorAvatar: a.author?.profile_image ?? `https://i.pravatar.cc/40?img=${i}`,
-  timeAgo: `${(i + 1) * 3}h ago`,
-  commentsCount: a.comments?.length ?? Math.floor(Math.random() * 30),
-}))
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Politics: 'var(--kenya-red)',
-  Business: 'var(--accent)',
-  Tech: 'var(--primary)',
-  Sports: 'var(--success)',
-  Science: 'var(--warning)',
-  Health: 'var(--success)',
-  Kenya: 'var(--kenya-green)',
-  Africa: 'var(--accent)',
-}
 
 const BREAKING = [
   'Parliament passes new digital economy bill after heated debate',
@@ -39,43 +14,29 @@ const BREAKING = [
   'President announces new affordable housing initiative for youth',
 ]
 
-const MOST_DISCUSSED = NEWS_FEED.slice(0, 5).sort(() => Math.random() - 0.5).map(a => ({
-  ...a,
-  commentsCount: Math.floor(Math.random() * 80) + 20,
-}))
+export default async function NewsPage() {
+  const supabase = await createClient()
 
-export default function NewsPage() {
-  const router = useRouter()
-  const { data: user } = useUser()
-  const [activeCategory, setActiveCategory] = useState('All')
-  const [sortBy, setSortBy] = useState('Most Recent')
-  const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
-
-  const filtered = activeCategory === 'All'
-    ? NEWS_FEED
-    : NEWS_FEED.filter(a => a.category === activeCategory)
-
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === 'Most Popular') return b.views - a.views
-    if (sortBy === 'Most Discussed') return b.commentsCount - a.commentsCount
-    return 0
-  })
-
-  const toggleBookmark = (id: number) => {
-    if (!user) {
-      router.push('/login?redirect=/news')
-      return
+  const articles: ArticleWithAuthor[] = await (async () => {
+    try {
+      const response = await supabase
+        .from('articles')
+        .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
+        .eq('status', 'published' as never)
+        .order('created_at', { ascending: false })
+        .limit(100) as PostgrestResponse<ArticleWithAuthor>
+      if (response.error) throw response.error
+      return response.data ?? []
+    } catch {
+      return []
     }
-    setBookmarked(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  })()
+
+  const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
+  const mostDiscussed = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-base)' }}>
       <Navbar />
 
       <main style={{ flex: 1 }}>
@@ -121,198 +82,10 @@ export default function NewsPage() {
           </div>
         </section>
 
-        {/* Category Filters + Sort */}
-        <section style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-          <div
-            style={{
-              maxWidth: 1100,
-              margin: '0 auto',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-              overflowX: 'auto',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 8, flex: 1, overflowX: 'auto' }}>
-              {CATEGORY_FILTERS.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    padding: '7px 18px',
-                    borderRadius: 999,
-                    border: '1px solid',
-                    borderColor: activeCategory === cat ? 'var(--primary)' : 'var(--border)',
-                    background: activeCategory === cat ? 'var(--primary)' : 'transparent',
-                    color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
-                    fontWeight: 600,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              style={{
-                padding: '8px 14px',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {SORT_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-        </section>
-
         {/* Main Content */}
         <section style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32 }}>
           {/* Feed */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {sorted.map(article => (
-              <article
-                key={article.article_id}
-                style={{
-                  display: 'flex',
-                  gap: 20,
-                  padding: 20,
-                  borderRadius: 16,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--card-shadow)',
-                  transition: 'box-shadow 0.2s, transform 0.2s',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = 'var(--card-hover-shadow)'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = 'var(--card-shadow)'
-                  e.currentTarget.style.transform = 'none'
-                }}
-              >
-                {/* Thumbnail */}
-                <div
-                  style={{
-                    width: 180,
-                    minWidth: 180,
-                    height: 120,
-                    borderRadius: 12,
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                  }}
-                >
-                  <img
-                    src={article.thumbnail}
-                    alt={article.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      alignSelf: 'flex-start',
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      padding: '3px 10px',
-                      borderRadius: 999,
-                      background: CATEGORY_COLORS[article.category] || 'var(--primary-light)',
-                      color: '#fff',
-                      marginBottom: 8,
-                    }}
-                  >
-                    {article.category}
-                  </span>
-
-                  <h2
-                    style={{
-                      fontSize: '1.05rem',
-                      fontWeight: 700,
-                      fontFamily: "'Newsreader', Georgia, serif",
-                      color: 'var(--text-primary)',
-                      lineHeight: 1.35,
-                      marginBottom: 6,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {article.title}
-                  </h2>
-
-                  <p
-                    style={{
-                      fontSize: '0.8rem',
-                      color: 'var(--text-tertiary)',
-                      lineHeight: 1.5,
-                      marginBottom: 12,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {article.excerpt}
-                  </p>
-
-                  {/* Footer row */}
-                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <img
-                        src={article.authorAvatar}
-                        alt={article.authorName}
-                        style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{article.authorName}</span>
-                    </div>
-                    <span>·</span>
-                    <span>{article.timeAgo}</span>
-                    <span>·</span>
-                    <span>{article.views.toLocaleString()} views</span>
-                    <span>·</span>
-                    <span>{article.commentsCount} comments</span>
-                    <span style={{ flex: 1 }} />
-                    <button
-                      onClick={e => { e.stopPropagation(); toggleBookmark(article.article_id) }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                        padding: 4,
-                        color: bookmarked.has(article.article_id) ? 'var(--accent)' : 'var(--text-muted)',
-                        transition: 'color 0.2s',
-                      }}
-                      title="Bookmark"
-                    >
-                      {bookmarked.has(article.article_id) ? '★' : '☆'}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+          <NewsFeed initialArticles={articles} />
 
           {/* Sidebar */}
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -353,8 +126,6 @@ export default function NewsPage() {
                       cursor: 'pointer',
                       transition: 'color 0.2s',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
                   >
                     {item}
                   </li>
@@ -376,7 +147,7 @@ export default function NewsPage() {
                 Most Discussed
               </h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {MOST_DISCUSSED.map((item, i) => (
+                {mostDiscussed.map((item, i) => (
                   <li key={item.article_id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                     <span
                       style={{
@@ -406,13 +177,11 @@ export default function NewsPage() {
                           marginBottom: 4,
                           cursor: 'pointer',
                         }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-primary)')}
                       >
                         {item.title}
                       </p>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        {item.commentsCount} comments
+                        {item.views.toLocaleString()} views
                       </span>
                     </div>
                   </li>
@@ -469,8 +238,6 @@ export default function NewsPage() {
                   cursor: 'pointer',
                   transition: 'background 0.2s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
               >
                 Subscribe
               </button>
