@@ -1,8 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, MessageCircle, Share2 } from 'lucide-react'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 import { formatNumber, formatDate } from '@/lib/utils'
+import { useLike } from '@/lib/hooks/useLike'
 
 export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
   const excerpt =
@@ -11,8 +14,15 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
 
   const readTime = article.reading_time_minutes ?? 0
   const comments = article.analytics?.comments_count ?? 0
-  const likes = article.likes ?? article.like_count ?? 0
+  const initialLikes = article.likes ?? article.like_count ?? 0
   const shares = article.share_count ?? 0
+
+  const { liked, count: likeCount, toggle: toggleLike } = useLike(
+    article.article_id,
+    initialLikes,
+    `/article/${article.slug}`,
+    true,
+  )
 
   const image =
     article.featured_image ||
@@ -57,7 +67,17 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
           </div>
 
           <div className="article-card-stats">
-            <span><Heart size={14} /> {formatNumber(likes)}</span>
+            <button
+              type="button"
+              onClick={toggleLike}
+              aria-label={liked ? 'Unlike article' : 'Like article'}
+              title={liked ? 'Unlike' : 'Like'}
+              className="article-card-like"
+              style={{ color: liked ? 'var(--error)' : 'inherit' }}
+            >
+              <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
+              {formatNumber(likeCount)}
+            </button>
             <span><MessageCircle size={14} /> {formatNumber(comments)}</span>
             <span><Share2 size={14} /> {formatNumber(shares)}</span>
           </div>

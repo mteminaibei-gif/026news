@@ -61,7 +61,7 @@ export const ROUTES = {
 
 export const NAV_LINKS = [
   { href: ROUTES.HOME, label: 'Home', icon: '🏠' },
-  { href: ROUTES.SOURCES, label: 'Sources', icon: '📡' },
+  { href: ROUTES.SOURCES, label: 'Explore', icon: '📡' },
   { href: ROUTES.NEWS, label: 'News', icon: '📰' },
   { href: ROUTES.ARTICLES, label: 'Articles', icon: '📑' },
   { href: ROUTES.RADIO, label: 'Radio', icon: '📻' },

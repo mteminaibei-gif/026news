@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, MessageCircle, Bookmark, Share2 } from 'lucide-react'
 import { useUser } from '@/lib/hooks/useAuth'
+import { useLike } from '@/lib/hooks/useLike'
 
 function compact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -22,7 +23,7 @@ interface Props {
 export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSaves = 0, commentCount = 0 }: Props) {
   const router = useRouter()
   const { data: user } = useUser()
-  const [liked, setLiked] = useState(false)
+  const { liked, count: likeCount, toggle: toggleLike } = useLike(articleId, initialLikes, `/article/${slug}`)
   const [saved, setSaved] = useState(false)
   const [savedId, setSavedId] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
@@ -43,10 +44,7 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
     return () => { active = false }
   }, [user, articleId])
 
-  const likeCount = initialLikes + (liked ? 1 : 0)
   const saveCount = initialSaves + (saved ? 1 : 0)
-
-  const toggleLike = () => setLiked(v => !v)
 
   const toggleSave = async () => {
     if (!user) {

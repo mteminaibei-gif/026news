@@ -52,7 +52,7 @@ export function HeroCarousel({ articles }: Props) {
         className="hero-slideshow"
         style={{
           position: 'relative',
-          height: 'clamp(440px, 60vh, 620px)',
+          height: 'clamp(520px, 68vh, 760px)',
           borderRadius: 16,
           overflow: 'hidden',
           background: 'var(--primary)',
