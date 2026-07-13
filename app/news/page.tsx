@@ -18,7 +18,7 @@ const NEWS_FEED = MOCK_ARTICLES.filter(a => a.status === 'published').map((a, i)
   authorName: a.author?.name ?? 'Staff',
   authorAvatar: a.author?.profile_image ?? `https://i.pravatar.cc/40?img=${i}`,
   timeAgo: `${(i + 1) * 3}h ago`,
-  commentsCount: a.comments?.length ?? Math.floor(Math.random() * 30),
+  commentsCount: a.comments?.length ?? (a.article_id % 30),
 }))
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -39,9 +39,9 @@ const BREAKING = [
   'President announces new affordable housing initiative for youth',
 ]
 
-const MOST_DISCUSSED = NEWS_FEED.slice(0, 5).sort(() => Math.random() - 0.5).map(a => ({
+const MOST_DISCUSSED = NEWS_FEED.slice(0, 5).map((a, i) => ({
   ...a,
-  commentsCount: Math.floor(Math.random() * 80) + 20,
+  commentsCount: 30 + i * 12,
 }))
 
 export default function NewsPage() {
