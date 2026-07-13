@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 interface CreateAccountRequest {
   email: string
@@ -61,8 +61,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
     }
 
+    // Privileged mutations need the service-role (admin) client: auth.admin.*
+    // only works with the service key, and the users insert must bypass RLS.
+    const admin = await createAdminClient()
+
     // Check if email already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await admin
       .from('users')
       .select('user_id')
       .eq('email', email.toLowerCase().trim())
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create auth user
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
       email: email.toLowerCase().trim(),
       password: password,
       email_confirm: true,
@@ -90,27 +94,31 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create user profile in users table
-    const { data: newUser, error: userError } = await supabase
+    // Create user profile in users table. The handle_new_user trigger may
+    // have already inserted a row on createUser, so upsert on auth_id. Include
+    // password_hash so the insert branch passes the NOT NULL constraint.
+    const { data: newUser, error: userError } = await admin
       .from('users')
-      .insert([{
+      .upsert([{
         auth_id: authData.user.id,
         email: email.toLowerCase().trim(),
         name: name.trim(),
         role: role,
-        phone: phone?.trim() || null,
-        location: location?.trim() || null,
         bio: bio?.trim() || null,
         status: 'active',
+        password_hash: '',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }] as any)
+      }] as any, { onConflict: 'auth_id' })
       .select()
       .single() as any
 
     if (userError) {
       // Rollback: delete auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id)
+      try {
+        await admin.auth.admin.deleteUser(authData.user.id)
+      } catch (rollbackError) {
+        console.error('[create-account] rollback failed:', rollbackError)
+      }
       console.error('User profile creation error:', userError)
       return NextResponse.json(
         { error: 'Failed to create user profile' },
@@ -120,7 +128,7 @@ export async function POST(req: NextRequest) {
 
     // If journalist, create journalist profile
     if (role === 'journalist') {
-      const { error: journalistError } = await supabase
+      const { error: journalistError } = await admin
         .from('journalists')
         .insert([{
           user_id: newUser.user_id,
@@ -139,7 +147,7 @@ export async function POST(req: NextRequest) {
 
     // Log admin action
     try {
-      await supabase
+      await admin
         .from('admin_logs')
         .insert([{
           admin_id: (adminUser as any)?.user_id,

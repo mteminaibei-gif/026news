@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -177,7 +177,13 @@ export async function POST(req: NextRequest) {
       throw new Error('No user ID returned from signup')
     }
 
-    // 2. Insert profile row
+    // 2. Persist profile row. The handle_new_user trigger may have already
+    //    inserted a users row on signUp, so upsert on auth_id. Use the admin
+    //    client: right after signUp there is no session cookie (email
+    //    verification is pending), so an anon insert/upsert would be blocked
+    //    by RLS or would duplicate the trigger-created row.
+    const admin = await createAdminClient()
+
     const profilePayload: Record<string, any> = {
       auth_id: authData.user.id,
       name: name.trim(),
@@ -185,6 +191,7 @@ export async function POST(req: NextRequest) {
       role: role,
       bio: bio.trim() || null,
       status: 'active',
+      password_hash: '',
       social_links: role === 'journalist' ? {
         organization: organization.trim() || null,
         portfolio: portfolio.trim() || null,
@@ -192,14 +199,15 @@ export async function POST(req: NextRequest) {
       } : null,
     }
 
-    const { error: profileError } = await supabase
+    const { error: profileError } = await admin
       .from('users')
-      .insert([profilePayload] as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .upsert([profilePayload] as any, { onConflict: 'auth_id' })
 
     if (profileError) {
       // Attempt to rollback auth user if profile creation failed
       try {
-        await supabase.auth.admin.deleteUser(authData.user.id)
+        await admin.auth.admin.deleteUser(authData.user.id)
       } catch (rollbackError) {
         console.error('[Rollback] Failed to delete auth user:', rollbackError)
       }

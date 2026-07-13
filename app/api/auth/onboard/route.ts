@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSWORD_MIN_LENGTH = 8
@@ -79,12 +79,18 @@ export async function POST(req: NextRequest) {
 
     // 2. Persist preferences. The handle_new_user trigger may have already
     //    inserted a users row on signUp, so upsert on auth_id to be safe.
+    //    Use the admin client: right after signUp there is no session cookie
+    //    (email verification is pending), so an anon upsert would be blocked
+    //    by the "users can update own profile" RLS policy.
+    const admin = await createAdminClient()
+
     const patch: Record<string, unknown> = {
       auth_id: authData.user.id,
       name: name.trim(),
       email: email.toLowerCase(),
       role: 'reader',
       status: 'active',
+      password_hash: '',
       interests: Array.isArray(interests) ? interests : [],
       notification_prefs:
         notification_prefs && typeof notification_prefs === 'object' ? notification_prefs : {},
@@ -93,12 +99,6 @@ export async function POST(req: NextRequest) {
     if (applyAuthor) {
       const app = application ?? {}
       patch.bio = (app.bio ?? '').toString().trim() || null
-      patch.social_links = {
-        portfolio: (app.portfolioUrl ?? '').toString().trim() || null,
-        linkedin: (app.linkedinUrl ?? '').toString().trim() || null,
-        website: null,
-        twitter: null,
-      }
       patch.author_application = {
         status: 'pending',
         first_name: (app.firstName ?? '').toString(),
@@ -107,11 +107,13 @@ export async function POST(req: NextRequest) {
         niche: (app.niche ?? '').toString(),
         experience: (app.experience ?? '').toString(),
         motivation: (app.motivation ?? '').toString(),
+        portfolio: (app.portfolioUrl ?? '').toString().trim() || null,
+        linkedin: (app.linkedinUrl ?? '').toString().trim() || null,
         submitted_at: new Date().toISOString(),
       }
     }
 
-    const { error: upsertError } = await supabase
+    const { error: upsertError } = await admin
       .from('users')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .upsert([patch] as any, { onConflict: 'auth_id' })
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
     if (upsertError) {
       // Rollback the auth user so we don't leave orphans
       try {
-        await supabase.auth.admin.deleteUser(authData.user.id)
+        await admin.auth.admin.deleteUser(authData.user.id)
       } catch (rollbackError) {
         console.error('[onboard] rollback failed:', rollbackError)
       }
