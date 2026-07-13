@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { Topbar } from '@/components/layout/Topbar'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
@@ -21,17 +21,23 @@ type ArticleRow = {
   featured_image: string | null; views: number; earnings: number; created_at: string
   author: { name: string } | null
   category: { name: string } | null
+  source_name: string | null
 }
+
+const ARTICLE_SELECT = 'article_id, title, slug, status, featured_image, views, earnings, created_at, author:users(name), category:categories(name), source_name'
 type JournalistRow = {
   user_id: number; name: string; email: string
   profile_image: string | null; status: string
 }
 
 export default function AdminDashboard() {
-  const supabase = createClient()
-  const [articles, setArticles] = useState<ArticleRow[]>([])
+  const supabase = useMemo(() => createClient(), [])
+  const [inhouseArticles, setInhouseArticles] = useState<ArticleRow[]>([])
+  const [sourcedArticles, setSourcedArticles] = useState<ArticleRow[]>([])
   const [journalists, setJournalists] = useState<JournalistRow[]>([])
   const [totalArticlesCount, setTotalArticlesCount] = useState(0)
+  const [publishLimits, setPublishLimits] = useState<{ inhouse: number; sourced: number }>({ inhouse: 10, sourced: 10 })
+  const [savingLimits, setSavingLimits] = useState(false)
   const [journalistsCount, setJournalistsCount] = useState(0)
   const [totalUsers, setTotalUsers] = useState(0)
   const [totalRevenue, setTotalRevenue] = useState(0)
@@ -56,13 +62,36 @@ export default function AdminDashboard() {
         }
       }
 
-      const { data: rawArticles, count: articlesCount } = await supabase
-        .from('articles')
-        .select('article_id, title, slug, status, featured_image, views, earnings, created_at, author:users(name), category:categories(name)', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .limit(20)
-      setArticles((rawArticles ?? []) as ArticleRow[])
-      setTotalArticlesCount(articlesCount ?? 0)
+      const [inhouseRes, sourcedRes, settingsRes] = await Promise.all([
+        supabase
+          .from('articles')
+          .select(ARTICLE_SELECT, { count: 'exact' })
+          .eq('is_aggregated', false)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('articles')
+          .select(ARTICLE_SELECT, { count: 'exact' })
+          .eq('is_aggregated', true)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        // site_settings is not yet in the generated supabase types
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from('site_settings') as any)
+          .select('key, value')
+          .eq('key', 'publish_limits')
+          .maybeSingle(),
+      ])
+      setInhouseArticles((inhouseRes.data ?? []) as ArticleRow[])
+      setSourcedArticles((sourcedRes.data ?? []) as ArticleRow[])
+      setTotalArticlesCount((inhouseRes.count ?? 0) + (sourcedRes.count ?? 0))
+      if (settingsRes.data?.value) {
+        const v = settingsRes.data.value as { inhouse?: number; sourced?: number }
+        setPublishLimits({
+          inhouse: Number(v.inhouse ?? 10),
+          sourced: Number(v.sourced ?? 10),
+        })
+      }
 
       const { data: rawJournalists, count: jCount } = await supabase
         .from('users')
@@ -115,8 +144,23 @@ export default function AdminDashboard() {
     }
   }, [fetchData, supabase])
 
-  const pending = articles.filter(a => a.status === 'under_review')
-  const published = articles.filter(a => a.status === 'published')
+  const pending = [...inhouseArticles, ...sourcedArticles].filter(a => a.status === 'under_review')
+  const published = [...inhouseArticles, ...sourcedArticles].filter(a => a.status === 'published')
+
+  const saveLimits = async () => {
+    setSavingLimits(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('site_settings') as any)
+      .upsert({ key: 'publish_limits', value: publishLimits, updated_at: new Date().toISOString() })
+    if (error) {
+      console.error('Failed to save publish limits:', error)
+      setNotification({ type: 'info', message: 'Could not save publish limits.' })
+    } else {
+      setNotification({ type: 'success', message: 'Publish limits updated.' })
+      setTimeout(() => setNotification(null), 4000)
+    }
+    setSavingLimits(false)
+  }
 
   return (
     <>
@@ -267,51 +311,57 @@ export default function AdminDashboard() {
 
               {/* Main Content Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                {/* Articles Table */}
-                <div className="lg:col-span-2" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <div>
-                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📋 Recent Articles</h3>
-                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Manage and review content</p>
+                {/* Publish Limits + Article Library */}
+                <div className="lg:col-span-2 space-y-5">
+                  {/* Publish Limits control */}
+                  <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                    <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div>
+                        <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⚙️ Publish Limits</h3>
+                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Max published articles surfaced per source type</p>
+                      </div>
+                      <button
+                        onClick={saveLimits}
+                        disabled={savingLimits}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
+                        style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
+                      >
+                        {savingLimits ? 'Saving…' : 'Save Limits'}
+                      </button>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <label className="block">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>🏠 In-House (max published)</span>
+                        <input
+                          type="number" min={0} max={500}
+                          value={publishLimits.inhouse}
+                          onChange={(e) => setPublishLimits({ ...publishLimits, inhouse: Math.max(0, Number(e.target.value) || 0) })}
+                          className="mt-2 w-full px-3 py-2 rounded-lg text-sm"
+                          style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>📡 Sourced / RSS (max published)</span>
+                        <input
+                          type="number" min={0} max={500}
+                          value={publishLimits.sourced}
+                          onChange={(e) => setPublishLimits({ ...publishLimits, sourced: Math.max(0, Number(e.target.value) || 0) })}
+                          className="mt-2 w-full px-3 py-2 rounded-lg text-sm"
+                          style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                        />
+                      </label>
                     </div>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr style={{ background: 'var(--bg-muted)' }}>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>#</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Article</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase hidden md:table-cell" style={{ color: 'var(--text-secondary)' }}>Author</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase hidden lg:table-cell" style={{ color: 'var(--text-secondary)' }}>Views</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                        {articles.slice(0, 8).map((a, i) => (
-                          <tr key={a.article_id} className="transition-colors" onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                            <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-tertiary)' }}>{i + 1}</td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                {a.featured_image && (
-                                  <div className="relative w-12 h-10 rounded-lg overflow-hidden">
-                                    <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-medium line-clamp-1" style={{ color: 'var(--text-primary)', maxWidth: 200 }}>{a.title}</p>
-                                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{a.category?.name}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-sm hidden md:table-cell" style={{ color: 'var(--text-primary)' }}>{a.author?.name}</td>
-                            <td className="px-6 py-4 text-sm hidden lg:table-cell" style={{ color: 'var(--text-primary)' }}>👁 {formatNumber(a.views)}</td>
-                            <td className="px-6 py-4"><Badge status={a.status} /></td>
-                            <td className="px-6 py-4"><AdminArticleActions articleId={a.article_id} /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+
+                  {/* Article Library */}
+                  <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                    <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📋 Content Library</h3>
+                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>In-house vs sourced publications</p>
+                    </div>
+                    <ArticleTable title="In-House Publications" icon="🏠" rows={inhouseArticles} limit={publishLimits.inhouse} />
+                    <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
+                    <ArticleTable title="Sourced (RSS) Articles" icon="📡" rows={sourcedArticles} limit={publishLimits.sourced} />
                   </div>
                 </div>
 
@@ -391,4 +441,108 @@ export default function AdminDashboard() {
       `}</style>
     </>
   )
+}
+
+function ArticleTable({ title, icon, rows, limit }: { title: string; icon: string; rows: ArticleRow[]; limit: number }) {
+  const published = rows.filter((r) => r.status === 'published')
+  const shown = published.slice(0, limit)
+  const extra = Math.max(0, published.length - shown.length)
+  return (
+    <div>
+      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>{icon}</div>
+          <div>
+            <h4 className="font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{title}</h4>
+            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              {published.length} published · showing {Math.min(limit, published.length)}
+              {extra > 0 ? <span style={{ color: 'var(--warning)' }}> ({extra} beyond limit)</span> : ''}
+            </p>
+          </div>
+        </div>
+        <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>{shown.length}</span>
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="px-6 py-12 text-center">
+          <div className="text-4xl mb-3 opacity-40">🗞️</div>
+          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>No published articles yet.</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Published {title.toLowerCase()} will appear here.</p>
+        </div>
+      ) : (
+        <ul className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+          {shown.map((a) => {
+            const name = a.author?.name ?? a.source_name ?? '—'
+            const initials = name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '—'
+            const isSourced = !a.author?.name && !!a.source_name
+            return (
+              <li
+                key={a.article_id}
+                className="group flex items-center gap-4 px-6 py-4 transition-all"
+                style={{ borderLeft: '3px solid transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--bg-muted)'
+                  e.currentTarget.style.borderLeftColor = 'var(--primary)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderLeftColor = 'transparent'
+                }}
+              >
+                {/* Thumbnail */}
+                {a.featured_image ? (
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{ boxShadow: '0 0 0 1px var(--border-subtle)' }}>
+                    <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>📰</div>
+                )}
+
+                {/* Title + meta */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    {a.category?.name && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>{a.category.name}</span>
+                    )}
+                    <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{timeAgo(a.created_at)}</span>
+                  </div>
+                </div>
+
+                {/* Author / source */}
+                <div className="hidden md:flex items-center gap-2 w-44 shrink-0">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: isSourced ? 'var(--info)' : 'var(--primary)', color: 'var(--text-inverse)' }}>{initials}</div>
+                  <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{isSourced ? `📡 ${a.source_name}` : a.author?.name}</span>
+                </div>
+
+                {/* Views */}
+                <div className="hidden lg:block shrink-0">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>👁 {formatNumber(a.views)}</span>
+                </div>
+
+                {/* Status */}
+                <div className="shrink-0"><Badge status={a.status} /></div>
+
+                {/* Actions */}
+                <div className="shrink-0"><AdminArticleActions articleId={a.article_id} /></div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function timeAgo(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diff < 60) return 'just now'
+  const m = Math.floor(diff / 60)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d ago`
+  const w = Math.floor(d / 7)
+  return `${w}w ago`
 }
