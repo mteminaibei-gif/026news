@@ -191,7 +191,7 @@ export default async function HomePage({ searchParams }: Props) {
       </div>
 
       {/* Main Content Grid */}
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 48 }}>
+      <div className="main-layout">
         <main>
           {/* Featured Article (First hero slide) */}
           {heroSlides[0] && (
@@ -268,7 +268,7 @@ export default async function HomePage({ searchParams }: Props) {
           )}
 
           {/* Article Grid - 2 columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div className="home-articles-grid">
             {displayArticles.slice(0, 8).map(article => (
               <ArticleCard key={article.article_id} article={article} variant="default" />
             ))}

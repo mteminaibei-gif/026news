@@ -169,7 +169,7 @@ export default function AdminDashboard() {
           borderRadius: 16,
           ...(notification.type === 'success'
             ? { background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)' }
-            : { background: 'var(--info)', border: '1px solid var(--info)', color: 'var(--text-inverse)' })
+            : { background: 'var(--primary-light)', border: '1px solid var(--primary)', color: 'var(--primary)' })
         }}>
           {notification.message}
         </div>

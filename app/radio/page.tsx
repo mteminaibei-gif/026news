@@ -1,59 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { useRadio } from '@/components/radio/RadioProvider'
+import { RADIO_STATIONS } from '@/lib/radio/stations'
 
-interface Station {
-  name: string
-  genre: string
-  live: boolean
-  listeners: number
-  color: string
-}
-
-interface Podcast {
-  title: string
-  author: string
-  episodes: number
-  duration: string
-  coverColor: string
-}
-
-const STATIONS: Station[] = [
-  { name: 'Capital FM Kenya', genre: 'Top 40 / Pop', live: true, listeners: 12400, color: '#e11d48' },
-  { name: 'Kiss FM', genre: 'Contemporary Hit Radio', live: true, listeners: 9800, color: '#7c3aed' },
-  { name: 'Homeboyz Radio', genre: 'Hip Hop / R&B', live: true, listeners: 7200, color: '#ea580c' },
-  { name: 'Classic 105', genre: 'Classic Hits', live: false, listeners: 5400, color: '#0891b2' },
-  { name: 'Radio Jambo', genre: 'Genge / Local', live: true, listeners: 11200, color: '#16a34a' },
-  { name: 'Nairobi Radio', genre: 'Talk / News', live: true, listeners: 4300, color: '#2563eb' },
-  { name: 'Metro FM', genre: 'Urban / Afrobeats', live: false, listeners: 6100, color: '#d946ef' },
-  { name: 'Kameme FM', genre: 'Kikuyu / Local', live: true, listeners: 8900, color: '#ca8a04' },
-  { name: 'Radio Maisha', genre: 'Swahili / Entertainment', live: true, listeners: 10500, color: '#dc2626' },
-]
-
-const PODCASTS: Podcast[] = [
-  { title: 'The Daily Brief', author: 'Capital FM', episodes: 324, duration: '28 min', coverColor: '#e11d48' },
-  { title: 'Kenya Talk', author: 'Nairobi Radio', episodes: 156, duration: '45 min', coverColor: '#2563eb' },
-  { title: 'Tech Pulse Africa', author: 'Kiss FM', episodes: 89, duration: '35 min', coverColor: '#7c3aed' },
-  { title: 'Sports Zone', author: 'Homeboyz Radio', episodes: 210, duration: '40 min', coverColor: '#ea580c' },
-  { title: 'Morning Vibes', author: 'Radio Jambo', episodes: 445, duration: '55 min', coverColor: '#16a34a' },
-  { title: 'Business Today', author: 'Classic 105', episodes: 178, duration: '32 min', coverColor: '#0891b2' },
+const PODCASTS = [
+  { title: 'The Daily Brief', author: '026 Groove', episodes: 324, duration: '28 min', coverColor: '#0f766e' },
+  { title: 'Kenya Talk', author: '026 Sonic', episodes: 156, duration: '45 min', coverColor: '#0891b2' },
+  { title: 'Tech Pulse Africa', author: '026 Indie', episodes: 89, duration: '35 min', coverColor: '#ea580c' },
+  { title: 'Sports Zone', author: '026 Beat', episodes: 210, duration: '40 min', coverColor: '#db2777' },
+  { title: 'Morning Vibes', author: '026 Soul', episodes: 445, duration: '55 min', coverColor: '#dc2626' },
+  { title: 'Business Today', author: '026 Fluid', episodes: 178, duration: '32 min', coverColor: '#7c3aed' },
 ]
 
 const RECENTLY_PLAYED = [
-  { title: 'Kenya Talk: Episode 156', station: 'Nairobi Radio', time: '2h ago' },
-  { title: 'Tech Pulse: AI in Africa', station: 'Kiss FM', time: '5h ago' },
-  { title: 'Sports Zone: Premier League Review', station: 'Homeboyz Radio', time: '1d ago' },
-  { title: 'Morning Vibes: Tuesday Edition', station: 'Radio Jambo', time: '2d ago' },
+  { title: 'Kenya Talk: Episode 156', station: '026 Sonic', time: '2h ago' },
+  { title: 'Tech Pulse: AI in Africa', station: '026 Indie', time: '5h ago' },
+  { title: 'Sports Zone: Premier League Review', station: '026 Beat', time: '1d ago' },
+  { title: 'Morning Vibes: Tuesday Edition', station: '026 Soul', time: '2d ago' },
 ]
 
 export default function RadioPage() {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [volume, setVolume] = useState(75)
-  const [progress, setProgress] = useState(0)
-  const [currentStation, setCurrentStation] = useState<Station>(STATIONS[0])
+  const { currentStation, isPlaying, volume, status, playStation, toggle, setVolume } = useRadio()
+  const nowPlaying = currentStation ?? RADIO_STATIONS[0]
+  const isThisPlaying = currentStation?.id === nowPlaying.id && isPlaying
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
@@ -85,20 +56,20 @@ export default function RadioPage() {
         >
           <div style={{ maxWidth: '1200px', margin: '0 auto', paddingInline: 'var(--space-lg)' }}>
             <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-sm)' }}>
-              <span style={{ fontSize: '2rem' }}>{'\u{1F3B5}'}</span>
+              <span style={{ fontSize: '2rem' }}>📻</span>
               <h1
                 style={{
                   fontSize: '2.75rem',
                   fontWeight: 700,
                   color: '#ffffff',
-                  fontFamily: "'Newsreader', Georgia, serif",
+                  fontFamily: 'var(--font-display)',
                 }}
               >
                 Radio & Podcasts
               </h1>
             </div>
             <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.7)', maxWidth: '600px' }}>
-              Listen to Kenya&apos;s top radio stations and podcasts
+              Listen to 026Newsblog live radio — streaming seamlessly across the site.
             </p>
           </div>
         </section>
@@ -115,22 +86,23 @@ export default function RadioPage() {
               marginBottom: 'var(--space-2xl)',
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 'var(--space-2xl)', alignItems: 'center' }}>
+            <div className="radio-now-playing">
               {/* Album Art */}
-              <div style={{ position: 'relative' }}>
+              <div className="radio-now-playing-art" style={{ position: 'relative' }}>
                 <div
                   style={{
                     width: '240px',
                     height: '240px',
+                    maxWidth: '100%',
                     borderRadius: '16px',
-                    background: `linear-gradient(135deg, ${currentStation.color} 0%, ${currentStation.color}88 100%)`,
+                    background: `linear-gradient(135deg, ${nowPlaying.color} 0%, ${nowPlaying.color}88 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: `0 8px 32px ${currentStation.color}44`,
+                    boxShadow: `0 8px 32px ${nowPlaying.color}44`,
                   }}
                 >
-                  <span style={{ fontSize: '4rem', filter: 'grayscale(0)' }}>{'\u{1F3B5}'}</span>
+                  <span style={{ fontSize: '4rem' }}>📻</span>
                 </div>
                 {/* Waveform */}
                 <div
@@ -152,11 +124,11 @@ export default function RadioPage() {
                       style={{
                         width: '3px',
                         borderRadius: '3px',
-                        background: currentStation.color,
-                        animation: isPlaying
+                        background: nowPlaying.color,
+                        animation: isThisPlaying
                           ? `${['eqBar1', 'eqBar2', 'eqBar3', 'eqBar4', 'eqBar5', 'eqBar3', 'eqBar2', 'eqBar1', 'eqBar4'][i]} ${0.4 + i * 0.1}s ease-in-out infinite`
                           : 'none',
-                        height: isPlaying ? undefined : '4px',
+                        height: isThisPlaying ? undefined : '4px',
                       }}
                     />
                   ))}
@@ -165,24 +137,24 @@ export default function RadioPage() {
 
               {/* Player Info */}
               <div>
-                <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-sm)' }}>
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Newsreader', Georgia, serif" }}>
-                    {currentStation.name}
+                <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: 'var(--space-sm)' }}>
+                  <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                    {nowPlaying.name}
                   </h2>
-                  {currentStation.live && (
-                    <span
-                      className="flex items-center gap-1"
-                      style={{
-                        padding: '3px 10px',
-                        borderRadius: '9999px',
-                        background: '#ef4444',
-                        color: '#ffffff',
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
+                  <span
+                    className="flex items-center gap-1"
+                    style={{
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                      background: isThisPlaying ? '#ef4444' : 'var(--bg-inset)',
+                      color: isThisPlaying ? '#ffffff' : 'var(--text-muted)',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {isThisPlaying && (
                       <span
                         style={{
                           width: '6px',
@@ -192,65 +164,72 @@ export default function RadioPage() {
                           animation: 'livePulse 1.5s ease-in-out infinite',
                         }}
                       />
-                      LIVE
-                    </span>
+                    )}
+                    {isThisPlaying ? 'LIVE' : 'READY'}
+                  </span>
+                  {status === 'loading' && currentStation?.id === nowPlaying.id && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Connecting…</span>
                   )}
                 </div>
                 <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>
-                  {currentStation.genre}
+                  {nowPlaying.genre}
                 </p>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 'var(--space-xl)' }}>
-                  {currentStation.listeners.toLocaleString()} listeners
+                  {nowPlaying.listeners.toLocaleString()} listeners
                 </p>
 
                 {/* Play/Pause */}
                 <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-lg)' }}>
                   <button
-                    onClick={() => setIsPlaying(!isPlaying)}
+                    onClick={() => (currentStation?.id === nowPlaying.id ? toggle() : playStation(nowPlaying))}
                     style={{
                       width: '64px',
                       height: '64px',
                       borderRadius: '50%',
                       border: 'none',
-                      background: currentStation.color,
+                      background: nowPlaying.color,
                       color: '#ffffff',
                       cursor: 'pointer',
                       fontSize: '1.5rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: `0 4px 16px ${currentStation.color}55`,
+                      boxShadow: `0 4px 16px ${nowPlaying.color}55`,
                       transition: 'all 0.2s',
                     }}
+                    aria-label={isThisPlaying ? 'Pause' : 'Play'}
                   >
-                    {isPlaying ? '\u23F8' : '\u25B6'}
+                    {isThisPlaying ? '⏸' : '▶'}
                   </button>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
                         width: '100%',
                         height: '4px',
                         borderRadius: '9999px',
                         background: 'var(--bg-inset)',
-                        cursor: 'pointer',
+                        overflow: 'hidden',
                       }}
                     >
                       <div
                         style={{
-                          width: `${progress}%`,
+                          width: isThisPlaying ? '100%' : '0%',
                           height: '100%',
                           borderRadius: '9999px',
-                          background: currentStation.color,
-                          transition: 'width 0.3s',
+                          background: nowPlaying.color,
+                          transition: 'width 0.4s linear',
                         }}
                       />
                     </div>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                      {isThisPlaying ? 'Now streaming live' : 'Press play to start streaming'}
+                    </p>
                   </div>
                 </div>
 
                 {/* Volume */}
                 <div className="flex items-center gap-3">
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{'\u{1F50A}'}</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>🔊</span>
                   <input
                     type="range"
                     min={0}
@@ -261,12 +240,11 @@ export default function RadioPage() {
                       flex: 1,
                       height: '4px',
                       borderRadius: '9999px',
-                      WebkitAppearance: 'none',
-                      appearance: 'none',
-                      background: `linear-gradient(to right, ${currentStation.color} ${volume}%, var(--bg-inset) ${volume}%)`,
+                      accentColor: nowPlaying.color,
                       cursor: 'pointer',
                       outline: 'none',
                     }}
+                    aria-label="Volume"
                   />
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', minWidth: '32px', textAlign: 'right' }}>
                     {volume}%
@@ -283,58 +261,55 @@ export default function RadioPage() {
                 fontSize: '1.5rem',
                 fontWeight: 700,
                 color: 'var(--text-primary)',
-                fontFamily: "'Newsreader', Georgia, serif",
+                fontFamily: 'var(--font-display)',
                 marginBottom: 'var(--space-lg)',
               }}
             >
               All Stations
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-lg)' }}>
-              {STATIONS.map(station => (
-                <div
-                  key={station.name}
-                  className="hover-lift"
-                  style={{
-                    background: 'var(--bg-surface)',
-                    borderRadius: '16px',
-                    padding: 'var(--space-lg)',
-                    border: '1px solid var(--border-subtle)',
-                    boxShadow: 'var(--card-shadow)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onClick={() => {
-                    setCurrentStation(station)
-                    setIsPlaying(true)
-                  }}
-                >
-                  <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-md)' }}>
-                    {/* Station Logo */}
-                    <div
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        background: `${station.color}22`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span style={{ fontSize: '1.1rem', fontWeight: 700, color: station.color }}>
-                        {station.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
-                      </span>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                        {station.name}
-                      </h3>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {station.genre}
-                      </p>
-                    </div>
-                    {station.live && (
+            <div className="radio-stations-grid">
+              {RADIO_STATIONS.map(station => {
+                const active = currentStation?.id === station.id
+                return (
+                  <div
+                    key={station.id}
+                    className="hover-lift"
+                    style={{
+                      background: active ? 'var(--primary-light)' : 'var(--bg-surface)',
+                      borderRadius: '16px',
+                      padding: 'var(--space-lg)',
+                      border: `1px solid ${active ? station.color : 'var(--border-subtle)'}`,
+                      boxShadow: 'var(--card-shadow)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onClick={() => playStation(station)}
+                  >
+                    <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-md)' }}>
+                      <div
+                        style={{
+                          width: '48px',
+                          height: '48px',
+                          borderRadius: '50%',
+                          background: `${station.color}22`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: station.color }}>
+                          {station.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                        </span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                          {station.name}
+                        </h3>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {station.genre}
+                        </p>
+                      </div>
                       <div className="flex items-center gap-1">
                         <span
                           style={{
@@ -349,43 +324,21 @@ export default function RadioPage() {
                           Live
                         </span>
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="flex items-center justify-between">
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      {station.listeners.toLocaleString()} listeners
-                    </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between">
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        {station.listeners.toLocaleString()} listeners
+                      </span>
                       <button
-                        onClick={e => e.stopPropagation()}
-                        style={{
-                          padding: '5px 14px',
-                          borderRadius: '9999px',
-                          border: `1px solid ${station.color}`,
-                          background: 'transparent',
-                          color: station.color,
-                          fontSize: '0.72rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        Follow
-                      </button>
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          setCurrentStation(station)
-                          setIsPlaying(true)
-                        }}
+                        onClick={e => { e.stopPropagation(); playStation(station) }}
                         style={{
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
                           border: 'none',
-                          background: station.color,
-                          color: '#ffffff',
+                          background: active ? station.color : 'var(--bg-inset)',
+                          color: active ? '#fff' : 'var(--text-primary)',
                           cursor: 'pointer',
                           fontSize: '0.8rem',
                           display: 'flex',
@@ -393,13 +346,14 @@ export default function RadioPage() {
                           justifyContent: 'center',
                           transition: 'all 0.2s',
                         }}
+                        aria-label={`Play ${station.name}`}
                       >
-                        {'\u25B6'}
+                        {active && isPlaying ? '⏸' : '▶'}
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </section>
 
@@ -410,13 +364,13 @@ export default function RadioPage() {
                 fontSize: '1.5rem',
                 fontWeight: 700,
                 color: 'var(--text-primary)',
-                fontFamily: "'Newsreader', Georgia, serif",
+                fontFamily: 'var(--font-display)',
                 marginBottom: 'var(--space-lg)',
               }}
             >
               Popular Podcasts
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-lg)' }}>
+            <div className="radio-podcasts-grid">
               {PODCASTS.map(podcast => (
                 <div
                   key={podcast.title}
@@ -427,7 +381,6 @@ export default function RadioPage() {
                     overflow: 'hidden',
                     border: '1px solid var(--border-subtle)',
                     boxShadow: 'var(--card-shadow)',
-                    cursor: 'pointer',
                   }}
                 >
                   <div
@@ -439,7 +392,7 @@ export default function RadioPage() {
                       justifyContent: 'center',
                     }}
                   >
-                    <span style={{ fontSize: '2.5rem' }}>{'\u{1F3A7}'}</span>
+                    <span style={{ fontSize: '2.5rem' }}>🎧</span>
                   </div>
                   <div style={{ padding: 'var(--space-md)' }}>
                     <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
@@ -469,7 +422,7 @@ export default function RadioPage() {
                 fontSize: '1.5rem',
                 fontWeight: 700,
                 color: 'var(--text-primary)',
-                fontFamily: "'Newsreader', Georgia, serif",
+                fontFamily: 'var(--font-display)',
                 marginBottom: 'var(--space-lg)',
               }}
             >
@@ -494,7 +447,6 @@ export default function RadioPage() {
                     gap: 'var(--space-md)',
                     padding: 'var(--space-md) var(--space-lg)',
                     borderBottom: i < RECENTLY_PLAYED.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                    cursor: 'pointer',
                     transition: 'background 0.15s',
                   }}
                 >
@@ -510,7 +462,7 @@ export default function RadioPage() {
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ fontSize: '1rem' }}>{'\u{1F3B5}'}</span>
+                    <span style={{ fontSize: '1rem' }}>📻</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -523,24 +475,6 @@ export default function RadioPage() {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flexShrink: 0 }}>
                     {item.time}
                   </span>
-                  <button
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      border: '1px solid var(--border)',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {'\u25B6'}
-                  </button>
                 </div>
               ))}
             </div>

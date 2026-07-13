@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
   // Fetch active RSS feeds
   const { data: rawFeeds } = await supabase
     .from('rss_feeds')
-    .select('feed_id, name, feed_url, category_id')
+      .select('feed_id, name, feed_url, category_id, error_count')
     .eq('is_active', true)
   const feeds = (rawFeeds ?? []) as unknown as Feed[]
 
@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
         results[feed.name] = `ERROR: ${errorMsg}`
         totalErrors++
         await supabase.from('rss_feeds')
-          .update({ last_error: errorMsg, error_count: (feed.feed_id as any) } as never)
+          .update({ last_error: errorMsg, error_count: ((feed as { error_count?: number }).error_count ?? 0) + 1 } as never)
           .eq('feed_id', feed.feed_id)
         continue
       }

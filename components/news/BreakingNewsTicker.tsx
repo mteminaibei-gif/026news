@@ -81,8 +81,8 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
 
   return (
     <div
-      className="text-white py-2 overflow-hidden relative"
-      style={{ background: 'var(--primary)', borderBottom: '2px solid var(--accent-light)' }}
+      className="py-2 overflow-hidden relative"
+      style={{ background: 'var(--ticker-bg)', color: 'var(--ticker-text)', borderBottom: '2px solid var(--accent-light)' }}
     >
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-3">
 
@@ -119,16 +119,17 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
                 <Link
                   key={`${h.article_id}-${i}`}
                   href={`/article/${h.slug}`}
-                  className="text-sm text-white/80 hover:text-white transition-colors shrink-0 group"
+                  className="text-sm hover:opacity-80 transition-opacity shrink-0 group"
+                  style={{ color: 'var(--ticker-text)' }}
                 >
-                  <span className={`mr-1.5`} style={{ color: isKenya ? 'var(--accent)' : 'rgba(255,255,255,0.4)' }}>
+                  <span className={`mr-1.5`} style={{ color: isKenya ? 'var(--accent)' : 'var(--ticker-text)', opacity: isKenya ? 1 : 0.5 }}>
                     {isKenya ? '🇰🇪' : '●'}
                   </span>
                   <span className="group-hover:underline underline-offset-2">
                     {h.title}
                   </span>
                   {h.category && (
-                    <span className="ml-1.5 text-white/30 text-xs">
+                    <span className="ml-1.5 text-xs" style={{ color: 'var(--ticker-text)', opacity: 0.5 }}>
                       [{h.category.name}]
                     </span>
                   )}
@@ -140,7 +141,7 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
       </div>
 
       {/* Fade mask on right */}
-      <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none" style={{ background: 'linear-gradient(to left, var(--primary), transparent)' }} />
+      <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none" style={{ background: 'linear-gradient(to left, var(--ticker-bg), transparent)' }} />
     </div>
   )
 }
