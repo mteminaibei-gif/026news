@@ -16,20 +16,24 @@ export interface RadioStation {
  * radio page. The global entries use public, CORS-friendly Icecast streams
  * (SomaFM) so playback works directly in the browser without a proxy.
  *
- * NOTE: Kenyan stream URLs are best-effort public endpoints and may change —
- * swap them for the official 026Newsblog / station production streams when
- * available.
+ * All Kenyan stream URLs were verified reachable (HTTP 200, or a zeno.fm 302
+ * redirect that the <audio> element follows automatically) via curl. Public
+ * endpoints can still change over time — re-verify if a station stops playing.
  */
 export const RADIO_STATIONS: RadioStation[] = [
   // ── Kenyan stations (prioritised) ──────────────────────────
+  // Stream URLs verified live (HTTP 200 / zeno.fm 302 redirect) via curl.
   { id: 'nrg', name: 'NRG Radio', genre: 'Urban Contemporary / Hip-Hop', color: '#e11d48', streamUrl: 'https://uksouth.streaming.broadcast.radio/nrg', listeners: 12340, region: 'ke', country: 'Kenya' },
-  { id: 'capital', name: 'Capital FM', genre: 'Urban / Pop / R&B', color: '#0f766e', streamUrl: 'https://icecast.stream.com.ke/capitalfm', listeners: 9820, region: 'ke', country: 'Kenya' },
-  { id: 'kiss', name: 'Kiss 100', genre: 'Top 40 / Afrobeats', color: '#db2777', streamUrl: 'https://kiss100.stream.com.ke/stream', listeners: 8760, region: 'ke', country: 'Kenya' },
-  { id: 'citizen', name: 'Radio Citizen', genre: 'News / Talk (Kiswahili)', color: '#16a34a', streamUrl: 'https://radio.citizen.ke/stream', listeners: 11200, region: 'ke', country: 'Kenya' },
-  { id: 'kbc', name: 'KBC Radio', genre: 'News / Public Service', color: '#2563eb', streamUrl: 'https://stream.kbc.co.ke/kbc', listeners: 5340, region: 'ke', country: 'Kenya' },
-  { id: 'classic', name: 'Classic 105', genre: 'Old Skool / Soft Rock', color: '#ea580c', streamUrl: 'https://classic105.stream.com.ke/stream', listeners: 6410, region: 'ke', country: 'Kenya' },
-  { id: 'easy', name: 'Easy FM', genre: 'Adult Contemporary', color: '#7c3aed', streamUrl: 'https://stream.easy.co.ke/easyfm', listeners: 4980, region: 'ke', country: 'Kenya' },
-  { id: 'jambo', name: 'Radio Jambo', genre: 'Sports / Entertainment', color: '#0891b2', streamUrl: 'https://radiojambo.stream.com.ke/stream', listeners: 7250, region: 'ke', country: 'Kenya' },
+  { id: 'capital', name: 'Capital FM', genre: 'Urban / Pop / R&B', color: '#0f766e', streamUrl: 'https://atunwadigital.streamguys1.com/capitalfm', listeners: 9820, region: 'ke', country: 'Kenya' },
+  { id: 'kiss', name: 'Kiss 100', genre: 'Top 40 / Afrobeats', color: '#db2777', streamUrl: 'https://kiss100fm-atunwadigital.streamguys1.com/kiss100fm', listeners: 8760, region: 'ke', country: 'Kenya' },
+  { id: 'citizen', name: 'Radio Citizen', genre: 'News / Talk (Kiswahili)', color: '#16a34a', streamUrl: 'https://radiocitizen-atunwadigital.streamguys1.com/radiocitizen', listeners: 11200, region: 'ke', country: 'Kenya' },
+  { id: 'kbc', name: 'KBC Radio', genre: 'News / Public Service', color: '#2563eb', streamUrl: 'https://stream.zeno.fm/ud2u96xst5quv', listeners: 5340, region: 'ke', country: 'Kenya' },
+  { id: 'classic', name: 'Classic 105', genre: 'Old Skool / Soft Rock', color: '#ea580c', streamUrl: 'https://classic105-atunwadigital.streamguys1.com/classic105', listeners: 6410, region: 'ke', country: 'Kenya' },
+  { id: 'easy', name: 'Easy FM', genre: 'Adult Contemporary', color: '#7c3aed', streamUrl: 'https://stream.zeno.fm/wvw02zaqpxquv', listeners: 4980, region: 'ke', country: 'Kenya' },
+  { id: 'jambo', name: 'Radio Jambo', genre: 'Sports / Entertainment', color: '#0891b2', streamUrl: 'https://radiojambo-atunwadigital.streamguys1.com/radiojambo', listeners: 7250, region: 'ke', country: 'Kenya' },
+  { id: 'hot96', name: 'Hot 96', genre: 'Hip-Hop / R&B', color: '#f43f5e', streamUrl: 'https://hot96-atunwadigital.streamguys1.com/hot96', listeners: 6100, region: 'ke', country: 'Kenya' },
+  { id: 'inooro', name: 'Inooro FM', genre: 'News / Talk (Kikuyu)', color: '#059669', streamUrl: 'https://inoorofm-atunwadigital.streamguys1.com/inoorofm', listeners: 4800, region: 'ke', country: 'Kenya' },
+  { id: 'ramogi', name: 'Ramogi FM', genre: 'News / Talk (Luo)', color: '#0d9488', streamUrl: 'https://ramogifm-atunwadigital.streamguys1.com/ramogifm', listeners: 5300, region: 'ke', country: 'Kenya' },
 
   // ── Global stations ────────────────────────────────────────
   { id: 'groove', name: '026 Groove', genre: 'Ambient / Downtempo', color: '#0f766e', streamUrl: 'https://ice1.somafm.com/groovesalad-128-mp3', listeners: 8420, region: 'global' },
