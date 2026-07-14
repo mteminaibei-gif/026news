@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/server'
+import { formatNumber } from '@/lib/utils'
+import { Eye, TrendingUp } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Explore — 026Newsblog' }
 export const dynamic = 'force-dynamic'
@@ -12,32 +14,89 @@ const CAT_COLORS = [
   'oklch(92% 0.04 310)', 'oklch(92% 0.04 25)', 'oklch(92% 0.04 80)',
   'oklch(92% 0.04 175)', 'oklch(92% 0.04 260)',
 ]
-const TRENDING = ['AI Journalism', 'M-Pesa', 'Climate Summit', 'Kenyan Startups', 'Marathon Training', 'Afrofuturism']
 
-export default async function SourcesPage() {
+export default async function ExplorePage() {
   const supabase = await createClient()
 
-  const [{ data: categories }, { data: journalists }, { data: featured }] = await Promise.all([
-    supabase.from('categories').select('category_id, name, slug, icon').order('name').limit(12),
-    supabase.from('users').select('user_id, name, profile_image').eq('role', 'journalist').limit(8),
-    supabase
-      .from('articles')
-      .select('article_id, title, slug, excerpt, featured_image, views, category:categories(name), author:users(name)')
-      .eq('status', 'published')
-      .order('views', { ascending: false })
-      .limit(4),
-  ])
+  // Fetch all categories
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('category_id, name, slug, icon')
+    .order('name')
+    .limit(20)
 
   const cats = (categories ?? []) as unknown as { category_id: number; name: string; slug: string; icon: string | null }[]
-  const authors = (journalists ?? []) as unknown as { user_id: number; name: string; profile_image: string | null }[]
-  const picks = (featured ?? []) as unknown as {
+
+  // For each category, fetch up to 4 articles (parallel)
+  const categoryArticles = await Promise.all(
+    cats.map(async (cat) => {
+      const { data } = await supabase
+        .from('articles')
+        .select('article_id, title, slug, excerpt, featured_image, views, tags, author:users(name)')
+        .eq('status', 'published')
+        .eq('category_id', cat.category_id)
+        .order('views', { ascending: false })
+        .limit(4)
+      return { category: cat, articles: (data ?? []) as unknown as Array<{
+        article_id: number; title: string; slug: string; excerpt: string | null
+        featured_image: string | null; views: number | null; tags: string[] | null
+        author: { name: string } | null
+      }> }
+    })
+  )
+
+  // Only show categories that have articles
+  const populatedCategories = categoryArticles.filter(ca => ca.articles.length > 0)
+
+  // Fetch trending tags (top tags from published articles)
+  const { data: trendingArticles } = await supabase
+    .from('articles')
+    .select('tags')
+    .eq('status', 'published')
+    .not('tags', 'is', null)
+    .order('views', { ascending: false })
+    .limit(50)
+
+  const tagCounts = new Map<string, number>()
+  for (const article of (trendingArticles ?? []) as unknown as { tags: string[] | null }[]) {
+    if (article.tags) {
+      for (const tag of article.tags) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1)
+      }
+    }
+  }
+  const trendingTags = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([tag, count]) => ({ tag, count }))
+
+  // Fetch top viewed articles for "Trending Now"
+  const { data: trendingArticlesList } = await supabase
+    .from('articles')
+    .select('article_id, title, slug, featured_image, views, category:categories(name), author:users(name)')
+    .eq('status', 'published')
+    .order('views', { ascending: false })
+    .limit(5)
+
+  const trendingList = (trendingArticlesList ?? []) as unknown as Array<{
+    article_id: number; title: string; slug: string; featured_image: string | null
+    views: number | null
+    category: { name: string } | null; author: { name: string } | null
+  }>
+
+  // Fetch recent articles
+  const { data: recentArticles } = await supabase
+    .from('articles')
+    .select('article_id, title, slug, excerpt, featured_image, views, category:categories(name), author:users(name)')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+    .limit(6)
+
+  const recentList = (recentArticles ?? []) as unknown as Array<{
     article_id: number; title: string; slug: string; excerpt: string | null
     featured_image: string | null; views: number | null
     category: { name: string } | null; author: { name: string } | null
-  }[]
-
-  const hero = picks[0]
-  const side = picks.slice(1, 4)
+  }>
 
   return (
     <>
@@ -64,94 +123,157 @@ export default async function SourcesPage() {
               Search
             </button>
           </form>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>Trending:</span>
-            {TRENDING.map((t) => (
-              <Link key={t} href={`/search?q=${encodeURIComponent(t)}`} style={{ padding: '5px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                {t}
-              </Link>
-            ))}
-          </div>
         </section>
 
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 64px' }}>
-          {/* Categories */}
-          <section style={{ marginBottom: 48 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Browse by Category</h2>
-              <Link href="/news" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
-            </div>
-            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollSnapType: 'x mandatory' }}>
-              {cats.map((c, i) => (
-                <Link key={c.category_id} href={`/category/${c.slug}`} style={{ minWidth: 180, padding: 20, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', scrollSnapAlign: 'start', flexShrink: 0 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: CAT_COLORS[i % CAT_COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginBottom: 12 }}>{c.icon || '📰'}</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</div>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* Editor's Picks */}
-          {picks.length > 0 && (
+          {/* Trending Tags */}
+          {trendingTags.length > 0 && (
             <section style={{ marginBottom: 48 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Editor&apos;s Picks</h2>
-                <Link href="/news" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>More picks →</Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <TrendingUp size={18} style={{ color: 'var(--primary)' }} />
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Trending Topics</h2>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
-                {hero && (
-                  <Link href={`/article/${hero.slug}`} style={{ borderRadius: 16, overflow: 'hidden', position: 'relative', height: 400, textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                    {hero.featured_image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={hero.featured_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(45% 0.12 175), oklch(45% 0.12 220))' }} />
-                    )}
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(10% 0.02 175 / 0.9) 0%, oklch(10% 0.02 175 / 0.2) 60%, transparent 100%)' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 32, color: 'oklch(96% 0.005 175)' }}>
-                      <span style={{ display: 'inline-block', padding: '4px 10px', background: 'var(--accent)', color: 'oklch(15% 0.02 55)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', borderRadius: 4, marginBottom: 10 }}>{hero.category?.name ?? 'Story'}</span>
-                      <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 600, lineHeight: 1.25, marginBottom: 10 }}>{hero.title}</h3>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.85 }}>{hero.author?.name ?? '026Newsblog'}{hero.views ? ` · ${hero.views.toLocaleString()} views` : ''}</span>
-                    </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {trendingTags.map(({ tag, count }) => (
+                  <Link
+                    key={tag}
+                    href={`/search?q=${encodeURIComponent(tag)}`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '7px 14px', borderRadius: 20,
+                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                      fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)',
+                      textDecoration: 'none', transition: 'all 0.15s',
+                    }}
+                  >
+                    <span>{tag}</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '1px 6px', borderRadius: 8 }}>{count}</span>
                   </Link>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {side.map((a) => (
-                    <Link key={a.article_id} href={`/article/${a.slug}`} style={{ display: 'flex', gap: 14, padding: 14, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12, textDecoration: 'none', color: 'inherit', flex: 1 }}>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.category?.name ?? 'Story'}</span>
-                        <h4 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.title}</h4>
-                        <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>{a.author?.name ?? '026Newsblog'}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                ))}
               </div>
             </section>
           )}
 
-          {/* Authors to Follow */}
-          {authors.length > 0 && (
+          {/* Categories with articles */}
+          {populatedCategories.map(({ category, articles }, i) => (
+            <section key={category.category_id} style={{ marginBottom: 48 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <Link href={`/category/${category.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: CAT_COLORS[i % CAT_COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>{category.icon || '📰'}</span>
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>{category.name}</h2>
+                </Link>
+                <Link href={`/category/${category.slug}`} style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+                {articles.map((article) => (
+                  <Link
+                    key={article.article_id}
+                    href={`/article/${article.slug}`}
+                    style={{
+                      borderRadius: 12, overflow: 'hidden',
+                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                      textDecoration: 'none', color: 'inherit',
+                      transition: 'transform 0.15s, box-shadow 0.15s',
+                    }}
+                  >
+                    {article.featured_image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={article.featured_image} alt="" style={{ width: '100%', height: 180, objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: 120, background: CAT_COLORS[i % CAT_COLORS.length] }} />
+                    )}
+                    <div style={{ padding: 16 }}>
+                      <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.95rem', fontWeight: 600, lineHeight: 1.35, marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
+                        {article.title}
+                      </h3>
+                      {article.excerpt && (
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {article.excerpt}
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                        <span>{article.author?.name ?? '026Newsblog'}</span>
+                        <span className="flex items-center gap-1">
+                          <Eye size={12} /> {formatNumber(article.views ?? 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          {/* Trending Now */}
+          {trendingList.length > 0 && (
+            <section style={{ marginBottom: 48 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                <TrendingUp size={18} style={{ color: 'var(--primary)' }} />
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Trending Now</h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {trendingList.map((a, i) => (
+                  <Link
+                    key={a.article_id}
+                    href={`/article/${a.slug}`}
+                    style={{
+                      display: 'flex', gap: 16, alignItems: 'center',
+                      padding: 14, borderRadius: 12,
+                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                      textDecoration: 'none', color: 'inherit',
+                    }}
+                  >
+                    <span style={{ minWidth: 28, height: 28, borderRadius: 8, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}>
+                      {i + 1}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', marginBottom: 4 }}>{a.category?.name ?? 'Story'}</div>
+                      <h4 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>{a.title}</h4>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{a.author?.name ?? '026Newsblog'} · {formatNumber(a.views ?? 0)} views</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Recent Articles */}
+          {recentList.length > 0 && (
             <section style={{ marginBottom: 48 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Authors to Follow</h2>
-                <Link href="/journalists" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>Browse all →</Link>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Recently Published</h2>
               </div>
-              <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8 }}>
-                {authors.map((a, i) => (
-                  <Link key={a.user_id} href={`/journalists/${a.user_id}`} style={{ minWidth: 200, padding: 20, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textAlign: 'center', textDecoration: 'none', color: 'inherit', flexShrink: 0 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 14, margin: '0 auto 10px', background: CAT_COLORS[i % CAT_COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'oklch(98% 0.005 175)', fontSize: '1rem', fontWeight: 700 }}>
-                      {a.profile_image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.profile_image} alt="" style={{ width: '100%', height: '100%', borderRadius: 14, objectFit: 'cover' }} />
-                      ) : (
-                        a.name.charAt(0).toUpperCase()
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+                {recentList.map((a) => (
+                  <Link
+                    key={a.article_id}
+                    href={`/article/${a.slug}`}
+                    style={{
+                      borderRadius: 12, overflow: 'hidden',
+                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                      textDecoration: 'none', color: 'inherit',
+                    }}
+                  >
+                    {a.featured_image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.featured_image} alt="" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: 100, background: 'var(--bg-muted)' }} />
+                    )}
+                    <div style={{ padding: 16 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', marginBottom: 6 }}>{a.category?.name ?? 'Story'}</div>
+                      <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.35, marginBottom: 6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
+                        {a.title}
+                      </h3>
+                      {a.excerpt && (
+                        <p style={{ fontSize: '0.76rem', color: 'var(--text-tertiary)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {a.excerpt}
+                        </p>
                       )}
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                        {a.author?.name ?? '026Newsblog'} · {formatNumber(a.views ?? 0)} views
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 12 }}>Author</div>
-                    <span style={{ padding: '6px 16px', borderRadius: 7, border: '1px solid var(--border)', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600 }}>View profile</span>
                   </Link>
                 ))}
               </div>

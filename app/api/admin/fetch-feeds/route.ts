@@ -3,6 +3,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
 import { fetchFullArticleContent } from '@/lib/rss/fulltext'
+import { curateArticle } from '@/lib/rss/curation'
 import crypto from 'crypto'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -250,6 +251,13 @@ export async function POST(req: NextRequest) {
         const pubDate = new Date(item.pubDate)
         const publishedAt = isNaN(pubDate.getTime()) ? new Date() : pubDate
 
+        // Auto-categorize and generate tags from content
+        const { categoryId: autoCategoryId, tags } = curateArticle(
+          item.title,
+          contentText,
+          feed.category_id,
+        )
+
         const { error: insertError } = await adminSupabase
           .from('articles')
           .insert({
@@ -262,13 +270,14 @@ export async function POST(req: NextRequest) {
             source_name: feed.name,
             content_hash: hash,
             is_aggregated: true,
-            category_id: feed.category_id,
+            category_id: autoCategoryId,
             author_id: botAuthorId,
             status: 'published',
             monetization_type: 'free',
             featured_image: finalImageUrl,
             featured: false,
             published_at: publishedAt.toISOString(),
+            tags: tags,
           } as never)
 
         if (insertError) {
