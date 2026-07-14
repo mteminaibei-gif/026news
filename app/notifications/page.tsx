@@ -71,7 +71,7 @@ export default function NotificationsPage() {
       const { data: profile } = await supabase
         .from('users')
         .select('user_id, role')
-        .eq('auth_id', user.id)
+        .eq('email', user.email ?? '')
         .single()
       if (profile) {
         setUserId((profile as { user_id: number }).user_id)
