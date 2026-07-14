@@ -40,7 +40,8 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
   const [submitting, setSubmitting]           = useState(false)
   const [submitError, setSubmitError]         = useState('')
 
-  const paragraphs = article.content.split('\n\n').filter(Boolean)
+  const plainText = article.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+  const wordCount = plainText ? plainText.split(/\s+/).length : 0
 
   async function handleAction(action: 'approve' | 'reject' | 'revision') {
     setSubmitError('')
@@ -131,12 +132,11 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
           {/* Content */}
           <div>
             <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--primary)', opacity: 0.6 }}>Article Content</p>
-            <div className="rounded-xl p-4 max-h-64 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-3" style={{ background: 'var(--bg-inset)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
-              {paragraphs.length > 0
-                ? paragraphs.map((p, i) => <p key={i}>{p}</p>)
-                : <p className="text-gray-400 italic">No content</p>
-              }
-            </div>
+            <div
+              className="rounded-xl max-h-64 overflow-y-auto text-sm leading-relaxed rich-editor-content"
+              style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)', padding: '1rem' }}
+              dangerouslySetInnerHTML={{ __html: article.content || '<p class="text-gray-400 italic">No content</p>' }}
+            />
           </div>
 
           {/* Source */}
@@ -264,7 +264,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
           <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--primary)' }}>📊 Article Stats</h4>
           <div className="space-y-0 divide-y" style={{ borderColor: 'var(--primary-light)' }}>
             {[
-              { label: 'Word Count',     value: `${article.content.split(/\s+/).filter(Boolean).length} words` },
+              { label: 'Word Count',     value: `${wordCount} words` },
               { label: 'Est. Read Time', value: `${readingTime(article.content)} min` },
               { label: 'Category',       value: article.category?.name ?? '—' },
               { label: 'Monetization',   value: article.monetization_type },

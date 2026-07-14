@@ -227,7 +227,6 @@ export default async function ArticlePage({ params }: Props) {
   }>
   const authorArticleCount = authorStats?.count ?? 0
 
-  const paragraphs = (article.content || '').split('\n\n').filter(Boolean)
   const readTime = article.reading_time_minutes ?? readingTime(article.content)
   const likes = article.like_count ?? article.likes ?? 0
   const authorInitials = (article.author?.name ?? 'S').split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()
@@ -327,11 +326,10 @@ export default async function ArticlePage({ params }: Props) {
           )}
 
           {/* Body */}
-          <div className="article-body">
-            {paragraphs.map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
-          </div>
+          <div
+            className="article-body rich-editor-content"
+            dangerouslySetInnerHTML={{ __html: article.content || '' }}
+          />
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
