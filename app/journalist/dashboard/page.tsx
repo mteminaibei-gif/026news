@@ -27,8 +27,24 @@ export default async function JournalistDashboard() {
       profile = rawProfile
     } catch { /* ignore */ }
   }
+
   if (!profile) {
-    profile = { user_id: 3, name: user?.email?.split('@')[0] || 'Author', profile_image: null, rank_score: 95, badge_level: 'silver', total_views: 87500 }
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
+        <div className="px-4 py-4" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            ← Go Home
+          </Link>
+        </div>
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 64px)' }}>
+          <div className="text-center p-8 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+            <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Account not found</h2>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Your account is not set up yet. Please contact an admin.</p>
+            <Link href="/" className="inline-block px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: 'var(--primary)', color: '#fff' }}>Go Home</Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   let articles: ArticleRow[] = []

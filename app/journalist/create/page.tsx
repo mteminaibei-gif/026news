@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { createClient } from '@/lib/supabase/client'
 
 const MONETIZE_OPTIONS = [
   { value: 'free',      icon: '🆓', label: 'Free',         desc: 'Public access' },
@@ -14,7 +15,7 @@ const MONETIZE_OPTIONS = [
   { value: 'ad',        icon: '📢', label: 'Ad-supported', desc: 'Serves ad units' },
 ]
 
-const CATEGORIES = [
+const FALLBACK_CATEGORIES = [
   'Politics', 'Business', 'Tech', 'Science',
   'Entertainment', 'Sports', 'Kenya', 'Africa', 'Health',
 ]
@@ -41,6 +42,20 @@ export default function CreatePostPage() {
   const [imagePreview,   setImagePreview]   = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState(false)
   const [imageError,     setImageError]     = useState('')
+  const [categories,     setCategories]     = useState<string[]>(FALLBACK_CATEGORIES)
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/categories')
+        if (res.ok) {
+          const data: { category_id: number; name: string }[] = await res.json()
+          if (data.length) setCategories(data.map(c => c.name))
+        }
+      } catch { /* ignore */ }
+    }
+    fetchCategories()
+  }, [])
 
   const wordCount    = content.trim().split(/\s+/).filter(Boolean).length
   const readMins     = Math.max(1, Math.ceil(wordCount / 200))
@@ -201,7 +216,7 @@ export default function CreatePostPage() {
                     className={fieldCls}
                     style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
                     <option value="">Choose…</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
