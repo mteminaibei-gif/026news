@@ -255,6 +255,7 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
               }}
             >
               <div
+                className="news-feed-card-image"
                 style={{
                   width: 180,
                   minWidth: 180,
@@ -342,8 +343,13 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '1rem',
-                      padding: 4,
+                      fontSize: '1.1rem',
+                      padding: 10,
+                      minWidth: 44,
+                      minHeight: 44,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       color: bookmarked.has(article.article_id) ? 'var(--accent)' : 'var(--text-muted)',
                       transition: 'color 0.2s',
                     }}
@@ -360,6 +366,23 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
 
       {loadingMore && <p className="home-feed-status">Loading more stories…</p>}
       {!hasMore && articles.length > 0 && <p className="home-feed-status">You&rsquo;re all caught up</p>}
+
+      <style>{`
+        @media (max-width: 640px) {
+          .news-feed-card-image {
+            width: 120px !important;
+            min-width: 120px !important;
+            height: 90px !important;
+          }
+        }
+        @media (max-width: 400px) {
+          .news-feed-card-image {
+            width: 100px !important;
+            min-width: 100px !important;
+            height: 80px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -164,14 +164,17 @@ const ARTICLE_CSS = `
 .article-view .related-card-title { font-family:'Newsreader',Georgia,serif; font-size:0.95rem; font-weight:600; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
 .article-view .related-card-meta { font-size:0.7rem; color: var(--text-tertiary); }
 @media (max-width: 768px) {
-  .article-view .article-layout { padding: 32px 16px 110px; }
+  .article-view .article-layout { padding: 32px 16px 90px; }
   .article-view .article-title { font-size:1.8rem; }
   .article-view .article-body { font-size:1.05rem; }
   .article-view .article-meta { flex-direction:column; gap:12px; align-items:flex-start; }
   .article-view .related-grid { grid-template-columns: 1fr; }
   .article-view .author-card { flex-direction:column; }
-  .article-view .float-bar { bottom:16px; padding:8px 14px; }
-  .article-view .float-btn { width:36px; height:36px; }
+  .article-view .float-bar { bottom:12px; padding:8px 16px; border-radius:14px; }
+  .article-view .float-btn { width:44px; height:44px; }
+  .article-view .float-btn svg { width:22px; height:22px; }
+  .article-view .inline-bar { padding:12px; gap:6px; }
+  .article-view .inline-bar .float-btn { padding:10px 12px; min-height:44px; }
 }
 `
 

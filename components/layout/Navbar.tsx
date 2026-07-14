@@ -152,7 +152,7 @@ export function Navbar() {
                 aria-label="Open search"
                 className="icon-btn"
                 style={{
-                  width: 36, height: 36, borderRadius: 8,
+                  width: 44, height: 44, borderRadius: 10,
                   border: '1px solid var(--border)',
                   background: 'var(--bg-surface)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -161,7 +161,7 @@ export function Navbar() {
                   transition: 'all 0.2s',
                 }}
               >
-                <Search size={16} />
+                <Search size={18} />
               </button>
             )}
 
@@ -260,7 +260,7 @@ export function Navbar() {
                     <Link
                       href={profile?.role === 'reader' ? '/profile' : '/settings'}
                       style={{
-                        width: 36, height: 36, borderRadius: 10,
+                        width: 44, height: 44, borderRadius: 10,
                         background: 'var(--primary)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: 'var(--bg-elevated)',
@@ -269,14 +269,14 @@ export function Navbar() {
                         cursor: 'pointer',
                       }}
                     >
-                      {profile?.name?.charAt(0).toUpperCase() ?? <User size={14} />}
+                      {profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />}
                     </Link>
                     <button
                       onClick={() => signOutMutation.mutate()}
                       title="Sign out"
                       aria-label="Sign out"
                       style={{
-                        width: 36, height: 36, borderRadius: 8,
+                        width: 44, height: 44, borderRadius: 10,
                         border: '1px solid var(--border)',
                         background: 'var(--bg-surface)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -285,7 +285,7 @@ export function Navbar() {
                         transition: 'all 0.2s',
                       }}
                     >
-                      <LogOut size={15} />
+                      <LogOut size={16} />
                     </button>
                   </div>
                 </div>

@@ -53,7 +53,7 @@ export function HeroCarousel({ articles }: Props) {
         className="hero-slideshow"
         style={{
           position: 'relative',
-          height: 'clamp(520px, 68vh, 760px)',
+          height: 'clamp(380px, 60vh, 760px)',
           borderRadius: 16,
           overflow: 'hidden',
           background: 'var(--primary)',
@@ -238,8 +238,8 @@ export function HeroCarousel({ articles }: Props) {
             z-index: 10;
           }
           .hero-dot {
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: rgba(255,255,255,0.3);
             border: none;
@@ -247,7 +247,15 @@ export function HeroCarousel({ articles }: Props) {
             cursor: pointer;
             transition: all 0.3s;
           }
-          .hero-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+          .hero-dot.active { background: var(--accent); width: 28px; border-radius: 4px; }
+          @media (max-width: 640px) {
+            .hero-dots { left: 20px; bottom: 16px; }
+            .hero-dot { width: 10px; height: 10px; }
+            .hero-dot.active { width: 22px; }
+            .hero-nav-btn { width: 40px; height: 40px; font-size: 1.3rem; }
+            .hero-nav-btn:first-of-type { left: 12px; }
+            .hero-nav-btn:last-of-type { right: 12px; }
+          }
         `}</style>
       </section>
     </div>

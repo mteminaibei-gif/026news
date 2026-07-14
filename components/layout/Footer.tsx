@@ -60,7 +60,7 @@ export function Footer() {
                   aria-label={s.label}
                   className="flex items-center justify-center text-sm font-bold transition-colors"
                   style={{
-                    width: 36, height: 36, borderRadius: 8,
+                    width: 44, height: 44, borderRadius: 10,
                     background: 'var(--primary)',
                     color: 'var(--bg-elevated)',
                   }}
@@ -83,13 +83,13 @@ export function Footer() {
                 <h5 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--primary)' }}>
                   {section}
                 </h5>
-                <ul className="space-y-2.5">
+                <ul className="space-y-1">
                   {links.map(link => (
                     <li key={link.label}>
                       <Link
                         href={link.href}
                         className="text-sm transition-colors"
-                        style={{ color: 'var(--text-secondary)' }}
+                        style={{ color: 'var(--text-secondary)', display: 'inline-block', padding: '8px 0' }}
                       >
                         {link.label}
                       </Link>

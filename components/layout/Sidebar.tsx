@@ -90,8 +90,8 @@ export function Sidebar({ role, user }: SidebarProps) {
           </Link>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ color: 'var(--text-tertiary)' }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--text-tertiary)', minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             aria-label="Toggle sidebar"
           >
             {isCollapsed ? (
@@ -139,10 +139,11 @@ export function Sidebar({ role, user }: SidebarProps) {
                       href={item.href}
                       className="flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200"
                       style={{
-                        padding: '10px 12px',
+                        padding: '12px 12px',
                         color: isActive ? 'var(--text-primary)' : 'var(--sidebar-text)',
                         background: isActive ? 'var(--sidebar-active)' : 'transparent',
                         textDecoration: 'none',
+                        minHeight: 44,
                       }}
                       title={isCollapsed ? item.label : undefined}
                     >
@@ -174,7 +175,7 @@ export function Sidebar({ role, user }: SidebarProps) {
                 <Link
                   href="/"
                   className="flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200"
-                  style={{ padding: '10px 12px', color: 'var(--sidebar-text)', textDecoration: 'none' }}
+                  style={{ padding: '12px 12px', color: 'var(--sidebar-text)', textDecoration: 'none', minHeight: 44 }}
                   title={isCollapsed ? 'View Site' : undefined}
                 >
                   <Home size={18} style={{ opacity: 0.7, flexShrink: 0 }} />

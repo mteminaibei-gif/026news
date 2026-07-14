@@ -918,6 +918,30 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
     max-height: none;
     overflow-y: visible;
   }
+  .feed-tab {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .article-card-like { padding: 8px; min-width: 44px; min-height: 44px; }
+}
+
+@media (max-width: 480px) {
+  .top-stories-grid { grid-template-columns: 1fr; }
+  .hero-dots { left: 20px; bottom: 16px; }
+  .hero-dot { width: 10px; height: 10px; }
+  .hero-dot.active { width: 20px; }
+  .cat-pill { padding: 10px 16px; font-size: 0.85rem; min-height: 44px; display: inline-flex; align-items: center; }
+  .main-layout { padding: 0 12px 32px; }
+}
+
+@media (max-width: 375px) {
+  .top-stories-grid { gap: 12px; }
+  .article-card { padding: 14px; gap: 14px; }
+  .article-card-title { font-size: 1.1rem; }
+  .made-in-kenya { font-size: 0.8rem; }
 }
 
 @media (max-width: 560px) {
@@ -983,6 +1007,17 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
   }
   .hero-content h1 {
     font-size: 1.7rem !important;
+  }
+  .hero-dots {
+    left: 20px;
+    bottom: 16px;
+  }
+  .hero-dot {
+    width: 12px;
+    height: 12px;
+  }
+  .hero-dot.active {
+    width: 24px;
   }
 }
 
