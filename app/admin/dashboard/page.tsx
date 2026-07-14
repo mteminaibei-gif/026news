@@ -219,14 +219,6 @@ export default function AdminDashboard() {
           >
             📋 Articles
           </button>
-          <div className="w-px h-6 mx-1" style={{ background: 'var(--border)' }} />
-          <button
-            onClick={() => setShowCreateAccountDialog(true)}
-            className="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
-            style={{ background: 'var(--primary)', color: 'var(--text-inverse)', borderRadius: 10 }}
-          >
-            <span>➕ Create</span>
-          </button>
         </div>
       </div>
 
