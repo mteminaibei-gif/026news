@@ -80,13 +80,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
     fetch('/api/categories')
       .then(r => r.json())
       .then((d: Category[]) => setCategories(d))
-      .catch(() => setCategories([
-        { category_id: 1, name: 'Politics' }, { category_id: 2, name: 'Business' },
-        { category_id: 3, name: 'Tech' },     { category_id: 4, name: 'Science' },
-        { category_id: 5, name: 'Entertainment' }, { category_id: 6, name: 'Sports' },
-        { category_id: 7, name: 'Kenya' },    { category_id: 8, name: 'Africa' },
-        { category_id: 9, name: 'Health' },
-      ]))
+      .catch(() => {})
   }, [])
 
   // Restore autosaved draft (new articles only)
