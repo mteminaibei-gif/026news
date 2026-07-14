@@ -66,7 +66,11 @@ export function HeroCarousel({ articles }: Props) {
           <div
             key={s.article_id}
             aria-hidden={i !== current}
-            className={`absolute inset-0 transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0'}`}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: i === current ? 'block' : 'none',
+            }}
           >
             {hasValidImage(s.featured_image) && !imgErrors.has(s.article_id) ? (
               <Image
@@ -80,7 +84,7 @@ export function HeroCarousel({ articles }: Props) {
                 onError={() => setImgErrors(prev => new Set([...prev, s.article_id]))}
               />
             ) : (
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, var(--primary), var(--primary-hover), oklch(15% 0.04 175))' }} />
+              <div className="absolute inset-0" style={{ background: 'var(--primary)' }} />
             )}
           </div>
         ))}
@@ -93,7 +97,8 @@ export function HeroCarousel({ articles }: Props) {
             position: 'absolute',
             bottom: 0, left: 0, right: 0,
             maxWidth: 820,
-            animation: 'heroFadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both',
+            padding: '60px 32px 80px',
+            background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)',
           }}
         >
           {/* Category */}
@@ -203,10 +208,6 @@ export function HeroCarousel({ articles }: Props) {
         )}
 
         <style>{`
-          @keyframes heroFadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
           .hero-nav-btn {
             position: absolute;
             top: 50%;
