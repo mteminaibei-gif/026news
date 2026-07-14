@@ -81,7 +81,12 @@ export default async function AdminAnalyticsPage() {
   const earnings = (rawEarnings.data ?? []) as unknown as EarnRow[]
   const newUsers = (rawNewUsers.data ?? []) as unknown as UserRow[]
 
-  const totalViews = topArticles.reduce((s, a) => s + (a.views ?? 0), 0)
+  // Get total views across ALL published articles (not just top 10)
+  const { data: allArticles } = await supabase
+    .from('articles')
+    .select('views')
+    .eq('status', 'published')
+  const totalViews = (allArticles ?? []).reduce((s: number, a: any) => s + (a.views ?? 0), 0)
   const totalRevenue = earnings.reduce((s, e) => s + Number(e.amount), 0)
   const thisMonth = new Date().toISOString().slice(0, 7)
   const monthRevenue = earnings.filter(e => e.created_at.startsWith(thisMonth)).reduce((s, e) => s + Number(e.amount), 0)

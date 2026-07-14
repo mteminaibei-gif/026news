@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ReadingProgress } from '@/components/ui/ReadingProgress'
+import { ViewTracker } from '@/components/ui/ViewTracker'
 import { ArticleFloatBar } from '@/components/news/ArticleFloatBar'
 import { ArticleComments } from '@/components/news/ArticleComments'
 import { createClient } from '@/lib/supabase/server'
@@ -272,6 +273,7 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       <article className="article-view">
+        <ViewTracker articleId={article.article_id} />
         <div className="article-layout">
           {/* Header */}
           <header className="article-header">
