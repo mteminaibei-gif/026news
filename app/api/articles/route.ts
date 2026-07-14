@@ -126,14 +126,15 @@ export async function POST(req: NextRequest) {
     catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 }) }
 
     const title              = sanitize(String(body.title ?? '')).substring(0, 300)
-    const content            = sanitize(String(body.content ?? '')).substring(0, 100_000)
+    const content            = String(body.content ?? '').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim().substring(0, 100_000)
     const category           = sanitize(String(body.category ?? '')).substring(0, 100)
     const source_reference   = String(body.source_reference ?? '').substring(0, 500)
     const monetization_type  = ['free', 'sponsored', 'ad'].includes(String(body.monetization_type))
       ? String(body.monetization_type) : 'free'
     const action             = body.action === 'submit' ? 'submit' : 'draft'
     const featured_image     = String(body.featured_image ?? '').substring(0, 1000) || null
-    const tags               = sanitize(String(body.tags ?? '')).substring(0, 500)
+    const rawTags            = String(body.tags ?? '')
+    const tags: string[]     = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : []
 
     if (!title || !content) {
       return NextResponse.json({ error: 'title and content are required' }, { status: 400 })
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
     if (title.length < 5) {
       return NextResponse.json({ error: 'Title must be at least 5 characters' }, { status: 400 })
     }
-    if (content.length < 50) {
+    if (content.length < 10) {
       return NextResponse.json({ error: 'Content must be at least 50 characters' }, { status: 400 })
     }
     // Validate source URL if provided
@@ -167,7 +168,7 @@ export async function POST(req: NextRequest) {
         status,
         monetization_type,
         featured_image,
-        tags: tags || null,
+        tags: tags.length > 0 ? tags : null,
       } as never)
       .select()
       .single()
