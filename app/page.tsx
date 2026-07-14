@@ -5,7 +5,9 @@ import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { HomeFeed } from '@/components/news/HomeFeed'
 import { ArticleCard } from '@/components/news/ArticleCard'
 import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
+import { BreakingNewsBanner } from '@/components/news/BreakingNewsBanner'
 import { BannerAd } from '@/components/ads/AdSense'
+import { LiveActivityFeed } from '@/components/news/LiveActivityFeed'
 import { formatNumber } from '@/lib/utils'
 import { TrendingUp, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -163,6 +165,9 @@ export default async function HomePage({ searchParams }: Props) {
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <Navbar />
 
+      {/* Breaking News Banner — appears when new article is published */}
+      <BreakingNewsBanner />
+
       {/* Breaking News Ticker */}
       <BreakingNewsTicker initialHeadlines={breakingHeadlines} />
 
@@ -221,6 +226,9 @@ export default async function HomePage({ searchParams }: Props) {
               </div>
             </div>
           )}
+
+          {/* Live Activity */}
+          <LiveActivityFeed />
 
           {/* Categories */}
           <div className="home-widget">

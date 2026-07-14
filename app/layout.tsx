@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { RealtimeShell } from '@/components/providers/RealtimeShell';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
 import StyledJsxRegistry from './registry';
@@ -93,12 +94,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col font-sans" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
         <ThemeProvider>
           <QueryProvider>
-            <RadioProvider>
-              <StyledJsxRegistry>
-                {children}
-                <CookieConsent />
-              </StyledJsxRegistry>
-            </RadioProvider>
+            <RealtimeShell>
+              <RadioProvider>
+                <StyledJsxRegistry>
+                  {children}
+                  <CookieConsent />
+                </StyledJsxRegistry>
+              </RadioProvider>
+            </RealtimeShell>
           </QueryProvider>
         </ThemeProvider>
         <Analytics />

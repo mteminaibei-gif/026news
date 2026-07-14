@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRealtime } from '@/components/providers/RealtimeProvider'
 
 export type NotificationType =
   | 'new_submission'
@@ -51,23 +52,20 @@ function mapRow(r: Row): AppNotification {
 }
 
 /**
- * Full-featured notification hook with real-time subscriptions,
- * mark read/unread, delete, and pagination.
+ * Notification hook — fetches initial data, then syncs with the
+ * RealtimeProvider's global notification subscription.
+ * No duplicate channels are created.
  */
-export function useNotifications(userId: number, role: 'admin' | 'journalist' | 'reader') {
+export function useNotifications(userId: number, _role?: string) {
   const [notifications, setNotifications] = useState<AppNotification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const { unreadCount: liveUnread, latestNotification } = useRealtime()
 
-  const recalc = useCallback((items: AppNotification[]) => {
-    setNotifications(items)
-    setUnreadCount(items.filter((n) => !n.read).length)
-  }, [])
-
+  // Fetch initial notifications
   useEffect(() => {
     if (!userId) { setLoading(false); return }
-    const supabase = createClient()
     let active = true
+    const supabase = createClient()
 
     ;(async () => {
       const { data } = await supabase
@@ -79,123 +77,64 @@ export function useNotifications(userId: number, role: 'admin' | 'journalist' | 
 
       if (!active) return
       const mapped = ((data ?? []) as Row[]).map(mapRow)
-      recalc(mapped)
+      setNotifications(mapped)
       setLoading(false)
     })()
 
-    // Subscribe to INSERT (new notifications) and UPDATE (read state changes)
-    const channel = supabase
-      .channel(`notifications:user:${userId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const n = mapRow(payload.new as Row)
-          setNotifications((prev) => [n, ...prev].slice(0, 50))
-          setUnreadCount((c) => c + 1)
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const updated = mapRow(payload.new as Row)
-          setNotifications((prev) => {
-            const next = prev.map((n) => n.id === updated.id ? { ...n, read: updated.read } : n)
-            setUnreadCount(next.filter((x) => !x.read).length)
-            return next
-          })
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const deletedId = String((payload.old as { notification_id: number }).notification_id)
-          setNotifications((prev) => {
-            const next = prev.filter((n) => n.id !== deletedId)
-            setUnreadCount(next.filter((x) => !x.read).length)
-            return next
-          })
-        }
-      )
-      .subscribe()
-
-    return () => {
-      active = false
-      supabase.removeChannel(channel)
-    }
-  }, [userId, role, recalc])
-
-  /** Mark a single notification as read */
-  const markRead = useCallback((id: string) => {
-    setNotifications((prev) => {
-      const target = prev.find((n) => n.id === id)
-      if (!target || target.read) return prev
-      const next = prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      setUnreadCount(next.filter((x) => !x.read).length)
-      return next
-    })
-    const supabase = createClient()
-    supabase
-      .from('notifications')
-      .update({ read: true } as never)
-      .eq('notification_id', Number(id))
-  }, [])
-
-  /** Mark a single notification as unread */
-  const markUnread = useCallback((id: string) => {
-    setNotifications((prev) => {
-      const target = prev.find((n) => n.id === id)
-      if (!target || !target.read) return prev
-      const next = prev.map((n) => (n.id === id ? { ...n, read: false } : n))
-      setUnreadCount(next.filter((x) => !x.read).length)
-      return next
-    })
-    const supabase = createClient()
-    supabase
-      .from('notifications')
-      .update({ read: false } as never)
-      .eq('notification_id', Number(id))
-  }, [])
-
-  /** Mark all notifications as read */
-  const markAllRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-    setUnreadCount(0)
-    if (!userId) return
-    const supabase = createClient()
-    supabase
-      .from('notifications')
-      .update({ read: true } as never)
-      .eq('user_id', userId)
-      .eq('read', false)
+    return () => { active = false }
   }, [userId])
 
-  /** Delete a single notification */
-  const deleteNotification = useCallback((id: string) => {
-    setNotifications((prev) => {
-      const next = prev.filter((n) => n.id !== id)
-      setUnreadCount(next.filter((x) => !x.read).length)
-      return next
+  // Sync live unread count from RealtimeProvider
+  const unreadCount = liveUnread
+
+  // Prepend new notifications from RealtimeProvider
+  useEffect(() => {
+    if (!latestNotification || latestNotification.user_id !== userId) return
+    const n: AppNotification = {
+      id: String(latestNotification.notification_id),
+      type: (latestNotification.type as NotificationType) ?? 'system',
+      title: latestNotification.title,
+      message: latestNotification.message,
+      link: latestNotification.link,
+      read: latestNotification.read,
+      timestamp: latestNotification.created_at,
+    }
+    setNotifications(prev => {
+      if (prev.some(p => p.id === n.id)) return prev
+      return [n, ...prev].slice(0, 50)
     })
+  }, [latestNotification, userId])
+
+  const markRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
     const supabase = createClient()
-    supabase
-      .from('notifications')
-      .delete()
-      .eq('notification_id', Number(id))
+    supabase.from('notifications').update({ read: true } as never).eq('notification_id', Number(id))
   }, [])
 
-  /** Clear all notifications */
-  const clearAll = useCallback(() => {
-    setNotifications([])
-    setUnreadCount(0)
+  const markUnread = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: false } : n))
+    const supabase = createClient()
+    supabase.from('notifications').update({ read: false } as never).eq('notification_id', Number(id))
+  }, [])
+
+  const markAllRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     if (!userId) return
     const supabase = createClient()
-    supabase
-      .from('notifications')
-      .delete()
-      .eq('user_id', userId)
+    supabase.from('notifications').update({ read: true } as never).eq('user_id', userId).eq('read', false)
+  }, [userId])
+
+  const deleteNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    const supabase = createClient()
+    supabase.from('notifications').delete().eq('notification_id', Number(id))
+  }, [])
+
+  const clearAll = useCallback(() => {
+    setNotifications([])
+    if (!userId) return
+    const supabase = createClient()
+    supabase.from('notifications').delete().eq('user_id', userId)
   }, [userId])
 
   return {

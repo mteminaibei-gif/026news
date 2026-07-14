@@ -230,30 +230,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
     }
   }, [])
 
-  // Auto-refresh: pull the newest published posts and prioritise them
-  useEffect(() => {
-    const id = setInterval(async () => {
-      const supabase = createClient()
-      let query = supabase
-        .from('articles')
-        .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-        .eq('status', 'published' as never)
-        .order('created_at', { ascending: false })
-        .limit(12)
-      if (categoryFilterName) {
-        query = query.eq('category', categoryFilterName as never)
-      }
-      const { data } = await query
-      if (data && data.length) {
-        setArticles((prev) => {
-          const ids = new Set(prev.map((a) => a.article_id))
-          const fresh = (data as ArticleWithAuthor[]).filter((a) => !ids.has(a.article_id))
-          return fresh.length ? sortInhouseFirst([...fresh, ...prev]) : prev
-        })
-      }
-    }, 45000)
-    return () => clearInterval(id)
-  }, [categoryFilterName])
+  // Realtime subscription handles live updates — no polling needed
 
   if (articles.length === 0) {
     return (

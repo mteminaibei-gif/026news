@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export interface RealtimeMetrics {
@@ -27,46 +27,41 @@ export function useRealtimeAnalytics() {
   const [metrics, setMetrics] = useState<RealtimeMetrics>(INITIAL_METRICS)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   const fetchMetrics = useCallback(async () => {
     try {
       setError(null)
 
-      // Get active users (logged in last 30 minutes)
       const { count: activeUsers } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .gt('last_login', new Date(Date.now() - 30 * 60000).toISOString())
 
-      // Get articles published today
       const { count: articlesPublished } = await supabase
         .from('articles')
         .select('*', { count: 'exact', head: true })
         .gte('published_at', new Date().toISOString().split('T')[0])
 
-      // Get total views (from analytics table or articles view count)
       const { data: viewsData } = await supabase
         .from('articles')
         .select('view_count') as any
 
       const totalViews = viewsData?.reduce((sum: number, a: any) => sum + (a.view_count || 0), 0) || 0
 
-      // Get total earnings
       const { data: earningsData } = await supabase
         .from('articles')
         .select('earnings') as any
 
       const totalEarnings = earningsData?.reduce((sum: number, a: any) => sum + (a.earnings || 0), 0) || 0
 
-      // Get top articles
       const { data: topArticles } = await supabase
         .from('articles')
         .select('title, view_count, earnings')
         .order('view_count', { ascending: false })
         .limit(5) as any
 
-      // Get recent activity
       const { data: recentActivity } = await supabase
         .from('articles')
         .select('article_id, title, published_at, users:author_id(name)')
@@ -103,34 +98,26 @@ export function useRealtimeAnalytics() {
   useEffect(() => {
     fetchMetrics()
 
-    // Fetch metrics every 5 seconds for real-time updates
-    const interval = setInterval(fetchMetrics, 5000)
-
-    // Subscribe to real-time changes
+    // Only realtime — no polling interval
     const articleSubscription = supabase
-      .channel('articles')
+      .channel('rt:analytics:articles')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'articles' },
-        () => {
-          fetchMetrics()
-        }
+        () => { fetchMetrics() }
       )
       .subscribe()
 
     const userSubscription = supabase
-      .channel('users')
+      .channel('rt:analytics:users')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'users' },
-        () => {
-          fetchMetrics()
-        }
+        () => { fetchMetrics() }
       )
       .subscribe()
 
     return () => {
-      clearInterval(interval)
       supabase.removeChannel(articleSubscription)
       supabase.removeChannel(userSubscription)
     }
