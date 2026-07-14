@@ -21,7 +21,6 @@ export function AdBanner({ slot = '1234567890', format = 'auto', className = '',
   useEffect(() => {
     if (!publisherId) return
     try {
-      // @ts-expect-error adsbygoogle is injected by AdSense script
       ;(window.adsbygoogle = window.adsbygoogle || []).push({})
     } catch {
       // AdSense not loaded yet

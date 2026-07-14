@@ -7,6 +7,7 @@ import { ReadingProgress } from '@/components/ui/ReadingProgress'
 import { ViewTracker } from '@/components/ui/ViewTracker'
 import { ArticleFloatBar } from '@/components/news/ArticleFloatBar'
 import { ArticleComments } from '@/components/news/ArticleComments'
+import { BannerAd, InArticleAd } from '@/components/ads/AdSense'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -332,6 +333,9 @@ export default async function ArticlePage({ params }: Props) {
             className="article-body rich-editor-content"
             dangerouslySetInnerHTML={{ __html: article.content || '' }}
           />
+
+          {/* Ad after article */}
+          <BannerAd />
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (

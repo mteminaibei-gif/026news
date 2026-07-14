@@ -5,6 +5,7 @@ import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { HomeFeed } from '@/components/news/HomeFeed'
 import { ArticleCard } from '@/components/news/ArticleCard'
 import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
+import { BannerAd } from '@/components/ads/AdSense'
 import { formatNumber } from '@/lib/utils'
 import { TrendingUp, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -167,6 +168,9 @@ export default async function HomePage({ searchParams }: Props) {
 
       {/* Hero Carousel */}
       {!categoryParam && <HeroCarousel articles={heroSlides as never} />}
+
+      {/* Banner Ad */}
+      <BannerAd />
 
       {/* Main Content Grid */}
       <div className="main-layout">

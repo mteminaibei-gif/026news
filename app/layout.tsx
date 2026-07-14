@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Space_Grotesk, Newsreader } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
@@ -101,6 +102,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </QueryProvider>
         </ThemeProvider>
         <Analytics />
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
