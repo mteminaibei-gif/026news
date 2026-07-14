@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Radio } from 'lucide-react'
 import { formatDate, formatNumber, readingTime } from '@/lib/utils'
 
 interface SlideArticle {
@@ -176,7 +177,7 @@ export function HeroCarousel({ articles }: Props) {
               className="hero-btn-secondary"
               style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s' }}
             >
-              🔊 Listen
+              <Radio size={16} className="inline mr-1.5" />Listen
             </Link>
           </div>
         </div>
