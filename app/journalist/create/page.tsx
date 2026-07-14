@@ -2,13 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
-
-const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
 
 const MONETIZE_OPTIONS = [
   { value: 'free',      icon: '🆓', label: 'Free',         desc: 'Public access' },
@@ -243,16 +241,15 @@ export default function CreatePostPage() {
             {/* Content editor */}
             <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
               <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <label className={labelCls + ' mb-0'} style={{ color: 'var(--text-tertiary)' }}>✍️ Content</label>
+                <label className={labelCls + ' mb-0'} style={{ color: 'var(--text-tertiary)' }}>Content</label>
                 <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{wordCount} words · ~{readMins} min read</span>
               </div>
-              <div data-color-mode="light" className="editor-wrapper">
-                <MDEditor
-                  value={content} onChange={val => setContent(val ?? '')}
-                  height={520} preview="live"
-                  aria-label="Article content editor"
-                />
-              </div>
+              <RichTextEditor
+                content={content}
+                onChange={val => setContent(val)}
+                placeholder="Write your article here..."
+                minHeight={480}
+              />
             </div>
 
             {/* Monetization */}
