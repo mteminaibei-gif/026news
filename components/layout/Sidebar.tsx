@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, PenLine, Newspaper, TrendingUp, Users, User,
-  Settings, Globe, BarChart3, Wallet, Home, FileText, Mail
+  Settings, Globe, BarChart3, Wallet, Home, FileText, Mail, Bell
 } from 'lucide-react'
 
 interface NavItem { href: string; label: string; icon: React.ReactNode }
@@ -26,16 +26,17 @@ const JOURNALIST_NAV: NavItem[] = [
   { href: '/journalist/profile',     label: 'Profile',     icon: <User size={18} /> },
 ]
 const ADMIN_NAV: NavItem[] = [
-  { href: '/admin/dashboard',   label: 'Dashboard',  icon: <LayoutDashboard size={18} /> },
-  { href: '/admin/write',       label: 'Write',      icon: <PenLine size={18} /> },
-  { href: '/admin/articles',    label: 'Articles',   icon: <Newspaper size={18} /> },
-  { href: '/admin/journalists', label: 'Authors',    icon: <FileText size={18} /> },
-  { href: '/admin/sources',     label: 'Sources',    icon: <Globe size={18} /> },
-  { href: '/admin/users',       label: 'Users',      icon: <Users size={18} /> },
-  { href: '/admin/analytics',   label: 'Analytics',   icon: <TrendingUp size={18} /> },
-  { href: '/admin/earnings',    label: 'Earnings',   icon: <Wallet size={18} /> },
-  { href: '/admin/gmail',       label: 'Gmail Inbox', icon: <Mail size={18} /> },
-  { href: '/admin/settings',    label: 'Settings',   icon: <Settings size={18} /> },
+  { href: '/admin/dashboard',      label: 'Dashboard',      icon: <LayoutDashboard size={18} /> },
+  { href: '/admin/write',          label: 'Write',          icon: <PenLine size={18} /> },
+  { href: '/admin/articles',       label: 'Articles',       icon: <Newspaper size={18} /> },
+  { href: '/admin/journalists',    label: 'Authors',        icon: <FileText size={18} /> },
+  { href: '/admin/notifications',  label: 'Notifications',  icon: <Bell size={18} /> },
+  { href: '/admin/sources',        label: 'Sources',        icon: <Globe size={18} /> },
+  { href: '/admin/users',          label: 'Users',          icon: <Users size={18} /> },
+  { href: '/admin/analytics',      label: 'Analytics',      icon: <TrendingUp size={18} /> },
+  { href: '/admin/earnings',       label: 'Earnings',       icon: <Wallet size={18} /> },
+  { href: '/admin/gmail',          label: 'Gmail Inbox',    icon: <Mail size={18} /> },
+  { href: '/admin/settings',       label: 'Settings',       icon: <Settings size={18} /> },
 ]
 
 export function Sidebar({ role, user }: SidebarProps) {
