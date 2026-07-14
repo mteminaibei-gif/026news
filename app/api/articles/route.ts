@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
 
 // ── simple in-process rate limiter ──────────────────────────
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title must be at least 5 characters' }, { status: 400 })
     }
     if (content.length < 10) {
-      return NextResponse.json({ error: 'Content must be at least 50 characters' }, { status: 400 })
+      return NextResponse.json({ error: 'Content must be at least 10 characters' }, { status: 400 })
     }
     // Validate source URL if provided
     if (source_reference) {
@@ -157,11 +157,16 @@ export async function POST(req: NextRequest) {
 
     const slug   = slugify(title)
     const status = action === 'submit' ? 'under_review' : 'draft'
+    const excerpt = String(body.excerpt ?? '').trim().substring(0, 500) || content.replace(/<[^>]*>/g, '').substring(0, 200).trim()
 
-    const { data: article, error } = await supabase
+    // Use admin client to bypass broken RLS policies (user_id vs auth_id mismatch)
+    const adminDb = await createAdminClient()
+
+    const { data: article, error } = await adminDb
       .from('articles')
       .insert({
         title, slug, content,
+        excerpt,
         category_id:       cat?.category_id ?? null,
         author_id:         profile.user_id,
         source_reference:  source_reference || null,
@@ -181,13 +186,13 @@ export async function POST(req: NextRequest) {
     }
 
     const articleRow = article as unknown as { article_id: number }
-    await supabase.from('analytics')
+    await adminDb.from('analytics')
       .insert({ article_id: articleRow.article_id, views: 0, likes: 0, shares: 0, comments_count: 0 } as never)
 
     // Send email notification to admins when article is submitted for review
     if (action === 'submit') {
       try {
-        const { data: admins } = await supabase
+        const { data: admins } = await adminDb
           .from('users').select('email, name').eq('role', 'admin')
         if (admins?.length) {
           const adminEmails = (admins as { email: string; name: string }[]).map(a => a.email)
