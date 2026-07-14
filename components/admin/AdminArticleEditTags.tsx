@@ -1,20 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Tag, X } from 'lucide-react'
 
-const CATEGORIES = [
-  { id: 1, name: 'Politics' },
-  { id: 2, name: 'Business' },
-  { id: 3, name: 'Technology' },
-  { id: 4, name: 'Sports' },
-  { id: 5, name: 'Entertainment' },
-  { id: 6, name: 'Health' },
-  { id: 7, name: 'Science' },
-  { id: 8, name: 'Kenya' },
-  { id: 9, name: 'Africa' },
-]
+interface Category { id: number; name: string }
 
 interface Props {
   articleId: number
@@ -24,24 +14,37 @@ interface Props {
 
 export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId }: Props) {
   const [open, setOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<string[]>(currentTags)
   const [categoryId, setCategoryId] = useState<number | null>(currentCategoryId)
   const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    createClient()
+      .from('categories')
+      .select('id, name')
+      .order('name')
+      .then(({ data }) => { if (data) setCategories(data as Category[]) })
+  }, [open])
 
   async function handleSave() {
     setSaving(true)
+    setError('')
     try {
       const supabase = createClient()
-      await supabase
+      const { error: saveError } = await supabase
         .from('articles')
         .update({ tags, category_id: categoryId } as never)
         .eq('article_id', articleId)
+      if (saveError) throw saveError
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch {
-      /* ignore */
+      setTimeout(() => { setSaved(false); setOpen(false) }, 1500)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
       setSaving(false)
     }
@@ -87,6 +90,12 @@ export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId
           </button>
         </div>
 
+        {error && (
+          <div className="mb-3 px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: 'var(--error-light)', color: 'var(--error)' }}>
+            {error}
+          </div>
+        )}
+
         {/* Category */}
         <div className="mb-4">
           <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Category</label>
@@ -97,7 +106,7 @@ export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId
             style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
           >
             <option value="">No category</option>
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>

@@ -158,7 +158,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
             <div className="flex gap-2 ml-4">
               {([
                 { key: 'all' as SourceFilter, label: 'All', count: totalCount },
-                { key: 'inhouse' as SourceFilter, label: 'Published Articles', count: inhouseCount },
+                { key: 'inhouse' as SourceFilter, label: 'In-House', count: inhouseCount },
                 { key: 'rss' as SourceFilter, label: 'RSS / Pulled', count: rssCount },
               ]).map(s => (
                 <Link
@@ -209,7 +209,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
               </Link>
             </div>
           ) : (
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
               <table className="w-full text-xs md:text-sm min-w-max">
                 <thead className="sticky top-0 z-10">
                   <tr className="text-left text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>

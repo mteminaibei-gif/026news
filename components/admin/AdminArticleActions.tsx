@@ -89,7 +89,8 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
         </button>
       )}
 
-      {currentStatus !== 'rejected' && (
+      {/* Reject — only for articles under review or draft */}
+      {(currentStatus === 'under_review' || currentStatus === 'draft') && (
         <button
           onClick={handleReject}
           disabled={loading !== null}

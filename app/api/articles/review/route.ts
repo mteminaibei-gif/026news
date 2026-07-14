@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Fetch profile — cast via unknown to bypass generated-type mismatch
     const { data: rawProfile } = await supabase
       .from('users')
       .select('user_id, role')
@@ -39,25 +38,51 @@ export async function POST(req: NextRequest) {
       action === 'reject'  ? 'rejected' :
       'revision_requested'
 
-    // 1. Update article status
+    // 1. Update article status + published_at + featured
+    const updatePayload: Record<string, unknown> = {
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    }
+    if (newStatus === 'published') {
+      updatePayload.published_at = new Date().toISOString()
+    }
+    if (feature_homepage !== undefined) {
+      updatePayload.featured = !!feature_homepage
+    }
+
     const { error: articleError } = await supabase
       .from('articles')
-      .update({ status: newStatus, updated_at: new Date().toISOString() } as never)
+      .update(updatePayload as never)
       .eq('article_id', id)
     if (articleError) throw articleError
 
-    // 2. Upsert review workflow record
-    const reviewRecord: ReviewRecord = {
+    // 2. Insert or update review_workflow record (safe upsert without onConflict)
+    const { data: existingReview } = await supabase
+      .from('review_workflow')
+      .select('article_id')
+      .eq('article_id', id)
+      .maybeSingle()
+
+    const reviewRecord = {
       article_id:   id,
       admin_id:     profile.user_id,
       review_notes: notes ?? null,
       action:       reviewAction,
       reviewed_at:  new Date().toISOString(),
     }
-    const { error: reviewError } = await supabase
-      .from('review_workflow')
-      .upsert(reviewRecord as never, { onConflict: 'article_id' })
-    if (reviewError) throw reviewError
+
+    if (existingReview) {
+      const { error: reviewError } = await supabase
+        .from('review_workflow')
+        .update(reviewRecord as never)
+        .eq('article_id', id)
+      if (reviewError) throw reviewError
+    } else {
+      const { error: reviewError } = await supabase
+        .from('review_workflow')
+        .insert(reviewRecord as never)
+      if (reviewError) throw reviewError
+    }
 
     console.log(`Article ${id} ${reviewAction} by admin ${profile.user_id}. Featured: ${feature_homepage}`)
 
