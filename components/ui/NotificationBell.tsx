@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useNotifications, type NotificationType } from '@/lib/hooks/useNotifications'
+import { useNotifications, type AppNotification, type NotificationType } from '@/lib/hooks/useNotifications'
 import { timeAgo } from '@/lib/utils'
+import { CheckCheck, Trash2, EyeOff, Check, MoreHorizontal } from 'lucide-react'
 
 interface NotificationBellProps {
   userId: number
@@ -18,27 +19,36 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   revision_requested: '🔄',
   new_comment: '💬',
   new_user: '🆕',
+  article_like: '❤️',
+  comment_like: '💙',
+  follow: '👤',
+  article_published: '📰',
+  mention: '🏷️',
   system: '🔔',
 }
 
 export function NotificationBell({ userId, role }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
+  const [menuId, setMenuId] = useState<string | null>(null)
   const router = useRouter()
-  const { notifications, unreadCount, markAllRead, markRead } = useNotifications(userId, role)
+  const { notifications, unreadCount, markAllRead, markRead, markUnread, deleteNotification } = useNotifications(userId, role)
 
-  function openNotification(n: { id: string; link?: string | null }) {
+  // Auto-mark all read when dropdown opens
+  useEffect(() => {
+    if (open && unreadCount > 0) markAllRead()
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function openNotification(n: AppNotification) {
     markRead(n.id)
     if (n.link) router.push(n.link)
     setOpen(false)
+    setMenuId(null)
   }
 
   return (
     <div className="relative">
       <button
-        onClick={() => {
-          setOpen(!open)
-          if (!open && unreadCount > 0) markAllRead()
-        }}
+        onClick={() => setOpen(!open)}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         className="relative p-2 rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors"
       >
@@ -62,18 +72,20 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
             role="dialog"
             aria-label="Notifications panel"
           >
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <h3 className="font-extrabold text-gray-900 text-sm">Notifications</h3>
               {notifications.length > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-blue-500 hover:text-blue-700 font-medium"
+                  className="text-xs text-blue-500 hover:text-blue-700 font-medium flex items-center gap-1"
                 >
-                  Mark all read
+                  <CheckCheck size={12} /> Mark all read
                 </button>
               )}
             </div>
 
+            {/* Notification list */}
             <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
               {notifications.length === 0 ? (
                 <div className="py-8 text-center text-gray-400">
@@ -83,10 +95,10 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
                 </div>
               ) : (
                 notifications.slice(0, 10).map((n) => (
-                  <button
+                  <div
                     key={n.id}
                     onClick={() => openNotification(n)}
-                    className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}
+                    className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-gray-50 transition-colors cursor-pointer ${!n.read ? 'bg-blue-50/50' : ''}`}
                   >
                     <span className="text-lg shrink-0 mt-0.5">
                       {TYPE_ICONS[n.type] ?? '📬'}
@@ -98,11 +110,12 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
                     {!n.read && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5" aria-label="Unread" />
                     )}
-                  </button>
+                  </div>
                 ))
               )}
             </div>
 
+            {/* Footer */}
             <div className="px-4 py-2.5 border-t border-gray-100 text-center">
               <Link
                 href="/notifications"

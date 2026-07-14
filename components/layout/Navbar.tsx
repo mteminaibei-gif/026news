@@ -9,6 +9,7 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
+import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
 import { NAV_LINKS } from '@/lib/constants/navigation'
 
 const NAVBAR_H = 64
@@ -25,6 +26,7 @@ export function Navbar() {
   const { data: profile } = useProfile(user?.email ?? undefined)
   const signOutMutation = useSignOut()
   const { unreadCount } = useNotifications(profile?.user_id ?? 0, (profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader')
+  const [notifOpen, setNotifOpen] = useState(false)
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
@@ -179,36 +181,56 @@ export function Navbar() {
               {darkMode ? <Sun size={16} style={{ color: 'var(--text-primary)' }} /> : <Moon size={16} style={{ color: 'var(--text-primary)' }} />}
             </button>
 
-            {/* Notification bell (authenticated) */}
+            {/* Notification bell (authenticated) — dropdown */}
             {!userLoading && user && (
-              <Link
-                href="/notifications"
-                style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-surface)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--text-secondary)',
-                  transition: 'all 0.2s',
-                  position: 'relative',
-                }}
-              >
-                <Bell size={16} />
-                {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: 6, right: 6,
-                    minWidth: 16, height: 16, borderRadius: 8,
-                    background: 'var(--error)',
-                    color: '#fff',
-                    fontSize: '0.6rem', fontWeight: 700,
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => {
+                    setNotifOpen(!notifOpen)
+                  }}
+                  aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+                  style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-surface)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px',
-                    border: '2px solid var(--bg-surface)',
-                  }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
+                    color: 'var(--text-secondary)',
+                    transition: 'all 0.2s',
+                    position: 'relative',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Bell size={16} />
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: 6, right: 6,
+                      minWidth: 16, height: 16, borderRadius: 8,
+                      background: 'var(--error)',
+                      color: '#fff',
+                      fontSize: '0.6rem', fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '0 4px',
+                      border: '2px solid var(--bg-surface)',
+                    }}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <>
+                    <div
+                      style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                      onClick={() => setNotifOpen(false)}
+                    />
+                    <NavbarNotificationDropdown
+                      userId={profile?.user_id ?? 0}
+                      role={(profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader'}
+                      onClose={() => setNotifOpen(false)}
+                    />
+                  </>
                 )}
-              </Link>
+              </div>
             )}
 
             {/* Auth states */}

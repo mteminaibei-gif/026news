@@ -169,7 +169,7 @@ export default function ProfilePage() {
     const colors = ['oklch(50% 0.14 200)', 'oklch(50% 0.14 320)', 'oklch(50% 0.14 90)', 'oklch(50% 0.14 30)', 'oklch(50% 0.14 350)']
     const color = colors[(n.notification_id || 0) % colors.length]
     const timeAgo = getTimeAgo(n.created_at)
-    const isUnread = !n.is_read
+    const isUnread = !n.read
     let text = ''
     if (n.type === 'article_published') text = `<strong>${name}</strong> published a new article`
     else if (n.type === 'comment_reply') text = `<strong>${name}</strong> replied to your comment`

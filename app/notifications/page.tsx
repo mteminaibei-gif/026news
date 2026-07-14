@@ -11,11 +11,13 @@ import {
   type NotificationType,
 } from '@/lib/hooks/useNotifications'
 import { timeAgo } from '@/lib/utils'
+import { CheckCheck, Trash2, EyeOff, Check, MoreHorizontal, Bell, Filter } from 'lucide-react'
 
-type Filter = 'all' | 'submissions' | 'comments' | 'system'
+type Filter = 'all' | 'interactions' | 'submissions' | 'comments' | 'system'
 
 const FILTERS: { label: string; value: Filter }[] = [
   { label: 'All', value: 'all' },
+  { label: 'Interactions', value: 'interactions' },
   { label: 'Submissions', value: 'submissions' },
   { label: 'Comments', value: 'comments' },
   { label: 'System', value: 'system' },
@@ -28,6 +30,11 @@ const TYPE_META: Record<NotificationType, { icon: string; bg: string; color: str
   revision_requested: { icon: '🔄', bg: 'var(--warning-light)', color: 'var(--warning)' },
   new_comment:        { icon: '💬', bg: 'var(--accent-light)', color: 'var(--accent)' },
   new_user:           { icon: '🆕', bg: 'var(--success-light)', color: 'var(--success)' },
+  article_like:       { icon: '❤️', bg: 'var(--error-light)', color: 'var(--error)' },
+  comment_like:       { icon: '💙', bg: 'var(--accent-light)', color: 'var(--accent)' },
+  follow:             { icon: '👤', bg: 'var(--primary-light)', color: 'var(--primary)' },
+  article_published:  { icon: '📰', bg: 'var(--success-light)', color: 'var(--success)' },
+  mention:            { icon: '🏷️', bg: 'var(--warning-light)', color: 'var(--warning)' },
   system:             { icon: '🔔', bg: 'var(--bg-inset)', color: 'var(--text-tertiary)' },
 }
 
@@ -48,8 +55,9 @@ function groupKey(ts: string): string {
 
 function matchesFilter(n: AppNotification, f: Filter): boolean {
   if (f === 'all') return true
-  if (f === 'submissions') return n.type === 'new_submission'
-  if (f === 'comments') return n.type === 'new_comment'
+  if (f === 'interactions') return ['article_like', 'comment_like', 'follow', 'article_published'].includes(n.type)
+  if (f === 'submissions') return ['new_submission', 'approved', 'rejected', 'revision_requested'].includes(n.type)
+  if (f === 'comments') return ['new_comment', 'mention'].includes(n.type)
   if (f === 'system') return n.type === 'system' || n.type === 'new_user'
   return true
 }
@@ -59,6 +67,7 @@ export default function NotificationsPage() {
   const [userId, setUserId] = useState<number | null>(null)
   const [role, setRole] = useState<'admin' | 'journalist' | 'reader'>('reader')
   const [loadingUser, setLoadingUser] = useState(true)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -81,7 +90,7 @@ export default function NotificationsPage() {
     })()
   }, [])
 
-  const { notifications, unreadCount, markAllRead, markRead } =
+  const { notifications, unreadCount, markAllRead, markRead, markUnread, deleteNotification, clearAll } =
     useNotifications(userId ?? 0, role)
 
   const visible = notifications.filter((n) => matchesFilter(n, activeFilter))
@@ -101,13 +110,14 @@ export default function NotificationsPage() {
       <Navbar />
 
       <main className="flex-1 w-full" style={{ maxWidth: '720px', marginInline: 'auto', paddingInline: 'var(--space-md)' }}>
+        {/* Header */}
         <div
           className="flex items-center justify-between"
           style={{ paddingBlock: 'var(--space-xl)', borderBottom: '1px solid var(--border-subtle)', marginBottom: 'var(--space-lg)' }}
         >
           <div>
-            <h1 className="font-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Notifications
+            <h1 className="font-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Bell size={24} /> Notifications
             </h1>
             {unreadCount > 0 && (
               <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
@@ -115,15 +125,27 @@ export default function NotificationsPage() {
               </p>
             )}
           </div>
-          <button
-            onClick={markAllRead}
-            className="font-semibold"
-            style={{ fontSize: '0.8rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            Mark all as read
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {notifications.length > 0 && (
+              <>
+                <button
+                  onClick={markAllRead}
+                  style={{ fontSize: '0.78rem', color: 'var(--primary)', background: 'var(--primary-light)', border: 'none', cursor: 'pointer', padding: '8px 14px', borderRadius: 8, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <CheckCheck size={14} /> Mark all read
+                </button>
+                <button
+                  onClick={() => { if (confirm('Clear all notifications?')) clearAll() }}
+                  style={{ fontSize: '0.78rem', color: 'var(--error)', background: 'var(--error-light)', border: 'none', cursor: 'pointer', padding: '8px 14px', borderRadius: 8, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Trash2 size={14} /> Clear all
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
+        {/* Filters */}
         <div className="flex gap-2 flex-wrap" style={{ marginBottom: 'var(--space-xl)' }}>
           {FILTERS.map((f) => (
             <button
@@ -147,8 +169,9 @@ export default function NotificationsPage() {
           ))}
         </div>
 
+        {/* Content */}
         {loadingUser ? (
-          <p style={{ color: 'var(--text-tertiary)', paddingBlock: 'var(--space-2xl)' }}>Loading…</p>
+          <p style={{ color: 'var(--text-tertiary)', paddingBlock: 'var(--space-2xl)' }}>Loading...</p>
         ) : userId === null ? (
           <div className="text-center" style={{ paddingBlock: 'var(--space-3xl)', borderRadius: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
             <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Sign in to see notifications</p>
@@ -172,10 +195,15 @@ export default function NotificationsPage() {
                     const meta = TYPE_META[item.type] ?? TYPE_META.system
                     const inner = (
                       <>
+                        {/* Unread dot */}
                         <div style={{ width: '8px', height: '8px', marginTop: '7px', flexShrink: 0, borderRadius: '9999px', background: !item.read ? 'var(--primary)' : 'transparent' }} />
-                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: meta.bg, color: meta.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', flexShrink: 0 }}>
+
+                        {/* Icon */}
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: meta.bg, color: meta.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>
                           {meta.icon}
                         </div>
+
+                        {/* Content */}
                         <div className="flex-1 min-w-0">
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: !item.read ? 600 : 400, lineHeight: 1.4 }}>
                             {item.message}
@@ -184,6 +212,37 @@ export default function NotificationsPage() {
                             {timeAgo(item.timestamp)}
                           </p>
                         </div>
+
+                        {/* Context menu */}
+                        <div style={{ position: 'relative', flexShrink: 0, alignSelf: 'center' }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === item.id ? null : item.id) }}
+                            style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
+
+                          {openMenuId === item.id && (
+                            <>
+                              <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} onClick={() => setOpenMenuId(null)} />
+                              <div style={{ position: 'absolute', right: 0, top: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 70, overflow: 'hidden', minWidth: 160 }}>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); item.read ? markUnread(item.id) : markRead(item.id); setOpenMenuId(null) }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', textAlign: 'left' }}
+                                >
+                                  {item.read ? <EyeOff size={14} /> : <Check size={14} />}
+                                  {item.read ? 'Mark as unread' : 'Mark as read'}
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteNotification(item.id); setOpenMenuId(null) }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', border: 'none', background: 'none', color: 'var(--error)', fontSize: '0.8rem', cursor: 'pointer', textAlign: 'left' }}
+                                >
+                                  <Trash2 size={14} /> Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </>
                     )
                     const style = {
@@ -191,6 +250,7 @@ export default function NotificationsPage() {
                       borderBottom: i < group.items.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                       background: !item.read ? 'var(--primary-light)' : 'transparent',
                       transition: 'background 0.15s',
+                      cursor: 'pointer',
                     }
                     if (item.link) {
                       return (
