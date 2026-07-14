@@ -74,7 +74,6 @@ export default function CreatePostPage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) { setImageError('Select an image file (PNG, JPG, WebP)'); return }
-    if (file.size > 5 * 1024 * 1024)    { setImageError('Image must be under 5 MB'); return }
     setImageError('')
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
@@ -314,7 +313,7 @@ export default function CreatePostPage() {
                     <p className="text-sm font-semibold transition-colors" style={{ color: 'var(--text-tertiary)' }}>
                       Click to upload
                     </p>
-                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>PNG, JPG, WebP · max 5 MB</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>PNG, JPG, WebP</p>
                   </button>
                 )}
                 {imageError && <p className="text-xs mt-2" style={{ color: 'var(--error)' }}>⚠️ {imageError}</p>}

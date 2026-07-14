@@ -159,7 +159,6 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   // Image helpers
   function applyImageFile(file: File) {
     if (!file.type.startsWith('image/')) { setImageError('Select an image file (PNG, JPG, WebP)'); return }
-    if (file.size > 5 * 1024 * 1024)    { setImageError('Image must be under 5 MB'); return }
     setImageError('')
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
@@ -447,7 +446,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                     <p className="text-sm font-semibold transition-colors" style={{ color: isDragging ? 'var(--primary)' : 'var(--text-tertiary)' }}>
                       {isDragging ? 'Drop image here' : 'Click or drag image here'}
                     </p>
-                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>PNG, JPG, WebP · max 5 MB</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>PNG, JPG, WebP</p>
                   </div>
                 )}
 
