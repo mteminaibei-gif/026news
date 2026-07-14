@@ -179,3 +179,13 @@ Would push these migrations:
  • 20260714000000_increase_image_upload_limit.sql
  • 20260714100000_fix_trigger_rollback.sql
 Finished supabase db push.
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Connecting to remote database...
+Would push these migrations:
+ • 20260713180000_gmail_rls.sql
+ • 20260713190000_fix_submission_notification_trigger.sql
+ • 20260714000000_increase_image_upload_limit.sql
+ • 20260714100000_fix_trigger_rollback.sql
+ • 20260714200000_new_notification_triggers.sql
+Finished supabase db push.

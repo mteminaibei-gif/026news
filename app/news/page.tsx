@@ -2,34 +2,40 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { MOCK_ARTICLES } from '@/lib/mock-data'
-import { useUser } from '@/lib/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
+import { formatNumber } from '@/lib/utils'
+import { Clock, MessageCircle, Eye, Bookmark, BookmarkCheck, ChevronRight, Radio, TrendingUp, Filter } from 'lucide-react'
 
 const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
-const SORT_OPTIONS = ['Most Recent', 'Most Popular', 'Most Discussed']
+const SORT_OPTIONS = ['Most Recent', 'Most Popular', 'Most Discussed'] as const
 
-const NEWS_FEED = MOCK_ARTICLES.filter(a => a.status === 'published').map((a, i) => ({
-  ...a,
-  thumbnail: a.featured_image || `https://picsum.photos/id/${10 + i}/400/250`,
-  category: a.category?.name ?? 'General',
-  excerpt: a.content.slice(0, 140).replace(/\n/g, ' ') + '...',
-  authorName: a.author?.name ?? 'Staff',
-  authorAvatar: a.author?.profile_image ?? `https://i.pravatar.cc/40?img=${i}`,
-  timeAgo: `${(i + 1) * 3}h ago`,
-  commentsCount: a.comments?.length ?? (a.article_id % 30),
-}))
+type NewsArticle = {
+  article_id: number
+  slug: string
+  title: string
+  excerpt: string | null
+  content: string
+  featured_image: string | null
+  views: number
+  created_at: string
+  tags: string[] | null
+  source_name: string | null
+  author: { name: string; profile_image: string | null } | null
+  category: { name: string } | null
+}
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Politics: 'var(--kenya-red)',
-  Business: 'var(--accent)',
-  Tech: 'var(--primary)',
-  Sports: 'var(--success)',
-  Science: 'var(--warning)',
-  Health: 'var(--success)',
-  Kenya: 'var(--kenya-green)',
-  Africa: 'var(--accent)',
+  Politics: 'var(--kenya-red, #e23b3b)',
+  Business: 'var(--accent, #d4a853)',
+  Tech: 'var(--primary, #1a73e8)',
+  Sports: 'var(--success, #34a853)',
+  Science: 'var(--warning, #fbbc04)',
+  Health: 'var(--success, #34a853)',
+  Kenya: 'var(--kenya-green, #006600)',
+  Africa: 'var(--accent, #d4a853)',
 }
 
 const BREAKING = [
@@ -39,22 +45,55 @@ const BREAKING = [
   'President announces new affordable housing initiative for youth',
 ]
 
-const MOST_DISCUSSED = NEWS_FEED.slice(0, 5).map((a, i) => ({
-  ...a,
-  commentsCount: 30 + i * 12,
-}))
-
 export default function NewsPage() {
   const router = useRouter()
-  const { data: user } = useUser()
+  const [articles, setArticles] = useState<NewsArticle[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
-  const [sortBy, setSortBy] = useState('Most Recent')
+  const [sortBy, setSortBy] = useState<typeof SORT_OPTIONS[number]>('Most Recent')
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const lastInteractionRef = useRef(0)
 
+  // Fetch news articles from Supabase
+  useEffect(() => {
+    const supabase = createClient()
+    let active = true
+
+    ;(async () => {
+      let query = supabase
+        .from('articles')
+        .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)')
+        .eq('status', 'published')
+        .eq('post_type', 'news')
+
+      if (activeCategory !== 'All') {
+        query = query.eq('category.name', activeCategory)
+      }
+
+      if (sortBy === 'Most Popular') {
+        query = query.order('views', { ascending: false })
+      } else if (sortBy === 'Most Discussed') {
+        query = query.order('views', { ascending: false })
+      } else {
+        query = query.order('created_at', { ascending: false })
+      }
+
+      query = query.limit(30)
+
+      const { data } = await query
+      if (active) {
+        setArticles((data as unknown as NewsArticle[]) ?? [])
+        setLoading(false)
+      }
+    })()
+
+    return () => { active = false }
+  }, [activeCategory, sortBy])
+
+  // Auto-scroll ticker
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -110,21 +149,7 @@ export default function NewsPage() {
     }
   }, [])
 
-  const filtered = activeCategory === 'All'
-    ? NEWS_FEED
-    : NEWS_FEED.filter(a => a.category === activeCategory)
-
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === 'Most Popular') return b.views - a.views
-    if (sortBy === 'Most Discussed') return b.commentsCount - a.commentsCount
-    return 0
-  })
-
   const toggleBookmark = (id: number) => {
-    if (!user) {
-      router.push('/login?redirect=/news')
-      return
-    }
     setBookmarked(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -133,415 +158,236 @@ export default function NewsPage() {
     })
   }
 
+  const topStory = articles[0]
+  const sideStories = articles.slice(1, 4)
+  const remainingArticles = articles.slice(4)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
       <Navbar />
 
-      <main style={{ flex: 1 }}>
-        {/* Header */}
-        <section
-          style={{
-            background: 'linear-gradient(135deg, var(--bg-elevated), var(--primary))',
-            padding: '48px 16px',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                padding: '6px 16px',
-                borderRadius: 999,
-                background: 'var(--accent-light)',
-                color: 'var(--accent)',
-                marginBottom: 16,
-              }}
-            >
-              Live Feed
-            </span>
-            <h1
-              style={{
-                fontSize: '2.5rem',
-                fontWeight: 800,
-                color: '#fff',
-                fontFamily: "'Newsreader', Georgia, serif",
-                marginBottom: 12,
-              }}
-            >
-              Latest News
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.1rem' }}>
-              Stay informed with breaking news from Kenya and Africa
-            </p>
+      {/* Breaking News Ticker */}
+      <div style={{ background: 'var(--primary)', color: 'oklch(98% 0.005 175)', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            padding: '8px 16px', background: 'rgba(0,0,0,0.2)',
+            fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em',
+            textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6,
+            flexShrink: 0,
+          }}>
+            <Radio size={12} /> Breaking
           </div>
-        </section>
-
-        {/* Category Filters + Sort */}
-        <section style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-          <div
-            style={{
-              maxWidth: 1100,
-              margin: '0 auto',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-              overflowX: 'auto',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 8, flex: 1, overflowX: 'auto' }}>
-              {CATEGORY_FILTERS.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    padding: '7px 18px',
-                    borderRadius: 999,
-                    border: '1px solid',
-                    borderColor: activeCategory === cat ? 'var(--primary)' : 'var(--border)',
-                    background: activeCategory === cat ? 'var(--primary)' : 'transparent',
-                    color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
-                    fontWeight: 600,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              style={{
-                padding: '8px 14px',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {SORT_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-        </section>
-
-        {/* Main Content */}
-        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32 }}>
-          {/* Feed */}
           <div
             ref={scrollRef}
-            className="news-feed-scroll"
-            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-            onMouseEnter={() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) pausedRef.current = true }}
-            onMouseLeave={() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) pausedRef.current = false }}
+            style={{
+              flex: 1, overflow: 'hidden', whiteSpace: 'nowrap',
+              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            }}
           >
-            {sorted.map(article => (
-              <article
-                key={article.article_id}
-                style={{
-                  display: 'flex',
-                  gap: 20,
-                  padding: 20,
-                  borderRadius: 16,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--card-shadow)',
-                  transition: 'box-shadow 0.2s, transform 0.2s',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = 'var(--card-hover-shadow)'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = 'var(--card-shadow)'
-                  e.currentTarget.style.transform = 'none'
-                }}
-              >
-                {/* Thumbnail */}
-                <div
-                  style={{
-                    width: 180,
-                    minWidth: 180,
-                    height: 120,
-                    borderRadius: 12,
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                  }}
-                >
-                  <img
-                    src={article.thumbnail}
-                    alt={article.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      alignSelf: 'flex-start',
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      padding: '3px 10px',
-                      borderRadius: 999,
-                      background: CATEGORY_COLORS[article.category] || 'var(--primary-light)',
-                      color: '#fff',
-                      marginBottom: 8,
-                    }}
-                  >
-                    {article.category}
-                  </span>
-
-                  <h2
-                    style={{
-                      fontSize: '1.05rem',
-                      fontWeight: 700,
-                      fontFamily: "'Newsreader', Georgia, serif",
-                      color: 'var(--text-primary)',
-                      lineHeight: 1.35,
-                      marginBottom: 6,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {article.title}
-                  </h2>
-
-                  <p
-                    style={{
-                      fontSize: '0.8rem',
-                      color: 'var(--text-tertiary)',
-                      lineHeight: 1.5,
-                      marginBottom: 12,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {article.excerpt}
-                  </p>
-
-                  {/* Footer row */}
-                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <img
-                        src={article.authorAvatar}
-                        alt={article.authorName}
-                        style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{article.authorName}</span>
-                    </div>
-                    <span>·</span>
-                    <span>{article.timeAgo}</span>
-                    <span>·</span>
-                    <span>{article.views.toLocaleString()} views</span>
-                    <span>·</span>
-                    <span>{article.commentsCount} comments</span>
-                    <span style={{ flex: 1 }} />
-                    <button
-                      onClick={e => { e.stopPropagation(); toggleBookmark(article.article_id) }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                        padding: 4,
-                        color: bookmarked.has(article.article_id) ? 'var(--accent)' : 'var(--text-muted)',
-                        transition: 'color 0.2s',
-                      }}
-                      title="Bookmark"
-                    >
-                      {bookmarked.has(article.article_id) ? '★' : '☆'}
-                    </button>
-                  </div>
-                </div>
-              </article>
+            {[...BREAKING, ...BREAKING].map((item, i) => (
+              <span key={i} style={{
+                display: 'inline-block', padding: '8px 24px',
+                fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap',
+              }}>
+                {item}
+                <span style={{ margin: '0 16px', opacity: 0.4 }}>&bull;</span>
+              </span>
             ))}
           </div>
+        </div>
+      </div>
 
-          {/* Sidebar */}
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Breaking News */}
-            <div
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 16,
-                padding: 20,
-                boxShadow: 'var(--card-shadow)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: 'var(--error)',
-                    animation: 'pulseGlow 2s ease-in-out infinite',
-                  }}
-                />
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Breaking News
-                </h3>
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {BREAKING.map((item, i) => (
-                  <li
-                    key={i}
-                    style={{
-                      fontSize: '0.82rem',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.4,
-                      paddingBottom: 12,
-                      borderBottom: i < BREAKING.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'color 0.2s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <main style={{ flex: 1, maxWidth: 1200, margin: '0 auto', paddingInline: 'var(--space-md)', width: '100%' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBlock: 'var(--space-xl)', borderBottom: '1px solid var(--border-subtle)', marginBottom: 'var(--space-lg)' }}>
+          <div>
+            <h1 className="font-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Radio size={24} style={{ color: 'var(--primary)' }} /> News
+            </h1>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 2 }}>Breaking stories and latest updates</p>
+          </div>
+        </div>
 
-            {/* Most Discussed */}
-            <div
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 16,
-                padding: 20,
-                boxShadow: 'var(--card-shadow)',
-              }}
-            >
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-                Most Discussed
-              </h3>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {MOST_DISCUSSED.map((item, i) => (
-                  <li key={item.article_id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                    <span
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 8,
-                        background: 'var(--primary-light)',
-                        color: 'var(--primary)',
-                        fontWeight: 700,
-                        fontSize: '0.72rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        marginTop: 2,
-                      }}
-                    >
-                      {i + 1}
-                    </span>
-                    <div>
-                      <p
-                        style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
-                          lineHeight: 1.35,
-                          marginBottom: 4,
-                          cursor: 'pointer',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-                      >
-                        {item.title}
-                      </p>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        {item.commentsCount} comments
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Newsletter Signup */}
-            <div
-              style={{
-                background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
-                borderRadius: 16,
-                padding: 24,
-                color: '#fff',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  fontFamily: "'Newsreader', Georgia, serif",
-                  marginBottom: 6,
-                }}
-              >
-                Stay Updated
-              </h3>
-              <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
-                Get the latest news delivered to your inbox every morning.
-              </p>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  background: 'rgba(255,255,255,0.12)',
-                  color: '#fff',
-                  fontSize: '0.82rem',
-                  marginBottom: 10,
-                }}
-              />
+        {/* Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {CATEGORY_FILTERS.map((cat) => (
               <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="font-semibold"
                 style={{
-                  width: '100%',
-                  padding: '10px 0',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: 'var(--accent)',
-                  color: '#1a1a1a',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
+                  fontSize: '0.78rem', padding: '0.4rem 1rem', borderRadius: '9999px',
+                  border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
+                  borderColor: activeCategory === cat ? 'var(--primary)' : 'var(--border)',
+                  background: activeCategory === cat ? 'var(--primary)' : 'var(--bg-surface)',
+                  color: activeCategory === cat ? 'var(--bg-elevated)' : 'var(--text-secondary)',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
               >
-                Subscribe
+                {cat}
               </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Filter size={14} style={{ color: 'var(--text-tertiary)' }} />
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setSortBy(opt)}
+                style={{
+                  fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6,
+                  border: 'none', cursor: 'pointer', fontWeight: 600,
+                  background: sortBy === opt ? 'var(--primary-light)' : 'transparent',
+                  color: sortBy === opt ? 'var(--primary)' : 'var(--text-tertiary)',
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading news...</div>
+        ) : articles.length === 0 ? (
+          <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: 16, border: '1px solid var(--border-subtle)' }}>
+            <Radio size={32} style={{ color: 'var(--text-tertiary)', marginBottom: 12 }} />
+            <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>No news articles yet</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>Check back soon for breaking stories.</p>
+          </div>
+        ) : (
+          <>
+            {/* Top Story Hero */}
+            {topStory && (
+              <Link href={`/article/${topStory.slug}`} style={{
+                display: 'block', borderRadius: 16, overflow: 'hidden',
+                position: 'relative', height: 420, marginBottom: 24,
+                textDecoration: 'none', color: 'inherit',
+              }}>
+                {topStory.featured_image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={topStory.featured_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(45% 0.12 175), oklch(45% 0.12 220))' }} />
+                )}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(10% 0.02 175 / 0.9) 0%, oklch(10% 0.02 175 / 0.15) 50%, transparent 100%)' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 32, color: 'oklch(96% 0.005 175)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{
+                      padding: '3px 10px', borderRadius: 4,
+                      background: CATEGORY_COLORS[topStory.category?.name ?? ''] || 'var(--primary)',
+                      fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>
+                      {topStory.category?.name ?? 'Breaking'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Top Story</span>
+                  </div>
+                  <h2 style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', fontWeight: 600, lineHeight: 1.25, marginBottom: 12, textWrap: 'balance' as const }}>
+                    {topStory.title}
+                  </h2>
+                  {topStory.excerpt && (
+                    <p style={{ fontSize: '0.88rem', opacity: 0.85, marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {topStory.excerpt}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.78rem', opacity: 0.8 }}>
+                    <span>{topStory.author?.name ?? '026Newsblog'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={13} /> {formatNumber(topStory.views ?? 0)}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> {new Date(topStory.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Side Stories */}
+            {sideStories.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 32 }}>
+                {sideStories.map((a) => (
+                  <Link key={a.article_id} href={`/article/${a.slug}`} style={{
+                    display: 'flex', gap: 14, padding: 16,
+                    background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 12, textDecoration: 'none', color: 'inherit',
+                    transition: 'all 0.2s',
+                  }}>
+                    {a.featured_image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.featured_image} alt="" style={{ width: 80, height: 80, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 80, height: 80, borderRadius: 9, background: 'var(--bg-inset)', flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+                      <div>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)' }}>
+                          {a.category?.name ?? 'News'}
+                        </span>
+                        <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.3, marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
+                          {a.title}
+                        </h3>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
+                        <span>{a.author?.name ?? 'Staff'}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={11} /> {formatNumber(a.views ?? 0)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Divider */}
+            {remainingArticles.length > 0 && (
+              <>
+                <div style={{ borderTop: '1px solid var(--border-subtle)', marginBlock: 24 }} />
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Latest News</h2>
+              </>
+            )}
+
+            {/* Article list */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
+              {remainingArticles.map((a) => (
+                <Link key={a.article_id} href={`/article/${a.slug}`} style={{
+                  display: 'flex', gap: 16, padding: 16,
+                  background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 12, textDecoration: 'none', color: 'inherit',
+                  transition: 'all 0.2s', cursor: 'pointer',
+                }}>
+                  {a.featured_image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.featured_image} alt="" style={{ width: 120, height: 90, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 120, height: 90, borderRadius: 9, background: 'var(--bg-inset)', flexShrink: 0 }} />
+                  )}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+                    <div>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)' }}>
+                        {a.category?.name ?? 'News'}
+                      </span>
+                      <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.95rem', fontWeight: 600, lineHeight: 1.3, marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
+                        {a.title}
+                      </h3>
+                      {a.excerpt && (
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {a.excerpt}
+                        </p>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                      <span>{a.author?.name ?? 'Staff'}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={12} /> {formatNumber(a.views ?? 0)}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={12} /> {new Date(a.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); toggleBookmark(a.article_id) }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: bookmarked.has(a.article_id) ? 'var(--primary)' : 'var(--text-tertiary)', flexShrink: 0, alignSelf: 'center' }}
+                  >
+                    {bookmarked.has(a.article_id) ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+                  </button>
+                </Link>
+              ))}
             </div>
-          </aside>
-        </section>
+          </>
+        )}
       </main>
 
       <Footer />

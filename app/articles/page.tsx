@@ -98,6 +98,7 @@ export default async function ArticlesPage() {
         'article_id, slug, title, content, excerpt, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)',
       )
       .eq('status', 'published' as never)
+      .eq('post_type', 'article' as never)
       .order('views', { ascending: false })
       .limit(48) as PostgrestResponse<ArticleRow>
     if (res.error) throw res.error

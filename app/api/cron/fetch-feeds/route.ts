@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/utils'
 import { fetchFullArticleContent } from '@/lib/rss/fulltext'
 import { curateArticle } from '@/lib/rss/curation'
+import { classifyPost } from '@/lib/rss/classify'
 import crypto from 'crypto'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -258,6 +259,15 @@ export async function GET(req: NextRequest) {
           feed.category_id,
         )
 
+        // Classify as news or article based on content analysis
+        const { postType } = classifyPost({
+          title: item.title,
+          content: contentText,
+          sourceUrl: item.link,
+          sourceName: feed.name,
+          feedCategoryId: feed.category_id,
+        })
+
         // Insert new article (auto-published — aggregated content goes live immediately)
         const { error: insertError } = await supabase
           .from('articles')
@@ -279,6 +289,7 @@ export async function GET(req: NextRequest) {
             featured:          false,
             published_at:      publishedAt.toISOString(),
             tags:              tags,
+            post_type:         postType,
           } as never)
 
         if (insertError) {
