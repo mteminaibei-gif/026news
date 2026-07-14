@@ -10,6 +10,7 @@ import { formatNumber } from '@/lib/utils'
 import { Clock, MessageCircle, Eye, Bookmark, BookmarkCheck, ChevronRight, Radio, TrendingUp, Filter } from 'lucide-react'
 
 const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
+const REGION_FILTERS = ['All Regions', 'Kenya', 'East Africa', 'Africa', 'World'] as const
 const SORT_OPTIONS = ['Most Recent', 'Most Popular', 'Most Discussed'] as const
 
 type NewsArticle = {
@@ -50,6 +51,7 @@ export default function NewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
+  const [activeRegion, setActiveRegion] = useState<typeof REGION_FILTERS[number]>('All Regions')
   const [sortBy, setSortBy] = useState<typeof SORT_OPTIONS[number]>('Most Recent')
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
 
@@ -73,6 +75,20 @@ export default function NewsPage() {
         query = query.eq('category.name', activeCategory)
       }
 
+      // Region filtering
+      if (activeRegion !== 'All Regions') {
+        const regionMap: Record<string, string> = {
+          'Kenya': 'KE',
+          'East Africa': 'EA',
+          'Africa': 'AF',
+          'World': 'INTL',
+        }
+        const code = regionMap[activeRegion]
+        if (code) {
+          query = query.contains('regions', [code])
+        }
+      }
+
       if (sortBy === 'Most Popular') {
         query = query.order('views', { ascending: false })
       } else if (sortBy === 'Most Discussed') {
@@ -91,7 +107,7 @@ export default function NewsPage() {
     })()
 
     return () => { active = false }
-  }, [activeCategory, sortBy])
+  }, [activeCategory, activeRegion, sortBy])
 
   // Auto-scroll ticker
   useEffect(() => {
@@ -209,15 +225,15 @@ export default function NewsPage() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {CATEGORY_FILTERS.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className="font-semibold"
                 style={{
-                  fontSize: '0.78rem', padding: '0.4rem 1rem', borderRadius: '9999px',
+                  fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '9999px',
                   border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
                   borderColor: activeCategory === cat ? 'var(--primary)' : 'var(--border)',
                   background: activeCategory === cat ? 'var(--primary)' : 'var(--bg-surface)',
@@ -225,6 +241,27 @@ export default function NewsPage() {
                 }}
               >
                 {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Region + Sort */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {REGION_FILTERS.map((region) => (
+              <button
+                key={region}
+                onClick={() => setActiveRegion(region)}
+                style={{
+                  fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6,
+                  border: '1px solid', cursor: 'pointer', fontWeight: 600,
+                  borderColor: activeRegion === region ? 'var(--accent)' : 'var(--border-subtle)',
+                  background: activeRegion === region ? 'var(--accent-light)' : 'transparent',
+                  color: activeRegion === region ? 'var(--accent)' : 'var(--text-tertiary)',
+                }}
+              >
+                {region}
               </button>
             ))}
           </div>

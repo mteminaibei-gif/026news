@@ -42,12 +42,14 @@ export function Topbar({ title, user, children }: TopbarProps) {
         </span>
 
         {/* Notification bell */}
-        <div className="relative">
-          <NotificationBell
-            userId={user.user_id ?? 1}
-            role={user.role ?? 'journalist'}
-          />
-        </div>
+        {user.user_id && (
+          <div className="relative">
+            <NotificationBell
+              userId={user.user_id}
+              role={user.role ?? 'journalist'}
+            />
+          </div>
+        )}
 
         {/* Profile avatar with enhanced styling */}
         <Link

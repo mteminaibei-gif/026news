@@ -182,7 +182,7 @@ export function Navbar() {
             </button>
 
             {/* Notification bell (authenticated) — dropdown */}
-            {!userLoading && user && (
+            {!userLoading && user && profile && (
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => {

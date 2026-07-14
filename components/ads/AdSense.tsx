@@ -16,6 +16,13 @@ interface AdProps {
   className?: string
 }
 
+function isAdSenseConfigured(): boolean {
+  return !!(
+    process.env.NEXT_PUBLIC_ADSENSE_ID &&
+    process.env.NEXT_PUBLIC_ADSENSE_ID !== 'ca-pub-XXXXXXXXXXXXXXXX'
+  )
+}
+
 export function AdSense({ slot, format = 'auto', responsive = true, style, className }: AdProps) {
   const adRef = useRef<HTMLModElement>(null)
   const pushed = useRef(false)
@@ -34,7 +41,7 @@ export function AdSense({ slot, format = 'auto', responsive = true, style, class
         ref={adRef}
         className="adsbygoogle"
         style={{ display: 'block', ...style }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+        data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_ID ?? 'ca-pub-XXXXXXXXXXXXXXXX'}
         data-ad-slot={slot}
         data-ad-format={format}
         data-full-width-responsive={responsive ? 'true' : 'false'}
@@ -43,27 +50,30 @@ export function AdSense({ slot, format = 'auto', responsive = true, style, class
   )
 }
 
-// Predefined ad placements
+// Predefined ad placements — only render when AdSense is configured
 export function BannerAd() {
+  if (!isAdSenseConfigured()) return null
   return (
-    <div className="my-6" style={{ minHeight: 90 }}>
+    <div style={{ margin: '16px auto', maxWidth: 728 }}>
       <AdSense slot="0000000000" format="horizontal" style={{ width: '100%', height: 90 }} />
     </div>
   )
 }
 
 export function InArticleAd() {
+  if (!isAdSenseConfigured()) return null
   return (
-    <div className="my-8" style={{ minHeight: 250 }}>
+    <div style={{ margin: '24px auto', maxWidth: 728 }}>
       <AdSense slot="0000000001" format="auto" style={{ width: '100%', minHeight: 250 }} />
     </div>
   )
 }
 
 export function SidebarAd() {
+  if (!isAdSenseConfigured()) return null
   return (
-    <div className="sticky top-24" style={{ minHeight: 600 }}>
-      <AdSense slot="0000000002" format="vertical" style={{ width: '100%', minHeight: 600 }} />
+    <div style={{ margin: '16px 0' }}>
+      <AdSense slot="0000000002" format="rectangle" style={{ width: '100%', height: 250 }} />
     </div>
   )
 }
