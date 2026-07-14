@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/ThemeProvider'
-import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell } from 'lucide-react'
+import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio, Newspaper, Compass, FileText, PenLine } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
@@ -92,12 +92,19 @@ export function Navbar() {
                 href === '/'
                   ? pathname === '/' && !href.includes('category')
                   : pathname?.startsWith(href.split('?')[0]) && href !== '/'
+              const Icon = href === '/' ? Compass
+                : href === '/sources' ? Compass
+                : href === '/news' ? Newspaper
+                : href === '/articles' ? FileText
+                : href === '/radio' ? Radio
+                : href === '/journalists' ? PenLine
+                : null
               return (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    'text-sm font-medium transition-colors duration-200',
+                    'text-sm font-medium transition-colors duration-200 flex items-center gap-1.5',
                     isActive
                       ? 'font-semibold'
                       : 'hover:opacity-100'
@@ -106,6 +113,7 @@ export function Navbar() {
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                   }}
                 >
+                  {Icon && <Icon size={15} />}
                   {link.label}
                 </Link>
               )
@@ -390,21 +398,32 @@ export function Navbar() {
             News Categories
           </p>
           <ul className="space-y-1" role="list">
-            {NAV_LINKS.map(link => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  onClick={closeMobile}
-                  className="block px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200"
-                  style={{
-                    color: pathname === link.href ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    background: pathname === link.href ? 'var(--primary-light)' : 'transparent',
-                  }}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map(link => {
+              const href = link.href as string
+              const Icon = href === '/' ? Compass
+                : href === '/sources' ? Compass
+                : href === '/news' ? Newspaper
+                : href === '/articles' ? FileText
+                : href === '/radio' ? Radio
+                : href === '/journalists' ? PenLine
+                : null
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={closeMobile}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200"
+                    style={{
+                      color: pathname === href ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      background: pathname === href ? 'var(--primary-light)' : 'transparent',
+                    }}
+                  >
+                    {Icon && <Icon size={16} />}
+                    {link.label}
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </div>
 
