@@ -82,9 +82,6 @@ export function HeroCarousel({ articles }: Props) {
             ) : (
               <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, var(--primary), var(--primary-hover), oklch(15% 0.04 175))' }} />
             )}
-            {/* Gradient overlays for text legibility */}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(15,23,42,0.88), rgba(15,23,42,0.25) 60%, transparent)' }} />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15,23,42,0.85), transparent 55%)' }} />
           </div>
         ))}
 
