@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Topbar } from '@/components/layout/Topbar'
 import { Badge } from '@/components/ui/Badge'
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
+import { AdminArticleEditTags } from '@/components/admin/AdminArticleEditTags'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 
@@ -20,20 +21,25 @@ type ArticleRow = {
   views: number
   created_at: string
   is_aggregated: boolean | null
+  tags: string[] | null
+  category_id: number | null
   author: { name: string; profile_image: string | null } | null
-  category: { name: string } | null
+  category: { name: string; category_id: number } | null
 }
 
-const FILTERS = ['all', 'published', 'under_review', 'draft', 'rejected'] as const
-type Filter = typeof FILTERS[number]
+const STATUS_FILTERS = ['all', 'published', 'under_review', 'draft', 'rejected'] as const
+type StatusFilter = typeof STATUS_FILTERS[number]
+const SOURCE_FILTERS = ['all', 'inhouse', 'rss'] as const
+type SourceFilter = typeof SOURCE_FILTERS[number]
 
 interface Props {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; source?: string }>
 }
 
 export default async function AdminArticlesPage({ searchParams }: Props) {
-  const { filter: rawFilter } = await searchParams
-  const filter: Filter = (FILTERS as readonly string[]).includes(rawFilter ?? '') ? (rawFilter as Filter) : 'all'
+  const { filter: rawFilter, source: rawSource } = await searchParams
+  const filter: StatusFilter = (STATUS_FILTERS as readonly string[]).includes(rawFilter ?? '') ? (rawFilter as StatusFilter) : 'all'
+  const source: SourceFilter = (SOURCE_FILTERS as readonly string[]).includes(rawSource ?? '') ? (rawSource as SourceFilter) : 'all'
 
   let supabase: Awaited<ReturnType<typeof createClient>>
   try {
@@ -57,10 +63,10 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     .from('users').select('name, profile_image').eq('email', user?.email ?? '').single()
   const admin = rawAdmin as { name: string; profile_image: string | null } | null
 
-  const safeCount = async (eq?: { col: string; val: string }) => {
+  const safeCount = async (eqs: { col: string; val: string | boolean }[] = []) => {
     try {
       let q = supabase.from('articles').select('article_id', { count: 'exact', head: true })
-      if (eq) q = q.eq(eq.col, eq.val)
+      for (const e of eqs) q = q.eq(e.col, e.val as never)
       const { count } = await q
       return count ?? 0
     } catch {
@@ -68,31 +74,32 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     }
   }
 
-  const [totalCount, publishedCount, reviewCount, draftCount, rejectedCount] = await Promise.all([
+  const [totalCount, publishedCount, reviewCount, draftCount, rejectedCount, inhouseCount, rssCount] = await Promise.all([
     safeCount(),
-    safeCount({ col: 'status', val: 'published' }),
-    safeCount({ col: 'status', val: 'under_review' }),
-    safeCount({ col: 'status', val: 'draft' }),
-    safeCount({ col: 'status', val: 'rejected' }),
+    safeCount([{ col: 'status', val: 'published' }]),
+    safeCount([{ col: 'status', val: 'under_review' }]),
+    safeCount([{ col: 'status', val: 'draft' }]),
+    safeCount([{ col: 'status', val: 'rejected' }]),
+    safeCount([{ col: 'is_aggregated', val: false }]),
+    safeCount([{ col: 'is_aggregated', val: true }]),
   ])
 
-  const counts: Record<string, number> = {
-    all:          totalCount,
-    published:    publishedCount,
-    under_review: reviewCount,
-    draft:        draftCount,
-    rejected:     rejectedCount,
+  const statusCounts: Record<string, number> = {
+    all: totalCount, published: publishedCount, under_review: reviewCount,
+    draft: draftCount, rejected: rejectedCount,
   }
 
   let articles: ArticleRow[] = []
   try {
     let query = supabase
       .from('articles')
-      .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, author:users(name,profile_image), category:categories(name)')
+      .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, tags, category_id, author:users(name,profile_image), category:categories(name,category_id)')
       .order('created_at', { ascending: false })
-      .limit(100)
+      .limit(200)
 
     if (filter !== 'all') query = query.eq('status', filter)
+    if (source === 'inhouse') query = query.eq('is_aggregated', false)
+    if (source === 'rss') query = query.eq('is_aggregated', true)
 
     const { data: rawArticles } = await query
     articles = (rawArticles ?? []) as unknown as ArticleRow[]
@@ -100,12 +107,20 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     articles = []
   }
 
+  const buildHref = (s: StatusFilter, src: SourceFilter) => {
+    const params = new URLSearchParams()
+    if (s !== 'all') params.set('filter', s)
+    if (src !== 'all') params.set('source', src)
+    const qs = params.toString()
+    return `/admin/articles${qs ? `?${qs}` : ''}`
+  }
+
   const stats = [
-    { label: 'Total',        value: counts.all,          color: 'var(--primary)' },
-    { label: 'Published',    value: counts.published,    color: 'var(--primary)' },
-    { label: 'Under Review', value: counts.under_review, color: 'var(--warning)' },
-    { label: 'Draft',        value: counts.draft,        color: 'var(--text-tertiary)' },
-    { label: 'Rejected',     value: counts.rejected,     color: 'var(--error)' },
+    { label: 'Total', value: totalCount, color: 'var(--primary)' },
+    { label: 'Published', value: publishedCount, color: 'var(--primary)' },
+    { label: 'In Review', value: reviewCount, color: 'var(--warning)' },
+    { label: 'Drafts', value: draftCount, color: 'var(--text-tertiary)' },
+    { label: 'Rejected', value: rejectedCount, color: 'var(--error)' },
   ]
 
   return (
@@ -119,7 +134,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           className="flex items-center gap-1.5 font-bold px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
           style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
         >
-          ✏️ Write Article
+          Write Article
         </Link>
       </Topbar>
 
@@ -137,145 +152,162 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
 
         <div className="backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
 
-          {/* Filters + actions bar */}
-          <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
-            <h2 className="font-extrabold" style={{ color: 'var(--primary)' }}>All Articles</h2>
-            <div className="flex flex-wrap gap-2">
-              {FILTERS.map(f => (
+          {/* Source tabs */}
+          <div className="px-5 py-3 flex items-center gap-4" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}>
+            <h2 className="font-extrabold text-sm" style={{ color: 'var(--primary)' }}>Articles</h2>
+            <div className="flex gap-2 ml-4">
+              {([
+                { key: 'all' as SourceFilter, label: 'All', count: totalCount },
+                { key: 'inhouse' as SourceFilter, label: 'Published Articles', count: inhouseCount },
+                { key: 'rss' as SourceFilter, label: 'RSS / Pulled', count: rssCount },
+              ]).map(s => (
                 <Link
-                  key={f}
-                  href={`/admin/articles${f !== 'all' ? `?filter=${f}` : ''}`}
-                  className="px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300"
+                  key={s.key}
+                  href={buildHref(filter, s.key)}
+                  className="px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200"
                   style={{
-                    padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                    ...(filter === f
-                      ? { background: 'var(--primary)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-sm)' }
-                      : { background: 'var(--bg-muted)', color: 'var(--text-secondary)' })
+                    ...(source === s.key
+                      ? { background: 'var(--primary)', color: 'var(--text-inverse)' }
+                      : { background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' })
                   }}
                 >
-                  {f.replace('_', ' ')}
-                  {counts[f] > 0 && (
-                    <span className="ml-1.5" style={{ opacity: 0.6 }}>
-                      {counts[f]}
-                    </span>
-                  )}
+                  {s.label}
+                  <span className="ml-1 opacity-60">{s.count}</span>
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Table */}
+          {/* Status filters */}
+          <div className="px-5 py-3 flex flex-wrap items-center gap-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            {STATUS_FILTERS.map(f => (
+              <Link
+                key={f}
+                href={buildHref(f, source)}
+                className="px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200"
+                style={{
+                  ...(filter === f
+                    ? { background: 'var(--primary)', color: 'var(--text-inverse)' }
+                    : { background: 'var(--bg-muted)', color: 'var(--text-secondary)' })
+                }}
+              >
+                {f.replace('_', ' ')}
+                {statusCounts[f] > 0 && <span className="ml-1 opacity-60">{statusCounts[f]}</span>}
+              </Link>
+            ))}
+          </div>
+
+          {/* Scrollable article list */}
           {articles.length === 0 ? (
             <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
-              <p className="text-3xl mb-2">📭</p>
-              <p className="font-semibold">No articles found</p>
+              <p className="text-3xl mb-2">No articles found</p>
               <p className="text-sm mt-1">
-                {filter !== 'all' ? `No ${filter.replace('_', ' ')} articles yet.` : 'Start by writing your first article.'}
+                {filter !== 'all' || source !== 'all' ? 'Try changing the filters.' : 'Start by writing your first article.'}
               </p>
               <Link href="/admin/write" className="mt-4 inline-block text-sm font-bold transition-colors" style={{ color: 'var(--primary)' }}>
-                ✏️ Write one now →
+                Write one now →
               </Link>
             </div>
           ) : (
-            <div className="backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs md:text-sm min-w-max">
-                  <thead>
-                    <tr className="text-left text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
-                      <th className="px-2 md:px-4 py-3">Article</th>
-                      <th className="px-2 md:px-4 py-3 hidden sm:table-cell">Author</th>
-                      <th className="px-2 md:px-4 py-3 hidden md:table-cell">Category</th>
-                      <th className="px-2 md:px-4 py-3 hidden lg:table-cell">Status</th>
-                      <th className="px-2 md:px-4 py-3 hidden lg:table-cell">Views</th>
-                      <th className="px-2 md:px-4 py-3 text-right">Date</th>
-                      <th className="px-2 md:px-4 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                    {articles.map(a => (
-                      <tr key={a.article_id} className="transition-all duration-300 hover:[background:var(--bg-muted)]" style={{ borderColor: 'var(--border-subtle)' }}>
-
-                        {/* Article */}
-                        <td className="px-2 md:px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {a.featured_image ? (
-                              <div className="relative w-8 h-6 rounded shrink-0 overflow-hidden hidden sm:block" style={{ background: 'var(--bg-muted)' }}>
-                                <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized />
-                              </div>
-                            ) : (
-                              <div className="w-8 h-6 rounded shrink-0 flex items-center justify-center text-sm hidden sm:flex" style={{ background: 'var(--bg-muted)' }}>
-                                📰
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-semibold line-clamp-1 text-xs md:text-sm" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
-                              {a.is_aggregated && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 inline-block" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
-                                  RSS
-                                </span>
-                              )}
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+              <table className="w-full text-xs md:text-sm min-w-max">
+                <thead className="sticky top-0 z-10">
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wider" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th className="px-4 py-3">Article</th>
+                    <th className="px-4 py-3 hidden sm:table-cell">Author</th>
+                    <th className="px-4 py-3 hidden md:table-cell">Category</th>
+                    <th className="px-4 py-3 hidden lg:table-cell">Status</th>
+                    <th className="px-4 py-3 hidden lg:table-cell">Views</th>
+                    <th className="px-4 py-3 text-right">Date</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+                  {articles.map(a => (
+                    <tr key={a.article_id} className="transition-colors hover:[background:var(--bg-muted)]" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {a.featured_image ? (
+                            <div className="relative w-10 h-8 rounded shrink-0 overflow-hidden hidden sm:block" style={{ background: 'var(--bg-muted)' }}>
+                              <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized />
                             </div>
-                          </div>
-                        </td>
-
-                        {/* Author */}
-                        <td className="px-2 md:px-4 py-3 hidden sm:table-cell">
-                          <div className="flex items-center gap-1">
-                            {a.author?.profile_image && (
-                              <div className="relative w-5 h-5 rounded-full overflow-hidden shrink-0">
-                                <Image src={a.author.profile_image} alt={a.author.name} fill className="object-cover" unoptimized />
-                              </div>
+                          ) : (
+                            <div className="w-10 h-8 rounded shrink-0 flex items-center justify-center text-sm hidden sm:flex" style={{ background: 'var(--bg-muted)' }}>
+                              📰
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold line-clamp-1 text-xs md:text-sm" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
+                            {a.is_aggregated && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 inline-block" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                                RSS
+                              </span>
                             )}
-                            <span className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{a.author?.name ?? '—'}</span>
                           </div>
-                        </td>
+                        </div>
+                      </td>
 
-                        <td className="px-2 md:px-4 py-3 text-xs hidden md:table-cell" style={{ color: 'var(--text-tertiary)' }}>{a.category?.name ?? '—'}</td>
-                        <td className="px-2 md:px-4 py-3 hidden lg:table-cell"><Badge status={a.status} /></td>
-                        <td className="px-2 md:px-4 py-3 text-xs hidden lg:table-cell" style={{ color: 'var(--text-primary)' }}>{(a.views ?? 0).toLocaleString()}</td>
-                        <td className="px-2 md:px-4 py-3 text-xs whitespace-nowrap text-right" style={{ color: 'var(--text-tertiary)' }}>{formatDate(a.created_at)}</td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        <div className="flex items-center gap-1.5">
+                          {a.author?.profile_image && (
+                            <div className="relative w-5 h-5 rounded-full overflow-hidden shrink-0">
+                              <Image src={a.author.profile_image} alt={a.author.name} fill className="object-cover" unoptimized />
+                            </div>
+                          )}
+                          <span className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{a.author?.name ?? '—'}</span>
+                        </div>
+                      </td>
 
-                        {/* Actions */}
-                        <td className="px-2 md:px-4 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {a.status === 'under_review' && (
-                              <Link
-                                href={`/admin/review/${a.article_id}`}
-                                className="text-xs font-bold px-2 md:px-2.5 py-1 rounded-lg transition-all duration-300 whitespace-nowrap"
-                                style={{ background: 'var(--warning)', color: '#1a1a1a' }}
-                              >
-                                Review
-                              </Link>
-                            )}
+                      <td className="px-4 py-3 text-xs hidden md:table-cell" style={{ color: 'var(--text-tertiary)' }}>{a.category?.name ?? '—'}</td>
+                      <td className="px-4 py-3 hidden lg:table-cell"><Badge status={a.status} /></td>
+                      <td className="px-4 py-3 text-xs hidden lg:table-cell" style={{ color: 'var(--text-primary)' }}>{(a.views ?? 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-xs whitespace-nowrap text-right" style={{ color: 'var(--text-tertiary)' }}>{formatDate(a.created_at)}</td>
+
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {a.status === 'under_review' && (
                             <Link
-                              href={`/admin/edit/${a.article_id}`}
-                              className="text-xs font-semibold px-2 md:px-2.5 py-1 rounded-lg transition-all duration-300"
-                              style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)' }}
+                              href={`/admin/review/${a.article_id}`}
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg transition-all duration-200"
+                              style={{ background: 'var(--warning)', color: '#1a1a1a' }}
                             >
-                              Edit
+                              Review
                             </Link>
-                            {a.status === 'published' && (
-                              <Link
-                                href={`/article/${a.slug}`}
-                                target="_blank"
-                                className="text-xs font-semibold px-2 md:px-2.5 py-1 rounded-lg transition-all duration-300 hidden sm:inline-block"
-                                style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
-                              >
-                                View
-                              </Link>
-                            )}
-                            <AdminArticleActions articleId={a.article_id} currentStatus={a.status} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          )}
+                          <Link
+                            href={`/admin/edit/${a.article_id}`}
+                            className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-200"
+                            style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)' }}
+                          >
+                            Edit
+                          </Link>
+                          {a.status === 'published' && (
+                            <Link
+                              href={`/article/${a.slug}`}
+                              target="_blank"
+                              className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-200 hidden sm:inline-block"
+                              style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
+                            >
+                              View
+                            </Link>
+                          )}
+                          {a.is_aggregated && (
+                            <AdminArticleEditTags
+                              articleId={a.article_id}
+                              currentTags={a.tags ?? []}
+                              currentCategoryId={a.category_id}
+                            />
+                          )}
+                          <AdminArticleActions articleId={a.article_id} currentStatus={a.status} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
-
       </div>
     </>
   )

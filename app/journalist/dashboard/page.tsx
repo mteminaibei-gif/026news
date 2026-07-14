@@ -8,7 +8,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, formatNumber, formatCurrency } from '@/lib/utils'
 import type { Metadata } from 'next'
-import { MOCK_ARTICLES, MOCK_USERS } from '@/lib/mock-data'
 
 export const metadata: Metadata = { title: 'Author Dashboard' }
 
@@ -38,7 +37,7 @@ export default async function JournalistDashboard() {
     if (error) throw error
     articles = data ?? []
   } catch {
-    articles = MOCK_ARTICLES.filter(a => a.author_id === profile!.user_id || a.author_id === 3).map(a => ({ article_id: a.article_id, title: a.title, slug: a.slug, status: a.status, featured_image: a.featured_image, views: a.views, earnings: a.earnings, created_at: a.created_at }))
+    articles = []
   }
 
   let earnings: EarningsRow[] = []
@@ -47,7 +46,7 @@ export default async function JournalistDashboard() {
     if (error) throw error
     earnings = data ?? []
   } catch {
-    earnings = [{ amount: 50, payout_status: 'paid', created_at: new Date().toISOString(), source: 'ads' }, { amount: 120, payout_status: 'pending', created_at: new Date().toISOString(), source: 'subscriptions' }]
+    earnings = []
   }
 
   let badges: BadgeRow[] = []
@@ -56,7 +55,7 @@ export default async function JournalistDashboard() {
     if (error) throw error
     badges = data ?? []
   } catch {
-    badges = [{ badge_type: 'silver', badge_label: 'Star Contributor', awarded_at: new Date().toISOString() }]
+    badges = []
   }
 
   let payouts: PayoutRow[] = []
@@ -65,7 +64,7 @@ export default async function JournalistDashboard() {
     if (error) throw error
     payouts = data ?? []
   } catch {
-    payouts = [{ amount: 340, journalist_cut: 170, status: 'paid', period_start: '2024-03-01', period_end: '2024-03-31', payment_method: 'mpesa' }]
+    payouts = []
   }
 
   const totalViews = articles.reduce((s, a) => s + (a.views ?? 0), 0)
@@ -87,13 +86,13 @@ export default async function JournalistDashboard() {
     chartData.push(earnings.filter(e => e.created_at.startsWith(ym)).reduce((s, e) => s + Number(e.amount), 0))
   }
 
-  let totalJournalists = MOCK_USERS.filter(u => u.role === 'journalist').length
-  let aboveCount = 1
+  let totalJournalists = 0
+  let aboveCount = 0
   try {
     const { count: totJ } = await supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never)
     const { count: abvJ } = await supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never).gt('rank_score', profile.rank_score ?? 0)
-    totalJournalists = totJ ?? totalJournalists
-    aboveCount = abvJ ?? aboveCount
+    totalJournalists = totJ ?? 0
+    aboveCount = abvJ ?? 0
   } catch { /* ignore */ }
   const rank = aboveCount + 1
 

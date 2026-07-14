@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
+import { useNotifications } from '@/lib/hooks/useNotifications'
 import { NAV_LINKS } from '@/lib/constants/navigation'
 
 const NAVBAR_H = 64
@@ -23,6 +24,7 @@ export function Navbar() {
   const { data: user, isLoading: userLoading } = useUser()
   const { data: profile } = useProfile(user?.email ?? undefined)
   const signOutMutation = useSignOut()
+  const { unreadCount } = useNotifications(profile?.user_id ?? 0, (profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader')
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
@@ -192,13 +194,20 @@ export function Navbar() {
                 }}
               >
                 <Bell size={16} />
-                <span style={{
-                  position: 'absolute', top: 8, right: 8,
-                  width: 8, height: 8,
-                  background: 'var(--accent)',
-                  borderRadius: '50%',
-                  border: '2px solid var(--bg-surface)',
-                }} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 6, right: 6,
+                    minWidth: 16, height: 16, borderRadius: 8,
+                    background: 'var(--error)',
+                    color: '#fff',
+                    fontSize: '0.6rem', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 4px',
+                    border: '2px solid var(--bg-surface)',
+                  }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
             )}
 

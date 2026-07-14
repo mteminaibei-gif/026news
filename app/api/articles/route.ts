@@ -183,6 +183,39 @@ export async function POST(req: NextRequest) {
     await supabase.from('analytics')
       .insert({ article_id: articleRow.article_id, views: 0, likes: 0, shares: 0, comments_count: 0 } as never)
 
+    // Send email notification to admins when article is submitted for review
+    if (action === 'submit') {
+      try {
+        const { data: admins } = await supabase
+          .from('users').select('email, name').eq('role', 'admin')
+        if (admins?.length) {
+          const adminEmails = (admins as { email: string; name: string }[]).map(a => a.email)
+          const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+          await fetch(`${APP_URL}/api/admin/skimmer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: adminEmails,
+              subject: `New Article Submitted: ${title}`,
+              html: `
+                <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #e23b3b;">New Article Submitted for Review</h2>
+                  <p><strong>Title:</strong> ${title}</p>
+                  <p><strong>Author:</strong> ${profile ? `User #${profile.user_id}` : 'Unknown'}</p>
+                  <p><strong>Category:</strong> ${category || 'Uncategorized'}</p>
+                  <p><strong>Status:</strong> Under Review</p>
+                  <hr style="border: 1px solid #eee; margin: 16px 0;" />
+                  <p><a href="${APP_URL}/admin/review/${articleRow.article_id}" style="background: #e23b3b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Review Article</a></p>
+                </div>
+              `,
+            }),
+          }).catch(() => {})
+        }
+      } catch {
+        // Email failure is non-blocking
+      }
+    }
+
     return NextResponse.json(article, { status: 201 })
   } catch (err) {
     console.error('[POST /api/articles]', err)
