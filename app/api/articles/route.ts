@@ -186,8 +186,14 @@ export async function POST(req: NextRequest) {
     }
 
     const articleRow = article as unknown as { article_id: number }
-    await adminDb.from('analytics')
-      .insert({ article_id: articleRow.article_id, views: 0, likes: 0, shares: 0, comments_count: 0 } as never)
+
+    // Analytics INSERT - non-blocking, wrapped in try/catch
+    try {
+      await adminDb.from('analytics')
+        .insert({ article_id: articleRow.article_id, views: 0, likes: 0, shares: 0, comments_count: 0 } as never)
+    } catch {
+      console.warn('[POST /api/articles] analytics insert failed (non-blocking)')
+    }
 
     // Send email notification to admins when article is submitted for review
     if (action === 'submit') {

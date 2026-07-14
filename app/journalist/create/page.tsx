@@ -35,6 +35,7 @@ export default function CreatePostPage() {
   const [monetization,  setMonetization]  = useState('free')
   const [submitting,    setSubmitting]    = useState(false)
   const [submitError,   setSubmitError]   = useState('')
+  const [submitSuccess, setSubmitSuccess] = useState('')
   const [saved,         setSaved]         = useState(false)
 
   const fileInputRef                        = useRef<HTMLInputElement>(null)
@@ -94,7 +95,7 @@ export default function CreatePostPage() {
   }
 
   async function handleSubmit(action: 'draft' | 'submit') {
-    setSubmitError(''); setSubmitting(true); setSaved(false)
+    setSubmitError(''); setSubmitSuccess(''); setSubmitting(true); setSaved(false)
     try {
       let featuredImageUrl: string | null = null
       if (imageFile) {
@@ -128,8 +129,13 @@ export default function CreatePostPage() {
       }
 
       localStorage.removeItem('draft_create')
-      setSaved(true)
-      router.push('/journalist/dashboard')
+      if (action === 'submit') {
+        setSubmitSuccess('Article submitted for review! You will be notified once an admin reviews it.')
+        setTimeout(() => router.push('/journalist/dashboard'), 3000)
+      } else {
+        setSaved(true)
+        router.push('/journalist/dashboard')
+      }
     } catch {
       setSubmitError('Unexpected error — please try again.')
     } finally {
@@ -185,6 +191,13 @@ export default function CreatePostPage() {
           <div role="alert" className="mb-5 text-sm px-4 py-3 rounded-xl flex items-center gap-2"
             style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
             ⚠️ {submitError}
+          </div>
+        )}
+
+        {submitSuccess && (
+          <div role="status" className="mb-5 text-sm px-4 py-3 rounded-xl flex items-center gap-2"
+            style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)' }}>
+            ✅ {submitSuccess}
           </div>
         )}
 
