@@ -48,7 +48,7 @@ export function HeroCarousel({ articles }: Props) {
   const readTime = readingTime(slide.content)
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px 40px' }}>
+    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
       <section
         className="hero-slideshow"
         style={{
