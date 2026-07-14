@@ -1,16 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <clipPath id="t">
-      <rect width="512" height="512" rx="104"/>
-    </clipPath>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a7a3a"/>
+      <stop offset="100%" style="stop-color:#0d5c2a"/>
+    </linearGradient>
   </defs>
-  <g clip-path="url(#t)">
-    <rect width="512" height="512" fill="#e23b3b"/>
-    <rect x="0" y="448" width="512" height="16" fill="#0a0a0a"/>
-    <rect x="0" y="464" width="512" height="8"  fill="#ffffff"/>
-    <rect x="0" y="472" width="512" height="16" fill="#bb0000"/>
-    <rect x="0" y="488" width="512" height="8"  fill="#ffffff"/>
-    <rect x="0" y="496" width="512" height="16" fill="#0a7d3c"/>
-  </g>
-  <text x="256" y="300" font-family="Arial,Helvetica,sans-serif" font-size="190" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="-8">026</text>
+  <!-- Shield background -->
+  <path d="M32 4 L56 16 L56 36 C56 50 44 60 32 64 C20 60 8 50 8 36 L8 16 Z" fill="url(#shield)" stroke="#0a4a20" stroke-width="2"/>
+  <!-- Mountain -->
+  <path d="M16 44 L32 20 L48 44 Z" fill="#2d8a4e"/>
+  <path d="M28 28 L32 20 L36 28 L34 28 L32 24 L30 28 Z" fill="white"/>
+  <!-- Sun rays -->
+  <circle cx="32" cy="18" r="4" fill="#FFD700"/>
+  <line x1="32" y1="10" x2="32" y2="6" stroke="#FFD700" stroke-width="2"/>
+  <line x1="38" y1="12" x2="41" y2="9" stroke="#FFD700" stroke-width="2"/>
+  <line x1="40" y1="18" x2="44" y2="18" stroke="#FFD700" stroke-width="2"/>
+  <line x1="26" y1="12" x2="23" y2="9" stroke="#FFD700" stroke-width="2"/>
+  <line x1="24" y1="18" x2="20" y2="18" stroke="#FFD700" stroke-width="2"/>
+  <!-- Corn plants -->
+  <ellipse cx="14" cy="38" rx="3" ry="5" fill="#9acd32"/>
+  <ellipse cx="50" cy="38" rx="3" ry="5" fill="#9acd32"/>
+  <!-- Crossed tools -->
+  <line x1="22" y1="36" x2="42" y2="48" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="42" y1="36" x2="22" y2="48" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <!-- Kenyan flag stripe at bottom -->
+  <path d="M8 52 L56 52 L56 56 L8 56 Z" fill="black"/>
+  <path d="M8 56 L56 56 L56 58 L8 58 Z" fill="#bb0000"/>
+  <path d="M8 58 L56 58 L56 60 L8 60 Z" fill="white"/>
+  <path d="M8 60 L56 60 L56 64 L8 64 Z" fill="#006600"/>
 </svg>
