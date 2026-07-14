@@ -235,15 +235,20 @@ export function Navbar() {
                     </Link>
                   )}
                   <div className="flex items-center gap-2 ml-1">
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 10,
-                      background: 'var(--primary)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'var(--bg-elevated)',
-                      fontSize: '0.8rem', fontWeight: 700,
-                    }}>
+                    <Link
+                      href={profile?.role === 'reader' ? '/profile' : '/settings'}
+                      style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        background: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--bg-elevated)',
+                        fontSize: '0.8rem', fontWeight: 700,
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
                       {profile?.name?.charAt(0).toUpperCase() ?? <User size={14} />}
-                    </div>
+                    </Link>
                     <button
                       onClick={() => signOutMutation.mutate()}
                       title="Sign out"
@@ -384,7 +389,12 @@ export function Navbar() {
         <div className="p-5 pt-4 space-y-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
           {user ? (
             <>
-              <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)' }}>
+              <Link
+                href={profile?.role === 'reader' ? '/profile' : '/settings'}
+                onClick={closeMobile}
+                className="flex items-center gap-3 p-3 rounded-xl"
+                style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}
+              >
                 <div style={{
                   width: 40, height: 40, borderRadius: 10,
                   background: 'var(--primary)',
@@ -398,7 +408,7 @@ export function Navbar() {
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{profile?.name ?? 'Account'}</p>
                   <p className="text-xs font-medium capitalize" style={{ color: 'var(--primary)' }}>{profile?.role === 'journalist' ? 'Author' : (profile?.role ?? 'Reader')}</p>
                 </div>
-              </div>
+              </Link>
 
               {(profile?.role === 'admin' || profile?.role === 'journalist') && (
                 <Link
