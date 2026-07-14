@@ -1,138 +1,139 @@
 /**
- * RSS Curation Engine
+ * RSS Curation Engine v2
  *
- * Automatically categorizes and tags aggregated articles
- * based on keyword analysis of title + content.
+ * Automatically categorizes and tags articles based on keyword analysis.
+ * Uses word-boundary-aware matching to avoid false positives.
  */
 
 // ── Category keyword maps ──────────────────────────────────────
-// Each category has weighted keyword patterns. Higher weight = stronger match.
+// All patterns use \b word boundaries to prevent partial matches.
 const CATEGORY_KEYWORDS: Record<number, Array<{ patterns: RegExp[]; weight: number }>> = {
   // Kenya (65)
   65: [
-    { patterns: [/kenya/i, /nairobi/i, /mombasa/i, /kisumu/i, /nakuru/i, /eldoret/i, /thika/i], weight: 10 },
-    { patterns: [/kenyan/i, /kenyans/i, /kenyatta/i, /ruto/i, /raila/i, /odinga/i, /safaricom/i, /m-?pesa/i, /kra\b/i, /mpesa/i], weight: 8 },
-    { patterns: [/east africa/i, /east african/i], weight: 3 },
+    { patterns: [/\bkenya\b/i, /\bnairobi\b/i, /\bmombasa\b/i, /\bkisumu\b/i, /\bnakuru\b/i, /\beldoret\b/i, /\bthika\b/i], weight: 10 },
+    { patterns: [/\bkenyan\b/i, /\bkenyans\b/i, /\bkenyatta\b/i, /\bruto\b/i, /\braila\b/i, /\bodinga\b/i, /\bsafaricom\b/i, /\bmpesa\b/i, /\bm-pesa\b/i, /\bkra\b/i], weight: 8 },
+    { patterns: [/\beast africa\b/i, /\beast african\b/i], weight: 3 },
   ],
   // Africa (66)
   66: [
-    { patterns: [/africa/i, /african/i, /afro/i, /au\b/i, /african union/i], weight: 10 },
-    { patterns: [/nigeria/i, /south africa/i, /ghana/i, /egypt/i, /ethiopia/i, /tanzania/i, /uganda/i, /rwanda/i, /congo/i, /mozambique/i, /zimbabwe/i, /zambia/i, /senegal/i], weight: 8 },
-    { patterns: [/sub-?saharan/i, /sahel/i, /horn of africa/i, /maghreb/i], weight: 7 },
-    { patterns: [/nairobi/i, /addis ababa/i, /lagos/i, /accra/i, /cairo/i, /dar es salaam/i], weight: 6 },
+    { patterns: [/\bafrica\b/i, /\bafrican\b/i, /\bau\b(?!\w)/i, /\bafrican union\b/i], weight: 10 },
+    { patterns: [/\bnigeria\b/i, /\bsouth africa\b/i, /\bghana\b/i, /\begypt\b/i, /\bethiopia\b/i, /\btanzania\b/i, /\buganda\b/i, /\brwanda\b/i, /\bcongo\b/i, /\bmozambique\b/i, /\bzimbabwe\b/i, /\bzambia\b/i, /\bsenegal\b/i], weight: 8 },
+    { patterns: [/\bsub-?saharan\b/i, /\bsahel\b/i, /\bhorn of africa\b/i, /\bmaghreb\b/i], weight: 7 },
+    { patterns: [/\blagos\b/i, /\baccra\b/i, /\bcairo\b/i, /\bdar es salaam\b/i, /\baddis ababa\b/i], weight: 6 },
   ],
   // Politics (1)
   1: [
-    { patterns: [/election/i, /vote/i, /voting/i, /ballot/i, /poll/i, /polling/i], weight: 10 },
-    { patterns: [/president/i, /governor/i, /senator/i, /parliament/i, /legislature/i, /congress/i, /assembly/i], weight: 9 },
-    { patterns: [/democrat/i, /republican/i, /political/i, /politics/i, /politician/i], weight: 8 },
-    { patterns: [/govern[mentm]/i, /minister/i, /cabinet/i, /opposition/i, /coalition/i, /party\b/i], weight: 7 },
-    { patterns: [/law/i, /bill/i, /legislation/i, /impeach/i, /vote/i, /referendum/i], weight: 6 },
-    { patterns: [/diplom[aticy]/i, /embassy/i, /sanction/i, /treaty/i, /summit/i, /bilateral/i], weight: 5 },
+    { patterns: [/\belection\b/i, /\belections\b/i, /\bvoting\b/i, /\bballot\b/i, /\bpoll\b/i, /\bpolls\b/i, /\bpolling\b/i], weight: 10 },
+    { patterns: [/\bpresident\b/i, /\bgovernor\b/i, /\bsenator\b/i, /\bparliament\b/i, /\bparliamentary\b/i, /\blegislature\b/i, /\bcongress\b/i, /\bassembly\b/i], weight: 9 },
+    { patterns: [/\bdemocrat\b/i, /\brepublican\b/i, /\bpolitical\b/i, /\bpolitics\b/i, /\bpolitician\b/i], weight: 8 },
+    { patterns: [/\bgovernment\b/i, /\bgovernments\b/i, /\bminister\b/i, /\bcabinet\b/i, /\bopposition\b/i, /\bcoalition\b/i, /\bparty\b/i], weight: 7 },
+    { patterns: [/\blaw\b/i, /\blaws\b/i, /\bbill\b/i, /\bbills\b/i, /\blegislation\b/i, /\bimpeach\b/i, /\breferendum\b/i], weight: 6 },
+    { patterns: [/\bdiplomatic\b/i, /\bdiplomacy\b/i, /\bembassy\b/i, /\bsanction\b/i, /\bsanctions\b/i, /\btreaty\b/i, /\bsummit\b/i, /\bbilateral\b/i], weight: 5 },
   ],
   // Business (2)
   2: [
-    { patterns: [/econom/i, /gdp/i, /inflation/i, /stock.?market/i, /share.?market/i, /trading/i, /investor/i], weight: 10 },
-    { patterns: [/business/i, /compan[yie]/i, /corporat/i, /startup/i, /entrepreneur/i, /ventures/i], weight: 9 },
-    { patterns: [/revenue/i, /profit/i, /earning/i, /fiscal/i, /budget/i, /tax/i, /tariff/i], weight: 8 },
-    { patterns: [/bank/i, /banking/i, /finance/i, /financial/i, /insur/i, /credit/i, /loan/i, /debt/i], weight: 7 },
-    { patterns: [/market/i, /trade/i, /export/i, /import/i, /commodit/i, /oil.?price/i], weight: 6 },
-    { patterns: [/ipo/i, /share/i, /stock/i, /bond/i, /forex/i, /currency/i, /dollar/i, /shilling/i], weight: 5 },
+    { patterns: [/\beconomic\b/i, /\beconomy\b/i, /\bgdp\b/i, /\binflation\b/i, /\bstock market\b/i, /\btrading\b/i, /\binvestor\b/i, /\binvestors\b/i], weight: 10 },
+    { patterns: [/\bbusiness\b/i, /\bcompanies\b/i, /\bcompany\b/i, /\bcorporate\b/i, /\bcorporation\b/i, /\bstartup\b/i, /\bstartups\b/i, /\bentrepreneur\b/i, /\bventures\b/i], weight: 9 },
+    { patterns: [/\brevenue\b/i, /\bprofit\b/i, /\bprofits\b/i, /\bearning\b/i, /\bearnings\b/i, /\bfiscal\b/i, /\bbudget\b/i, /\btax\b/i, /\btaxes\b/i, /\btariff\b/i, /\btariffs\b/i], weight: 8 },
+    { patterns: [/\bbank\b/i, /\bbanking\b/i, /\bfinance\b/i, /\bfinancial\b/i, /\binsurance\b/i, /\binsured\b/i, /\bcredit\b/i, /\bloan\b/i, /\bloans\b/i, /\bdebt\b/i], weight: 7 },
+    { patterns: [/\bmarket\b/i, /\bmarkets\b/i, /\btrade\b/i, /\bexport\b/i, /\bexports\b/i, /\bimport\b/i, /\bimports\b/i, /\bcommodity\b/i, /\bcommodities\b/i, /\boil price\b/i], weight: 6 },
+    { patterns: [/\bipo\b/i, /\bshares\b/i, /\bstock\b/i, /\bbond\b/i, /\bbonds\b/i, /\bforex\b/i, /\bcurrency\b/i, /\bdollar\b/i, /\bshilling\b/i], weight: 5 },
   ],
   // Tech (3)
   3: [
-    { patterns: [/ai\b/i, /artificial intelligence/i, /machine learning/i, /deep learning/i, /chatgpt/i, /openai/i, /claude/i, /gemini/i], weight: 10 },
-    { patterns: [/tech/i, /technolog/i, /software/i, /hardware/i, /startup/i, /unicorn/i], weight: 9 },
-    { patterns: [/cyber/i, /hack/i, /data.?breach/i, /privacy/i, /encryption/i, /malware/i, /ransomware/i], weight: 8 },
-    { patterns: [/app[le]?\b/i, /google/i, /microsoft/i, /amazon/i, /meta/i, /facebook/i, /twitter/i, /x\.com/i, /tiktok/i, /samsung/i, /nvidia/i], weight: 7 },
-    { patterns: [/5g/i, /internet/i, /broadband/i, /digital/i, /blockchain/i, /crypto/i, /bitcoin/i, /ethereum/i, /nft/i], weight: 6 },
-    { patterns: [/robot/i, /autonomous/i, /drone/i, /innovat/i, /patent/i, /silicon.?valley/i], weight: 5 },
+    { patterns: [/\bartificial intelligence\b/i, /\bmachine learning\b/i, /\bdeep learning\b/i, /\bchatgpt\b/i, /\bopenai\b/i, /\bclaude\b/i, /\bgemini\b/i], weight: 10 },
+    { patterns: [/\btech\b/i, /\btechs\b/i, /\btechnology\b/i, /\btechnologies\b/i, /\bsoftware\b/i, /\bhardware\b/i, /\bunicorn\b/i], weight: 9 },
+    { patterns: [/\bcybersecurity\b/i, /\bhacking\b/i, /\bhack\b/i, /\bhacker\b/i, /\bdata breach\b/i, /\bprivacy\b/i, /\bencryption\b/i, /\bmalware\b/i, /\bransomware\b/i], weight: 8 },
+    { patterns: [/\bgoogle\b/i, /\bmicrosoft\b/i, /\bamazon\b/i, /\bmeta\b/i, /\bfacebook\b/i, /\btwitter\b/i, /\btiktok\b/i, /\bsamsung\b/i, /\bnvidia\b/i, /\btesla\b/i, /\bspaceX\b/i], weight: 7 },
+    { patterns: [/\b5g\b/i, /\binternet\b/i, /\bbroadband\b/i, /\bdigital\b/i, /\bblockchain\b/i, /\bcrypto\b/i, /\bcryptocurrency\b/i, /\bbitcoin\b/i, /\bethereum\b/i, /\bnft\b/i], weight: 6 },
+    { patterns: [/\brobot\b/i, /\brobots\b/i, /\bautonomous\b/i, /\bdrone\b/i, /\bdrones\b/i, /\binnovation\b/i, /\binnovative\b/i, /\bpatent\b/i, /\bsilicon valley\b/i], weight: 5 },
   ],
   // Science (4)
   4: [
-    { patterns: [/scient/i, /research/i, /study.?find/i, /experiment/i, /laboratory/i, /lab\b/i], weight: 10 },
-    { patterns: [/nasa/i, /space/i, /rocket/i, /satellite/i, /mars/i, /moon/i, /nasa/i, /esa\b/i], weight: 9 },
-    { patterns: [/physic/i, /chemi/i, /biology/i, /genetic/i, /dna/i, /evolution/i, /atom/i], weight: 8 },
-    { patterns: [/climate/i, /global.?warming/i, /carbon/i, /emission/i, /fossil/i, /renewable/i, /solar.?energy/i, /wind.?energy/i], weight: 7 },
-    { patterns: [/discover/i, /breakthrough/i, /innovat/i, /technology/i, /quantum/i, / telescope/i], weight: 5 },
+    { patterns: [/\bscientist\b/i, /\bscientists\b/i, /\bscientific\b/i, /\bresearch\b/i, /\bstudy finds?\b/i, /\bexperiment\b/i, /\blaboratory\b/i, /\blab\b/i], weight: 10 },
+    { patterns: [/\bnasa\b/i, /\bspace\b/i, /\brocket\b/i, /\bsatellite\b/i, /\bmars\b/i, /\bmoon\b/i, /\besa\b/i], weight: 9 },
+    { patterns: [/\bphysics\b/i, /\bphysicist\b/i, /\bchemistry\b/i, /\bbiology\b/i, /\bbiologist\b/i, /\bgenetic\b/i, /\bdna\b/i, /\bevolution\b/i, /\batom\b/i, /\batoms\b/i], weight: 8 },
+    { patterns: [/\bclimate\b/i, /\bglobal warming\b/i, /\bcarbon\b/i, /\bemission\b/i, /\bemissions\b/i, /\bfossil\b/i, /\brenewable\b/i, /\bsolar energy\b/i, /\bwind energy\b/i], weight: 7 },
+    { patterns: [/\bdiscovery\b/i, /\bdiscoveries\b/i, /\bbreakthrough\b/i, /\binnovation\b/i, /\bquantum\b/i, /\btelescope\b/i], weight: 5 },
   ],
   // Sports (6)
   6: [
-    { patterns: [/football/i, /soccer/i, /premier league/i, /champions league/i, /world cup/i, /fifa/i, /uefa/i], weight: 10 },
-    { patterns: [/basketball/i, /nba\b/i, /rugby/i, /cricket/i, /tennis/i, /golf/i, /f1\b/i, /formula.?1/i, /boxing/i, /mma\b/i], weight: 9 },
-    { patterns: [/athlet/i, /marathon/i, /olympic/i, /sport/i, /athlete/i, /player/i, /team\b/i], weight: 8 },
-    { patterns: [/match/i, /game/i, /score/i, /goal/i, /win/i, /victory/i, /champion/i, /trophy/i, /league/i], weight: 7 },
-    { patterns: [/coach/i, /manager/i, /transfer/i, /signing/i, /stadium/i, /tournament/i], weight: 6 },
+    { patterns: [/\bfootball\b/i, /\bsoccer\b/i, /\bpremier league\b/i, /\bchampions league\b/i, /\bworld cup\b/i, /\bfifa\b/i, /\buefa\b/i], weight: 10 },
+    { patterns: [/\bbasketball\b/i, /\bnba\b/i, /\brugby\b/i, /\bcricket\b/i, /\btennis\b/i, /\bgolf\b/i, /\bf1\b/i, /\bformula 1\b/i, /\bboxing\b/i, /\bmma\b/i], weight: 9 },
+    { patterns: [/\bathletics\b/i, /\bathlete\b/i, /\bathletes\b/i, /\bmarathon\b/i, /\bolympics\b/i, /\bolympic\b/i, /\bsport\b/i, /\bsports\b/i, /\bplayer\b/i, /\bteam\b/i, /\bteams\b/i], weight: 8 },
+    { patterns: [/\bmatch\b/i, /\bmatches\b/i, /\bgame\b/i, /\bgames\b/i, /\bscore\b/i, /\bscores\b/i, /\bgoal\b/i, /\bgoals\b/i, /\bwin\b/i, /\bwon\b/i, /\bvictory\b/i, /\bchampion\b/i, /\bchampions\b/i, /\btrophy\b/i, /\bleague\b/i], weight: 7 },
+    { patterns: [/\bcoach\b/i, /\bmanager\b/i, /\btransfer\b/i, /\btransfers\b/i, /\bsigning\b/i, /\bstadium\b/i, /\btournament\b/i], weight: 6 },
   ],
   // Entertainment (5)
   5: [
-    { patterns: [/film/i, /movie/i, /cinema/i, /hollywood/i, /bollywood/i, /netflix/i, /disney/i], weight: 10 },
-    { patterns: [/music/i, /song/i, /album/i, /concert/i, /artist/i, /grammy/i, /billboard/i], weight: 9 },
-    { patterns: [/celebrity/i, /celeb/i, /star/i, /actor/i, /actress/i, /singer/i, /rapper/i], weight: 8 },
-    { patterns: [/tv.?show/i, /series/i, /episode/i, /stream/i, /reality.?tv/i, /award/i, /oscar/i], weight: 7 },
-    { patterns: [/tiktok/i, /instagram/i, /viral/i, /trending/i, /meme/i, /influencer/i, /youtube/i], weight: 6 },
+    { patterns: [/\bfilm\b/i, /\bfilms\b/i, /\bmovie\b/i, /\bmovies\b/i, /\bcinema\b/i, /\bhollywood\b/i, /\bbollywood\b/i, /\bnetflix\b/i, /\bdisney\b/i], weight: 10 },
+    { patterns: [/\bmusic\b/i, /\bsong\b/i, /\bsongs\b/i, /\balbum\b/i, /\balbums\b/i, /\bconcert\b/i, /\bconcerts\b/i, /\bgrammy\b/i, /\bgrammys\b/i, /\bbillboard\b/i], weight: 9 },
+    { patterns: [/\bcelebrity\b/i, /\bcelebrities\b/i, /\bceleb\b/i, /\bactor\b/i, /\bactress\b/i, /\bsinger\b/i, /\bsingers\b/i, /\brapper\b/i], weight: 8 },
+    { patterns: [/\btv show\b/i, /\bseries\b/i, /\bepisode\b/i, /\bepisodes\b/i, /\bstreaming\b/i, /\breality tv\b/i, /\baward\b/i, /\bawards\b/i, /\boscar\b/i, /\boscars\b/i], weight: 7 },
+    { patterns: [/\btiktok\b/i, /\binstagram\b/i, /\bviral\b/i, /\btrending\b/i, /\bmeme\b/i, /\bmemes\b/i, /\binfluencer\b/i, /\byoutube\b/i], weight: 6 },
   ],
   // Health (67)
   67: [
-    { patterns: [/health/i, /medical/i, /doctor/i, /hospital/i, /clinic/i, /patient/i], weight: 10 },
-    { patterns: [/disease/i, /virus/i, /vaccine/i, /covid/i, /pandemic/i, /epidemic/i, /outbreak/i], weight: 9 },
-    { patterns: [/mental.?health/i, /depression/i, /anxiety/i, /therapy/i, /counsel/i], weight: 8 },
-    { patterns: [/drug/i, /medication/i, /pharm/i, /treatment/i, /cure/i, /diagnos/i], weight: 7 },
-    { patterns: [/nutrition/i, /diet/i, /exercise/i, /fitness/i, /wellness/i, /obesity/i], weight: 6 },
-    { patterns: [/who\b/i, /cdc/i, /health.?ministry/i, /public.?health/i, /maternal/i, /child.?health/i], weight: 5 },
+    { patterns: [/\bhealth\b/i, /\bmedical\b/i, /\bdoctor\b/i, /\bdoctors\b/i, /\bhospital\b/i, /\bhospitals\b/i, /\bclinic\b/i, /\bclinics\b/i, /\bpatient\b/i, /\bpatients\b/i], weight: 10 },
+    { patterns: [/\bdisease\b/i, /\bdiseases\b/i, /\bvirus\b/i, /\bviruses\b/i, /\bvaccine\b/i, /\bvaccines\b/i, /\bcovid\b/i, /\bpandemic\b/i, /\bepidemic\b/i, /\boutbreak\b/i], weight: 9 },
+    { patterns: [/\bmental health\b/i, /\bdepression\b/i, /\banxiety\b/i, /\btherapy\b/i, /\bcounseling\b/i], weight: 8 },
+    { patterns: [/\bdrug\b/i, /\bdrugs\b/i, /\bmedication\b/i, /\bpharmaceutical\b/i, /\bpharma\b/i, /\btreatment\b/i, /\btreatments\b/i, /\bcure\b/i, /\bdiagnosis\b/i], weight: 7 },
+    { patterns: [/\bnutrition\b/i, /\bdiet\b/i, /\bdiets\b/i, /\bexercise\b/i, /\bfitness\b/i, /\bwellness\b/i, /\bobesity\b/i], weight: 6 },
+    { patterns: [/\bwho\b/i, /\bcdc\b/i, /\bhealth ministry\b/i, /\bpublic health\b/i, /\bmaternal\b/i, /\bchild health\b/i], weight: 5 },
   ],
   // World (64)
   64: [
-    { patterns: [/international/i, /global/i, /world/i, /foreign/i, /overseas/i], weight: 10 },
-    { patterns: [/united.?nations/i, /un\b/i, /nato/i, /eu\b/i, /european/i, /who\b/i], weight: 8 },
-    { patterns: [/war/i, /conflict/i, /ceasefire/i, /refugee/i, /humanitarian/i, /sanction/i], weight: 7 },
-    { patterns: [/trump/i, /biden/i, /putin/i, /xi.?jinping/i, /macron/i, /zelensky/i], weight: 6 },
+    { patterns: [/\binternational\b/i, /\bglobal\b/i, /\bworld\b/i, /\bforeign\b/i, /\boverseas\b/i], weight: 10 },
+    { patterns: [/\bunited nations\b/i, /\bnato\b/i, /\beuropean union\b/i, /\beuropean\b/i], weight: 8 },
+    { patterns: [/\bwar\b/i, /\bconflict\b/i, /\bceasefire\b/i, /\brefugee\b/i, /\brefugees\b/i, /\bhumanitarian\b/i, /\bsanction\b/i, /\bsanctions\b/i], weight: 7 },
+    { patterns: [/\btrump\b/i, /\bbiden\b/i, /\bputin\b/i, /\bxi jinping\b/i, /\bmacron\b/i, /\bzelensky\b/i], weight: 6 },
   ],
   // Education (68)
   68: [
-    { patterns: [/education/i, /school/i, /university/i, /student/i, /teacher/i, /curriculum/i], weight: 10 },
-    { patterns: [/exam/i, /grade/i, /enrol/i, /campus/i, /academic/i, /scholarship/i, /lecture/i], weight: 9 },
-    { patterns: [/learning/i, /literacy/i, /tuition/i, /diploma/i, /degree/i, /graduate/i], weight: 7 },
+    { patterns: [/\beducation\b/i, /\bschool\b/i, /\bschools\b/i, /\buniversity\b/i, /\buniversities\b/i, /\bstudent\b/i, /\bstudents\b/i, /\bteacher\b/i, /\bteachers\b/i, /\bcurriculum\b/i], weight: 10 },
+    { patterns: [/\bexam\b/i, /\bexams\b/i, /\bgrade\b/i, /\bgrades\b/i, /\benrollment\b/i, /\bcampus\b/i, /\bacademic\b/i, /\bscholarship\b/i, /\blecture\b/i], weight: 9 },
+    { patterns: [/\blearning\b/i, /\bliteracy\b/i, /\btuition\b/i, /\bdiploma\b/i, /\bdegree\b/i, /\bdegrees\b/i, /\bgraduate\b/i, /\bgraduates\b/i], weight: 7 },
   ],
   // Agriculture (69)
   69: [
-    { patterns: [/agricultur/i, /farm/i, /crop/i, /harvest/i, /food.?security/i, /fertiliz/i], weight: 10 },
-    { patterns: [/livestock/i, /cattle/i, /poultry/i, /dairy/i, /fish/i, /fishing/i], weight: 9 },
-    { patterns: [/irrigation/i, /seed/i, /soil/i, /pest/i, /fertiliz/i, /organic/i], weight: 8 },
+    { patterns: [/\bagriculture\b/i, /\bagricultural\b/i, /\bfarm\b/i, /\bfarms\b/i, /\bfarming\b/i, /\bcrop\b/i, /\bcrops\b/i, /\bharvest\b/i, /\bfood security\b/i, /\bfertilizer\b/i], weight: 10 },
+    { patterns: [/\blivestock\b/i, /\bcattle\b/i, /\bpoultry\b/i, /\bdairy\b/i, /\bfishing\b/i, /\bfishery\b/i], weight: 9 },
+    { patterns: [/\birrigation\b/i, /\bseed\b/i, /\bseeds\b/i, /\bsoil\b/i, /\bpest\b/i, /\borganic\b/i], weight: 8 },
   ],
   // Environment (73)
   73: [
-    { patterns: [/environment/i, /ecolog/i, /biodivers/i, /deforest/i, /conservation/i], weight: 10 },
-    { patterns: [/pollution/i, /plastic/i, /ocean/i, /forest/i, /wildlife/i, /endanger/i], weight: 9 },
-    { patterns: [/climate.?change/i, /global.?warming/i, /carbon/i, /emission/i, /renewable/i, /sustainability/i], weight: 8 },
+    { patterns: [/\benvironment\b/i, /\benvironmental\b/i, /\becology\b/i, /\bbiodiversity\b/i, /\bdeforestation\b/i, /\bconservation\b/i], weight: 10 },
+    { patterns: [/\bpollution\b/i, /\bplastic\b/i, /\bplastics\b/i, /\bocean\b/i, /\bforests?\b/i, /\bwildlife\b/i, /\bendangered\b/i], weight: 9 },
+    { patterns: [/\bclimate change\b/i, /\bglobal warming\b/i, /\bcarbon\b/i, /\bemission\b/i, /\bemissions\b/i, /\brenewable\b/i, /\bsustainability\b/i, /\bsustainable\b/i], weight: 8 },
   ],
   // Crime & Justice (72)
   72: [
-    { patterns: [/crime/i, /criminal/i, /murder/i, /kill/i, /shoot/i, /stab/i, /rob/i, /theft/i, /burgl/i], weight: 10 },
-    { patterns: [/police/i, /arrest/i, /suspect/i, /court/i, /judge/i, /verdict/i, /sentence/i, /prison/i, /jail/i], weight: 9 },
-    { patterns: [/fraud/i, /scam/i, /corrupt/i, /bribe/i, /money.?launder/i], weight: 8 },
-    { patterns: [/investigat/i, /prosecut/i, /trial/i, /convict/i, /acquit/i, /bail/i], weight: 7 },
+    { patterns: [/\bcrime\b/i, /\bcrimes\b/i, /\bcriminal\b/i, /\bcriminals\b/i, /\bmurder\b/i, /\bmurders\b/i, /\bshooting\b/i, /\bstabbing\b/i, /\brobbery\b/i, /\btheft\b/i, /\bburglary\b/i], weight: 10 },
+    { patterns: [/\bpolice\b/i, /\barrest\b/i, /\barrests\b/i, /\barrested\b/i, /\bsuspect\b/i, /\bsuspects\b/i, /\bcourt\b/i, /\bcourts\b/i, /\bjudge\b/i, /\bverdict\b/i, /\bsentence\b/i, /\bprison\b/i, /\bjail\b/i], weight: 9 },
+    { patterns: [/\bfraud\b/i, /\bscam\b/i, /\bscams\b/i, /\bcorruption\b/i, /\bbribe\b/i, /\bbribery\b/i, /\bmoney laundering\b/i], weight: 8 },
+    { patterns: [/\binvestigation\b/i, /\bprosecution\b/i, /\btrial\b/i, /\bconviction\b/i, /\bacquittal\b/i, /\bbail\b/i], weight: 7 },
   ],
   // Opinion (71)
   71: [
-    { patterns: [/opinion/i, /editorial/i, /commentary/i, /analysis/i, /perspective/i, /viewpoint/i], weight: 10 },
-    { patterns: [/column/i, /op-?ed/i, /debate/i, /discuss/i, /argue/i, /critique/i], weight: 8 },
+    { patterns: [/\bopinion\b/i, /\beditorial\b/i, /\bcommentary\b/i, /\banalysis\b/i, /\bperspective\b/i, /\bviewpoint\b/i], weight: 10 },
+    { patterns: [/\bcolumn\b/i, /\bop-ed\b/i, /\bdebate\b/i, /\bdiscussion\b/i, /\bargue\b/i, /\bcritique\b/i], weight: 8 },
   ],
   // Real Estate (74)
   74: [
-    { patterns: [/real.?estate/i, /property/i, /housing/i, /mortgage/i, /rent/i, /landlord/i, /tenant/i], weight: 10 },
-    { patterns: [/construct/i, /build/i, /apartment/i, /house.?price/i, /land.?price/i, /developer/i], weight: 9 },
+    { patterns: [/\breal estate\b/i, /\bproperty\b/i, /\bproperties\b/i, /\bhousing\b/i, /\bmortgage\b/i, /\brent\b/i, /\brental\b/i, /\blandlord\b/i, /\btenant\b/i, /\btenants\b/i], weight: 10 },
+    { patterns: [/\bconstruction\b/i, /\bbuilding\b/i, /\bapartment\b/i, /\bapartments\b/i, /\bhouse price\b/i, /\bland price\b/i, /\bdeveloper\b/i, /\bdevelopers\b/i], weight: 9 },
   ],
   // Lifestyle (70)
   70: [
-    { patterns: [/lifestyle/i, /fashion/i, /beauty/i, /travel/i, /food/i, /recipe/i, /cooking/i], weight: 10 },
-    { patterns: [/relationship/i, /dating/i, /marriage/i, /parenting/i, /family/i, /wellness/i], weight: 8 },
-    { patterns: [/culture/i, /tradition/i, /festival/i, /holiday/i, /celebration/i], weight: 6 },
+    { patterns: [/\blifestyle\b/i, /\bfashion\b/i, /\bbeauty\b/i, /\btravel\b/i, /\bfood\b/i, /\brecipe\b/i, /\brecipes\b/i, /\bcooking\b/i], weight: 10 },
+    { patterns: [/\brelationship\b/i, /\brelationships\b/i, /\bdating\b/i, /\bmarriage\b/i, /\bparenting\b/i, /\bfamily\b/i, /\bwellness\b/i], weight: 8 },
+    { patterns: [/\bculture\b/i, /\bcultural\b/i, /\btradition\b/i, /\btraditions\b/i, /\bfestival\b/i, /\bholida\b/i, /\bcelebration\b/i], weight: 6 },
   ],
 }
 
+
 // ── Tag extraction keywords ─────────────────────────────────────
-// Common news topic keywords that make good tags
+// All patterns use \b word boundaries.
 const TAG_KEYWORDS: Array<{ pattern: RegExp; tag: string }> = [
   // Kenya-specific
   { pattern: /\bNairobi\b/i, tag: 'Nairobi' },
@@ -140,7 +141,7 @@ const TAG_KEYWORDS: Array<{ pattern: RegExp; tag: string }> = [
   { pattern: /\bKisumu\b/i, tag: 'Kisumu' },
   { pattern: /\bNakuru\b/i, tag: 'Nakuru' },
   { pattern: /\bEldoret\b/i, tag: 'Eldoret' },
-  { pattern: /\bRuto\b/i, tag: 'Ruto' },
+  { pattern: /\bRuto\b/i, tag: 'President Ruto' },
   { pattern: /\bRaila\b/i, tag: 'Raila Odinga' },
   { pattern: /\bKenyatta\b/i, tag: 'Kenyatta' },
   { pattern: /\bSafaricom\b/i, tag: 'Safaricom' },
@@ -152,7 +153,6 @@ const TAG_KEYWORDS: Array<{ pattern: RegExp; tag: string }> = [
   { pattern: /\bAU\b(?!\w)/, tag: 'African Union' },
   { pattern: /\bECOWAS\b/i, tag: 'ECOWAS' },
   // Global orgs
-  { pattern: /\bUN\b(?!\w)/, tag: 'United Nations' },
   { pattern: /\bWHO\b(?!\w)/, tag: 'WHO' },
   { pattern: /\bIMF\b/i, tag: 'IMF' },
   { pattern: /\bWorld Bank\b/i, tag: 'World Bank' },
@@ -161,6 +161,7 @@ const TAG_KEYWORDS: Array<{ pattern: RegExp; tag: string }> = [
   { pattern: /\bEU\b(?!\w)/, tag: 'European Union' },
   { pattern: /\bG7\b/i, tag: 'G7' },
   { pattern: /\bG20\b/i, tag: 'G20' },
+  { pattern: /\bUN\b(?!\w)/, tag: 'United Nations' },
   // Tech companies
   { pattern: /\bOpenAI\b/i, tag: 'OpenAI' },
   { pattern: /\bChatGPT\b/i, tag: 'ChatGPT' },
@@ -227,6 +228,33 @@ const TAG_KEYWORDS: Array<{ pattern: RegExp; tag: string }> = [
 ]
 
 
+// ── Stopwords for phrase extraction ─────────────────────────────
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+  'of', 'with', 'by', 'from', 'is', 'was', 'are', 'were', 'be', 'been',
+  'has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+  'should', 'may', 'might', 'can', 'shall', 'this', 'that', 'these',
+  'those', 'it', 'its', 'he', 'she', 'they', 'we', 'you', 'i', 'my',
+  'his', 'her', 'their', 'our', 'your', 'not', 'no', 'if', 'then',
+  'than', 'so', 'as', 'up', 'out', 'about', 'into', 'over', 'after',
+  'before', 'between', 'under', 'above', 'such', 'each', 'which',
+  'there', 'their', 'all', 'also', 'how', 'what', 'when', 'where',
+  'who', 'whom', 'why', 'being', 'some', 'any', 'most', 'other',
+  'new', 'first', 'last', 'long', 'great', 'high', 'old', 'large',
+  'big', 'same', 'able', 'own', 'just', 'than', 'now', 'said',
+  'says', 'say', 'like', 'much', 'well', 'back', 'even', 'still',
+  'way', 'take', 'come', 'made', 'many', 'very', 'us', 'go', 'see',
+  'know', 'think', 'make', 'get', 'want', 'look', 'use', 'find',
+  'give', 'tell', 'work', 'call', 'try', 'ask', 'need', 'feel',
+  'become', 'leave', 'put', 'mean', 'keep', 'let', 'begin', 'seem',
+  'help', 'show', 'hear', 'play', 'run', 'move', 'live', 'believe',
+  'happen', 'must', 'start', 'might', 'went', 'year', 'years',
+  'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+  'ten', 'day', 'days', 'time', 'times', 'week', 'month', 'year',
+  'people', 'man', 'woman', 'men', 'women', 'world', 'part', 'good',
+])
+
+
 // ── Public functions ────────────────────────────────────────────
 
 /**
@@ -246,6 +274,7 @@ export function categorizeArticle(
     let score = 0
     for (const { patterns, weight } of keywordSets) {
       for (const pattern of patterns) {
+        // Count unique matches using a Set to avoid double-counting overlapping patterns
         const matches = text.match(new RegExp(pattern.source, 'gi'))
         if (matches) {
           score += matches.length * weight
@@ -255,54 +284,52 @@ export function categorizeArticle(
     if (score > 0) scores[cat] = score
   }
 
-  // Find the highest-scoring category
   const sorted = Object.entries(scores).sort((a, b) => Number(b[1]) - Number(a[1]))
 
   if (sorted.length > 0 && Number(sorted[0][1]) >= 10) {
     return Number(sorted[0][0])
   }
 
-  // If the feed has a default category and no strong keyword match, use it
-  if (feedCategoryId) {
-    return feedCategoryId
-  }
-
-  // Fallback to World
-  return 64
+  if (feedCategoryId) return feedCategoryId
+  return 64 // World
 }
 
 
 /**
  * Extracts relevant tags from article title + content.
- * Returns up to `maxTags` unique, normalized tags.
+ * Prioritizes title matches, then content matches.
  */
 export function extractTags(
   title: string,
   content: string,
   maxTags: number = 8,
 ): string[] {
-  const text = `${title} ${content}`
-  const found = new Map<string, string>() // normalized -> display name
-
+  // Check title first (higher priority)
+  const found = new Map<string, string>()
   for (const { pattern, tag } of TAG_KEYWORDS) {
     if (found.size >= maxTags) break
-    if (pattern.test(text)) {
+    if (pattern.test(title)) {
       const normalized = tag.toLowerCase()
-      if (!found.has(normalized)) {
-        found.set(normalized, tag)
-      }
+      if (!found.has(normalized)) found.set(normalized, tag)
     }
   }
 
-  // If we still need more tags, extract capitalized multi-word phrases
+  // Then check content
+  for (const { pattern, tag } of TAG_KEYWORDS) {
+    if (found.size >= maxTags) break
+    if (pattern.test(content)) {
+      const normalized = tag.toLowerCase()
+      if (!found.has(normalized)) found.set(normalized, tag)
+    }
+  }
+
+  // Fallback: extract named entity phrases from title
   if (found.size < maxTags) {
-    const phrases = extractPhrases(text, maxTags - found.size)
+    const phrases = extractPhrases(title, maxTags - found.size)
     for (const phrase of phrases) {
       if (found.size >= maxTags) break
       const normalized = phrase.toLowerCase()
-      if (!found.has(normalized) && phrase.length > 2 && phrase.length < 40) {
-        found.set(normalized, phrase)
-      }
+      if (!found.has(normalized)) found.set(normalized, phrase)
     }
   }
 
@@ -312,7 +339,6 @@ export function extractTags(
 
 /**
  * Full curation pipeline: categorize + tag an article.
- * Returns the category ID and tags array.
  */
 export function curateArticle(
   title: string,
@@ -329,27 +355,33 @@ export function curateArticle(
 // ── Internal helpers ────────────────────────────────────────────
 
 /**
- * Extracts common noun phrases from text as potential tags.
+ * Extracts capitalized phrases from text (likely named entities).
+ * Filters out stopwords and common phrases.
  */
 function extractPhrases(text: string, max: number): string[] {
   const words = text.replace(/<[^>]+>/g, ' ').split(/\s+/)
   const phrases: string[] = []
   const seen = new Set<string>()
 
-  // Look for 2-3 word capitalized phrases (likely proper nouns / named entities)
   for (let i = 0; i < words.length - 1 && phrases.length < max * 3; i++) {
     const w1 = words[i].replace(/[^a-zA-Z]/g, '')
     const w2 = words[i + 1]?.replace(/[^a-zA-Z]/g, '')
     if (!w1 || !w2) continue
+    if (w1.length < 3 || w2.length < 3) continue
 
-    // Check for capitalized phrases (proper nouns)
-    if (/^[A-Z]/.test(w1) && /^[A-Z]/.test(w2)) {
-      const phrase = `${w1} ${w2}`
-      const norm = phrase.toLowerCase()
-      if (!seen.has(norm) && w1.length > 1 && w2.length > 1) {
-        seen.add(norm)
-        phrases.push(phrase)
-      }
+    // Both must be capitalized (proper noun)
+    if (!/^[A-Z]/.test(w1) || !/^[A-Z]/.test(w2)) continue
+
+    // Skip if either word is a stopword
+    const w1Lower = w1.toLowerCase()
+    const w2Lower = w2.toLowerCase()
+    if (STOPWORDS.has(w1Lower) || STOPWORDS.has(w2Lower)) continue
+
+    const phrase = `${w1} ${w2}`
+    const norm = phrase.toLowerCase()
+    if (!seen.has(norm)) {
+      seen.add(norm)
+      phrases.push(phrase)
     }
   }
 
