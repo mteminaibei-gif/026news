@@ -19,13 +19,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
-    const { title, content, excerpt, category_id, featured_image, monetization_type, status, author_id } = await req.json()
+    const { title, content, excerpt, category_id, featured_image, monetization_type, status, author_id, tags, source_reference } = await req.json()
 
     if (!title?.trim() || !content?.trim()) {
       return NextResponse.json({ error: 'title and content are required' }, { status: 400 })
     }
 
     const slug = slugify(title)
+    const tagsArray = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
 
     const insertPayload = {
       title:             title.trim(),
@@ -33,12 +34,14 @@ export async function POST(req: NextRequest) {
       content:           content.trim(),
       excerpt:           excerpt?.trim() || content.trim().substring(0, 200),
       category_id:       category_id ?? null,
-      author_id:         author_id ?? profile.user_id, // default to admin as author
+      author_id:         author_id ?? profile.user_id,
       featured_image:    featured_image ?? null,
       monetization_type: monetization_type ?? 'free',
       status:            status ?? 'draft',
       is_aggregated:     false,
       published_at:      status === 'published' ? new Date().toISOString() : null,
+      tags:              tagsArray,
+      source_reference:  source_reference?.trim() || null,
     }
 
     const { data: article, error } = await supabase
@@ -89,7 +92,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
-    const { article_id, title, content, excerpt, category_id, featured_image, monetization_type, status, author_id } = await req.json()
+    const { article_id, title, content, excerpt, category_id, featured_image, monetization_type, status, author_id, tags, source_reference } = await req.json()
 
     if (!article_id) {
       return NextResponse.json({ error: 'article_id is required' }, { status: 400 })
@@ -108,6 +111,10 @@ export async function PUT(req: NextRequest) {
     if (category_id !== undefined) updatePayload.category_id = category_id
     if (featured_image !== undefined) updatePayload.featured_image = featured_image
     if (monetization_type) updatePayload.monetization_type = monetization_type
+    if (tags !== undefined) {
+      updatePayload.tags = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
+    }
+    if (source_reference !== undefined) updatePayload.source_reference = source_reference?.trim() || null
     if (status) {
       updatePayload.status = status
       // Set published_at when transitioning to published

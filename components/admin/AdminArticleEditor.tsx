@@ -71,7 +71,8 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   const [saved,       setSaved]       = useState(false)
   const [lastSaved,   setLastSaved]   = useState<Date | null>(null)
 
-  const wordCount    = content.trim().split(/\s+/).filter(Boolean).length
+  const plainText = content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+  const wordCount    = plainText ? plainText.split(/\s+/).length : 0
   const readMins     = Math.max(1, Math.ceil(wordCount / 200))
   const completeness = [title, categoryId, content.length > 50, imagePreview].filter(Boolean).length * 25
 

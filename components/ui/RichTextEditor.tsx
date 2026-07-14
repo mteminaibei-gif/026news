@@ -3,7 +3,7 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
+import LinkExtension from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
@@ -15,7 +15,7 @@ import {
   Image as ImageIcon, Link as LinkIcon,
   Undo, Redo, Minus,
 } from 'lucide-react'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 interface Props {
   content: string
@@ -51,34 +51,46 @@ function ToolbarDivider() {
 }
 
 export function RichTextEditor({ content, onChange, placeholder = 'Write your article...', minHeight = 400 }: Props) {
+  const initialContent = useRef(content)
+  const isInternalUpdate = useRef(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        link: false,
+        underline: false,
       }),
       Image.configure({ inline: false, allowBase64: true }),
-      Link.configure({ openOnClick: false, autolink: true }),
+      LinkExtension.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({ placeholder }),
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
-    content,
+    content: initialContent.current || '',
     onUpdate: ({ editor: e }) => {
+      isInternalUpdate.current = true
       onChange(e.getHTML())
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none',
-        style: `min-height: ${minHeight}px; padding: 1.25rem 1.5rem; font-family: 'Newsreader', Georgia, serif; font-size: 1rem; line-height: 1.85; color: var(--text-primary);`,
+        class: 'rich-editor-content focus:outline-none',
+        style: `min-height: ${minHeight}px; padding: 1.25rem 1.5rem; font-family: 'Newsreader', Georgia, serif; font-size: 1rem; line-height: 1.85; color: var(--text-primary); outline: none;`,
       },
     },
   })
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (!editor) return
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false
+      return
+    }
+    const current = editor.getHTML()
+    if (content && content !== current) {
       editor.commands.setContent(content, { emitUpdate: false })
     }
-  }, [content])
+  }, [content, editor])
 
   const addImage = useCallback(() => {
     if (!editor) return

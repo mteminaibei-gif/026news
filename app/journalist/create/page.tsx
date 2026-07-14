@@ -57,7 +57,8 @@ export default function CreatePostPage() {
     fetchCategories()
   }, [])
 
-  const wordCount    = content.trim().split(/\s+/).filter(Boolean).length
+  const plainText = content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+  const wordCount    = plainText ? plainText.split(/\s+/).length : 0
   const readMins     = Math.max(1, Math.ceil(wordCount / 200))
   const completeness = [title, category, content.length > 50, imagePreview].filter(Boolean).length * 25
 
