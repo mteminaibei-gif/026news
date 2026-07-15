@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Radio } from 'lucide-react'
+import { Radio, Tv } from 'lucide-react'
 import { formatDate, formatNumber, readingTime, stripHtml } from '@/lib/utils'
 
 interface SlideArticle {
@@ -174,9 +174,16 @@ export function HeroCarousel({ articles }: Props) {
               Read Story →
             </Link>
             <Link
+              href="/tv"
+              className="hero-btn-secondary"
+              style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Tv size={16} className="inline mr-1.5" />Watch
+            </Link>
+            <Link
               href="/radio"
               className="hero-btn-secondary"
-              style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s' }}
+              style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <Radio size={16} className="inline mr-1.5" />Listen
             </Link>

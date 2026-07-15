@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/Topbar'
-import { MOCK_USERS } from '@/lib/mock-data'
 import { createClient } from '@/lib/supabase/client'
-
-const ADMIN = MOCK_USERS.find((u) => u.role === 'admin')!
 
 const TABS = ['General', 'RSS & Publishing', 'Monetization', 'Notifications', 'Security', 'Integrations']
 
@@ -46,6 +43,7 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('General')
   const [loading, setLoading] = useState(true)
   const [savedTab, setSavedTab] = useState('')
+  const [admin, setAdmin] = useState<{ name: string; profile_image: string | null } | null>(null)
 
   const [general, setGeneral] = useState<General>(DEFAULTS.general)
   const [monetization, setMonetization] = useState<Monetization>(DEFAULTS.monetization)
@@ -55,6 +53,20 @@ export default function AdminSettingsPage() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
+
+    // Load admin user info
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: adminData } = await supabase
+        .from('users').select('name, profile_image').eq('email', user.email ?? '').single() as { data: { name: string; profile_image: string | null } | null }
+      if (adminData) {
+        setAdmin({ name: adminData.name, profile_image: adminData.profile_image })
+      } else {
+        setAdmin({ name: user.email?.split('@')[0] || 'Admin', profile_image: null })
+      }
+    }
+
+    // Load settings
     const { data } = await (supabase.from('site_settings') as any)
       .select('key, value')
     if (data) {
@@ -84,7 +96,7 @@ export default function AdminSettingsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-        <Topbar title="Settings" user={ADMIN} />
+        <Topbar title="Settings" user={{ name: 'Admin', profile_image: null }} />
         <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8" style={{ color: 'var(--text-tertiary)' }}>Loading settings…</main>
       </div>
     )
@@ -113,7 +125,7 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Topbar title="Settings" user={ADMIN} />
+      <Topbar title="Settings" user={admin ?? { name: 'Admin', profile_image: null }} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
         <div className="flex gap-1 backdrop-blur-sm rounded-2xl shadow-sm p-1 mb-6 overflow-x-auto" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>

@@ -3,7 +3,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { MOCK_USERS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import { formatNumber } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'About Us',
@@ -26,8 +27,33 @@ const VALUES = [
   { icon: '⚡', title: 'Real-Time Journalism', desc: 'Live breaking news, realtime comments, and instant notifications keep you ahead of the story.' },
 ]
 
-export default function AboutPage() {
-  const journalists = MOCK_USERS.filter(u => u.role === 'journalist')
+export default async function AboutPage() {
+  const supabase = await createClient()
+
+  // Fetch real journalist data
+  const { data: journalists } = await supabase
+    .from('users')
+    .select('user_id, name, bio, profile_image, total_views')
+    .eq('role', 'journalist' as never)
+    .eq('status', 'active' as never)
+    .order('total_views', { ascending: false })
+    .limit(4)
+
+  const journalistsData = (journalists ?? []) as Array<{ user_id: number; name: string; bio: string | null; profile_image: string | null; total_views: number | null }>
+
+  // Fetch real stats
+  const [{ count: totalArticles }, { count: totalAuthors }, { count: totalCategories }] = await Promise.all([
+    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'published' as never),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'journalist' as never),
+    supabase.from('categories').select('*', { count: 'exact', head: true }),
+  ])
+
+  const stats = [
+    { value: '120K+', label: 'Monthly Readers' },
+    { value: `${totalAuthors ?? 0}+`, label: 'Freelance Authors' },
+    { value: `${formatNumber(totalArticles ?? 0)}+`, label: 'Articles Published' },
+    { value: `${totalCategories ?? 7}`, label: 'News Categories' },
+  ]
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -63,7 +89,7 @@ export default function AboutPage() {
       {/* Stats */}
       <section style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {STATS.map(s => (
+          {stats.map(s => (
             <div key={s.label}>
               <p className="text-3xl font-extrabold" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>{s.value}</p>
               <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{s.label}</p>
@@ -124,25 +150,34 @@ export default function AboutPage() {
       <section className="max-w-5xl mx-auto px-4 py-16">
         <h2 className="text-2xl font-extrabold mb-2 text-center" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>Meet Our Authors</h2>
         <p className="text-center mb-10" style={{ color: 'var(--text-tertiary)' }}>The voices behind our stories.</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {journalists.map(j => (
+<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {journalistsData.map(j => (
             <Link
               key={j.user_id}
               href={`/journalists/${j.user_id}`}
               className="rounded-xl p-5 transition-all text-center group"
               style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
             >
-              <Image
-                src={j.profile_image ?? ''}
-                alt={j.name}
-                width={72}
-                height={72}
-                className="rounded-full object-cover mx-auto mb-3"
-                style={{ border: '2px solid var(--border-subtle)' }}
-              />
+              {j.profile_image ? (
+                <Image
+                  src={j.profile_image}
+                  alt={j.name}
+                  width={72}
+                  height={72}
+                  className="rounded-full object-cover mx-auto mb-3"
+                  style={{ border: '2px solid var(--border-subtle)' }}
+                />
+              ) : (
+                <div className="w-18 h-18 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3"
+                  style={{ background: 'var(--primary)' }}>
+                {j.name?.charAt(0).toUpperCase() ?? '?'}
+              </div>
+              )}
               <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{j.articles} articles published</p>
-              <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>{j.bio}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                {formatNumber(j.total_views ?? 0)} total views
+              </p>
+              <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>{j.bio ?? 'Passionate journalist covering stories that matter.'}</p>
             </Link>
           ))}
         </div>

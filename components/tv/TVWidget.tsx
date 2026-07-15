@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTVGlobal } from './TVGlobalProvider'
+import { useRadio } from '@/components/radio/RadioProvider'
 
 export function TVWidget() {
   const { currentStation, isPlaying, status, error, stop, playStation } = useTVGlobal()
+  const { currentStation: currentRadioStation, isPlaying: isRadioPlaying } = useRadio()
   const [minimized, setMinimized] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<{ destroy: () => void } | null>(null)
@@ -96,11 +98,15 @@ export function TVWidget() {
 
   if (!currentStation) return null
 
+  // Calculate position: if radio is playing, place TV above it
+  const isRadioActive = currentRadioStation && isRadioPlaying
+  const bottomOffset = isRadioActive ? 120 : 16
+
   return (
     <div
       className="fixed z-50 shadow-2xl transition-all duration-300"
       style={{
-        bottom: minimized ? 16 : 16,
+        bottom: minimized ? bottomOffset : bottomOffset,
         right: 16,
         width: minimized ? 200 : 420,
         maxWidth: 'calc(100vw - 32px)',
