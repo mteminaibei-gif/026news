@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
+import { APP_URL } from '@/lib/constants/app'
 
 // ── simple in-process rate limiter ──────────────────────────
 const postLimiter = new Map<string, { count: number; reset: number }>()
@@ -202,7 +203,6 @@ export async function POST(req: NextRequest) {
           .from('users').select('email, name').eq('role', 'admin')
         if (admins?.length) {
           const adminEmails = (admins as { email: string; name: string }[]).map(a => a.email)
-          const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
           await fetch(`${APP_URL}/api/admin/skimmer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

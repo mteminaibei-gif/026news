@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // POST /api/auth/reset-password - Reset password with token
 export async function POST(req: NextRequest) {
   try {
-    const { token, newPassword } = await req.json()
+    const { token, newPassword } = await req.json().catch(() => ({})) as { token?: string; newPassword?: string }
 
     if (!token || !newPassword) {
       return NextResponse.json({ error: 'Token and new password are required' }, { status: 400 })

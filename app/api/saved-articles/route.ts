@@ -68,52 +68,60 @@ export async function GET(req: NextRequest) {
  * Save an article
  */
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { article_id, notes } = await req.json()
-
-  if (!article_id) {
-    return NextResponse.json({ error: 'article_id is required' }, { status: 400 })
-  }
-
-  // Get user profile
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('user_id')
-    .eq('email', user.email ?? '')
-    .single()
-
-  if (!userProfile) {
-    return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
-  }
-
-  const userId = (userProfile as any).user_id
-
-  // Save article
-  const { data, error } = await (supabase as any)
-    .from('saved_articles')
-    .insert({
-      user_id: userId,
-      article_id,
-      notes: notes || null,
-    })
-    .select()
-
-  if (error) {
-    if (error.code === '23505') {
-      return NextResponse.json({ error: 'Article already saved' }, { status: 409 })
+  try {
+    const supabase = await createClient()
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    console.error('[POST /api/saved-articles] Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
 
-  return NextResponse.json(data?.[0] || {}, { status: 201 })
+    let body: { article_id?: number; notes?: string }
+    try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }) }
+
+    const { article_id, notes } = body
+
+    if (!article_id) {
+      return NextResponse.json({ error: 'article_id is required' }, { status: 400 })
+    }
+
+    // Get user profile
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('email', user.email ?? '')
+      .single()
+
+    if (!userProfile) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
+    const userId = (userProfile as any).user_id
+
+    // Save article
+    const { data, error } = await (supabase as any)
+      .from('saved_articles')
+      .insert({
+        user_id: userId,
+        article_id,
+        notes: notes || null,
+      })
+      .select()
+
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'Article already saved' }, { status: 409 })
+      }
+      console.error('[POST /api/saved-articles] Error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data?.[0] || {}, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/saved-articles]', err)
+    return NextResponse.json({ error: 'Failed to save article' }, { status: 500 })
+  }
 }
 
 /**
@@ -121,30 +129,38 @@ export async function POST(req: NextRequest) {
  * Remove a saved article
  */
 export async function DELETE(req: NextRequest) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const supabase = await createClient()
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    let body: { saved_id?: number }
+    try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }) }
+
+    const { saved_id } = body
+
+    if (!saved_id) {
+      return NextResponse.json({ error: 'saved_id is required' }, { status: 400 })
+    }
+
+    // Delete saved article
+    const { error } = await (supabase as any)
+      .from('saved_articles')
+      .delete()
+      .eq('saved_id', saved_id)
+
+    if (error) {
+      console.error('[DELETE /api/saved-articles] Error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('[DELETE /api/saved-articles]', err)
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
-
-  const { saved_id } = await req.json()
-
-  if (!saved_id) {
-    return NextResponse.json({ error: 'saved_id is required' }, { status: 400 })
-  }
-
-  // Delete saved article
-  const { error } = await (supabase as any)
-    .from('saved_articles')
-    .delete()
-    .eq('saved_id', saved_id)
-
-  if (error) {
-    console.error('[DELETE /api/saved-articles] Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ success: true })
 }

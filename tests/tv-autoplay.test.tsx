@@ -1,7 +1,7 @@
-"""TV Auto-Play Functionality Test Suite
-
-Tests for TV station selection, auto-play, HLS support, and widget functionality.
-"""
+/**
+ * TV Auto-Play Functionality Test Suite
+ * Tests for TV station selection, auto-play, HLS support, and widget functionality.
+ */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'

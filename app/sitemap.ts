@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
+import { APP_URL } from '@/lib/constants/app'
 
 type ArticleRow = { slug: string; updated_at: string }
 type CategoryRow = { name: string }

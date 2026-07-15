@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { APP_URL } from '@/lib/constants/app'
 
 type UserProfile = {
   user_id: number; name: string; email: string; role: string
@@ -84,7 +85,6 @@ export function useSignUp() {
     }: { email: string; password: string; name: string; bio?: string; organization?: string; portfolio?: string; phone?: string }) => {
       const supabase = createClient()
       const combinedBio = `${bio}\n\nOrganization: ${organization || '-'}\nPortfolio: ${portfolio || '-'}\nPhone: ${phone || '-'}`
-      const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
       // The handle_new_user trigger (DB) creates the public.users row from
       // raw_user_meta_data, so we pass profile fields via options.data.
       const { data, error } = await supabase.auth.signUp({

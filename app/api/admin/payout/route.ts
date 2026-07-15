@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
-    const { period_start, period_end, payment_method = 'manual', trigger_payment = false } = await req.json()
+    const { period_start, period_end, payment_method = 'manual', trigger_payment = false } = await req.json().catch(() => ({})) as { period_start?: string; period_end?: string; payment_method?: string; trigger_payment?: boolean }
 
     if (!period_start || !period_end) {
       return NextResponse.json({ error: 'period_start and period_end are required (YYYY-MM-DD)' }, { status: 400 })

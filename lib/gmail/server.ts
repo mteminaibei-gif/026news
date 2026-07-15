@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
+import { APP_URL } from '@/lib/constants/app'
 
 /**
  * Server-only Gmail integration.
@@ -332,7 +333,7 @@ export async function exchangeCodeForTokens(code: string): Promise<{ email: stri
   const clientSecret = process.env.GMAIL_CLIENT_SECRET
   const redirectUri =
     process.env.GMAIL_REDIRECT_URI ??
-    `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'}/api/gmail/callback`
+    `${APP_URL}/api/gmail/callback`
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -377,7 +378,7 @@ export function buildConsentUrl(state: string): string {
   const clientId = process.env.GMAIL_CLIENT_ID
   const redirectUri =
     process.env.GMAIL_REDIRECT_URI ??
-    `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'}/api/gmail/callback`
+    `${APP_URL}/api/gmail/callback`
   const scope = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.send',

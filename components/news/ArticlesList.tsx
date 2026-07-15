@@ -13,11 +13,6 @@ interface Props {
 export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
   const [articles, setArticles] = useState<ArticleWithAuthor[]>(initialArticles)
 
-  // Lightweight in-memory realtime log for debugging (inspect via devtools)
-  if (typeof window !== 'undefined') {
-    ;(window as any).__realtimeLogs = (window as any).__realtimeLogs || []
-  }
-
   // Sync state if initialArticles changes (e.g., category selection change)
   useEffect(() => {
     setArticles(initialArticles)
@@ -62,19 +57,8 @@ export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
         async (payload) => {
           if (payload.new.status !== 'published') return
 
-          const t0 = Date.now()
-          ;(console as any).debug?.('[realtime] INSERT payload received', payload.new)
-
           // Try fetching the full joined row with retries to avoid partial reads
           const newArt = await fetchArticleWithRetry(payload.new.article_id)
-
-          const t1 = Date.now()
-          ;(console as any).debug?.(`[realtime] fetched article ${payload.new.article_id} in ${t1 - t0}ms`, newArt)
-
-          // store a short log for inspection in the browser
-          if (typeof window !== 'undefined') {
-            ;(window as any).__realtimeLogs.push({ event: 'INSERT', id: payload.new.article_id, ts: new Date().toISOString(), fetched: !!newArt })
-          }
 
           if (newArt) {
             const art = newArt as unknown as ArticleWithAuthor
@@ -100,17 +84,7 @@ export function ArticlesList({ initialArticles, categoryFilterName }: Props) {
             return
           }
 
-          const t0 = Date.now()
-          ;(console as any).debug?.('[realtime] UPDATE payload received', payload.new)
-
           const updatedArt = await fetchArticleWithRetry(payload.new.article_id)
-
-          const t1 = Date.now()
-          ;(console as any).debug?.(`[realtime] fetched updated article ${payload.new.article_id} in ${t1 - t0}ms`, updatedArt)
-
-          if (typeof window !== 'undefined') {
-            ;(window as any).__realtimeLogs.push({ event: 'UPDATE', id: payload.new.article_id, ts: new Date().toISOString(), fetched: !!updatedArt })
-          }
 
           if (updatedArt) {
             const art = updatedArt as unknown as ArticleWithAuthor

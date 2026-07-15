@@ -1,7 +1,7 @@
-"""OAuth Integration Test Suite
-
-Comprehensive tests for OAuth authentication including Google, X (Twitter), Facebook providers.
-"""
+/**
+ * OAuth Integration Test Suite
+ * Comprehensive tests for OAuth authentication including Google, X (Twitter), Facebook providers.
+ */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useRouter } from 'next/navigation'

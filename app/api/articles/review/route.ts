@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
-    const { id, action, notes, feature_homepage } = await req.json()
+    const { id, action, notes, feature_homepage } = await req.json().catch(() => ({})) as { id?: number; action?: string; notes?: string; feature_homepage?: boolean }
     if (!id || !action) {
       return NextResponse.json({ error: 'id and action are required' }, { status: 400 })
     }
@@ -85,8 +85,6 @@ export async function POST(req: NextRequest) {
         .insert(reviewRecord as never)
       if (reviewError) throw reviewError
     }
-
-    console.log(`Article ${id} ${reviewAction} by admin ${profile.user_id}. Featured: ${feature_homepage}`)
 
     return NextResponse.json({ success: true, article_id: id, status: newStatus, action: reviewAction })
   } catch (err) {

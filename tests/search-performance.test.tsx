@@ -1,7 +1,7 @@
-"""Search Functionality Performance Audit
-
-Comprehensive performance tests for search features, including filtering, indexing, and user experience.
-"""
+/**
+ * Search Functionality Performance Audit
+ * Comprehensive performance tests for search features, including filtering, indexing, and user experience.
+ */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'

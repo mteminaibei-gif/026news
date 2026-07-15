@@ -18,7 +18,8 @@ interface CreateAccountRequest {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, role, phone, location, bio } = (await req.json()) as CreateAccountRequest
+    const body = await req.json().catch(() => ({})) as CreateAccountRequest
+    const { email, password, name, role, phone, location, bio } = body
 
     // Validate required fields
     if (!email || !password || !name || !role) {

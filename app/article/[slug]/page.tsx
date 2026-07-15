@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
+import { APP_URL } from '@/lib/constants/app'
 
 const getSourceHost = (url?: string | null) => {
   if (!url) return null
@@ -43,7 +44,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     author: { name: string } | null; category: { name: string } | null
   }
 
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
   const description = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
 
   return {
@@ -242,7 +242,6 @@ export default async function ArticlePage({ params }: Props) {
       ? 'Image via 026News'
       : null
 
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
   const seoDescription = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
   const jsonLd = {
     '@context': 'https://schema.org',

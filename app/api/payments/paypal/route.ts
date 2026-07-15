@@ -18,6 +18,7 @@ async function getPayPalToken(): Promise<string> {
     },
     body: 'grant_type=client_credentials',
   })
+  if (!res.ok) throw new Error(`PayPal auth failed: ${res.status}`)
   const data = await res.json()
   return data.access_token as string
 }

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { paymentMethod, amount, phoneNumber, email } = await req.json()
+    const { paymentMethod, amount, phoneNumber, email } = await req.json().catch(() => ({})) as { paymentMethod?: string; amount?: number; phoneNumber?: string; email?: string }
 
     if (!paymentMethod || !['mpesa', 'paypal'].includes(paymentMethod)) {
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 // first-time bootstrap (set ADMIN_SIGNUP_SECRET in env).
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, secret } = await req.json()
+    const { email, password, name, secret } = await req.json().catch(() => ({})) as { email?: string; password?: string; name?: string; secret?: string }
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: 'name, email and password are required' }, { status: 400 })

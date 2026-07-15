@@ -46,10 +46,8 @@ export async function updateJournalistRankings() {
         .eq('user_id', stat.author_id)
     }
 
-    console.log(`Updated rankings for ${stats.length} journalists`)
     return { success: true, updated: stats.length }
   } catch (error) {
-    console.error('Ranking update error:', error)
     return { success: false, error }
   }
 }
@@ -106,10 +104,8 @@ export async function awardJournalistBadges() {
       }
     }
 
-    console.log(`Badge awards processed for ${journalists?.length || 0} journalists`)
     return { success: true, processed: journalists?.length }
   } catch (error) {
-    console.error('Badge award error:', error)
     return { success: false, error }
   }
 }
@@ -139,7 +135,6 @@ export async function processMonthlyRevenueSplit(totalAdSenseRevenue: number) {
     const totalViews = (articles || []).reduce((sum: number, a: any) => sum + (a.views || 0), 0)
 
     if (totalViews === 0) {
-      console.log('No views to distribute')
       return { success: true, distributed: 0 }
     }
 
@@ -175,12 +170,8 @@ export async function processMonthlyRevenueSplit(totalAdSenseRevenue: number) {
       })
     }
 
-    console.log(
-      `Revenue split: Journalist share ${journalistShare.toFixed(2)}, Platform share ${platformShare.toFixed(2)}`
-    )
     return { success: true, distributed: payouts.length, totalAmount: journalistShare }
   } catch (error) {
-    console.error('Revenue split error:', error)
     return { success: false, error }
   }
 }

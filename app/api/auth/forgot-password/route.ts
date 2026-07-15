@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { randomBytes } from 'crypto'
+import { APP_URL } from '@/lib/constants/app'
 
 // In-memory rate limiter
 const rateLimiter = new Map<string, { count: number; reset: number }>()
@@ -74,19 +75,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
     }
 
-    // In production, you would send an email with the reset link
-    // For now, we'll log it to console (in development)
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'}/reset-password?token=${token}`
-    
-    console.log('=== PASSWORD RESET LINK ===')
-    console.log(`Email: ${email}`)
-    console.log(`Name: ${existingUser.name}`)
-    console.log(`Reset Link: ${resetLink}`)
-    console.log('===========================')
+    const resetLink = `${APP_URL}/reset-password?token=${token}`
 
     return NextResponse.json({ 
       message: 'If an account with that email exists, you will receive a password reset link.',
-      // Development mode: include link for testing
       ...(process.env.NODE_ENV === 'development' && { devResetLink: resetLink })
     })
 
