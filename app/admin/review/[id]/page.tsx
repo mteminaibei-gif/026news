@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { createClient } from '@/lib/supabase/server'
 import { AdminReviewClient } from '@/components/admin/AdminReviewClient'
 
@@ -70,26 +70,11 @@ export default async function ReviewPage({ params }: Props) {
   }
 
   return (
-    <>
-      <Topbar
-        title="Review Article Submission"
-        user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }}
-      >
-        <Link
-          href="/admin/articles"
-          className="text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300"
-          style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}
-        >
-          ← Back to Articles
-        </Link>
-      </Topbar>
-
-      <div className="p-6 flex-1">
-        <AdminReviewClient
-          article={article}
-          authorArticleCount={authorArticleCount}
-        />
-      </div>
-    </>
+    <div className="p-6 flex-1">
+      <AdminReviewClient
+        article={article}
+        authorArticleCount={authorArticleCount}
+      />
+    </div>
   )
 }

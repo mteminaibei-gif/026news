@@ -403,17 +403,17 @@ export default function AdminProfilePage() {
         <button onClick={() => setActiveTab('dashboard')}
           className="profile-tab-btn"
           style={{ fontWeight: 500, color: activeTab === 'dashboard' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'dashboard' ? 'var(--primary)' : 'transparent' }}>
-          📊 Dashboard
+          Dashboard
         </button>
         <button onClick={() => setActiveTab('articles')}
           className="profile-tab-btn"
           style={{ fontWeight: 500, color: activeTab === 'articles' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'articles' ? 'var(--primary)' : 'transparent' }}>
-          📋 Articles ({articles.length})
+          Articles ({articles.length})
         </button>
         <button onClick={() => setActiveTab('control-panel')}
           className="profile-tab-btn"
           style={{ fontWeight: 500, color: activeTab === 'control-panel' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'control-panel' ? 'var(--primary)' : 'transparent' }}>
-          ⚙️ Control Panel
+          Control Panel
         </button>
         <button onClick={() => setActiveTab('about')}
           className="profile-tab-btn"

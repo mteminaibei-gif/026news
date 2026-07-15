@@ -1,86 +1,231 @@
-import Image from 'next/image'
+'use client'
+
 import Link from 'next/link'
-import { NotificationBell } from '@/components/ui/NotificationBell'
+import { useState } from 'react'
 
-interface TopbarProps {
-  title: string
-  user: { name: string; profile_image: string | null; user_id?: number; role?: 'admin' | 'journalist' | 'reader' }
-  children?: React.ReactNode
-}
+type TopbarUser = { name: string | null; profile_image: string | null }
 
-export function Topbar({ title, user, children }: TopbarProps) {
+export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
+  const [open, setOpen] = useState(false)
+
   return (
     <header
-      className="backdrop-blur-md px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20"
-      style={{ background: 'var(--nav-bg)', borderBottom: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'var(--nav-bg)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid var(--border)',
+      }}
     >
-      {/* Left: Kenya accent bar + title */}
-      <div className="flex items-center gap-3">
-        <span
-          className="w-1.5 h-8 rounded-full shrink-0"
-          style={{ background: 'linear-gradient(to bottom, var(--error), var(--text-primary), var(--success))' }}
-        />
-        <div>
-          <h1
-            className="text-lg sm:text-xl font-bold"
-            style={{ fontFamily: "'Newsreader', Georgia, serif", color: 'var(--primary)' }}
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: '0 auto',
+          height: 53,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              N
+            </div>
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: 18,
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-display)',
+              }}
+            >
+              026<span style={{ color: 'var(--primary)' }}>NEWS</span>
+            </span>
+          </Link>
+          {title && (
+            <span
+              style={{
+                fontSize: 15,
+                fontWeight: 500,
+                color: 'var(--text-primary)',
+                marginLeft: 8,
+                paddingLeft: 12,
+                borderLeft: '1px solid var(--border)',
+              }}
+            >
+              {title}
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link
+            href="/"
+            style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+              padding: '6px 12px',
+              borderRadius: 8,
+              transition: 'background 0.15s',
+            }}
           >
-            {title}
-          </h1>
-          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-            <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: 'var(--success)' }} />
-            <span>Live Dashboard</span>
+            Home
+          </Link>
+
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setOpen(!open)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '4px 8px',
+                border: 'none',
+                borderRadius: 8,
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              {user.profile_image ? (
+                <img
+                  src={user.profile_image}
+                  alt={user.name || ''}
+                  width={32}
+                  height={32}
+                  style={{ borderRadius: '50%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: 'var(--primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  {(user.name || 'U')[0]?.toUpperCase()}
+                </div>
+              )}
+            </button>
+
+            {open && (
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                  onClick={() => setOpen(false)}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '100%',
+                    marginTop: 4,
+                    width: 220,
+                    background: 'var(--bg-surface)',
+                    borderRadius: 12,
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+                    padding: 4,
+                    zIndex: 100,
+                  }}
+                >
+                  <div style={{ padding: '8px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                    Signed in as <strong style={{ color: 'var(--text-primary)' }}>{user.name || 'User'}</strong>
+                  </div>
+                  <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                  <Link
+                    href="/admin/profile"
+                    onClick={() => setOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '8px 12px',
+                      fontSize: 13,
+                      color: 'var(--text-primary)',
+                      textDecoration: 'none',
+                      borderRadius: 8,
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    Admin Dashboard
+                  </Link>
+                  <Link
+                    href="/journalist/profile"
+                    onClick={() => setOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '8px 12px',
+                      fontSize: 13,
+                      color: 'var(--text-primary)',
+                      textDecoration: 'none',
+                      borderRadius: 8,
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    Journalist Dashboard
+                  </Link>
+                  <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                  <button
+                    onClick={async () => {
+                      const { createClient } = await import('@/lib/supabase/client')
+                      const supabase = createClient()
+                      await supabase.auth.signOut()
+                      window.location.href = '/'
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '8px 12px',
+                      fontSize: 13,
+                      color: 'var(--error)',
+                      background: 'none',
+                      border: 'none',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--error-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-3 sm:gap-4">
-        {children}
-
-        <span className="text-sm hidden sm:block font-medium" style={{ color: 'var(--text-secondary)' }}>
-          Welcome, <span className="font-bold" style={{ color: 'var(--primary)' }}>{user.name}</span>
-        </span>
-
-        {/* Notification bell */}
-        {user.user_id && (
-          <div className="relative">
-            <NotificationBell
-              userId={user.user_id}
-              role={user.role ?? 'journalist'}
-            />
-          </div>
-        )}
-
-        {/* Profile avatar with enhanced styling */}
-        <Link
-          href={user.role === 'admin' ? '/admin/settings' : '/journalist/profile'}
-          aria-label="View profile"
-          className="transition-all duration-300 hover:scale-110 group"
-        >
-          {user.profile_image ? (
-            <div className="relative">
-              <Image
-                src={user.profile_image}
-                alt={user.name}
-                width={40}
-                height={40}
-                className="rounded-full object-cover transition-all duration-300 shadow-md"
-                style={{ border: '2px solid var(--primary-light)' }}
-              />
-              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ background: 'var(--success)' }} />
-            </div>
-          ) : (
-            <div className="relative">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-300 shadow-md"
-                style={{ background: 'linear-gradient(to bottom right, var(--primary), var(--success))', border: '2px solid var(--primary-light)' }}
-              >
-                {user.name.charAt(0)}
-              </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ background: 'var(--success)' }} />
-            </div>
-          )}
-        </Link>
       </div>
     </header>
   )

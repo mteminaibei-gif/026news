@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Topbar } from '@/components/layout/Topbar'
 import { BadgePill } from '@/components/ui/BadgePill'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
@@ -160,17 +159,20 @@ export default function JournalistProfilePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen">
-      <Topbar title="Author Dashboard" user={{ name: profile.name, profile_image: profile.profile_image }}>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === 'dashboard' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}>
-            📊 Dashboard
-          </button>
-          <button onClick={() => setActiveTab('profile')} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === 'profile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}>
-            👤 Profile
-          </button>
-        </div>
-      </Topbar>
+    <div>
+      {/* Tab Navigation */}
+      <div className="profile-tabs" style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+        <button onClick={() => setActiveTab('dashboard')}
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'dashboard' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'dashboard' ? 'var(--primary)' : 'transparent' }}>
+          Dashboard
+        </button>
+        <button onClick={() => setActiveTab('profile')}
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'profile' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'profile' ? 'var(--primary)' : 'transparent' }}>
+          Profile
+        </button>
+      </div>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-5">
         {activeTab === 'dashboard' && (

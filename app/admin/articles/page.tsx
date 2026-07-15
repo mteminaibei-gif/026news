@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { Badge } from '@/components/ui/Badge'
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { AdminArticleEditTags } from '@/components/admin/AdminArticleEditTags'
@@ -46,15 +46,12 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     supabase = await createClient()
   } catch {
     return (
-      <>
-        <Topbar title="Articles Management" user={{ name: 'Admin', profile_image: null }} />
-        <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
-          <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
-            <p className="text-lg font-semibold mb-2">Unable to connect to database</p>
-            <p className="text-sm">Please try refreshing the page.</p>
-          </div>
+      <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
+        <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
+          <p className="text-lg font-semibold mb-2">Unable to connect to database</p>
+          <p className="text-sm">Please try refreshing the page.</p>
         </div>
-      </>
+      </div>
     )
   }
 
@@ -124,21 +121,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
   ]
 
   return (
-    <>
-      <Topbar
-        title="Articles Management"
-        user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }}
-      >
-        <Link
-          href="/admin/write"
-          className="flex items-center gap-1.5 font-bold px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
-          style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
-        >
-          Write Article
-        </Link>
-      </Topbar>
-
-      <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
+    <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
@@ -309,6 +292,5 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           )}
         </div>
       </div>
-    </>
   )
 }

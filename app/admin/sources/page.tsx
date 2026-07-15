@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { createClient } from '@/lib/supabase/server'
 import { AdminSourcesClient } from '@/components/admin/AdminSourcesClient'
 
@@ -42,14 +42,8 @@ export default async function AdminSourcesPage() {
   const categories = (rawCats  ?? []) as unknown as Category[]
 
   return (
-    <>
-      <Topbar
-        title="News Sources"
-        user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }}
-      />
-      <div className="p-6 flex-1">
-        <AdminSourcesClient feeds={feeds} categories={categories} />
-      </div>
-    </>
+    <div className="p-6 flex-1">
+      <AdminSourcesClient feeds={feeds} categories={categories} />
+    </div>
   )
 }

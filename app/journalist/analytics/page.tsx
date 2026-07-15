@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { StatCard } from '@/components/ui/StatCard'
 import { BarChart } from '@/components/ui/BarChart'
 import { createClient } from '@/lib/supabase/server'
@@ -51,8 +51,6 @@ export default async function JournalistAnalyticsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
-      <Topbar title="Analytics" user={profile as { name: string; profile_image: string | null }} />
-
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
 
         {/* KPI Cards */}

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { createClient } from '@/lib/supabase/server'
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard'
 
@@ -19,15 +19,12 @@ export default async function AdminAnalyticsPage() {
     supabase = await createClient()
   } catch {
     return (
-      <>
-        <Topbar title="Platform Analytics" user={{ name: 'Admin', profile_image: null }} />
-        <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
-          <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
-            <p className="text-lg font-semibold mb-2">Unable to connect to database</p>
-            <p className="text-sm">Please try refreshing the page.</p>
-          </div>
+      <div className="p-6 flex-1" style={{ background: 'var(--bg-base)' }}>
+        <div className="text-center py-16" style={{ color: 'var(--text-tertiary)' }}>
+          <p className="text-lg font-semibold mb-2">Unable to connect to database</p>
+          <p className="text-sm">Please try refreshing the page.</p>
         </div>
-      </>
+      </div>
     )
   }
 
@@ -86,19 +83,16 @@ export default async function AdminAnalyticsPage() {
   const monthRevenue = earnings.filter(e => e.created_at.startsWith(thisMonth)).reduce((s, e) => s + Number(e.amount), 0)
 
   return (
-    <>
-      <Topbar title="Platform Analytics" user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }} />
-      <AnalyticsDashboard
-        initialTopArticles={topArticles}
-        initialEarnings={earnings}
-        initialNewUsers={newUsers}
-        initialTotalArticles={totalArticles}
-        initialTotalUsers={totalUsers}
-        initialTotalJournalists={totalJournalists}
-        initialTotalViews={totalViews}
-        initialTotalRevenue={totalRevenue}
-        initialMonthRevenue={monthRevenue}
-      />
-    </>
+    <AnalyticsDashboard
+      initialTopArticles={topArticles}
+      initialEarnings={earnings}
+      initialNewUsers={newUsers}
+      initialTotalArticles={totalArticles}
+      initialTotalUsers={totalUsers}
+      initialTotalJournalists={totalJournalists}
+      initialTotalViews={totalViews}
+      initialTotalRevenue={totalRevenue}
+      initialMonthRevenue={monthRevenue}
+    />
   )
 }

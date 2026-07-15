@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { StatCard } from '@/components/ui/StatCard'
 import { BarChart } from '@/components/ui/BarChart'
 import { createClient } from '@/lib/supabase/server'
@@ -70,10 +70,7 @@ export default async function AdminEarningsPage() {
   }
 
   return (
-    <>
-      <Topbar title="Platform Earnings" user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }} />
-
-      <div className="p-6 flex-1 space-y-6" style={{ background: 'var(--bg-base)' }}>
+    <div className="p-6 flex-1 space-y-6" style={{ background: 'var(--bg-base)' }}>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -99,7 +96,6 @@ export default async function AdminEarningsPage() {
           payouts={payouts}
         />
 
-      </div>
-    </>
+    </div>
   )
 }

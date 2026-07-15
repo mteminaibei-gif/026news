@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { createClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import type { PostgrestResponse } from '@supabase/supabase-js'
@@ -92,8 +92,6 @@ export default async function AdminJournalistsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Topbar title="Authors Management" user={{ name: admin?.name ?? 'Admin', profile_image: admin?.profile_image ?? null }} />
-
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
 
         {/* Quick stats */}

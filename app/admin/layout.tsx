@@ -1,6 +1,6 @@
-import { Sidebar } from '@/components/layout/Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { Topbar } from '@/components/layout/Topbar'
 
 type UserProfile = { name: string; profile_image: string | null; role: string }
 
@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) redirect('/login?error=login_required&redirect=/admin/dashboard')
+    if (!user) redirect('/login?error=login_required&redirect=/admin/profile')
 
     const { data: rawProfile } = await supabase
       .from('users')
@@ -24,20 +24,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
 
     return (
-      <div className="flex min-h-screen" style={{ background: 'var(--bg-base)' }}>
-        {/* Collapsible Sidebar */}
-        <Sidebar
-          role="admin"
-          user={{ name: profile.name, profile_image: profile.profile_image }}
-        />
-        
-        {/* Main content area - responsive with dynamic margin */}
-        <div className="flex-1 flex flex-col min-h-screen transition-all duration-300 md:ml-16 lg:ml-64">
+      <div className="flex-1 flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
+        <Topbar title="Admin" user={{ name: profile.name, profile_image: profile.profile_image }} />
+        <div className="flex-1">
           {children}
         </div>
       </div>
     )
   } catch {
-    redirect('/login?error=login_required&redirect=/admin/dashboard')
+    redirect('/login?error=login_required&redirect=/admin/profile')
   }
 }

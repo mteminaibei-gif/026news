@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { StatCard } from '@/components/ui/StatCard'
 import { BarChart } from '@/components/ui/BarChart'
 import { Badge } from '@/components/ui/Badge'
@@ -100,8 +100,6 @@ export default function JournalistEarningsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
-      <Topbar title="Earnings" user={{ name: profile.name, profile_image: profile.profile_image }} />
-
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard label="Total Earnings" value={formatCurrency(totalEarnings)} sub="All time" accent="kenya" icon="💰" />

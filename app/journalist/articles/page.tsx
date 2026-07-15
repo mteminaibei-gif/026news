@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { Badge } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
 import { JournalistArticlesClient } from './JournalistArticlesClient'
@@ -30,8 +30,6 @@ export default async function JournalistArticlesPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
-      <Topbar title="My Articles" user={{ name: (profile as { name: string }).name, profile_image: (profile as { profile_image: string | null }).profile_image }} />
-
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
         <JournalistArticlesClient
           articles={(articles ?? []) as unknown as Array<{

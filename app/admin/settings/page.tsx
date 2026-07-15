@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Topbar } from '@/components/layout/Topbar'
+
 import { createClient } from '@/lib/supabase/client'
 
 const TABS = ['General', 'RSS & Publishing', 'Monetization', 'Notifications', 'Security', 'Integrations']
@@ -101,7 +101,6 @@ export default function AdminSettingsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-        <Topbar title="Settings" user={{ name: 'Admin', profile_image: null }} />
         <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8" style={{ color: 'var(--text-tertiary)' }}>Loading settings…</main>
       </div>
     )
@@ -130,8 +129,6 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Topbar title="Settings" user={admin ?? { name: 'Admin', profile_image: null }} />
-
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
         <div className="flex gap-1 backdrop-blur-sm rounded-2xl shadow-sm p-1 mb-6 overflow-x-auto" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
           {TABS.map((tab) => (
