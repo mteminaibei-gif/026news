@@ -8,6 +8,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { RealtimeShell } from '@/components/providers/RealtimeShell';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
+import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
 import StyledJsxRegistry from './registry';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
@@ -96,10 +97,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <QueryProvider>
             <RealtimeShell>
               <RadioProvider>
-                <StyledJsxRegistry>
-                  {children}
-                  <CookieConsent />
-                </StyledJsxRegistry>
+                <TVGlobalProvider>
+                  <StyledJsxRegistry>
+                    {children}
+                    <CookieConsent />
+                  </StyledJsxRegistry>
+                </TVGlobalProvider>
               </RadioProvider>
             </RealtimeShell>
           </QueryProvider>

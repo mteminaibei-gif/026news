@@ -5,8 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { TVProvider, useTV } from '@/components/tv/TVProvider'
-import { TVPlayer } from '@/components/tv/TVPlayer'
+import { TVGlobalProvider, useTVGlobal } from '@/components/tv/TVGlobalProvider'
 import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
@@ -27,7 +26,7 @@ type TVArticle = {
 }
 
 function TVPageContent() {
-  const { currentStation, isPlaying, playStation } = useTV()
+  const { currentStation, isPlaying, playStation, stop, status, error } = useTVGlobal()
   const [articles, setArticles] = useState<TVArticle[]>([])
   const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'africa' | 'global'>('live')
 
@@ -184,13 +183,19 @@ function TVPageContent() {
                 ✕
               </button>
             </div>
-            {/* Video embed */}
-            <div className="relative bg-black" style={{ paddingBottom: '56.25%' }}>
-              {isPlaying && <TVPlayer station={currentStation} isPlaying={isPlaying} />}
+            {/* Video embed - handled by global TV widget */}
+            <div className="relative bg-black" style={{ paddingBottom: '56.25%', minHeight: 200 }}>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p style={{ color: 'white', textAlign: 'center', padding: '20px' }}>
+                  TV is playing in the floating widget — click the 📺 icon bottom-right to expand
+                </p>
+              </div>
             </div>
             {/* Station info footer */}
             <div className="px-4 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
               <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{currentStation.name} — {currentStation.genre}</p>
+              {status === 'loading' && <p className="text-xs text-yellow-400 mt-1">Connecting...</p>}
+              {status === 'error' && <p className="text-xs text-red-400 mt-1">{error}</p>}
             </div>
           </div>
         )}
@@ -295,8 +300,6 @@ function TVPageContent() {
 
 export default function TVPage() {
   return (
-    <TVProvider>
-      <TVPageContent />
-    </TVProvider>
+    <TVPageContent />
   )
 }
