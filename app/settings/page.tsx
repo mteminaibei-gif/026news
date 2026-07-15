@@ -89,17 +89,6 @@ export default function SettingsPage() {
     setError('');
     setSaved(false);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('You must be signed in.'); return; }
-
-      const { data: profile } = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('auth_id', user.id)
-        .single();
-      if (!profile) { setError('Profile not found.'); return; }
-
       const prefs = {
         email_notifications: emailNotifications,
         comment_notifications: commentNotifications,
@@ -109,26 +98,29 @@ export default function SettingsPage() {
         reading_history: readingHistory,
       };
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          name,
-          bio,
-          notification_prefs: prefs,
-          updated_at: new Date().toISOString(),
-        } as never)
-        .eq('user_id', (profile as { user_id: number }).user_id);
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, bio, notification_prefs: prefs }),
+      });
 
-      if (updateError) { setError('Failed to save profile settings.'); return; }
-
-      // Account changes (best-effort)
-      if (newEmail) {
-        const { error: e } = await supabase.auth.updateUser({ email: newEmail });
-        if (e) setError('Profile saved, but email change failed: ' + e.message);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? 'Failed to save profile settings.');
+        return;
       }
-      if (newPassword) {
-        const { error: e } = await supabase.auth.updateUser({ password: newPassword });
-        if (e) setError('Profile saved, but password change failed: ' + e.message);
+
+      // Account changes (best-effort, via Supabase auth directly)
+      if (newEmail || newPassword) {
+        const supabase = createClient();
+        if (newEmail) {
+          const { error: e } = await supabase.auth.updateUser({ email: newEmail });
+          if (e) setError('Profile saved, but email change failed: ' + e.message);
+        }
+        if (newPassword) {
+          const { error: e } = await supabase.auth.updateUser({ password: newPassword });
+          if (e) setError('Profile saved, but password change failed: ' + e.message);
+        }
       }
 
       setSaved(true);
