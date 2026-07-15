@@ -58,7 +58,9 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
 
 export function AdminControlPanel() {
   const [activeTab, setActiveTab] = useState('overview')
-  const { metrics } = useRealtimeAnalytics()
+  const { metrics } = useRealtimeAnalytics({
+    totalArticles: 0, totalUsers: 0, totalJournalists: 0, totalViews: 0, totalRevenue: 0, monthRevenue: 0,
+  })
 
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     maintenance_mode: false,
