@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Eye, User } from 'lucide-react'
+import { stripHtml } from '@/lib/utils'
 
 interface HeroArticle {
   article_id: string
@@ -57,7 +58,7 @@ export default function HeroSlideshow() {
   }
 
   const currentArticle = articles[currentIndex]
-  const excerpt = currentArticle.content.substring(0, 150).replace(/<[^>]*>/g, '') + '...'
+  const excerpt = stripHtml(currentArticle.content).substring(0, 150) + '...'
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + articles.length) % articles.length)

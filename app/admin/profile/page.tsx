@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Heart, Bookmark, MessageSquare, Bell, Settings, Check, Loader2 } from 'lucide-react'
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, stripHtml } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 import { ProfileNav } from '@/components/layout/ProfileNav'
 
@@ -282,7 +282,7 @@ export default function AdminProfilePage() {
                             <span style={{ fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', padding: '1px 6px', borderRadius: 4, background: article.status === 'published' ? '#22c55e20' : article.status === 'review' ? '#f59e0b20' : 'var(--bg-inset)', color: article.status === 'published' ? '#22c55e' : article.status === 'review' ? '#f59e0b' : 'var(--text-tertiary)' }}>{article.status}</span>
                           </div>
                           <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.35, marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
-                          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.content.slice(0, 160).replace(/\n/g, ' ')}...</p>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{stripHtml(article.content).slice(0, 160)}...</p>
                         </Link>
                       </div>
                       <div style={{ display: 'flex', gap: 14, fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: 12, alignItems: 'center' }}>

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
-import { formatDate, formatNumber } from '@/lib/utils'
+import { formatDate, formatNumber, stripHtml } from '@/lib/utils'
 
 interface ArticleCardProps {
   article: {
@@ -129,7 +129,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
         </h3>
 
         <p className="text-sm line-clamp-2 mb-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          {article.excerpt?.trim() || article.content.substring(0, 120)}...
+          {article.excerpt?.trim() || stripHtml(article.content).substring(0, 120)}...
         </p>
 
         {sourceHost && (

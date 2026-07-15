@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, stripHtml } from '@/lib/utils'
 import { TrendingUp, MessageSquare, Clock, Loader2, Eye, Bookmark, BookmarkCheck } from 'lucide-react'
 
 type Filter = 'trending' | 'latest' | 'discussed'
@@ -189,7 +189,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                         {featured.title}
                       </h2>
                       <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 16 }}>
-                        {featured.content.substring(0, 200)}...
+                        {stripHtml(featured.content).substring(0, 200)}...
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.82rem', color: 'var(--text-tertiary)' }}>
                         <span>{featured.author?.name ?? 'Staff Writer'}</span>

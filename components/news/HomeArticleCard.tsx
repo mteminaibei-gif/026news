@@ -4,13 +4,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, MessageCircle, Share2 } from 'lucide-react'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
-import { formatNumber, formatDate } from '@/lib/utils'
+import { formatNumber, formatDate, stripHtml } from '@/lib/utils'
 import { useLike } from '@/lib/hooks/useLike'
 
 export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
   const excerpt =
     article.excerpt?.trim() ||
-    article.content.replace(/\n+/g, ' ').slice(0, 160).trim()
+    stripHtml(article.content).replace(/\n+/g, ' ').slice(0, 160).trim()
 
   const readTime = article.reading_time_minutes ?? 0
   const comments = article.analytics?.comments_count ?? 0

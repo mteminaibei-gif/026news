@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, stripHtml } from '@/lib/utils'
 import Link from 'next/link'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
@@ -320,7 +320,7 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
                     overflow: 'hidden',
                   }}
                 >
-                  {article.content?.slice(0, 140).replace(/\n/g, ' ') + '...'}
+                  {stripHtml(article.content ?? '').slice(0, 140) + '...'}
                 </p>
 
                 <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>

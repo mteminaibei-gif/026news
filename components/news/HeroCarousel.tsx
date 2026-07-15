@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Radio } from 'lucide-react'
-import { formatDate, formatNumber, readingTime } from '@/lib/utils'
+import { formatDate, formatNumber, readingTime, stripHtml } from '@/lib/utils'
 
 interface SlideArticle {
   article_id: number
@@ -142,7 +142,7 @@ export function HeroCarousel({ articles }: Props) {
 
           {/* Excerpt */}
           <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: 20, maxWidth: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {slide.content.replace(/\n+/g, ' ').slice(0, 200).trim()}…
+            {stripHtml(slide.content).replace(/\n+/g, ' ').slice(0, 200).trim()}…
           </p>
 
           {/* Meta */}
