@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { TVStation } from '@/lib/tv/stations'
-import { TVWidget } from './TVWidget'
 
 interface TVContextValue {
   currentStation: TVStation | null
@@ -40,7 +39,6 @@ export function TVProvider({ children }: { children: ReactNode }) {
   return (
     <TVContext.Provider value={{ currentStation, isPlaying, playStation, stop }}>
       {children}
-      <TVWidget />
     </TVContext.Provider>
   )
 }

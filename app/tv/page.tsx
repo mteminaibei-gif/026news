@@ -151,29 +151,53 @@ function TVPageContent() {
       </section>
 
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 64px', width: '100%' }}>
-        {/* Currently Playing Banner */}
+        {/* Inline Player — shows when a station is selected */}
         {currentStation && (
           <div
-            className="rounded-2xl p-4 mb-6 flex items-center gap-4"
-            style={{ background: `${currentStation.color}12`, border: `1px solid ${currentStation.color}33` }}
+            className="rounded-2xl overflow-hidden mb-8"
+            style={{ border: `2px solid ${currentStation.color}`, boxShadow: `0 8px 32px ${currentStation.color}22` }}
           >
+            {/* Player header */}
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `linear-gradient(135deg, ${currentStation.color} 0%, ${currentStation.color}88 100%)` }}
+              className="flex items-center justify-between px-4 py-3"
+              style={{ background: currentStation.color }}
             >
-              <span className="text-2xl">{currentStation.logo}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{currentStation.name}</span>
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold uppercase">
-                  <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                  LIVE
-                </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{currentStation.logo}</span>
+                <div>
+                  <span className="text-white font-bold text-sm">{currentStation.name}</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="flex items-center gap-1 text-white/80 text-[10px] font-bold uppercase">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      LIVE
+                    </span>
+                    <span className="text-white/60 text-[10px]">{currentStation.viewers.toLocaleString()} watching</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {currentStation.genre} · Click another station to switch
-              </p>
+              <button
+                onClick={stop}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-sm transition-colors"
+                aria-label="Close player"
+              >
+                ✕
+              </button>
+            </div>
+            {/* Video embed */}
+            <div className="relative bg-black" style={{ paddingBottom: '56.25%' }}>
+              {isPlaying && (
+                <iframe
+                  src={`https://www.youtube.com/embed/${currentStation.youtubeId}?autoplay=1&mute=0&rel=0&modestbranding=1&controls=1`}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={`Live: ${currentStation.name}`}
+                />
+              )}
+            </div>
+            {/* Station info footer */}
+            <div className="px-4 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
+              <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{currentStation.name} — {currentStation.genre}</p>
             </div>
           </div>
         )}
