@@ -34,17 +34,17 @@ export function useArticleStats(articleId: number, initial: ArticleStats) {
       )
       .subscribe()
 
-    // Subscribe to likes count changes
+    // Subscribe to likes count changes (API writes to `likes` table)
     const likesChannel = supabase
       .channel(`article-likes:${articleId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'article_likes', filter: `article_id=eq.${articleId}` },
+        { event: 'INSERT', schema: 'public', table: 'likes', filter: `article_id=eq.${articleId}` },
         () => setStats(s => ({ ...s, likes: s.likes + 1 }))
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'article_likes', filter: `article_id=eq.${articleId}` },
+        { event: 'DELETE', schema: 'public', table: 'likes', filter: `article_id=eq.${articleId}` },
         () => setStats(s => ({ ...s, likes: Math.max(0, s.likes - 1) }))
       )
       .subscribe()

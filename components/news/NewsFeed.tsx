@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
+import { Heart, MessageCircle } from 'lucide-react'
+import { useLike } from '@/lib/hooks/useLike'
 import Link from 'next/link'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
@@ -40,6 +42,7 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
+  const [likedArticles, setLikedArticles] = useState<Set<number>>(new Set())
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
@@ -211,6 +214,22 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
     })
   }
 
+  const handleLike = async (articleId: number) => {
+    setLikedArticles(prev => {
+      const next = new Set(prev)
+      if (next.has(articleId)) next.delete(articleId)
+      else next.add(articleId)
+      return next
+    })
+    try {
+      await fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article_id: articleId }),
+      })
+    } catch {}
+  }
+
   if (articles.length === 0) {
     return (
       <div className="rounded-xl p-8 text-center" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
@@ -337,6 +356,31 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
                   <span>·</span>
                   <span>{formatNumber(article.views)} views</span>
                   <span style={{ flex: 1 }} />
+                  <button
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); handleLike(article.article_id) }}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 6,
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      color: likedArticles.has(article.article_id) ? 'var(--primary)' : 'var(--text-muted)',
+                      fontSize: '0.75rem', fontWeight: 500,
+                    }}
+                    title="Like"
+                  >
+                    <Heart size={14} fill={likedArticles.has(article.article_id) ? 'currentColor' : 'none'} />
+                    {formatNumber((article.likes ?? article.like_count ?? 0) + (likedArticles.has(article.article_id) ? 1 : 0))}
+                  </button>
+                  <Link
+                    href={`/article/${article.slug}#comments`}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500,
+                      textDecoration: 'none', padding: 6,
+                    }}
+                    title="Comments"
+                  >
+                    <MessageCircle size={14} />
+                  </Link>
                   <button
                     onClick={e => { e.preventDefault(); e.stopPropagation(); toggleBookmark(article.article_id) }}
                     style={{

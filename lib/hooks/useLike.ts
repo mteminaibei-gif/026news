@@ -9,7 +9,7 @@ import { useUser } from './useAuth'
  * - Reading the count/state is public.
  * - Toggling requires a signed-in user; otherwise we redirect to login.
  */
-export function useLike(articleId: number, initialLikes: number, redirectTo: string, lazy = false) {
+export function useLike(articleId: number, initialLikes: number, redirectTo: string) {
   const router = useRouter()
   const { data: user } = useUser()
 
@@ -18,7 +18,6 @@ export function useLike(articleId: number, initialLikes: number, redirectTo: str
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (lazy) return
     let active = true
     fetch(`/api/likes?article_id=${articleId}`)
       .then(r => (r.ok ? r.json() : null))
@@ -30,7 +29,7 @@ export function useLike(articleId: number, initialLikes: number, redirectTo: str
       })
       .catch(() => {})
     return () => { active = false }
-  }, [articleId, lazy])
+  }, [articleId])
 
   const toggle = useCallback(async () => {
     if (!user) {

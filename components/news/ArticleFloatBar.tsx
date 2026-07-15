@@ -92,12 +92,18 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
 
   const share = async () => {
     const url = `${window.location.origin}/article/${slug}`
+    // Increment share count
+    fetch('/api/shares', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ article_id: articleId }),
+    }).catch(() => {})
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({ title: document.title, url })
         return
       } catch {
-        return // user dismissed the share sheet
+        return
       }
     }
     try {

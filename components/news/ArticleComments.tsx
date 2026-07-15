@@ -29,10 +29,20 @@ function initials(name?: string | null): string {
 
 export function ArticleComments({ articleId, initialComments }: { articleId: number; initialComments: CommentWithUser[] }) {
   const [comments, setComments] = useState<CommentWithUser[]>(initialComments)
+  const [likedComments, setLikedComments] = useState<Set<number>>(new Set())
   const { data: user, isLoading } = useUser()
   const pathname = usePathname()
 
   const handlePosted = (c: CommentWithUser) => setComments(prev => [c, ...prev])
+
+  const toggleCommentLike = (commentId: number) => {
+    setLikedComments(prev => {
+      const next = new Set(prev)
+      if (next.has(commentId)) next.delete(commentId)
+      else next.add(commentId)
+      return next
+    })
+  }
 
   return (
     <div>
@@ -77,8 +87,13 @@ export function ArticleComments({ articleId, initialComments }: { articleId: num
               </div>
               <p className="comment-text">{c.comment_text}</p>
               <div className="comment-actions">
-                <button className="comment-action" type="button">
-                  <Heart size={13} /> 0
+                <button
+                  className={`comment-action ${likedComments.has(c.comment_id) ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => toggleCommentLike(c.comment_id)}
+                  style={{ color: likedComments.has(c.comment_id) ? 'var(--primary)' : undefined }}
+                >
+                  <Heart size={13} fill={likedComments.has(c.comment_id) ? 'currentColor' : 'none'} /> {likedComments.has(c.comment_id) ? 1 : 0}
                 </button>
                 <button className="comment-action" type="button">
                   <MessageCircle size={13} /> Reply

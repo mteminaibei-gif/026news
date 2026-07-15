@@ -21,7 +21,6 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
     article.article_id,
     initialLikes,
     `/article/${article.slug}`,
-    true,
   )
 
   const image =
