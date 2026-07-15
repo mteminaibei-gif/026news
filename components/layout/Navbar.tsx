@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/ThemeProvider'
-import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio, Newspaper, Compass, FileText, PenLine } from 'lucide-react'
+import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio, Newspaper, Compass, FileText, PenLine, MessageSquare } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
@@ -98,6 +98,7 @@ export function Navbar() {
                 : href === '/articles' ? FileText
                 : href === '/radio' ? Radio
                 : href === '/journalists' ? PenLine
+                : href === '/inbox' ? MessageSquare
                 : null
               return (
                 <Link
@@ -406,6 +407,7 @@ export function Navbar() {
                 : href === '/articles' ? FileText
                 : href === '/radio' ? Radio
                 : href === '/journalists' ? PenLine
+                : href === '/inbox' ? MessageSquare
                 : null
               return (
                 <li key={href}>

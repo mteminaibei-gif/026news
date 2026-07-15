@@ -54,6 +54,7 @@ export const ROUTES = {
   // User
   PROFILE: '/profile',
   DASHBOARD: '/dashboard',
+  INBOX: '/inbox',
   
   // Other
   SUBSCRIBE: '/subscribe',
@@ -66,6 +67,7 @@ export const NAV_LINKS = [
   { href: ROUTES.ARTICLES, label: 'Articles', icon: '📑' },
   { href: ROUTES.RADIO, label: 'Radio', icon: '📻' },
   { href: ROUTES.AUTHORS, label: 'Authors', icon: '✍️' },
+  { href: ROUTES.INBOX, label: 'Inbox', icon: '💬' },
 ] as const
 
 export const FOOTER_LINKS = {

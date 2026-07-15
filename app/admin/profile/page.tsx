@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, Share2, UserPlus, UserMinus, Loader2, Check } from 'lucide-react'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Check, Loader2 } from 'lucide-react'
 import { formatNumber } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 
@@ -27,11 +27,9 @@ interface Conversation {
   last_message: string; last_message_at: string; unread: number
 }
 
-export default function JournalistProfilePage() {
+export default function AdminProfilePage() {
   const router = useRouter()
-  const params = useParams()
   const supabase = createClient()
-  const targetUserId = Number(params.id)
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
@@ -46,19 +44,12 @@ export default function JournalistProfilePage() {
   const [following, setFollowing] = useState<any[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
 
-  const [isFollowing, setIsFollowing] = useState(false)
-  const [followLoading, setFollowLoading] = useState(false)
-  const [showChat, setShowChat] = useState(false)
-  const [profileLoading, setProfileLoading] = useState(true)
-
   useEffect(() => {
-    if (!targetUserId) return
-    resolveCurrentUser()
-  }, [targetUserId])
+    resolveAndLoad()
+  }, [])
 
   useEffect(() => {
     if (currentUserId === null) return
-    loadProfile()
     loadArticles()
     loadSaved()
     loadLiked()
@@ -66,33 +57,26 @@ export default function JournalistProfilePage() {
     loadNotifs()
     loadFollowing()
     loadConversations()
-    checkFollowStatus()
-  }, [currentUserId, targetUserId])
+  }, [currentUserId])
 
-  async function resolveCurrentUser() {
+  async function resolveAndLoad() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    if (authUser?.id) {
-      const { data } = await supabase.from('users').select('user_id').eq('auth_id', authUser.id).single()
-      if (data) setCurrentUserId((data as { user_id: number }).user_id)
-    }
-    setProfileLoading(false)
-  }
+    if (!authUser?.id) { router.push('/login?redirect=/admin/profile'); setLoading(false); return }
 
-  async function loadProfile() {
-    const { data } = await supabase
-      .from('users')
-      .select('user_id, name, role, bio, profile_image, created_at, is_verified')
-      .eq('user_id', targetUserId)
-      .single()
-    if (data) setProfile(data as Profile)
+    const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).single()
+    if (data) {
+      setProfile(data as Profile)
+      setCurrentUserId((data as { user_id: number }).user_id)
+    }
+    setLoading(false)
   }
 
   async function loadArticles() {
+    if (!currentUserId) return
     const { data } = await supabase
       .from('articles')
       .select('*, category:categories(name)')
-      .eq('author_id', targetUserId)
-      .eq('status', 'published')
+      .eq('author_id', currentUserId)
       .order('created_at', { ascending: false })
       .limit(20)
     setArticles((data as Article[]) || [])
@@ -166,7 +150,7 @@ export default function JournalistProfilePage() {
       if (!msgs?.length) { setConversations([]); return }
 
       const convMap = new Map<number, Conversation>()
-      for (const msg of msgs as { sender_id: number; receiver_id: number; message: string; created_at: string }[]) {
+      for (const msg of msgs as { sender_id: number; receiver_id: number; message: string; created_at: string; is_read: boolean }[]) {
         const otherId: number = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id
         if (otherId === currentUserId) continue
         if (!convMap.has(otherId)) {
@@ -184,40 +168,8 @@ export default function JournalistProfilePage() {
     } catch { setConversations([]) }
   }
 
-  async function checkFollowStatus() {
-    if (!currentUserId) return
-    const { data } = await supabase
-      .from('user_follows')
-      .select('follow_id')
-      .eq('follower_id', currentUserId)
-      .eq('following_id', targetUserId)
-      .maybeSingle()
-    setIsFollowing(!!data)
-  }
-
-  async function toggleFollow() {
-    if (!currentUserId) { router.push('/login?redirect=' + encodeURIComponent(window.location.pathname)); return }
-    setFollowLoading(true)
-    try {
-      if (isFollowing) {
-        await supabase
-          .from('user_follows')
-          .delete()
-          .eq('follower_id', currentUserId)
-          .eq('following_id', targetUserId)
-        setIsFollowing(false)
-      } else {
-        await supabase
-          .from('user_follows')
-          .insert({ follower_id: currentUserId, following_id: targetUserId } as never)
-        setIsFollowing(true)
-      }
-    } catch {}
-    setFollowLoading(false)
-  }
-
   async function toggleSave(articleId: number) {
-    if (!currentUserId) { router.push('/login?redirect=' + encodeURIComponent(window.location.pathname)); return }
+    if (!currentUserId) return
     const exists = savedArticles.some(s => s.article_id === articleId)
     if (exists) {
       await supabase.from('saved_articles').delete().eq('user_id', currentUserId).eq('article_id', articleId)
@@ -229,7 +181,7 @@ export default function JournalistProfilePage() {
   }
 
   async function toggleLike(articleId: number) {
-    if (!currentUserId) { router.push('/login?redirect=' + encodeURIComponent(window.location.pathname)); return }
+    if (!currentUserId) return
     const exists = likedArticles.some(l => l.articles?.article_id === articleId)
     if (exists) {
       await supabase.from('article_likes').delete().eq('user_id', currentUserId).eq('article_id', articleId)
@@ -247,7 +199,7 @@ export default function JournalistProfilePage() {
     setNotifs(prev => prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n))
   }
 
-  if (loading || profileLoading) {
+  if (loading) {
     return (
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 className="animate-spin" size={32} style={{ color: 'var(--primary)' }} />
@@ -258,13 +210,12 @@ export default function JournalistProfilePage() {
   if (!profile) {
     return (
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
-        <p style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Author not found</p>
-        <button onClick={() => router.push('/')} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Back to Home</button>
+        <p style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Please log in</p>
+        <button onClick={() => router.push('/login?redirect=/admin/profile')} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Go to Login</button>
       </div>
     )
   }
 
-  const isOwnProfile = currentUserId === targetUserId
   const unreadNotifs = notifications.filter(n => !n.is_read)
   const totalUnread = conversations.reduce((s, c) => s + c.unread, 0)
   const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -289,25 +240,10 @@ export default function JournalistProfilePage() {
               {profile.is_verified && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)' }} title="Verified"><Check size={14} color="#fff" strokeWidth={3} /></span>
               )}
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: 6 }}>Admin</span>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.6, marginBottom: 16 }}>{profile.bio ?? 'No bio available.'}</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {!isOwnProfile && (
-                <button onClick={toggleFollow} disabled={followLoading}
-                  style={{ padding: '10px 20px', borderRadius: 9, fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 7, border: 'none',
-                    background: isFollowing ? 'var(--bg-elevated)' : 'var(--primary)', color: isFollowing ? 'var(--text-secondary)' : 'oklch(98% 0.005 175)' }}>
-                  {followLoading ? <Loader2 size={15} className="animate-spin" /> : isFollowing ? <UserMinus size={15} /> : <UserPlus size={15} />}
-                  {isFollowing ? 'Following' : 'Follow'}
-                </button>
-              )}
-              {!isOwnProfile && (
-                <button onClick={() => setShowChat(true)}
-                  style={{ padding: '10px 20px', borderRadius: 9, fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)' }}>
-                  <MessageSquare size={15} /> Message
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -336,7 +272,10 @@ export default function JournalistProfilePage() {
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
                         <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', marginBottom: 6 }}>{article.category?.name}</span>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{article.category?.name}</span>
+                            <span style={{ fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', padding: '1px 6px', borderRadius: 4, background: article.status === 'published' ? '#22c55e20' : article.status === 'review' ? '#f59e0b20' : 'var(--bg-inset)', color: article.status === 'published' ? '#22c55e' : article.status === 'review' ? '#f59e0b' : 'var(--text-tertiary)' }}>{article.status}</span>
+                          </div>
                           <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.35, marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
                           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.content.slice(0, 160).replace(/\n/g, ' ')}...</p>
                         </Link>
@@ -364,7 +303,7 @@ export default function JournalistProfilePage() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '64px 0', background: 'var(--bg-surface)', borderRadius: 16, border: '1px solid var(--border-subtle)' }}>
-                <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>No published articles yet.</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>No articles yet.</p>
               </div>
             )
           ) : (
@@ -383,7 +322,7 @@ export default function JournalistProfilePage() {
               </div>
               <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10, marginBottom: 16 }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Articles Published</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{articles.length}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{articles.filter(a => a.status === 'published').length}</div>
               </div>
               <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Total Views</div>
@@ -412,7 +351,7 @@ export default function JournalistProfilePage() {
                 <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px 0' }}>No notifications</p>
               )}
             </div>
-            <Link href="/notifications" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View All</Link>
+            <Link href="/admin/notifications" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View All</Link>
           </div>
 
           {/* Messages */}
@@ -423,8 +362,8 @@ export default function JournalistProfilePage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {conversations.length > 0 ? conversations.slice(0, 4).map(c => (
-                <div key={c.other_user.user_id} onClick={() => setShowChat(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'opacity 0.2s' }}>
+                <div key={c.other_user.user_id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}>
                   {c.other_user.profile_image ? (
                     <img src={c.other_user.profile_image} alt={c.other_user.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
@@ -468,20 +407,12 @@ export default function JournalistProfilePage() {
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
             <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>Quick Links</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><Bell size={14} /> Home</Link>
-              <Link href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><Settings size={14} /> Settings</Link>
+              <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><Bell size={14} /> Dashboard</Link>
+              <Link href="/admin/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><Settings size={14} /> Settings</Link>
             </div>
           </div>
         </aside>
       </div>
-
-      {showChat && (
-        <ChatWidget
-          receiverId={targetUserId}
-          receiverName={profile.name}
-          receiverImage={profile.profile_image}
-        />
-      )}
     </div>
   )
 }
