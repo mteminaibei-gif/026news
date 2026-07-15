@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Heart, Bookmark, MessageSquare, Bell, Settings, Loader2, Users, BarChart3, DollarSign, AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp, Users as UsersIcon, DollarSign as DollarSignIcon, Award, FileText, Settings as SettingsIcon, Plus, Eye, Edit, Trash2, Flag, Star, Share2, MoreHorizontal } from 'lucide-react'
 import { formatNumber, formatCurrency, stripHtml, timeAgo } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
-import { ProfileNav } from '@/components/layout/ProfileNav'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
@@ -408,13 +407,8 @@ export default function AdminProfilePage() {
         </button>
       </div>
 
-      {/* Content */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '220px 1fr 320px', gap: 32 }}>
-        {/* Profile Nav */}
-        <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
-          <ProfileNav role="admin" />
-        </aside>
-
+{/* Content */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
         {/* Main Content */}
         <main>
           {activeTab === 'dashboard' && (
@@ -655,90 +649,6 @@ export default function AdminProfilePage() {
             </div>
           )}
         </main>
-
-        {/* Sidebar */}
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Notifications */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ fontSize: '0.82rem', fontWeight: 700 }}>Notifications</h3>
-              {unreadNotifs.length > 0 && <span style={{ fontSize: '0.65rem', fontWeight: 600, background: 'var(--primary)', color: '#fff', borderRadius: 10, padding: '2px 7px' }}>{unreadNotifs.length}</span>}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {notifications.length > 0 ? notifications.slice(0, 4).map(n => (
-                <div key={n.notification_id} onClick={() => markNotifRead(n.notification_id)}
-                  style={{ padding: '12px 0', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: n.is_read ? 0.55 : 1, transition: 'opacity 0.2s' }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, marginBottom: 2 }}>{n.title}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.message}</div>
-                </div>
-              )) : (
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px 0' }}>No notifications</p>
-              )}
-            </div>
-            <Link href="/admin/notifications" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View All</Link>
-          </div>
-
-          {/* Messages */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ fontSize: '0.82rem', fontWeight: 700 }}>Messages</h3>
-              {totalUnread > 0 && <span style={{ fontSize: '0.65rem', fontWeight: 600, background: 'var(--primary)', color: '#fff', borderRadius: 10, padding: '2px 7px' }}>{totalUnread}</span>}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {conversations.length > 0 ? conversations.slice(0, 4).map(c => (
-                <div key={c.other_user.user_id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}>
-                  {c.other_user.profile_image ? (
-                    <img src={c.other_user.profile_image} alt={c.other_user.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0 }}>{c.other_user.name.charAt(0)}</div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 600 }}>{c.other_user.name}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.last_message}</div>
-                  </div>
-                </div>
-              )) : (
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px 0' }}>No messages</p>
-              )}
-            </div>
-            <Link href="/inbox" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View Inbox</Link>
-          </div>
-
-          {/* Following */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>Following</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {following.length > 0 ? following.slice(0, 4).map((f: any) => (
-                <div key={f.follow_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  {f.following?.profile_image ? (
-                    <img src={f.following.profile_image} alt={f.following.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0 }}>{f.following?.name?.charAt(0)}</div>
-                  )}
-                  <div>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 600 }}>{f.following?.name}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'capitalize' }}>{f.following?.role}</div>
-                  </div>
-                </div>
-              )) : (
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px 0' }}>Not following anyone</p>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14 }}>Quick Links</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><BarChart3 size={14} /> Dashboard</Link>
-              <Link href="/admin/articles" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><FileText size={14} /> Articles</Link>
-              <Link href="/admin/journalists" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><UsersIcon size={14} /> Journalists</Link>
-              <Link href="/admin/earnings" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><DollarSignIcon size={14} /> Earnings</Link>
-              <Link href="/admin/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', fontSize: '0.75rem', fontWeight: 500, textDecoration: 'none', color: 'var(--text-secondary)' }}><SettingsIcon size={14} /> Settings</Link>
-            </div>
-          </div>
-        </aside>
       </div>
 
       <AccountCreationDialog isOpen={showCreateAccountDialog} onClose={() => setShowCreateAccountDialog(false)} />

@@ -244,62 +244,43 @@ export function Navbar() {
             )}
 
             {/* Auth states */}
-            {!userLoading && (
-              user ? (
-                <div className="hidden sm:flex items-center gap-2">
-                  {(profile?.role === 'admin' || profile?.role === 'journalist') && (
-                    <Link
-                      href={profile.role === 'admin' ? '/admin/dashboard' : '/journalist/dashboard'}
-                      className="btn"
-                      style={{
-                        padding: '8px 18px', borderRadius: 8,
-                        fontSize: '0.82rem', fontWeight: 600,
-                        background: 'var(--primary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        display: 'inline-flex', alignItems: 'center', gap: 7,
-                        border: 'none', textDecoration: 'none',
-                        transition: 'all 0.2s var(--ease-out-expo)',
-                      }}
-                    >
-                      <LayoutDashboard size={15} />
-                      {profile.role === 'admin' ? 'Admin' : 'Dashboard'}
-                    </Link>
-                  )}
-                  <div className="flex items-center gap-2 ml-1">
-                    <Link
-                      href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
-                      style={{
-                        width: 44, height: 44, borderRadius: 10,
-                        background: 'var(--primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--bg-elevated)',
-                        fontSize: '0.8rem', fontWeight: 700,
-                        textDecoration: 'none',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />}
-                    </Link>
-                    <button
-                      onClick={() => signOutMutation.mutate()}
-                      title="Sign out"
-                      aria-label="Sign out"
-                      style={{
-                        width: 44, height: 44, borderRadius: 10,
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-surface)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <LogOut size={16} />
-                    </button>
+{!userLoading && (
+                user ? (
+                  <div className="hidden sm:flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <Link
+                        href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
+                        style={{
+                          width: 44, height: 44, borderRadius: 10,
+                          background: 'var(--primary)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'var(--bg-elevated)',
+                          fontSize: '0.8rem', fontWeight: 700,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />}
+                      </Link>
+                      <button
+                        onClick={() => signOutMutation.mutate()}
+                        title="Sign out"
+                        aria-label="Sign out"
+                        style={{
+                          width: 44, height: 44, borderRadius: 10,
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-surface)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <LogOut size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
+                ) : (
                 <div className="hidden sm:flex items-center gap-2">
                   <Link
                     href="/login"
@@ -455,20 +436,6 @@ export function Navbar() {
                 </div>
               </Link>
 
-              {(profile?.role === 'admin' || profile?.role === 'journalist') && (
-                <Link
-                  href={profile.role === 'admin' ? '/admin/dashboard' : '/journalist/dashboard'}
-                  onClick={closeMobile}
-                  className="flex items-center justify-center gap-2 w-full text-sm font-semibold py-3 rounded-xl transition-all"
-                  style={{
-                    background: 'var(--primary)', color: 'var(--bg-elevated)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <LayoutDashboard size={14} />
-                  {profile.role === 'admin' ? 'Admin Dashboard' : 'Author Dashboard'}
-                </Link>
-              )}
               <button
                 onClick={() => { closeMobile(); signOutMutation.mutate() }}
                 className="flex items-center justify-center gap-2 w-full text-sm font-semibold py-3 rounded-xl transition-all"
