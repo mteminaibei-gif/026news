@@ -34,6 +34,15 @@ export const RADIO_STATIONS: RadioStation[] = [
   { id: 'hot96', name: 'Hot 96', genre: 'Hip-Hop / R&B', color: '#f43f5e', streamUrl: 'https://hot96-atunwadigital.streamguys1.com/hot96', listeners: 6100, region: 'ke', country: 'Kenya' },
   { id: 'inooro', name: 'Inooro FM', genre: 'News / Talk (Kikuyu)', color: '#059669', streamUrl: 'https://inoorofm-atunwadigital.streamguys1.com/inoorofm', listeners: 4800, region: 'ke', country: 'Kenya' },
   { id: 'ramogi', name: 'Ramogi FM', genre: 'News / Talk (Luo)', color: '#0d9488', streamUrl: 'https://ramogifm-atunwadigital.streamguys1.com/ramogifm', listeners: 5300, region: 'ke', country: 'Kenya' },
+  { id: 'chamgei', name: 'Chamgei FM', genre: 'News / Talk (Kalenjin)', color: '#b45309', streamUrl: 'https://stream.zeno.fm/chamgeifm', listeners: 3200, region: 'ke', country: 'Kenya' },
+  { id: 'musyi', name: 'Musyi FM', genre: 'News / Talk (Kikuyu)', color: '#9333ea', streamUrl: 'https://stream.zeno.fm/musyifm', listeners: 3800, region: 'ke', country: 'Kenya' },
+  { id: 'kiss30', name: 'Kiss TV', genre: 'Entertainment / Lifestyle', color: '#e11d48', streamUrl: 'https://stream.zeno.fm/kisstv', listeners: 4100, region: 'ke', country: 'Kenya' },
+  { id: 'metro', name: 'Metro FM', genre: 'Urban / Pop', color: '#0891b2', streamUrl: 'https://stream.zeno.fm/metrofm', listeners: 5600, region: 'ke', country: 'Kenya' },
+  { id: 'pambazuka', name: 'Pambazuka Radio', genre: 'Talk / Current Affairs', color: '#059669', streamUrl: 'https://stream.zeno.fm/pambazuka', listeners: 2900, region: 'ke', country: 'Kenya' },
+  { id: 'beds', name: 'Bedside Radio', genre: 'Slow Jams / R&B', color: '#be185d', streamUrl: 'https://stream.zeno.fm/bedsideradio', listeners: 2400, region: 'ke', country: 'Kenya' },
+  { id: 'uliza', name: 'Uliza FM', genre: 'News / Talk (Swahili)', color: '#1d4ed8', streamUrl: 'https://stream.zeno.fm/ulizafm', listeners: 3100, region: 'ke', country: 'Kenya' },
+  { id: 'sucess', name: 'Success FM', genre: 'Gospel / Inspirational', color: '#ca8a04', streamUrl: 'https://stream.zeno.fm/successfm', listeners: 2700, region: 'ke', country: 'Kenya' },
+  { id: 'coro', name: 'Coro FM', genre: 'News / Talk (Kisii)', color: '#dc2626', streamUrl: 'https://stream.zeno.fm/corofm', listeners: 2200, region: 'ke', country: 'Kenya' },
 
   // ── Global stations ────────────────────────────────────────
   { id: 'groove', name: '026 Groove', genre: 'Ambient / Downtempo', color: '#0f766e', streamUrl: 'https://ice1.somafm.com/groovesalad-128-mp3', listeners: 8420, region: 'global' },
