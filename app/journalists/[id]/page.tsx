@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, Share2, UserPlus, UserMinus, Loader2, Check } from 'lucide-react'
 import { formatNumber } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
+import { ProfileNav } from '@/components/layout/ProfileNav'
 
 interface Profile {
   user_id: number; name: string; role: string; bio: string | null
@@ -325,7 +326,11 @@ export default function JournalistProfilePage() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '220px 1fr 320px', gap: 32 }}>
+        {/* Profile Nav */}
+        <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
+          <ProfileNav role="journalist" userId={targetUserId} />
+        </aside>
         {/* Main */}
         <main>
           {activeTab === 'articles' ? (

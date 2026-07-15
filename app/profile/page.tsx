@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Heart, Bookmark, MessageSquare, Bell, Settings, Sun, Moon, Send, ThumbsUp, Reply, Star } from 'lucide-react'
+import { ProfileNav } from '@/components/layout/ProfileNav'
 
 interface UserProfile {
   name: string; role: string; email?: string; created_at?: string
@@ -282,7 +283,12 @@ export default function ProfilePage() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 40 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '220px 1fr 340px', gap: 32 }}>
+        {/* Profile Nav */}
+        <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
+          <ProfileNav role="reader" />
+        </aside>
+
         <main>
           {/* Saved Tab */}
           {activeTab === 'saved' && (

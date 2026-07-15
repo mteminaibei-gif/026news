@@ -1,17 +1,16 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber } from '@/lib/utils'
-import { Clock, MessageCircle, Eye, Bookmark, BookmarkCheck, ChevronRight, Radio, TrendingUp, Filter } from 'lucide-react'
+import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw } from 'lucide-react'
 
 const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
 const REGION_FILTERS = ['All Regions', 'Kenya', 'East Africa', 'Africa', 'World'] as const
-const SORT_OPTIONS = ['Most Recent', 'Most Popular', 'Most Discussed'] as const
+const SORT_OPTIONS = ['Most Recent', 'Most Popular'] as const
 
 type NewsArticle = {
   article_id: number
@@ -39,6 +38,13 @@ const CATEGORY_COLORS: Record<string, string> = {
   Africa: 'var(--accent, #d4a853)',
 }
 
+const REGION_PRIORITY: Record<string, number> = {
+  Kenya: 0,
+  'East Africa': 1,
+  Africa: 2,
+  World: 3,
+}
+
 const BREAKING = [
   'Parliament passes new digital economy bill after heated debate',
   'Nairobi Stock Exchange hits all-time high amid foreign investment surge',
@@ -46,68 +52,158 @@ const BREAKING = [
   'President announces new affordable housing initiative for youth',
 ]
 
+const PAGE_SIZE = 15
+
+function getRegionPriority(article: NewsArticle): number {
+  const catName = article.category?.name ?? ''
+  const source = (article.source_name ?? '').toLowerCase()
+
+  if (catName === 'Kenya' || source.includes('kenya') || source.includes('nation') || source.includes('standard') || source.includes('citizen') || source.includes('kbc') || source.includes('capital') || source.includes('star')) return 0
+  if (catName === 'East Africa' || source.includes('east africa') || source.includes('tanzania') || source.includes('uganda') || source.includes('rwanda')) return 1
+  if (catName === 'Africa' || source.includes('africa')) return 2
+  return 3
+}
+
+function sortByRegionPriority(articles: NewsArticle[]): NewsArticle[] {
+  return [...articles].sort((a, b) => {
+    const pa = getRegionPriority(a)
+    const pb = getRegionPriority(b)
+    if (pa !== pb) return pa - pb
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+}
+
 export default function NewsPage() {
-  const router = useRouter()
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeRegion, setActiveRegion] = useState<typeof REGION_FILTERS[number]>('All Regions')
   const [sortBy, setSortBy] = useState<typeof SORT_OPTIONS[number]>('Most Recent')
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
+  const [newCount, setNewCount] = useState(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const lastInteractionRef = useRef(0)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const offsetRef = useRef(0)
+  const latestTimestampRef = useRef<string>('')
 
-  // Fetch news articles from Supabase
+  const supabase = createClient()
+
+  // Fetch initial articles
+  const fetchArticles = useCallback(async (reset = false) => {
+    if (reset) {
+      offsetRef.current = 0
+      setArticles([])
+      setHasMore(true)
+    }
+
+    let query = supabase
+      .from('articles')
+      .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)')
+      .eq('status', 'published')
+      .eq('post_type', 'news')
+
+    if (activeCategory !== 'All') {
+      query = query.eq('category.name', activeCategory)
+    }
+
+    if (activeRegion !== 'All Regions') {
+      const regionMap: Record<string, string> = {
+        'Kenya': 'KE', 'East Africa': 'EA', 'Africa': 'AF', 'World': 'INTL',
+      }
+      const code = regionMap[activeRegion]
+      if (code) query = query.contains('regions', [code])
+    }
+
+    if (sortBy === 'Most Popular') {
+      query = query.order('views', { ascending: false })
+    } else {
+      query = query.order('created_at', { ascending: false })
+    }
+
+    query = query.range(offsetRef.current, offsetRef.current + PAGE_SIZE - 1)
+
+    const { data } = await query
+    const fetched = (data as unknown as NewsArticle[]) ?? []
+
+    if (fetched.length < PAGE_SIZE) setHasMore(false)
+
+    if (reset || offsetRef.current === 0) {
+      setArticles(sortByRegionPriority(fetched))
+      if (fetched.length > 0) {
+        latestTimestampRef.current = fetched[0].created_at
+      }
+    } else {
+      setArticles(prev => sortByRegionPriority([...prev, ...fetched]))
+    }
+
+    offsetRef.current += fetched.length
+  }, [activeCategory, activeRegion, sortBy, supabase])
+
+  // Initial load
   useEffect(() => {
-    const supabase = createClient()
-    let active = true
+    setLoading(true)
+    fetchArticles(true).finally(() => setLoading(false))
+  }, [fetchArticles])
 
-    ;(async () => {
+  // Infinite scroll observer
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect()
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setLoadingMore(true)
+          fetchArticles(false).finally(() => setLoadingMore(false))
+        }
+      },
+      { rootMargin: '200px' }
+    )
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current)
+    }
+
+    return () => { observerRef.current?.disconnect() }
+  }, [hasMore, loadingMore, loading, fetchArticles])
+
+  // Auto-refresh: check for new posts every 60s
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!latestTimestampRef.current) return
+
       let query = supabase
         .from('articles')
         .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)')
         .eq('status', 'published')
         .eq('post_type', 'news')
+        .gt('created_at', latestTimestampRef.current)
+        .order('created_at', { ascending: false })
+        .limit(20)
 
-      if (activeCategory !== 'All') {
-        query = query.eq('category.name', activeCategory)
-      }
-
-      // Region filtering
+      if (activeCategory !== 'All') query = query.eq('category.name', activeCategory)
       if (activeRegion !== 'All Regions') {
-        const regionMap: Record<string, string> = {
-          'Kenya': 'KE',
-          'East Africa': 'EA',
-          'Africa': 'AF',
-          'World': 'INTL',
-        }
+        const regionMap: Record<string, string> = { 'Kenya': 'KE', 'East Africa': 'EA', 'Africa': 'AF', 'World': 'INTL' }
         const code = regionMap[activeRegion]
-        if (code) {
-          query = query.contains('regions', [code])
-        }
+        if (code) query = query.contains('regions', [code])
       }
-
-      if (sortBy === 'Most Popular') {
-        query = query.order('views', { ascending: false })
-      } else if (sortBy === 'Most Discussed') {
-        query = query.order('views', { ascending: false })
-      } else {
-        query = query.order('created_at', { ascending: false })
-      }
-
-      query = query.limit(30)
 
       const { data } = await query
-      if (active) {
-        setArticles((data as unknown as NewsArticle[]) ?? [])
-        setLoading(false)
+      const newArticles = (data as unknown as NewsArticle[]) ?? []
+      if (newArticles.length > 0) {
+        setNewCount(prev => prev + newArticles.length)
+        setArticles(prev => sortByRegionPriority([...newArticles, ...prev]))
+        latestTimestampRef.current = newArticles[0].created_at
       }
-    })()
+    }, 60000)
 
-    return () => { active = false }
-  }, [activeCategory, activeRegion, sortBy])
+    return () => clearInterval(interval)
+  }, [activeCategory, activeRegion, supabase])
 
   // Auto-scroll ticker
   useEffect(() => {
@@ -129,12 +225,8 @@ export default function NewsPage() {
       if (el && !pausedRef.current && idle && el.scrollHeight > el.clientHeight + 4) {
         const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight)
         if (distanceFromBottom <= 80) {
-          if (endPauseUntil === 0) {
-            endPauseUntil = now + END_PAUSE
-          } else if (now >= endPauseUntil) {
-            el.scrollTop = 0
-            endPauseUntil = 0
-          }
+          if (endPauseUntil === 0) endPauseUntil = now + END_PAUSE
+          else if (now >= endPauseUntil) { el.scrollTop = 0; endPauseUntil = 0 }
         } else {
           el.scrollTop += (dt / 1000) * PX_PER_SEC
           endPauseUntil = 0
@@ -172,6 +264,11 @@ export default function NewsPage() {
       else next.add(id)
       return next
     })
+  }
+
+  const showNewPosts = () => {
+    setNewCount(0)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const topStory = articles[0]
@@ -220,9 +317,28 @@ export default function NewsPage() {
             <h1 className="font-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
               <Radio size={24} style={{ color: 'var(--primary)' }} /> News
             </h1>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 2 }}>Breaking stories and latest updates</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 2 }}>
+              Breaking stories and latest updates · Kenya &gt; East Africa &gt; Africa &gt; World
+            </p>
           </div>
         </div>
+
+        {/* New posts notification */}
+        {newCount > 0 && (
+          <button
+            onClick={showNewPosts}
+            style={{
+              width: '100%', padding: '10px 16px', marginBottom: 16,
+              background: 'var(--primary-light)', border: '1px solid var(--primary)',
+              borderRadius: 10, cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)',
+            }}
+          >
+            <RefreshCw size={14} />
+            {newCount} new {newCount === 1 ? 'article' : 'articles'} — tap to see
+          </button>
+        )}
 
         {/* Filters */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
@@ -379,7 +495,7 @@ export default function NewsPage() {
               </>
             )}
 
-            {/* Article list */}
+            {/* Article list with infinite scroll */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
               {remainingArticles.map((a) => (
                 <Link key={a.article_id} href={`/article/${a.slug}`} style={{
@@ -422,6 +538,22 @@ export default function NewsPage() {
                   </button>
                 </Link>
               ))}
+
+              {/* Infinite scroll sentinel */}
+              <div ref={loadMoreRef} style={{ height: 1 }} />
+
+              {loadingMore && (
+                <div style={{ textAlign: 'center', padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Loader2 size={18} className="animate-spin" style={{ color: 'var(--primary)' }} />
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)' }}>Loading more news...</span>
+                </div>
+              )}
+
+              {!hasMore && articles.length > 0 && (
+                <div style={{ textAlign: 'center', padding: 24, fontSize: '0.82rem', color: 'var(--text-tertiary)' }}>
+                  You&apos;ve reached the end
+                </div>
+              )}
             </div>
           </>
         )}
