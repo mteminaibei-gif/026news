@@ -1,25 +1,15 @@
-import type { Metadata } from 'next'
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { createClient } from '@/lib/supabase/server'
+import { TVProvider, useTV } from '@/components/tv/TVProvider'
+import { KENYAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
+import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
-import { Tv, Eye, Clock, ExternalLink } from 'lucide-react'
-
-export const metadata: Metadata = { title: 'Kenyan TV — 026Newsblog' }
-export const dynamic = 'force-dynamic'
-
-const KENYAN_TV_STATIONS = [
-  { name: 'Citizen TV', slug: 'citizen', color: '#16a34a', website: 'https://www.citizen.digital', logo: '🟢' },
-  { name: 'NTV Kenya', slug: 'ntv', color: '#2563eb', website: 'https://ntvkenya.co.ke', logo: '🔵' },
-  { name: 'KBC TV', slug: 'kbc', color: '#0f766e', website: 'https://www.kbc.co.ke', logo: '🟦' },
-  { name: 'K24 TV', slug: 'k24', color: '#e11d48', website: 'https://www.k24tv.co.ke', logo: '🔴' },
-  { name: 'Nation TV', slug: 'nation', color: '#ea580c', website: 'https://nation.africa', logo: '🟠' },
-  { name: 'Switch TV', slug: 'switch', color: '#7c3aed', website: 'https://www.switchtv.ke', logo: '🟣' },
-  { name: 'TV47', slug: 'tv47', color: '#ca8a04', website: 'https://tv47.ke', logo: '🟡' },
-  { name: 'Lulu TV', slug: 'lulu', color: '#db2777', website: 'https://www.lulutv.ke', logo: '🩷' },
-]
+import { Tv, Eye, Clock, Play, Pause, Globe } from 'lucide-react'
 
 type TVArticle = {
   article_id: number
@@ -31,154 +21,236 @@ type TVArticle = {
   views: number
   created_at: string
   source_name: string | null
-  source_url: string | null
   author: { name: string; profile_image: string | null } | null
   category: { name: string } | null
 }
 
-export default async function TVPage() {
-  const supabase = await createClient()
+function TVPageContent() {
+  const { currentStation, isPlaying, playStation } = useTV()
+  const [articles, setArticles] = useState<TVArticle[]>([])
+  const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'global'>('live')
 
-  const TV_SOURCE_PATTERNS = ['citizen', 'ntv', 'kbc', 'k24', 'nation', 'switch', 'tv47', 'lulu', 'royal media', 'standard media', 'media max']
+  useEffect(() => {
+    const fetchArticles = async () => {
+      const supabase = createClient()
+      const TV_PATTERNS = ['citizen', 'ntv', 'kbc', 'k24', 'nation', 'switch', 'tv47', 'lulu', 'ramogi', 'royal media']
+      const { data } = await supabase
+        .from('articles')
+        .select('article_id, title, slug, excerpt, content, featured_image, views, created_at, source_name, author:users(name, profile_image), category:categories(name)')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      const all = (data ?? []) as unknown as TVArticle[]
+      setArticles(all.filter(a => {
+        const src = (a.source_name ?? '').toLowerCase()
+        return TV_PATTERNS.some(p => src.includes(p))
+      }))
+    }
+    fetchArticles()
+  }, [])
 
-  const { data: rawArticles } = await supabase
-    .from('articles')
-    .select('article_id, title, slug, excerpt, content, featured_image, views, created_at, source_name, source_url, author:users(name, profile_image), category:categories(name)')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(200)
+  const renderStationCard = (station: TVStation) => {
+    const active = currentStation?.id === station.id && isPlaying
+    return (
+      <div
+        key={station.id}
+        className="hover-lift cursor-pointer transition-all duration-200"
+        style={{
+          background: active ? `${station.color}15` : 'var(--bg-surface)',
+          borderRadius: 16,
+          border: `2px solid ${active ? station.color : 'var(--border-subtle)'}`,
+          overflow: 'hidden',
+          boxShadow: active ? `0 4px 20px ${station.color}33` : 'var(--card-shadow)',
+        }}
+        onClick={() => playStation(station)}
+      >
+        {/* Live preview */}
+        <div
+          className="relative flex items-center justify-center"
+          style={{
+            height: 140,
+            background: `linear-gradient(135deg, ${station.color} 0%, ${station.color}88 100%)`,
+          }}
+        >
+          <span style={{ fontSize: '3rem' }}>{station.logo}</span>
+          {active && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <div className="flex items-end gap-1 h-10">
+                {[1,2,3,4,5,4,3,2,1].map((h, i) => (
+                  <div
+                    key={i}
+                    className="w-1 rounded-full bg-white"
+                    style={{
+                      animation: isPlaying ? `eqBar${(i % 5) + 1} ${0.4 + i * 0.1}s ease-in-out infinite` : 'none',
+                      height: isPlaying ? undefined : '4px',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-white text-[9px] font-bold uppercase">LIVE</span>
+          </div>
+        </div>
 
-  const allArticles = (rawArticles ?? []) as unknown as TVArticle[]
-
-  const articles = allArticles.filter(a => {
-    const src = (a.source_name ?? '').toLowerCase()
-    return TV_SOURCE_PATTERNS.some(p => src.includes(p))
-  })
-
-  const stationArticles: Record<string, TVArticle[]> = {}
-  for (const station of KENYAN_TV_STATIONS) {
-    stationArticles[station.slug] = articles.filter(a => {
-      const src = (a.source_name ?? '').toLowerCase()
-      return src.includes(station.slug) || src.includes(station.name.toLowerCase())
-    }).slice(0, 6)
+        {/* Info */}
+        <div className="p-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{station.name}</h3>
+            <button
+              onClick={(e) => { e.stopPropagation(); playStation(station) }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-transform active:scale-90"
+              style={{ background: station.color }}
+              aria-label={active ? `Pause ${station.name}` : `Watch ${station.name}`}
+            >
+              {active ? <Pause size={14} /> : <Play size={14} />}
+            </button>
+          </div>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{station.genre}</p>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+            {station.viewers.toLocaleString()} watching
+          </p>
+        </div>
+      </div>
+    )
   }
 
-  const latestArticles = articles.slice(0, 12)
+  const TV_SOURCE_PATTERNS = ['citizen', 'ntv', 'kbc', 'k24', 'nation', 'switch', 'tv47', 'lulu', 'ramogi', 'royal media']
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
       <Navbar />
 
+      <style>{`
+        @keyframes eqBar1 { 0%, 100% { height: 4px; } 50% { height: 18px; } }
+        @keyframes eqBar2 { 0%, 100% { height: 8px; } 50% { height: 14px; } }
+        @keyframes eqBar3 { 0%, 100% { height: 6px; } 50% { height: 22px; } }
+        @keyframes eqBar4 { 0%, 100% { height: 10px; } 50% { height: 16px; } }
+        @keyframes eqBar5 { 0%, 100% { height: 5px; } 50% { height: 20px; } }
+      `}</style>
+
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', padding: '48px 0 40px' }}>
+      <section style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', padding: '32px 0 28px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', paddingInline: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Tv size={24} style={{ color: '#fff' }} />
+          <div className="flex items-center gap-3" style={{ marginBottom: 4 }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <Tv size={22} style={{ color: '#fff' }} />
             </div>
             <div>
-              <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display)' }}>
-                Kenyan TV
+              <h1 className="text-xl font-extrabold text-white" style={{ fontFamily: 'var(--font-display)' }}>
+                Kenyan TV — Live
               </h1>
-              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                Latest stories from Kenya&apos;s top TV stations
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Watch live streams directly — no redirects
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 64px', width: '100%' }}>
-        {/* Station Cards */}
-        <section style={{ marginBottom: 40 }}>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20 }}>
-            TV Stations
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 64px', width: '100%' }}>
+        {/* Currently Playing Banner */}
+        {currentStation && (
+          <div
+            className="rounded-2xl p-4 mb-6 flex items-center gap-4"
+            style={{ background: `${currentStation.color}12`, border: `1px solid ${currentStation.color}33` }}
+          >
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: `linear-gradient(135deg, ${currentStation.color} 0%, ${currentStation.color}88 100%)` }}
+            >
+              <span className="text-2xl">{currentStation.logo}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{currentStation.name}</span>
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold uppercase">
+                  <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                  LIVE
+                </span>
+              </div>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {currentStation.genre} · Click another station to switch
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          {[
+            { id: 'live' as const, label: 'All Stations', icon: <Tv size={14} /> },
+            { id: 'kenya' as const, label: 'Kenyan TV', icon: '🇰🇪' },
+            { id: 'global' as const, label: 'International', icon: <Globe size={14} /> },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all"
+              style={{
+                background: activeTab === tab.id ? 'var(--primary)' : 'var(--bg-surface)',
+                color: activeTab === tab.id ? '#fff' : 'var(--text-secondary)',
+                border: `1px solid ${activeTab === tab.id ? 'var(--primary)' : 'var(--border-subtle)'}`,
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Station Grid */}
+        <section className="mb-10">
+          <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+            {activeTab === 'kenya' ? 'Kenyan TV Stations' : activeTab === 'global' ? 'International TV' : 'All TV Stations'}
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-            {KENYAN_TV_STATIONS.map(station => {
-              const count = (stationArticles[station.slug] ?? []).length
-              return (
-                <a
-                  key={station.slug}
-                  href={station.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14, padding: 16,
-                    background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                    borderRadius: 14, textDecoration: 'none', color: 'inherit',
-                    transition: 'all 0.2s', cursor: 'pointer',
-                  }}
-                  className="hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: `${station.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
-                    {station.logo}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{station.name}</h3>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                      {count} {count === 1 ? 'article' : 'articles'}
-                    </p>
-                  </div>
-                  <ExternalLink size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                </a>
-              )
-            })}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {(activeTab === 'kenya' ? KENYAN_TV_STATIONS : activeTab === 'global' ? GLOBAL_TV_STATIONS : [...KENYAN_TV_STATIONS, ...GLOBAL_TV_STATIONS]).map(renderStationCard)}
           </div>
         </section>
 
-        {/* Latest from all stations */}
-        {latestArticles.length > 0 && (
-          <section style={{ marginBottom: 40 }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20 }}>
-              Latest Stories
+        {/* Latest TV News */}
+        {articles.length > 0 && (
+          <section>
+            <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+              Latest TV News
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
-              {latestArticles.map(article => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {articles.slice(0, 9).map(article => {
                 const station = KENYAN_TV_STATIONS.find(s => {
                   const src = (article.source_name ?? '').toLowerCase()
-                  return src.includes(s.slug) || src.includes(s.name.toLowerCase())
+                  return src.includes(s.id) || src.includes(s.name.toLowerCase())
                 })
                 return (
                   <Link
                     key={article.article_id}
                     href={`/article/${article.slug}`}
-                    style={{
-                      display: 'flex', gap: 14, padding: 16,
-                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                      borderRadius: 14, textDecoration: 'none', color: 'inherit',
-                      transition: 'all 0.2s',
-                    }}
-                    className="hover:shadow-lg hover:-translate-y-0.5"
+                    className="flex gap-3 p-3 rounded-xl transition-all hover:shadow-md"
+                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', textDecoration: 'none', color: 'inherit' }}
                   >
                     {article.featured_image ? (
-                      <div style={{ position: 'relative', width: 100, height: 80, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+                      <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
                         <Image src={article.featured_image} alt="" fill className="object-cover" unoptimized />
                       </div>
                     ) : (
-                      <div style={{ width: 100, height: 80, borderRadius: 10, background: station ? `${station.color}15` : 'var(--bg-muted)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Tv size={20} style={{ color: station?.color ?? 'var(--text-tertiary)' }} />
+                      <div className="w-20 h-16 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: station ? `${station.color}15` : 'var(--bg-muted)' }}>
+                        <Tv size={16} style={{ color: station?.color ?? 'var(--text-tertiary)' }} />
                       </div>
                     )}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
-                      <div>
-                        {station && (
-                          <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: station.color }}>
-                            {station.name}
-                          </span>
-                        )}
-                        <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.3, marginTop: station ? 3 : 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
-                          {article.title}
-                        </h3>
-                        {article.excerpt && (
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {stripHtml(article.excerpt)}
-                          </p>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.68rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={11} /> {formatNumber(article.views ?? 0)}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={11} /> {new Date(article.created_at).toLocaleDateString()}</span>
+                    <div className="flex-1 min-w-0">
+                      {station && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: station.color }}>
+                          {station.name}
+                        </span>
+                      )}
+                      <h3 className="text-xs font-semibold leading-tight mt-0.5 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+                        {article.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                        <span className="flex items-center gap-0.5"><Eye size={9} /> {formatNumber(article.views ?? 0)}</span>
+                        <span>{new Date(article.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </Link>
@@ -188,70 +260,24 @@ export default async function TVPage() {
           </section>
         )}
 
-        {/* Per-station sections */}
-        {KENYAN_TV_STATIONS.map(station => {
-          const stationArts = stationArticles[station.slug] ?? []
-          if (stationArts.length === 0) return null
-          return (
-            <section key={station.slug} style={{ marginBottom: 40 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: '1.3rem' }}>{station.logo}</span>
-                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{station.name}</h2>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{stationArts.length} articles</span>
-                </div>
-                <a href={station.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', fontWeight: 600, color: station.color, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  Visit site <ExternalLink size={12} />
-                </a>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-                {stationArts.map(article => (
-                  <Link
-                    key={article.article_id}
-                    href={`/article/${article.slug}`}
-                    style={{
-                      display: 'flex', gap: 12, padding: 14,
-                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                      borderRadius: 12, textDecoration: 'none', color: 'inherit',
-                      transition: 'all 0.2s',
-                    }}
-                    className="hover:shadow-md"
-                  >
-                    {article.featured_image ? (
-                      <div style={{ position: 'relative', width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
-                        <Image src={article.featured_image} alt="" fill className="object-cover" unoptimized />
-                      </div>
-                    ) : (
-                      <div style={{ width: 72, height: 72, borderRadius: 8, background: `${station.color}12`, flexShrink: 0 }} />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
-                        {article.title}
-                      </h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={10} /> {formatNumber(article.views ?? 0)}</span>
-                        <span>{new Date(article.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )
-        })}
-
         {articles.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 64, background: 'var(--bg-surface)', borderRadius: 16, border: '1px solid var(--border-subtle)' }}>
-            <Tv size={40} style={{ color: 'var(--text-tertiary)', marginBottom: 16 }} />
-            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>No TV articles yet</p>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>
-              Articles from Kenyan TV stations will appear here once RSS feeds are synced.
-            </p>
+          <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <Tv size={40} className="mx-auto mb-4" style={{ color: 'var(--text-tertiary)' }} />
+            <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No TV articles yet</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Articles from Kenyan TV stations will appear here.</p>
           </div>
         )}
       </main>
 
       <Footer />
     </div>
+  )
+}
+
+export default function TVPage() {
+  return (
+    <TVProvider>
+      <TVPageContent />
+    </TVProvider>
   )
 }
