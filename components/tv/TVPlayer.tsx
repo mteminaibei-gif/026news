@@ -23,6 +23,7 @@ export function TVPlayer({ station, isPlaying }: Props) {
       // Try native HLS support (Safari)
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url
+        video.muted = true
         video.play().catch(() => {})
         return
       }
@@ -54,7 +55,10 @@ export function TVPlayer({ station, isPlaying }: Props) {
           const hls = new HlsClass({ enableWorker: true, lowLatencyMode: true })
           hls.loadSource(url)
           hls.attachMedia(video)
-          hls.on('MANIFEST_PARSED', () => { video.play().catch(() => {}) })
+          hls.on('MANIFEST_PARSED', () => {
+            video.muted = true
+            video.play().catch(() => {})
+          })
           hlsInstance = hls
         }
       }
@@ -83,14 +87,14 @@ export function TVPlayer({ station, isPlaying }: Props) {
     )
   }
 
-  return (
+return (
     <video
       ref={videoRef}
       className="absolute inset-0 w-full h-full object-contain bg-black"
       controls
       autoPlay
       playsInline
-      muted={false}
+      muted
     />
   )
 }
