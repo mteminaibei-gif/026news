@@ -68,7 +68,6 @@ export const NAV_LINKS = [
   { href: ROUTES.ARTICLES, label: 'Articles', icon: '📑' },
   { href: ROUTES.RADIO, label: 'Radio', icon: '📻' },
   { href: ROUTES.TV, label: 'TV', icon: '📺' },
-  { href: ROUTES.AUTHORS, label: 'Authors', icon: '✍️' },
   { href: ROUTES.INBOX, label: 'Inbox', icon: '💬' },
 ] as const
 
