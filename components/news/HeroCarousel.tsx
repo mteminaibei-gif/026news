@@ -97,9 +97,8 @@ export function HeroCarousel({ articles }: Props) {
           style={{
             position: 'absolute',
             bottom: 0, left: 0, right: 0,
-            maxWidth: 820,
-            padding: '60px 32px 80px',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)',
+            padding: '80px 40px 100px',
+            background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.15) 70%, transparent 100%)',
           }}
         >
           {/* Category */}
@@ -141,9 +140,11 @@ export function HeroCarousel({ articles }: Props) {
           </h1>
 
           {/* Excerpt */}
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: 20, maxWidth: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {stripHtml(slide.content).replace(/\n+/g, ' ').slice(0, 200).trim()}…
-          </p>
+          {stripHtml(slide.content).length > 10 && (
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: 20, maxWidth: 700, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {stripHtml(slide.content).replace(/\n+/g, ' ').slice(0, 250).trim()}…
+            </p>
+          )}
 
           {/* Meta */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', flexWrap: 'wrap' }}>

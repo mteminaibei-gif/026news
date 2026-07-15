@@ -23,6 +23,7 @@ type NewsArticle = {
   created_at: string
   tags: string[] | null
   source_name: string | null
+  category_id: number | null
   author: { name: string; profile_image: string | null } | null
   category: { name: string } | null
 }
@@ -104,12 +105,13 @@ export default function NewsPage() {
 
     let query = supabase
       .from('articles')
-      .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)')
+      .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, category_id, author:users(name, profile_image), category:categories(name)')
       .eq('status', 'published')
       .eq('post_type', 'news')
 
     if (activeCategory !== 'All') {
-      query = query.eq('category.name', activeCategory)
+      const { data: catRow } = await supabase.from('categories').select('category_id').eq('name', activeCategory).maybeSingle() as { data: { category_id: number } | null }
+      if (catRow) query = query.eq('category_id', catRow.category_id)
     }
 
     if (activeRegion !== 'All Regions') {
@@ -179,14 +181,17 @@ export default function NewsPage() {
 
       let query = supabase
         .from('articles')
-        .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, author:users(name, profile_image), category:categories(name)')
+        .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, category_id, author:users(name, profile_image), category:categories(name)')
         .eq('status', 'published')
         .eq('post_type', 'news')
         .gt('created_at', latestTimestampRef.current)
         .order('created_at', { ascending: false })
         .limit(20)
 
-      if (activeCategory !== 'All') query = query.eq('category.name', activeCategory)
+      if (activeCategory !== 'All') {
+        const { data: catRow } = await supabase.from('categories').select('category_id').eq('name', activeCategory).maybeSingle() as { data: { category_id: number } | null }
+        if (catRow) query = query.eq('category_id', catRow.category_id)
+      }
       if (activeRegion !== 'All Regions') {
         const regionMap: Record<string, string> = { 'Kenya': 'KE', 'East Africa': 'EA', 'Africa': 'AF', 'World': 'INTL' }
         const code = regionMap[activeRegion]
@@ -434,6 +439,15 @@ export default function NewsPage() {
                       {topStory.category?.name ?? 'Breaking'}
                     </span>
                     <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Top Story</span>
+                    {topStory.tags && topStory.tags.length > 0 && (
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {topStory.tags.slice(0, 3).map((tag: string) => (
+                          <span key={tag} style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: 4, background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}>
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <h2 style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', fontWeight: 600, lineHeight: 1.25, marginBottom: 12, textWrap: 'balance' as const }}>
                     {topStory.title}
@@ -476,6 +490,15 @@ export default function NewsPage() {
                         <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.3, marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
                           {a.title}
                         </h3>
+                        {a.tags && a.tags.length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                            {a.tags.slice(0, 3).map((tag: string) => (
+                              <span key={tag} style={{ fontSize: '0.55rem', padding: '1px 5px', borderRadius: 3, background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}>
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
                         <span>{a.author?.name ?? 'Staff'}</span>
@@ -522,6 +545,15 @@ export default function NewsPage() {
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {stripHtml(a.excerpt)}
                         </p>
+                      )}
+                      {a.tags && a.tags.length > 0 && (
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                          {a.tags.slice(0, 4).map((tag: string) => (
+                            <span key={tag} style={{ fontSize: '0.58rem', padding: '2px 6px', borderRadius: 3, background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}>
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
