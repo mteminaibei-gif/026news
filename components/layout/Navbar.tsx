@@ -86,7 +86,7 @@ export function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex flex-1 items-center justify-center gap-8" aria-label="Main navigation">
-            {NAV_LINKS.map(link => {
+            {NAV_LINKS.filter(l => l.href !== '/inbox' || user).map(link => {
               const href = link.href as string
               const isActive =
                 href === '/'
@@ -399,7 +399,7 @@ export function Navbar() {
             News Categories
           </p>
           <ul className="space-y-1" role="list">
-            {NAV_LINKS.map(link => {
+            {NAV_LINKS.filter(l => l.href !== '/inbox' || user).map(link => {
               const href = link.href as string
               const Icon = href === '/' ? Compass
                 : href === '/sources' ? Compass
