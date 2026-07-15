@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { SEOAnalyzer } from '@/components/seo/SEOAnalyzer'
 
 const MONETIZE_OPTIONS = [
   { value: 'free',      icon: '🆓', label: 'Free',         desc: 'Public access' },
@@ -236,10 +237,24 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               className="text-xs font-bold text-white px-4 py-1.5 rounded-lg transition-all hover:shadow-md disabled:opacity-40" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
               {saving ? (imageUploading ? '⏫ Uploading…' : '⏳ Saving…') : '🚀 Publish'}
             </button>
-          </div>
-        </div>
-      </div>
+              </div>
+            </div>
 
+            {/* SEO Analyzer */}
+            <SEOAnalyzer
+              title={title}
+              content={content}
+              excerpt={excerpt}
+              slug={slugify(title)}
+              featuredImage={imagePreview ?? undefined}
+              tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
+              category={categories.find(c => c.category_id === categoryId)?.name}
+              onApplyTitle={(t) => setTitle(t)}
+              onApplyExcerpt={(e) => setExcerpt(e)}
+              onApplyContent={(c) => setContent(c)}
+            />
+
+          </div>
       {/* ── Body ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {saveError && (

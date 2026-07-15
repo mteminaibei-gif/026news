@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { SEOAnalyzer } from '@/components/seo/SEOAnalyzer'
 import { createClient } from '@/lib/supabase/client'
 
 const MONETIZE_OPTIONS = [
@@ -418,6 +419,20 @@ export default function CreatePostPage() {
             <p className="text-[10px] text-center px-2" style={{ color: 'var(--text-tertiary)' }}>
               ✨ Draft auto-saves to your browser every second.
             </p>
+
+            {/* SEO Analyzer */}
+            <SEOAnalyzer
+              title={title}
+              content={content}
+              excerpt={excerpt}
+              slug={slugify(title)}
+              featuredImage={imagePreview ?? undefined}
+              tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
+              category={category}
+              onApplyTitle={(t) => setTitle(t)}
+              onApplyExcerpt={(e) => setExcerpt(e)}
+              onApplyContent={(c) => setContent(c)}
+            />
 
           </div>
         </div>
