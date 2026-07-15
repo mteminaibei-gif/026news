@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { TVProvider, useTV } from '@/components/tv/TVProvider'
-import { KENYAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
+import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { Tv, Eye, Clock, Play, Pause, Globe } from 'lucide-react'
@@ -28,12 +28,12 @@ type TVArticle = {
 function TVPageContent() {
   const { currentStation, isPlaying, playStation } = useTV()
   const [articles, setArticles] = useState<TVArticle[]>([])
-  const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'global'>('live')
+  const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'africa' | 'global'>('live')
 
   useEffect(() => {
     const fetchArticles = async () => {
       const supabase = createClient()
-      const TV_PATTERNS = ['citizen', 'ntv', 'kbc', 'k24', 'nation', 'switch', 'tv47', 'lulu', 'ramogi', 'royal media']
+      const TV_PATTERNS = ['citizen', 'ntv', 'kbc', 'k24', 'nation', 'switch', 'tv47', 'lulu', 'ramogi', 'royal media', 'news central', 'africanews', 'tv360', 'channel one', 'ghana']
       const { data } = await supabase
         .from('articles')
         .select('article_id, title, slug, excerpt, content, featured_image, views, created_at, source_name, author:users(name, profile_image), category:categories(name)')
@@ -203,11 +203,12 @@ function TVPageContent() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           {[
             { id: 'live' as const, label: 'All Stations', icon: <Tv size={14} /> },
-            { id: 'kenya' as const, label: 'Kenyan TV', icon: '🇰🇪' },
-            { id: 'global' as const, label: 'International', icon: <Globe size={14} /> },
+            { id: 'kenya' as const, label: 'Kenya', icon: '🇰🇪' },
+            { id: 'africa' as const, label: 'Africa', icon: '🌍' },
+            { id: 'global' as const, label: 'World', icon: <Globe size={14} /> },
           ].map(tab => (
             <button
               key={tab.id}
@@ -228,10 +229,10 @@ function TVPageContent() {
         {/* Station Grid */}
         <section className="mb-10">
           <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            {activeTab === 'kenya' ? 'Kenyan TV Stations' : activeTab === 'global' ? 'International TV' : 'All TV Stations'}
+            {activeTab === 'kenya' ? 'Kenyan TV' : activeTab === 'africa' ? 'African TV' : activeTab === 'global' ? 'World TV' : 'All TV Stations'}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {(activeTab === 'kenya' ? KENYAN_TV_STATIONS : activeTab === 'global' ? GLOBAL_TV_STATIONS : [...KENYAN_TV_STATIONS, ...GLOBAL_TV_STATIONS]).map(renderStationCard)}
+            {(activeTab === 'kenya' ? KENYAN_TV_STATIONS : activeTab === 'africa' ? AFRICAN_TV_STATIONS : activeTab === 'global' ? GLOBAL_TV_STATIONS : [...KENYAN_TV_STATIONS, ...AFRICAN_TV_STATIONS, ...GLOBAL_TV_STATIONS]).map(renderStationCard)}
           </div>
         </section>
 
@@ -243,7 +244,8 @@ function TVPageContent() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {articles.slice(0, 9).map(article => {
-                const station = KENYAN_TV_STATIONS.find(s => {
+                const allStations = [...KENYAN_TV_STATIONS, ...AFRICAN_TV_STATIONS]
+                const station = allStations.find(s => {
                   const src = (article.source_name ?? '').toLowerCase()
                   return src.includes(s.id) || src.includes(s.name.toLowerCase())
                 })
