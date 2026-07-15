@@ -58,7 +58,7 @@ export function TVWidget() {
       {isPlaying && !minimized && (
         <div className="relative" style={{ paddingBottom: '56.25%' }}>
           <iframe
-            src={`https://www.youtube.com/embed/${currentStation.youtubeId}?autoplay=1&mute=0&rel=0&modestbranding=1&controls=1`}
+            src={`https://www.youtube.com/channel/${currentStation.youtubeChannel}/live?autoplay=1&mute=0`}
             className="absolute inset-0 w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
