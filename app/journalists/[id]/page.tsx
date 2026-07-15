@@ -5,14 +5,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, Share2, UserPlus, UserMinus, Loader2, Check } from 'lucide-react'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, Share2, UserPlus, UserMinus, Loader2 } from 'lucide-react'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 import { ProfileNav } from '@/components/layout/ProfileNav'
 
 interface Profile {
   user_id: number; name: string; role: string; bio: string | null
-  profile_image: string | null; created_at: string; is_verified: boolean
+  profile_image: string | null; created_at: string
 }
 interface Article {
   article_id: number; title: string; slug: string; content: string
@@ -82,7 +82,7 @@ export default function JournalistProfilePage() {
   async function loadProfile() {
     const { data } = await supabase
       .from('users')
-      .select('user_id, name, role, bio, profile_image, created_at, is_verified')
+      .select('user_id, name, role, bio, profile_image, created_at')
       .eq('user_id', targetUserId)
       .single()
     if (data) setProfile(data as Profile)
@@ -287,9 +287,6 @@ export default function JournalistProfilePage() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
               <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'Newsreader', Georgia, serif" }}>{profile.name}</h1>
-              {profile.is_verified && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)' }} title="Verified"><Check size={14} color="#fff" strokeWidth={3} /></span>
-              )}
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.6, marginBottom: 16 }}>{profile.bio ?? 'No bio available.'}</p>

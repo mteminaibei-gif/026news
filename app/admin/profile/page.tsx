@@ -5,14 +5,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Check, Loader2 } from 'lucide-react'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Loader2 } from 'lucide-react'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 import { ProfileNav } from '@/components/layout/ProfileNav'
 
 interface Profile {
   user_id: number; name: string; role: string; bio: string | null
-  profile_image: string | null; created_at: string; is_verified: boolean
+  profile_image: string | null; created_at: string
 }
 interface Article {
   article_id: number; title: string; slug: string; content: string
@@ -64,7 +64,7 @@ export default function AdminProfilePage() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser?.id) { router.push('/login?redirect=/admin/profile'); setLoading(false); return }
 
-    const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).single()
+    const { data } = await supabase.from('users').select('user_id, name, role, bio, profile_image, created_at').eq('auth_id', authUser.id).single()
     if (data) {
       setProfile(data as Profile)
       setCurrentUserId((data as { user_id: number }).user_id)
@@ -238,9 +238,6 @@ export default function AdminProfilePage() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
               <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'Newsreader', Georgia, serif" }}>{profile.name}</h1>
-              {profile.is_verified && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)' }} title="Verified"><Check size={14} color="#fff" strokeWidth={3} /></span>
-              )}
               <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: 6 }}>Admin</span>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>

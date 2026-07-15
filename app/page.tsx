@@ -52,6 +52,7 @@ export default async function HomePage({ searchParams }: Props) {
   })) as unknown as ArticleWithAuthor[])
 
   // Admin "Publish Limits": how many published articles to surface per source type.
+  // A limit of 0 (or unset) means unlimited. In-house posts always shown first.
   const limitsRes = await safeQuery(async () => {
     const r = await (supabase.from('site_settings') as any)
       .select('value')
@@ -62,12 +63,10 @@ export default async function HomePage({ searchParams }: Props) {
   }, null)
   const limits = (limitsRes?.value ?? { inhouse: 0, sourced: 0 }) as { inhouse: number; sourced: number }
 
-  // Organise the published posts by the saved limit: cap in-house and
-  // sourced/RSS articles separately, then show newest first overall.
-  // A limit of 0 (or unset) means unlimited.
+  // Always show ALL in-house articles (no cap). Only cap sourced/RSS if limit set.
   const inhouseList = rawArticles.filter(a => (a as unknown as Record<string, unknown>).is_aggregated !== true)
   const sourcedList = rawArticles.filter(a => (a as unknown as Record<string, unknown>).is_aggregated === true)
-  const inhouse = limits.inhouse > 0 ? inhouseList.slice(0, limits.inhouse) : inhouseList
+  const inhouse = inhouseList
   const sourced = limits.sourced > 0 ? sourcedList.slice(0, limits.sourced) : sourcedList
   const articles: ArticleWithAuthor[] = [...inhouse, ...sourced].sort((a, b) => {
     // In-house (original) posts are surfaced before aggregated/RSS content.
