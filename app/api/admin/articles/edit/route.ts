@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
 
 type Profile = { user_id: number; role: string }
@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
       source_reference:  source_reference?.trim() || null,
     }
 
-    const { data: article, error } = await supabase
+    const adminDb = await createAdminClient()
+
+    const { data: article, error } = await adminDb
       .from('articles')
       .insert(insertPayload as never)
       .select()
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Seed analytics row
     const articleRow = article as unknown as { article_id: number }
-    await supabase
+    await adminDb
       .from('analytics')
       .insert({ article_id: articleRow.article_id, views: 0, likes: 0, shares: 0, comments_count: 0 } as never)
 
@@ -98,6 +100,8 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'article_id is required' }, { status: 400 })
     }
 
+    const adminDb = await createAdminClient()
+
     const updatePayload: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
@@ -119,7 +123,7 @@ export async function PUT(req: NextRequest) {
       updatePayload.status = status
       // Set published_at when transitioning to published
       if (status === 'published') {
-        const { data: existing } = await supabase
+        const { data: existing } = await adminDb
           .from('articles')
           .select('published_at')
           .eq('article_id', article_id)
@@ -131,7 +135,7 @@ export async function PUT(req: NextRequest) {
     }
     if (author_id !== undefined) updatePayload.author_id = author_id
 
-    const { data: article, error } = await supabase
+    const { data: article, error } = await adminDb
       .from('articles')
       .update(updatePayload as never)
       .eq('article_id', article_id)
@@ -172,7 +176,8 @@ export async function GET(req: NextRequest) {
     const id = new URL(req.url).searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
-    const { data: article, error } = await supabase
+    const adminDb = await createAdminClient()
+    const { data: article, error } = await adminDb
       .from('articles')
       .select('*, author:users(user_id,name,profile_image), category:categories(category_id,name)')
       .eq('article_id', Number(id))

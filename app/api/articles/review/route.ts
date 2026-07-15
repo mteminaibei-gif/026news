@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 type Profile = { user_id: number; role: string }
 type ReviewRecord = { article_id: number; admin_id: number; review_notes: string | null; action: string; reviewed_at: string }
@@ -50,14 +50,16 @@ export async function POST(req: NextRequest) {
       updatePayload.featured = !!feature_homepage
     }
 
-    const { error: articleError } = await supabase
+    const adminDb = await createAdminClient()
+
+    const { error: articleError } = await adminDb
       .from('articles')
       .update(updatePayload as never)
       .eq('article_id', id)
     if (articleError) throw articleError
 
     // 2. Insert or update review_workflow record (safe upsert without onConflict)
-    const { data: existingReview } = await supabase
+    const { data: existingReview } = await adminDb
       .from('review_workflow')
       .select('article_id')
       .eq('article_id', id)
@@ -72,13 +74,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (existingReview) {
-      const { error: reviewError } = await supabase
+      const { error: reviewError } = await adminDb
         .from('review_workflow')
         .update(reviewRecord as never)
         .eq('article_id', id)
       if (reviewError) throw reviewError
     } else {
-      const { error: reviewError } = await supabase
+      const { error: reviewError } = await adminDb
         .from('review_workflow')
         .insert(reviewRecord as never)
       if (reviewError) throw reviewError
@@ -120,7 +122,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
-    const { data, error } = await supabase
+    const adminDb = await createAdminClient()
+    const { data, error } = await adminDb
       .from('articles')
       .select('*, author:users(user_id,name,profile_image,bio), category:categories(name), review:review_workflow(review_notes,action,reviewed_at)')
       .eq('status', 'under_review')

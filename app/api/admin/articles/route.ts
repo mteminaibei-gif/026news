@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 type Profile = { user_id: number; role: string }
 
@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url)
-    const status = url.searchParams.get('status')       // published | under_review | rejected | draft | expired
-    const type = url.searchParams.get('type')           // inhouse | sourced
+    const status = url.searchParams.get('status')
+    const type = url.searchParams.get('type')
     const category = url.searchParams.get('category_id')
     const search = url.searchParams.get('search')
     const tag = url.searchParams.get('tag')
@@ -27,7 +27,9 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 25))
     const offset = (page - 1) * limit
 
-    let query = supabase
+    const adminDb = await createAdminClient()
+
+    let query = adminDb
       .from('articles')
       .select('article_id, title, slug, status, featured_image, views, earnings, created_at, published_at, is_aggregated, source_name, category_id, author_id, tags, excerpt, like_count, share_count, save_count, featured, author:users(user_id, name, profile_image), category:categories(name, slug)', { count: 'exact' })
 
@@ -83,19 +85,20 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { ids, action, status, category_id, tags, featured, expires_at } = body as {
+    const { ids, action, status, category_id, tags, featured } = body as {
       ids: number[]
       action?: string
       status?: string
       category_id?: number | null
       tags?: string[]
       featured?: boolean
-      expires_at?: string | null
     }
 
     if (!ids?.length) {
       return NextResponse.json({ error: 'ids array is required' }, { status: 400 })
     }
+
+    const adminDb = await createAdminClient()
 
     // Build update payload
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -115,28 +118,27 @@ export async function PATCH(req: NextRequest) {
 
     if (category_id !== undefined) update.category_id = category_id
     if (tags !== undefined) update.tags = tags
-    if (expires_at !== undefined) update.published_at = expires_at // reuse for expiry
 
     // Update each article
     let updated = 0
     for (const id of ids) {
-      const { error } = await supabase
+      const { error } = await adminDb
         .from('articles')
         .update(update as never)
         .eq('article_id', id)
       if (!error) updated++
     }
 
-    // Handle bulk delete
+    // Handle bulk delete — use admin client for child tables
     if (action === 'delete') {
       updated = 0
       for (const id of ids) {
-        await supabase.from('analytics').delete().eq('article_id', id)
-        await supabase.from('comments').delete().eq('article_id', id)
-        await supabase.from('review_workflow').delete().eq('article_id', id)
-        await supabase.from('earnings').delete().eq('article_id', id)
-        await supabase.from('article_tag_mappings').delete().eq('article_id', id)
-        const { error } = await supabase.from('articles').delete().eq('article_id', id)
+        await adminDb.from('analytics').delete().eq('article_id', id)
+        await adminDb.from('comments').delete().eq('article_id', id)
+        await adminDb.from('review_workflow').delete().eq('article_id', id)
+        await adminDb.from('earnings').delete().eq('article_id', id)
+        await adminDb.from('article_tag_mappings').delete().eq('article_id', id)
+        const { error } = await adminDb.from('articles').delete().eq('article_id', id)
         if (!error) updated++
       }
     }
@@ -148,7 +150,7 @@ export async function PATCH(req: NextRequest) {
       if (category_id !== undefined) singleUpdate.category_id = category_id
       if (tags !== undefined) singleUpdate.tags = tags
       if (featured !== undefined) singleUpdate.featured = featured
-      const { error } = await supabase
+      const { error } = await adminDb
         .from('articles')
         .update(singleUpdate as never)
         .eq('article_id', body.id)
@@ -187,13 +189,15 @@ export async function DELETE(req: NextRequest) {
     const id = new URL(req.url).searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
-    await supabase.from('analytics').delete().eq('article_id', Number(id))
-    await supabase.from('comments').delete().eq('article_id', Number(id))
-    await supabase.from('review_workflow').delete().eq('article_id', Number(id))
-    await supabase.from('earnings').delete().eq('article_id', Number(id))
-    await supabase.from('article_tag_mappings').delete().eq('article_id', Number(id))
+    const adminDb = await createAdminClient()
 
-    const { error } = await supabase.from('articles').delete().eq('article_id', Number(id))
+    await adminDb.from('analytics').delete().eq('article_id', Number(id))
+    await adminDb.from('comments').delete().eq('article_id', Number(id))
+    await adminDb.from('review_workflow').delete().eq('article_id', Number(id))
+    await adminDb.from('earnings').delete().eq('article_id', Number(id))
+    await adminDb.from('article_tag_mappings').delete().eq('article_id', Number(id))
+
+    const { error } = await adminDb.from('articles').delete().eq('article_id', Number(id))
     if (error) throw error
 
     return NextResponse.json({ success: true })

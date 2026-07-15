@@ -101,6 +101,8 @@ export interface Database {
           updated_at: string
           regions: RegionCode[]
           is_region_priority: boolean
+          is_aggregated: boolean
+          content_hash: string | null
         }
         Insert: Omit<Database['public']['Tables']['articles']['Row'], 'article_id' | 'created_at' | 'updated_at' | 'views' | 'likes' | 'earnings' | 'like_count' | 'share_count' | 'save_count'>
         Update: Partial<Database['public']['Tables']['articles']['Insert']>
