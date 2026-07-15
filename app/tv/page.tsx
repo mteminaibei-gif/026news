@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { TVProvider, useTV } from '@/components/tv/TVProvider'
+import { TVPlayer } from '@/components/tv/TVPlayer'
 import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
@@ -185,15 +186,7 @@ function TVPageContent() {
             </div>
             {/* Video embed */}
             <div className="relative bg-black" style={{ paddingBottom: '56.25%' }}>
-              {isPlaying && (
-                <iframe
-                  src={`https://www.youtube.com/channel/${currentStation.youtubeChannel}/live?autoplay=1&mute=0`}
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title={`Live: ${currentStation.name}`}
-                />
-              )}
+              {isPlaying && <TVPlayer station={currentStation} isPlaying={isPlaying} />}
             </div>
             {/* Station info footer */}
             <div className="px-4 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
