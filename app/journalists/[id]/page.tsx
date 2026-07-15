@@ -36,7 +36,6 @@ export default function JournalistProfilePage() {
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'articles' | 'about'>('articles')
 
   const [articles, setArticles] = useState<Article[]>([])
@@ -89,69 +88,81 @@ export default function JournalistProfilePage() {
   }
 
   async function loadArticles() {
-    const { data } = await supabase
-      .from('articles')
-      .select('*, category:categories(name)')
-      .eq('author_id', targetUserId)
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-      .limit(20)
-    setArticles((data as Article[]) || [])
+    try {
+      const { data } = await supabase
+        .from('articles')
+        .select('*, category:categories(name)')
+        .eq('author_id', targetUserId)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      setArticles((data as Article[]) || [])
+    } catch { setArticles([]) }
   }
 
   async function loadSaved() {
     if (!currentUserId) return
-    const { data } = await supabase
-      .from('saved_articles')
-      .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
-      .eq('user_id', currentUserId)
-      .order('saved_at', { ascending: false })
-      .limit(10)
-    setSaved((data as any[]) || [])
+    try {
+      const { data } = await supabase
+        .from('saved_articles')
+        .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
+        .eq('user_id', currentUserId)
+        .order('saved_at', { ascending: false })
+        .limit(10)
+      setSaved((data as any[]) || [])
+    } catch { setSaved([]) }
   }
 
   async function loadLiked() {
     if (!currentUserId) return
-    const { data } = await supabase
-      .from('article_likes')
-      .select('liked_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
-      .eq('user_id', currentUserId)
-      .order('liked_at', { ascending: false })
-      .limit(10)
-    setLiked((data as any[]) || [])
+    try {
+      const { data } = await supabase
+        .from('likes')
+        .select('created_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setLiked((data as any[]) || [])
+    } catch { setLiked([]) }
   }
 
   async function loadComments() {
     if (!currentUserId) return
-    const { data } = await supabase
-      .from('comments')
-      .select('*, articles!inner(article_id, title, slug, featured_image)')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setComments((data as any[]) || [])
+    try {
+      const { data } = await supabase
+        .from('comments')
+        .select('*, articles!inner(article_id, title, slug, featured_image)')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setComments((data as any[]) || [])
+    } catch { setComments([]) }
   }
 
   async function loadNotifs() {
     if (!currentUserId) return
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setNotifs((data as Notification[]) || [])
+    try {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setNotifs((data as Notification[]) || [])
+    } catch { setNotifs([]) }
   }
 
   async function loadFollowing() {
     if (!currentUserId) return
-    const { data } = await supabase
-      .from('user_follows')
-      .select('*, following:users!user_follows_following_id_fkey(user_id, name, profile_image, role)')
-      .eq('follower_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setFollowing((data as any[]) || [])
+    try {
+      const { data } = await supabase
+        .from('user_follows')
+        .select('*, following:users!user_follows_following_id_fkey(user_id, name, profile_image, role)')
+        .eq('follower_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setFollowing((data as any[]) || [])
+    } catch { setFollowing([]) }
   }
 
   async function loadConversations() {
@@ -187,13 +198,15 @@ export default function JournalistProfilePage() {
 
   async function checkFollowStatus() {
     if (!currentUserId) return
-    const { data } = await supabase
-      .from('user_follows')
-      .select('follow_id')
-      .eq('follower_id', currentUserId)
-      .eq('following_id', targetUserId)
-      .maybeSingle()
-    setIsFollowing(!!data)
+    try {
+      const { data } = await supabase
+        .from('user_follows')
+        .select('follow_id')
+        .eq('follower_id', currentUserId)
+        .eq('following_id', targetUserId)
+        .maybeSingle()
+      setIsFollowing(!!data)
+    } catch { setIsFollowing(false) }
   }
 
   async function toggleFollow() {
@@ -248,7 +261,7 @@ export default function JournalistProfilePage() {
     setNotifs(prev => prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n))
   }
 
-  if (loading || profileLoading) {
+  if (profileLoading) {
     return (
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 className="animate-spin" size={32} style={{ color: 'var(--primary)' }} />

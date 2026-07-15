@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [comments, setComments] = useState([])
   const [notifications, setNotifs] = useState([])
   const [following, setFollowing] = useState([])
+  const [conversations, setConversations] = useState([])
   const [readingData, setReadingData] = useState([45, 70, 30, 85, 60, 0, 0])
   const [interests, setInterests] = useState(['Technology', 'AI & ML', 'Startups', 'Fintech', 'Sports', 'Culture', 'Innovation', 'Science'])
   const [stats, setStats] = useState({ articles: 0, saved: 0, following: 0, comments: 0 })
@@ -45,6 +46,7 @@ export default function ProfilePage() {
     loadComments()
     loadNotifs()
     loadFollowing()
+    loadConversations()
     loadStats()
   }, [userId])
 
@@ -161,6 +163,36 @@ export default function ProfilePage() {
     }
   }
 
+  const loadConversations = async () => {
+    if (!userId) return
+    try {
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('sender_id, receiver_id, message, created_at, is_read')
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (!msgs?.length) { setConversations([]); return }
+
+      const convMap = new Map()
+      for (const msg of msgs) {
+        const otherId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id
+        if (otherId === userId) continue
+        if (!convMap.has(otherId)) {
+          const { data: u } = await supabase.from('users').select('user_id, name, profile_image, role').eq('user_id', otherId).single()
+          const fallback = { user_id: otherId, name: 'Unknown', profile_image: null, role: 'user' }
+          convMap.set(otherId, {
+            other_user: u || fallback,
+            last_message: msg.message,
+            last_message_at: msg.created_at,
+            unread: msg.sender_id !== userId && !msg.is_read ? 1 : 0,
+          })
+        }
+      }
+      setConversations(Array.from(convMap.values()).slice(0, 5) as any)
+    } catch { setConversations([]) }
+  }
+
   const initials = user ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'
   const displayName = user?.name || 'Reader'
 
@@ -170,7 +202,7 @@ export default function ProfilePage() {
     const colors = ['oklch(50% 0.14 200)', 'oklch(50% 0.14 320)', 'oklch(50% 0.14 90)', 'oklch(50% 0.14 30)', 'oklch(50% 0.14 350)']
     const color = colors[(n.notification_id || 0) % colors.length]
     const timeAgo = getTimeAgo(n.created_at)
-    const isUnread = !n.read
+    const isUnread = !n.is_read
     let text = ''
     if (n.type === 'article_published') text = `<strong>${name}</strong> published a new article`
     else if (n.type === 'comment_reply') text = `<strong>${name}</strong> replied to your comment`
@@ -430,16 +462,23 @@ export default function ProfilePage() {
               <MessageSquare size={16} style={{ color: 'var(--accent)' }} /> Messages
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '12px 12px 12px 4px', background: 'var(--bg-inset)', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>Hey! Loved your comment on the M-Pesa article. Want to connect?</div>
-              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '12px 12px 4px 12px', background: 'var(--primary)', color: 'oklch(98% 0.005 175)', fontSize: '0.78rem', lineHeight: 1.4, alignSelf: 'flex-end' }}>Thanks! Absolutely, I'm always up for discussing fintech trends.</div>
-              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '12px 12px 12px 4px', background: 'var(--bg-inset)', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>Great! I'm writing a piece on crypto regulation next week. Would love your input.</div>
+              {conversations.length === 0 ? (
+                <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No messages yet.</p>
+              ) : (conversations as any[]).slice(0, 3).map((c: any, i: number) => (
+                <div key={i} onClick={() => window.location.href = '/inbox'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 9, cursor: 'pointer', background: c.unread > 0 ? 'var(--bg-inset)' : 'transparent', transition: 'background 0.2s' }}>
+                  {c.other_user?.profile_image ? (
+                    <img src={c.other_user.profile_image} alt={c.other_user.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0 }}>{c.other_user?.name?.charAt(0) || '?'}</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.other_user?.name}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.last_message}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <input type="text" placeholder="Type a message..." style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', fontSize: '0.78rem', fontFamily: 'inherit', color: 'var(--text-primary)', outline: 'none' }} />
-              <button style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--primary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Send size={15} style={{ color: 'oklch(98% 0.005 175)' }} />
-              </button>
-            </div>
+            <Link href="/inbox" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View Inbox</Link>
           </div>
 
           {/* Following */}
