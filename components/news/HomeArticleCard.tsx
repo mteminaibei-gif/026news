@@ -9,7 +9,7 @@ import { useLike } from '@/lib/hooks/useLike'
 
 export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
   const excerpt =
-    article.excerpt?.trim() ||
+    stripHtml(article.excerpt ?? '').trim() ||
     stripHtml(article.content).replace(/\n+/g, ' ').slice(0, 160).trim()
 
   const readTime = article.reading_time_minutes ?? 0

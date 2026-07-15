@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/server'
+import { stripHtml } from '@/lib/utils'
 import type { PostgrestResponse } from '@supabase/supabase-js'
 
 type ArticleRow = {
@@ -226,7 +227,7 @@ export default async function ArticlesPage() {
                           {featured.title}
                         </h2>
                         <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-md)' }}>
-                          {(featured.excerpt || featured.content).slice(0, 150)}...
+                          {stripHtml(featured.excerpt || featured.content).slice(0, 150)}...
                         </p>
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
@@ -319,7 +320,7 @@ export default async function ArticlesPage() {
                             overflow: 'hidden',
                           }}
                         >
-                          {(article.excerpt || article.content).slice(0, 100)}...
+                          {stripHtml(article.excerpt || article.content).slice(0, 100)}...
                         </p>
 
                         {/* Author Row */}

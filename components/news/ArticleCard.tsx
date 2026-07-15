@@ -129,7 +129,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
         </h3>
 
         <p className="text-sm line-clamp-2 mb-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          {article.excerpt?.trim() || stripHtml(article.content).substring(0, 120)}...
+          {stripHtml(article.excerpt ?? '').trim() || stripHtml(article.content).substring(0, 120)}...
         </p>
 
         {sourceHost && (

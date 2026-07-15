@@ -8,6 +8,7 @@ import { ViewTracker } from '@/components/ui/ViewTracker'
 import { ArticleEngagement } from '@/components/news/ArticleEngagement'
 import { ArticleComments } from '@/components/news/ArticleComments'
 import { BannerAd, InArticleAd } from '@/components/ads/AdSense'
+import { stripHtml } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
-  const description = ((article.excerpt || article.content) ?? '').slice(0, 160)
+  const description = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
 
   return {
     title: article.title,
@@ -242,7 +243,7 @@ export default async function ArticlePage({ params }: Props) {
       : null
 
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
-  const seoDescription = ((article.excerpt || article.content) ?? '').slice(0, 160)
+  const seoDescription = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
@@ -283,7 +284,7 @@ export default async function ArticlePage({ params }: Props) {
           <header className="article-header">
             {article.category?.name && <span className="article-category">{article.category.name}</span>}
             <h1 className="article-title">{article.title}</h1>
-            {article.excerpt && <p className="article-subtitle">{article.excerpt}</p>}
+            {article.excerpt && <p className="article-subtitle">{stripHtml(article.excerpt)}</p>}
 
             <div className="article-meta">
               <div className="article-author-row">

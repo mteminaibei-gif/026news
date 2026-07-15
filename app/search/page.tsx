@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { formatNumber, formatDate } from '@/lib/utils'
+import { formatNumber, formatDate, stripHtml } from '@/lib/utils'
 import { Search as SearchIcon, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Art = {
@@ -367,7 +367,7 @@ function ResultRow({ a }: { a: Art }) {
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(a.created_at)}</span>
         </div>
         <h3 className="font-bold leading-snug mb-1 line-clamp-2" style={{ color: 'var(--text-primary)' }}>{a.title}</h3>
-        <p className="text-sm line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{(a.excerpt || a.content).replace(/\n+/g, ' ').slice(0, 120)}…</p>
+        <p className="text-sm line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{stripHtml(a.excerpt || a.content).replace(/\n+/g, ' ').slice(0, 120)}…</p>
         <div className="flex items-center gap-3 mt-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span>{a.author?.name ?? 'Staff Writer'}</span>
           <span>·</span>

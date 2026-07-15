@@ -231,7 +231,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                         </h3>
                         {article.excerpt && (
                           <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 12, flex: 1 }}>
-                            {article.excerpt}
+                            {stripHtml(article.excerpt)}
                           </p>
                         )}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: 'auto' }}>

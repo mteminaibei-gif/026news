@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, stripHtml } from '@/lib/utils'
 import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw } from 'lucide-react'
 
 const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
@@ -440,7 +440,7 @@ export default function NewsPage() {
                   </h2>
                   {topStory.excerpt && (
                     <p style={{ fontSize: '0.88rem', opacity: 0.85, marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {topStory.excerpt}
+                      {stripHtml(topStory.excerpt)}
                     </p>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.78rem', opacity: 0.8 }}>
@@ -520,7 +520,7 @@ export default function NewsPage() {
                       </h3>
                       {a.excerpt && (
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          {a.excerpt}
+                          {stripHtml(a.excerpt)}
                         </p>
                       )}
                     </div>
