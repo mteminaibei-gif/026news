@@ -44,9 +44,9 @@ function LoginForm() {
 
       const role = data.user?.role?.toLowerCase()
       if (role === 'admin') {
-        window.location.href = '/admin/dashboard'
+        window.location.href = '/admin/profile'
       } else if (role === 'journalist') {
-        window.location.href = '/journalist/dashboard'
+        window.location.href = '/journalist/profile'
       } else {
         window.location.href = '/profile'
       }

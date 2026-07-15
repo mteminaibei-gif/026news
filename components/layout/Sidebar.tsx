@@ -17,7 +17,6 @@ interface SidebarProps {
 }
 
 const JOURNALIST_NAV: NavItem[] = [
-  { href: '/journalist/dashboard',   label: 'Dashboard',   icon: <LayoutDashboard size={18} /> },
   { href: '/journalist/create',      label: 'Write Article', icon: <PenLine size={18} /> },
   { href: '/journalist/articles',    label: 'My Articles', icon: <Newspaper size={18} /> },
   { href: '/journalist/analytics',   label: 'Analytics',   icon: <BarChart3 size={18} /> },
@@ -26,7 +25,6 @@ const JOURNALIST_NAV: NavItem[] = [
   { href: '/journalist/profile',     label: 'Profile',     icon: <User size={18} /> },
 ]
 const ADMIN_NAV: NavItem[] = [
-  { href: '/admin/dashboard',      label: 'Dashboard',      icon: <LayoutDashboard size={18} /> },
   { href: '/admin/write',          label: 'Write',          icon: <PenLine size={18} /> },
   { href: '/admin/notifications',  label: 'Notifications',  icon: <Bell size={18} /> },
   { href: '/admin/reviews',        label: 'Reviews',        icon: <FileText size={18} /> },

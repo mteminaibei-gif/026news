@@ -16,7 +16,6 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
     if (role === 'admin') {
       return [
         { href: '/admin/profile', label: 'My Profile', icon: User },
-        { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/articles', label: 'Articles', icon: FileText },
         { href: '/admin/write', label: 'Write', icon: PenLine },
         { href: '/admin/reviews', label: 'Reviews', icon: BarChart3 },
@@ -28,7 +27,6 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
     if (role === 'journalist') {
       return [
         { href: `/journalists/${userId}`, label: 'Public Profile', icon: User },
-        { href: '/journalist/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/journalist/create', label: 'Write Article', icon: PenLine },
         { href: '/journalist/articles', label: 'My Articles', icon: FileText },
         { href: '/journalist/analytics', label: 'Analytics', icon: BarChart3 },
