@@ -142,8 +142,8 @@ export default function SettingsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
-      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem', display: 'flex', gap: '2rem' }}>
-        <nav style={{ width: '200px', flexShrink: 0 }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' }} className="settings-layout">
+        <nav className="settings-sidebar">
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Settings</h1>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {tabs.map((tab) => (

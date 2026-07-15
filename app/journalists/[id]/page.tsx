@@ -287,7 +287,7 @@ export default function JournalistProfilePage() {
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px', display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+        <div className="journalist-header" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px' }}>
           {profile.profile_image ? (
             <div style={{ width: 120, height: 120, borderRadius: 28, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)' }}>
               <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
@@ -297,13 +297,13 @@ export default function JournalistProfilePage() {
               {profile.name.charAt(0)}
             </div>
           )}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="journalist-header-content">
               <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'Newsreader', Georgia, serif" }}>{profile.name}</h1>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.6, marginBottom: 16 }}>{profile.bio ?? 'No bio available.'}</p>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {!isOwnProfile && (
                 <button onClick={toggleFollow} disabled={followLoading}
                   style={{ padding: '10px 20px', borderRadius: 9, fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 7, border: 'none',
@@ -324,19 +324,21 @@ export default function JournalistProfilePage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 0 }}>
+      <div className="profile-tabs" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)' }}>
         <button onClick={() => setActiveTab('articles')}
-          style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: activeTab === 'articles' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottom: `2px solid ${activeTab === 'articles' ? 'var(--primary)' : 'transparent'}`, cursor: 'pointer', background: 'none', border: 'none', borderRight: 'none', fontFamily: 'inherit' }}>
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'articles' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'articles' ? 'var(--primary)' : 'transparent' }}>
           Articles ({articles.length})
         </button>
         <button onClick={() => setActiveTab('about')}
-          style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottom: `2px solid ${activeTab === 'about' ? 'var(--primary)' : 'transparent'}`, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit' }}>
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'about' ? 'var(--primary)' : 'transparent' }}>
           About
         </button>
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '220px 1fr 320px', gap: 32 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }} className="journalist-layout">
         {/* Profile Nav */}
         <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
           <ProfileNav role="journalist" userId={targetUserId} />
@@ -347,7 +349,7 @@ export default function JournalistProfilePage() {
             articles.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {articles.map(article => (
-                  <div key={article.article_id} style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: 20, padding: 20, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
+                  <div key={article.article_id} className="profile-article-card-with-image" style={{ padding: 20, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
                         <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -386,7 +388,7 @@ export default function JournalistProfilePage() {
             <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 32 }}>
               <h2 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 16 }}>About {profile.name}</h2>
               <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24 }}>{profile.bio ?? 'No bio available.'}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+              <div className="about-info-grid">
                 <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Role</div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600, textTransform: 'capitalize' }}>{profile.role}</div>

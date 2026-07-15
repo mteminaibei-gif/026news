@@ -210,7 +210,7 @@ export default function AdminProfilePage() {
       .eq('user_id', currentUserId)
       .order('saved_at', { ascending: false })
       .limit(10)
-    setSaved((data as any[]) || [])
+    setSaved((saved as any[]) || [])
 
     const { data: liked } = await supabase
       .from('article_likes')
@@ -218,7 +218,7 @@ export default function AdminProfilePage() {
       .eq('user_id', currentUserId)
       .order('liked_at', { ascending: false })
       .limit(10)
-    setLiked((data as any[]) || [])
+    setLiked((liked as any[]) || [])
 
     const { data: commentsData } = await supabase
       .from('comments')
@@ -226,7 +226,7 @@ export default function AdminProfilePage() {
       .eq('user_id', currentUserId)
       .order('created_at', { ascending: false })
       .limit(10)
-    setComments((data as any[]) || [])
+    setComments((commentsData as any[]) || [])
 
     const { data: notifs } = await supabase
       .from('notifications')
@@ -234,7 +234,7 @@ export default function AdminProfilePage() {
       .eq('user_id', currentUserId)
       .order('created_at', { ascending: false })
       .limit(10)
-    setNotifs((data as Notification[]) || [])
+    setNotifs((notifs as Notification[]) || [])
 
     const { data: followingData } = await supabase
       .from('user_follows')
@@ -242,7 +242,7 @@ export default function AdminProfilePage() {
       .eq('follower_id', currentUserId)
       .order('created_at', { ascending: false })
       .limit(10)
-    setFollowing((data as any[]) || [])
+    setFollowing((followingData as any[]) || [])
 
     try {
       const { data: msgs } = await supabase
@@ -352,6 +352,17 @@ export default function AdminProfilePage() {
     chartData.push(articles.filter(a => a.created_at.startsWith(ym)).length)
   }
 
+  const allArticles = [...inhouseArticles, ...sourcedArticles]
+  const trafficChartData: number[] = []
+  const trafficChartLabels: string[] = []
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    const ym = d.toISOString().slice(0, 7)
+    trafficChartLabels.push(d.toLocaleString('default', { month: 'short' }))
+    trafficChartData.push(allArticles.filter(a => a.created_at.startsWith(ym)).reduce((sum, a) => sum + (a.views || 0), 0))
+  }
+
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
       {notification && (
@@ -366,7 +377,7 @@ export default function AdminProfilePage() {
       )}
 
       <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px', display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+        <div className="admin-header" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px' }}>
           {profile.profile_image ? (
             <div style={{ width: 120, height: 120, borderRadius: 28, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)' }}>
               <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
@@ -376,8 +387,8 @@ export default function AdminProfilePage() {
               {profile.name.charAt(0)}
             </div>
           )}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="admin-header-title">
               <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'Newsreader', Georgia, serif" }}>{profile.name}</h1>
               <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: 6 }}>Admin</span>
             </div>
@@ -388,21 +399,25 @@ export default function AdminProfilePage() {
       </div>
 
       {/* Tab Navigation */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 0 }}>
+      <div className="profile-tabs" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)' }}>
         <button onClick={() => setActiveTab('dashboard')}
-          style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: activeTab === 'dashboard' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottom: `2px solid ${activeTab === 'dashboard' ? 'var(--primary)' : 'transparent'}`, cursor: 'pointer', background: 'none', border: 'none', borderRight: 'none', fontFamily: 'inherit' }}>
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'dashboard' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'dashboard' ? 'var(--primary)' : 'transparent' }}>
           📊 Dashboard
         </button>
         <button onClick={() => setActiveTab('articles')}
-          style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: activeTab === 'articles' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottom: `2px solid ${activeTab === 'articles' ? 'var(--primary)' : 'transparent'}`, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit' }}>
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'articles' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'articles' ? 'var(--primary)' : 'transparent' }}>
           📋 Articles ({articles.length})
         </button>
         <button onClick={() => setActiveTab('control-panel')}
-          style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: activeTab === 'control-panel' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottom: `2px solid ${activeTab === 'control-panel' ? 'var(--primary)' : 'transparent'}`, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit' }}>
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'control-panel' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'control-panel' ? 'var(--primary)' : 'transparent' }}>
           ⚙️ Control Panel
         </button>
         <button onClick={() => setActiveTab('about')}
-          style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottom: `2px solid ${activeTab === 'about' ? 'var(--primary)' : 'transparent'}`, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit' }}>
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'about' ? 'var(--primary)' : 'transparent' }}>
           About
         </button>
       </div>
@@ -463,7 +478,7 @@ export default function AdminProfilePage() {
                     <span className="px-3 py-1 text-xs font-semibold rounded-full" style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: 'var(--success-light)', color: 'var(--success)' }}>Live</span>
                   </div>
                   <div className="p-6">
-                    <BarChart data={[30, 45, 38, 55, 60, 50, 72, 80, 75, 90, 85, 100]} labels={['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']} height={100} />
+                    <BarChart data={trafficChartData} labels={trafficChartLabels} height={100} />
                   </div>
                 </div>
 
@@ -628,7 +643,7 @@ export default function AdminProfilePage() {
             <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 32 }}>
               <h2 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 16 }}>About {profile.name}</h2>
               <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24 }}>{profile.bio ?? 'No bio available.'}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+              <div className="about-info-grid">
                 <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Role</div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600, textTransform: 'capitalize' }}>{profile.role}</div>

@@ -24,7 +24,7 @@ type Art = {
 export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [inputValue, setInputValue] = useState('')
-  const [recentSearches, setRecentSearches] = useState<string[]>(['Kenya politics', 'Solar energy', 'Tech startups'])
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [showRecent, setShowRecent] = useState(true)
 
   const [categories, setCategories] = useState<{ category_id: number; name: string }[]>([])
@@ -32,6 +32,13 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'recent' | 'views'>('recent')
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('026-recent-searches')
+      if (stored) setRecentSearches(JSON.parse(stored))
+    } catch {}
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -100,15 +107,20 @@ export default function SearchPage() {
     const trimmed = inputValue.trim()
     if (!trimmed) return
     setQuery(trimmed)
-    setRecentSearches(prev => [trimmed, ...prev.filter(s => s !== trimmed)].slice(0, 8))
+    const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, 8)
+    setRecentSearches(updated)
+    localStorage.setItem('026-recent-searches', JSON.stringify(updated))
   }
 
   function clearRecent() {
     setRecentSearches([])
+    localStorage.removeItem('026-recent-searches')
   }
 
   function removeRecent(term: string) {
-    setRecentSearches(prev => prev.filter(s => s !== term))
+    const updated = recentSearches.filter(s => s !== term)
+    setRecentSearches(updated)
+    localStorage.setItem('026-recent-searches', JSON.stringify(updated))
   }
 
   return (

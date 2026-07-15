@@ -29,8 +29,8 @@ export default function ProfilePage() {
   const [notifications, setNotifs] = useState([])
   const [following, setFollowing] = useState([])
   const [conversations, setConversations] = useState([])
-  const [readingData, setReadingData] = useState([45, 70, 30, 85, 60, 0, 0])
-  const [interests, setInterests] = useState(['Technology', 'AI & ML', 'Startups', 'Fintech', 'Sports', 'Culture', 'Innovation', 'Science'])
+  const [readingData, setReadingData] = useState([0, 0, 0, 0, 0, 0, 0])
+  const [interests, setInterests] = useState<string[]>([])
   const [stats, setStats] = useState({ articles: 0, saved: 0, following: 0, comments: 0 })
 
   useEffect(() => {
@@ -48,6 +48,8 @@ export default function ProfilePage() {
     loadFollowing()
     loadConversations()
     loadStats()
+    loadInterests()
+    loadReadingActivity()
   }, [userId])
 
   const toggleTheme = () => {
@@ -86,6 +88,49 @@ export default function ProfilePage() {
         following: following.count ?? 0,
         comments: comments.count ?? 0,
       })
+    } catch {}
+  }
+
+  const loadInterests = async () => {
+    try {
+      const { data: cats } = await supabase.from('categories').select('name').limit(8)
+      if (cats && cats.length > 0) {
+        setInterests(cats.map((c: any) => c.name))
+      } else {
+        const stored = localStorage.getItem('026-interests')
+        if (stored) setInterests(JSON.parse(stored))
+      }
+    } catch {
+      const stored = localStorage.getItem('026-interests')
+      if (stored) setInterests(JSON.parse(stored))
+    }
+  }
+
+  const loadReadingActivity = async () => {
+    if (!userId) return
+    try {
+      const now = new Date()
+      const dayOfWeek = now.getDay()
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7))
+      monday.setHours(0, 0, 0, 0)
+
+      const [savedRes, likedRes] = await Promise.all([
+        supabase.from('saved_articles').select('saved_at').eq('user_id', userId).gte('saved_at', monday.toISOString()),
+        supabase.from('article_likes').select('created_at').eq('user_id', userId).gte('created_at', monday.toISOString()),
+      ])
+
+      const dailyCounts = [0, 0, 0, 0, 0, 0, 0]
+      const allDates = [
+        ...(savedRes.data || []).map((s: any) => s.saved_at),
+        ...(likedRes.data || []).map((l: any) => l.created_at),
+      ]
+      for (const dateStr of allDates) {
+        const d = new Date(dateStr)
+        const diffDays = Math.floor((d.getTime() - monday.getTime()) / 86400000)
+        if (diffDays >= 0 && diffDays < 7) dailyCounts[diffDays]++
+      }
+      setReadingData(dailyCounts)
     } catch {}
   }
 
@@ -267,24 +312,24 @@ export default function ProfilePage() {
 
       {/* Profile Header */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 28, marginBottom: 32 }}>
+        <div className="profile-header" style={{ marginBottom: 32 }}>
           <div style={{ width: 96, height: 96, borderRadius: 24, background: 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
             {initials}
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>{displayName}</h1>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{displayName.toLowerCase().replace(/\s/g, '')} · Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Jan 2026'}</p>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{displayName.toLowerCase().replace(/\s/g, '')} · Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</p>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.55, marginBottom: 16 }}>
-              Tech enthusiast and avid reader. Interested in AI, startups, and the future of East African innovation.
+              {user?.bio || 'No bio yet.'}
             </p>
-            <div style={{ display: 'flex', gap: 20, alignItems: 'center', fontSize: '0.82rem' }}>
+            <div className="profile-stats-row" style={{ fontSize: '0.82rem' }}>
               <span><strong style={{ fontWeight: 700 }}>{stats.articles}</strong> <span style={{ color: 'var(--text-tertiary)' }}>articles read</span></span>
               <span><strong style={{ fontWeight: 700 }}>{stats.saved}</strong> <span style={{ color: 'var(--text-tertiary)' }}>saved</span></span>
               <span><strong style={{ fontWeight: 700 }}>{stats.following}</strong> <span style={{ color: 'var(--text-tertiary)' }}>following</span></span>
               <span><strong style={{ fontWeight: 700 }}>{stats.comments}</strong> <span style={{ color: 'var(--text-tertiary)' }}>comments</span></span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0, paddingTop: 8 }}>
+          <div className="profile-header-actions">
             <Link href="/settings" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <Settings size={15} /> Settings
             </Link>
@@ -295,7 +340,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="profile-tabs" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
           {[
             { id: 'saved', label: 'Saved', icon: Bookmark, count: stats.saved },
             { id: 'liked', label: 'Liked', icon: Heart, count: likedArticles.length },
@@ -303,7 +348,8 @@ export default function ProfilePage() {
             { id: 'history', label: 'History', icon: null, count: null },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              style={{ padding: '14px 20px', fontSize: '0.85rem', fontWeight: activeTab === tab.id ? 600 : 500, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)', cursor: 'pointer', borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}>
+              className="profile-tab-btn"
+              style={{ fontWeight: activeTab === tab.id ? 600 : 500, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === tab.id ? 'var(--primary)' : 'transparent' }}>
               {tab.icon && <tab.icon size={15} />}
               {tab.label}
               {tab.count != null && (
@@ -315,7 +361,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '220px 1fr 340px', gap: 32 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }} className="profile-layout">
         {/* Profile Nav */}
         <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
           <ProfileNav role="reader" />
@@ -329,7 +375,7 @@ export default function ProfilePage() {
               {savedArticles.map((a: any, i) => {
                 const article = a.articles || a
                 return (
-                  <Link key={i} href={`/article/${article.slug || '#'}`} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 18, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer' }}>
+                  <Link key={i} href={`/article/${article.slug || '#'}`} className="profile-article-card" style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer' }}>
                     <Image src={article.featured_image || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
@@ -339,7 +385,7 @@ export default function ProfilePage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved {a.saved_at ? new Date(a.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 7} min read</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved {a.saved_at ? new Date(a.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
@@ -361,7 +407,7 @@ export default function ProfilePage() {
               {likedArticles.map((a: any, i) => {
                 const article = a.articles || a
                 return (
-                  <Link key={i} href={`/article/${article.slug || '#'}`} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 18, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer', opacity: 0.85 }}>
+                  <Link key={i} href={`/article/${article.slug || '#'}`} className="profile-article-card" style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer', opacity: 0.85 }}>
                     <Image src={article.featured_image || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
@@ -371,7 +417,7 @@ export default function ProfilePage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 7} min read</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
@@ -409,22 +455,28 @@ export default function ProfilePage() {
 
           {/* History Tab */}
           {activeTab === 'history' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, opacity: 0.7 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 18, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
-                <Image src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300&h=200&fit=crop" alt="" width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>Technology</span>
-                    <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0' }}>AI-Powered Journalism Is Reshaping How Stories Reach Readers</h3>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Amara Mwangi</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Read today · 5 min read</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {likedArticles.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No reading history yet.</p>}
+              {likedArticles.slice(0, 5).map((a: any, i: number) => {
+                const article = a.articles || a
+                return (
+                  <Link key={i} href={`/article/${article.slug || '#'}`} className="profile-article-card" style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer', opacity: 0.85 }}>
+                    <Image src={article.featured_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || ''}</span>
+                        <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </main>

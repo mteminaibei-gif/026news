@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, type CSSProperties } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { createClient } from '@/lib/supabase/client'
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5
 
@@ -23,13 +24,7 @@ const INTERESTS = [
   { id: 'education', label: 'Education', icon: '📚' },
 ]
 
-const AUTHORS = [
-  { id: 'am', name: 'Amara Mwangi', topic: 'Technology · AI', initials: 'AM', grad: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(45% 0.12 200))' },
-  { id: 'ko', name: 'Kwame Osei', topic: 'Business · Fintech', initials: 'KO', grad: 'linear-gradient(135deg, oklch(50% 0.14 30), oklch(50% 0.12 50))' },
-  { id: 'fn', name: 'Dr. Fatima Ndegwa', topic: 'Science · Health', initials: 'FN', grad: 'linear-gradient(135deg, oklch(50% 0.14 140), oklch(45% 0.12 160))' },
-  { id: 'za', name: 'Zuri Abara', topic: 'Culture · Arts', initials: 'ZA', grad: 'linear-gradient(135deg, oklch(50% 0.14 310), oklch(45% 0.12 330))' },
-  { id: 'es', name: 'Eliud Sang', topic: 'Sports · Fitness', initials: 'ES', grad: 'linear-gradient(135deg, oklch(50% 0.14 25), oklch(50% 0.12 40))' },
-]
+type AuthorItem = { id: string; name: string; topic: string; initials: string; grad: string; profile_image?: string | null }
 
 const NOTIFS = [
   { id: 'daily_digest', name: 'Daily Digest Email', desc: 'Top 5 stories delivered every morning' },
@@ -79,6 +74,37 @@ export default function OnboardingPage() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [authors, setAuthors] = useState<AuthorItem[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('users')
+      .select('user_id, name, profile_image, bio')
+      .eq('role', 'journalist' as never)
+      .eq('status', 'active' as never)
+      .order('rank_score', { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const grads = [
+            'linear-gradient(135deg, oklch(50% 0.14 220), oklch(45% 0.12 200))',
+            'linear-gradient(135deg, oklch(50% 0.14 30), oklch(50% 0.12 50))',
+            'linear-gradient(135deg, oklch(50% 0.14 140), oklch(45% 0.12 160))',
+            'linear-gradient(135deg, oklch(50% 0.14 310), oklch(45% 0.12 330))',
+            'linear-gradient(135deg, oklch(50% 0.14 25), oklch(50% 0.12 40))',
+          ]
+          setAuthors(data.map((u: any, i: number) => ({
+            id: String(u.user_id),
+            name: u.name,
+            topic: u.bio?.slice(0, 30) || 'Journalist',
+            initials: u.name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(),
+            grad: grads[i % grads.length],
+            profile_image: u.profile_image,
+          })))
+        }
+      })
+  }, [])
 
   const TOTAL = 6
 
@@ -114,6 +140,8 @@ export default function OnboardingPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Something went wrong.'); return }
+      localStorage.setItem('026-interests', JSON.stringify(interests))
+      localStorage.setItem('026-follows', JSON.stringify(follows))
       router.push(`/verify-email?email=${encodeURIComponent(email)}`)
     } catch {
       setError('Network error. Please try again.')
@@ -235,11 +263,18 @@ export default function OnboardingPage() {
                 <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: 6 }}>Get notified when these writers publish new stories.</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-                {AUTHORS.map((a) => {
+                {authors.length === 0 && (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '16px 0' }}>Loading authors...</p>
+                )}
+                {authors.map((a) => {
                   const f = follows.includes(a.id)
                   return (
                     <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 12, background: a.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'oklch(98% 0.005 175)', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>{a.initials}</div>
+                      {a.profile_image ? (
+                        <img src={a.profile_image} alt={a.name} style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: a.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'oklch(98% 0.005 175)', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>{a.initials}</div>
+                      )}
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{a.topic}</div>

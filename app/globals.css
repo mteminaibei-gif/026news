@@ -1176,3 +1176,221 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
   margin: 1rem 0;
   display: block;
 }
+
+/* ── Profile pages responsive ──────────────────────────── */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 340px;
+  gap: 32px;
+}
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+.profile-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+.profile-tabs {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.profile-tabs::-webkit-scrollbar { display: none; }
+.profile-article-card {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 18px;
+}
+.profile-article-card-with-image {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 20px;
+}
+.profile-stats-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Journalist public profile layout */
+.journalist-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  gap: 32px;
+}
+.journalist-header {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+.journalist-header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+/* Settings layout */
+.settings-layout {
+  display: flex;
+  gap: 2rem;
+}
+.settings-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+/* About tab grid */
+.about-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Admin profile header */
+.admin-header {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+.admin-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+/* Tab button responsive */
+.profile-tab-btn {
+  padding: 14px 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+@media (max-width: 1024px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+  .profile-layout > aside:first-child {
+    display: none;
+  }
+  .profile-layout > aside:last-child {
+    display: none;
+  }
+  .journalist-layout {
+    grid-template-columns: 1fr;
+  }
+  .journalist-layout > aside:first-child {
+    display: none;
+  }
+  .journalist-layout > aside:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .profile-header-actions {
+    padding-top: 0;
+    justify-content: center;
+  }
+  .profile-stats-row {
+    justify-content: center;
+    gap: 12px;
+  }
+  .profile-article-card {
+    grid-template-columns: 1fr;
+  }
+  .profile-article-card > img,
+  .profile-article-card > div:first-child {
+    min-height: 160px;
+  }
+  .profile-article-card-with-image {
+    grid-template-columns: 1fr;
+  }
+  .profile-article-card-with-image > a:last-child {
+    min-height: 160px;
+  }
+  .journalist-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .journalist-header-content {
+    justify-content: center;
+  }
+  .admin-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .admin-header-title {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .about-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-layout {
+    flex-direction: column;
+  }
+  .settings-sidebar {
+    width: 100%;
+  }
+  .settings-sidebar ul {
+    flex-direction: row !important;
+    overflow-x: auto;
+    gap: 4px !important;
+  }
+  .settings-sidebar li {
+    white-space: nowrap;
+  }
+  .profile-tab-btn {
+    padding: 12px 14px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .profile-header-actions a,
+  .profile-header-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+  .journalist-header > div:last-child {
+    width: 100%;
+  }
+  .journalist-header > div:last-child > div {
+    flex-direction: column;
+    width: 100%;
+  }
+  .journalist-header > div:last-child > div > button {
+    width: 100%;
+    justify-content: center;
+  }
+}

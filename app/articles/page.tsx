@@ -25,14 +25,6 @@ type CategoryRow = { category_id: number; name: string }
 
 const FILTER_TABS = ['All Time', 'This Month', 'This Week', 'Today'] as const
 
-const RISING_STORIES = [
-  { title: 'New Exoplanet Discovery Sparks Debate', trend: '+245%', category: 'Science' },
-  { title: 'Kenya’s Tech Hub Expansion Plans', trend: '+180%', category: 'Tech' },
-  { title: 'East African Trade Agreement Update', trend: '+156%', category: 'Business' },
-  { title: 'Climate Summit Key Takeaways', trend: '+132%', category: 'Science' },
-  { title: 'Youth Employment Initiative Results', trend: '+98%', category: 'Politics' },
-]
-
 async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try { return await fn() } catch { return fallback }
 }
@@ -114,6 +106,16 @@ export default async function ArticlesPage() {
 
   const featured = articles[0]
   const rest = articles.slice(1)
+
+  const risingStories = articles
+    .filter(a => a.views > 0)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 5)
+    .map(a => ({
+      title: a.title,
+      trend: `+${Math.min(Math.round(a.views / 10), 999)}%`,
+      category: a.category?.name || 'News',
+    }))
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
@@ -376,7 +378,7 @@ export default async function ArticlesPage() {
                   Rising Stories
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                  {RISING_STORIES.map((story, i) => (
+                  {risingStories.map((story, i) => (
                     <div
                       key={i}
                       className="hover-lift"
