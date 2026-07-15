@@ -114,7 +114,7 @@ export function Navbar() {
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                   }}
                 >
-                  {Icon && <Icon size={15} />}
+                  {Icon && <Icon size={15} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : undefined} />}
                   {link.label}
                 </Link>
               )
@@ -420,7 +420,7 @@ export function Navbar() {
                       background: pathname === href ? 'var(--primary-light)' : 'transparent',
                     }}
                   >
-                    {Icon && <Icon size={16} />}
+                    {Icon && <Icon size={16} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : undefined} />}
                     {link.label}
                   </Link>
                 </li>
