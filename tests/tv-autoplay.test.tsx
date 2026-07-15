@@ -27,7 +27,7 @@ describe('TV Auto-Play Functionality', () => {
   describe('TVGlobalProvider', () => {
     it('should initialize with no station selected', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TVGlobalProvider>{children}</TVProvider>
+        <TVGlobalProvider>{children}</TVGlobalProvider>
       )
       const { result } = renderHook(() => require('@/components/tv/TVGlobalProvider').useTVGlobal(), { wrapper })
       expect(result.current.currentStation).toBeNull()
@@ -37,7 +37,7 @@ describe('TV Auto-Play Functionality', () => {
 
     it('should play station when playStation is called', async () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TVGlobalProvider>{children}</TVProvider>
+        <TVGlobalProvider>{children}</TVGlobalProvider>
       )
       const { result } = renderHook(() => require('@/components/tv/TVGlobalProvider').useTVGlobal(), { wrapper })
       
@@ -50,7 +50,6 @@ describe('TV Auto-Play Functionality', () => {
         embedType: 'hls' as const,
         website: 'https://test.com',
         logo: '📺',
-        viewers: 100,
         region: 'ke',
       }
       
@@ -65,7 +64,7 @@ describe('TV Auto-Play Functionality', () => {
 
     it('should toggle play when same station is called twice', async () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TVGlobalProvider>{children}</TVProvider>
+        <TVGlobalProvider>{children}</TVGlobalProvider>
       )
       const { result } = renderHook(() => require('@/components/tv/TVGlobalProvider').useTVGlobal(), { wrapper })
       
@@ -78,7 +77,6 @@ describe('TV Auto-Play Functionality', () => {
         embedType: 'hls' as const,
         website: 'https://test.com',
         logo: '📺',
-        viewers: 100,
         region: 'ke',
       }
       
@@ -96,7 +94,7 @@ describe('TV Auto-Play Functionality', () => {
 
     it('should stop when stop is called', async () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TVGlobalProvider>{children}</TVProvider>
+        <TVGlobalProvider>{children}</TVGlobalProvider>
       )
       const { result } = renderHook(() => require('@/components/tv/TVGlobalProvider').useTVGlobal(), { wrapper })
       
@@ -109,7 +107,6 @@ describe('TV Auto-Play Functionality', () => {
         embedType: 'hls' as const,
         website: 'https://test.com',
         logo: '📺',
-        viewers: 100,
         region: 'ke',
       }
       
@@ -137,7 +134,7 @@ describe('TV Auto-Play Functionality', () => {
 
     it('should render minimized view when station is playing', async () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TVGlobalProvider>{children}</TVProvider>
+        <TVGlobalProvider>{children}</TVGlobalProvider>
       )
       const { result } = renderHook(() => require('@/components/tv/TVGlobalProvider').useTVGlobal(), { wrapper })
       
@@ -150,7 +147,6 @@ describe('TV Auto-Play Functionality', () => {
         embedType: 'hls' as const,
         website: 'https://test.com',
         logo: '📺',
-        viewers: 100,
         region: 'ke',
       }
       
@@ -165,7 +161,7 @@ describe('TV Auto-Play Functionality', () => {
 
     it('should show expand/minimize controls', async () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TVGlobalProvider>{children}</TVProvider>
+        <TVGlobalProvider>{children}</TVGlobalProvider>
       )
       const { result } = renderHook(() => require('@/components/tv/TVGlobalProvider').useTVGlobal(), { wrapper })
       
@@ -178,7 +174,6 @@ describe('TV Auto-Play Functionality', () => {
         embedType: 'hls' as const,
         website: 'https://test.com',
         logo: '📺',
-        viewers: 100,
         region: 'ke',
       }
       
@@ -213,7 +208,6 @@ describe('TV Auto-Play Functionality', () => {
         embedType: 'hls' as const,
         website: 'https://test.com',
         logo: '📺',
-        viewers: 100,
         region: 'ke',
       }
       

@@ -109,9 +109,6 @@ function TVPageContent() {
             </button>
           </div>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{station.genre}</p>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
-            {station.viewers.toLocaleString()} watching
-          </p>
         </div>
       </div>
     )
@@ -171,7 +168,6 @@ function TVPageContent() {
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       LIVE
                     </span>
-                    <span className="text-white/60 text-[10px]">{currentStation.viewers.toLocaleString()} watching</span>
                   </div>
                 </div>
               </div>
@@ -183,13 +179,74 @@ function TVPageContent() {
                 ✕
               </button>
             </div>
-            {/* Video embed - handled by global TV widget */}
+            {/* Video embed - inline player */}
             <div className="relative bg-black" style={{ paddingBottom: '56.25%', minHeight: 200 }}>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p style={{ color: 'white', textAlign: 'center', padding: '20px' }}>
-                  TV is playing in the floating widget — click the 📺 icon bottom-right to expand
-                </p>
-              </div>
+              {currentStation.embedType === 'hls' ? (
+                <video
+                  className="absolute inset-0 w-full h-full object-contain"
+                  playsInline
+                  muted
+                  autoPlay
+                  controls
+                  ref={(el) => {
+                    if (!el) return
+                    const loadStream = async () => {
+                      try {
+                        // Ensure HLS.js is loaded
+                        const win = window as unknown as Record<string, unknown>
+                        if (!win.Hls) {
+                          const script = document.createElement('script')
+                          script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest'
+                          script.async = true
+                          await new Promise<void>((resolve) => {
+                            script.onload = () => resolve()
+                            document.head.appendChild(script)
+                          })
+                        }
+                        const HlsClass = (window as unknown as Record<string, unknown>).Hls as {
+                          new (config?: Record<string, unknown>): {
+                            loadSource: (url: string) => void
+                            attachMedia: (video: HTMLVideoElement) => void
+                            on: (event: string, cb: (...args: any[]) => void) => void
+                            destroy: () => void
+                          }
+                          isSupported: () => boolean
+                        }
+                        if (HlsClass && HlsClass.isSupported()) {
+                          const hls = new HlsClass({ enableWorker: true, lowLatencyMode: true })
+                          hls.loadSource(currentStation.streamUrl)
+                          hls.attachMedia(el)
+                          hls.on('MANIFEST_PARSED', () => {
+                            el.muted = true
+                            el.play().catch(() => {})
+                          })
+                          hls.on('ERROR', (_: unknown, data: { fatal: boolean }) => {
+                            if (data.fatal) {
+                              el.poster = ''
+                            }
+                          })
+                        } else if (el.canPlayType('application/vnd.apple.mpegurl')) {
+                          el.src = currentStation.streamUrl
+                          el.muted = true
+                          el.play().catch(() => {})
+                        }
+                      } catch (err) {
+                        console.error('HLS load error:', err)
+                      }
+                    }
+                    loadStream()
+                  }}
+                />
+              ) : (
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={currentStation.streamUrl}
+                  allow="autoplay; encrypted-media; fullscreen"
+                  allowFullScreen
+                  frameBorder="0"
+                  title={`Live stream: ${currentStation.name}`}
+                />
+              )}
             </div>
             {/* Station info footer */}
             <div className="px-4 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>

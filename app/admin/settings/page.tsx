@@ -15,7 +15,7 @@ type Security = Record<string, boolean>
 type Publishing = { rss_auto_publish: boolean; rss_max_per_fetch: number; inhouse_publish_limit: number }
 
 const DEFAULTS = {
-  general: { site_name: '026NEWS', tagline: "Kenya's Premier Digital News Platform", contact_email: 'hello@026news.com', app_url: 'https://026news.vercel.app' } as General,
+  general: { site_name: '026NEWS', tagline: "Kenya's Premier Digital News Platform", contact_email: 'hello@026news.com', app_url: 'https://026newsblog.vercel.app' } as General,
   monetization: { revenue_share: 70, min_payout: 25, adsense_publisher_id: '', stripe_publishable_key: '', mpesa_consumer_key: '' } as Monetization,
   admin_notifications: { new_submission: true, article_decision: true, new_user: true, flagged_comment: true, payout_request: false, revenue_milestone: false } as AdminNotifs,
   security: { email_verification: true, two_factor: false, rate_limiting: true, block_vpn: false, rls_enabled: true } as Security,
@@ -43,6 +43,7 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('General')
   const [loading, setLoading] = useState(true)
   const [savedTab, setSavedTab] = useState('')
+  const [saveError, setSaveError] = useState('')
   const [admin, setAdmin] = useState<{ name: string; profile_image: string | null } | null>(null)
 
   const [general, setGeneral] = useState<General>(DEFAULTS.general)
@@ -84,13 +85,17 @@ export default function AdminSettingsPage() {
   useEffect(() => { load() }, [load])
 
   const save = async (key: string, value: unknown) => {
+    setSaveError('')
     const supabase = createClient()
     const { error } = await (supabase.from('site_settings') as any)
       .upsert({ key, value, updated_at: new Date().toISOString() })
-    if (!error) {
-      setSavedTab(key)
-      setTimeout(() => setSavedTab(''), 2500)
+    if (error) {
+      console.error('[Admin Settings Save]', error)
+      setSaveError(`Failed to save ${key}: ${error.message ?? 'Unknown error'}. Check that RLS allows admin writes to site_settings.`)
+      return
     }
+    setSavedTab(key)
+    setTimeout(() => setSavedTab(''), 2500)
   }
 
   if (loading) {
@@ -137,6 +142,11 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className={panel} style={panelStyle}>
+          {saveError && (
+            <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
+              {saveError}
+            </div>
+          )}
           {activeTab === 'General' && (
             <form onSubmit={(e) => { e.preventDefault(); save('general', general) }} className="space-y-5">
               <div className="flex items-center gap-2 mb-4"><span className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} /><h2 className="text-lg font-extrabold" style={{ color: 'var(--primary)' }}>General Settings</h2></div>

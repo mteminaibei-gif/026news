@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     author: { name: string } | null; category: { name: string } | null
   }
 
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
   const description = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
 
   return {
@@ -242,7 +242,7 @@ export default async function ArticlePage({ params }: Props) {
       ? 'Image via 026News'
       : null
 
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
   const seoDescription = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
   const jsonLd = {
     '@context': 'https://schema.org',

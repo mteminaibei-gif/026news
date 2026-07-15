@@ -11,7 +11,6 @@ import { LiveActivityFeed } from '@/components/news/LiveActivityFeed'
 import { formatNumber } from '@/lib/utils'
 import { TrendingUp, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { MOCK_CATEGORIES, MOCK_ARTICLES } from '@/lib/mock-data'
 import type { Metadata } from 'next'
 import type { PostgrestResponse } from '@supabase/supabase-js'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
@@ -44,12 +43,7 @@ export default async function HomePage({ searchParams }: Props) {
       .limit(200) as PostgrestResponse<ArticleWithAuthor>
     if (response.error) throw response.error
     return response.data ?? []
-  }, MOCK_ARTICLES.filter(a => a.status === 'published').map(a => ({
-    ...a,
-    author: a.author,
-    category: a.category,
-    analytics: { views: a.views, likes: 0, shares: 0, comments_count: 0 },
-  })) as unknown as ArticleWithAuthor[])
+  }, [])
 
   // Admin "Publish Limits": how many published articles to surface per source type.
   // A limit of 0 (or unset) means unlimited. In-house posts always shown first.
@@ -64,14 +58,14 @@ export default async function HomePage({ searchParams }: Props) {
   const limits = (limitsRes?.value ?? { inhouse: 0, sourced: 0 }) as { inhouse: number; sourced: number }
 
   // Always show ALL in-house articles (no cap). Only cap sourced/RSS if limit set.
-  const inhouseList = rawArticles.filter(a => (a as unknown as Record<string, unknown>).is_aggregated !== true)
-  const sourcedList = rawArticles.filter(a => (a as unknown as Record<string, unknown>).is_aggregated === true)
+  const inhouseList = rawArticles.filter(a => !(a as any).is_aggregated)
+  const sourcedList = rawArticles.filter(a => (a as any).is_aggregated)
   const inhouse = inhouseList
   const sourced = limits.sourced > 0 ? sourcedList.slice(0, limits.sourced) : sourcedList
   const articles: ArticleWithAuthor[] = [...inhouse, ...sourced].sort((a, b) => {
     // In-house (original) posts are surfaced before aggregated/RSS content.
-    const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
-    const bi = (b as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+    const ai = (a as any).is_aggregated ? 1 : 0
+    const bi = (b as any).is_aggregated ? 1 : 0
     if (ai !== bi) return ai - bi
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
@@ -79,27 +73,27 @@ export default async function HomePage({ searchParams }: Props) {
   const categories: CategoryRow[] = await safeQuery(async () => {
     const response = await supabase.from('categories').select('category_id, name') as PostgrestResponse<CategoryRow>
     if (response.error) throw response.error
-    return (response.data?.length ? response.data : MOCK_CATEGORIES) as CategoryRow[]
-  }, MOCK_CATEGORIES)
+    return (response.data?.length ? response.data : []) as CategoryRow[]
+  }, [])
 
   const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
 
   const kenyaArticles = articles.filter(a =>
     ['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? '') ||
-    (a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('kenya')
+    a.source_name?.toLowerCase().includes('kenya')
   )
   const africaArticles = articles.filter(a =>
     a.category?.name === 'Africa' ||
-    ((a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa') &&
+    (a.source_name?.toLowerCase().includes('africa') &&
      !['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? ''))
   )
   const otherArticles = articles.filter(a =>
     !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '') &&
-    !(a as unknown as Record<string, unknown>).source_name?.toString().toLowerCase().includes('africa')
+    !a.source_name?.toLowerCase().includes('africa')
   )
 
   const featured = articles.filter((a): a is ArticleWithAuthor & { featured: boolean } =>
-    Boolean((a as unknown as Record<string, unknown>).featured)
+    Boolean(a.featured)
   )
   const PRIORITY_SOURCES = ['nation', 'kbc', 'royal', 'citizen', 'standard', 'capital', 'star', 'business daily']
   const isPriority = (a: ArticleWithAuthor) => {
@@ -117,8 +111,8 @@ export default async function HomePage({ searchParams }: Props) {
   // Prioritise in-house (non-aggregated) posts, then newest-first.
   const prioritizeInhouse = (arr: ArticleWithAuthor[]) =>
     [...arr].sort((a, b) => {
-      const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
-      const bi = (b as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+      const ai = (a as any).is_aggregated ? 1 : 0
+      const bi = (b as any).is_aggregated ? 1 : 0
       if (ai !== bi) return ai - bi
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })

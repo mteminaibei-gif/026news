@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     // In production, you would send an email with the reset link
     // For now, we'll log it to console (in development)
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/reset-password?token=${token}`
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'}/reset-password?token=${token}`
     
     console.log('=== PASSWORD RESET LINK ===')
     console.log(`Email: ${email}`)

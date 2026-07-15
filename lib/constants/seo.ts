@@ -4,7 +4,7 @@ export const SITE_CONFIG = {
   name: '026NEWS',
   title: '026NEWS — Breaking News, Journalism, and Analysis from Africa',
   description: 'Get breaking news, in-depth analysis, and original journalism from Africa. Read articles by professional journalists, subscribe to topics you care about, and stay informed with 026NEWS.',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://026news.com',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://026newsblog.vercel.app',
   logo: '/logo.svg',
   favicon: '/favicon.ico',
   email: 'hello@026news.com',

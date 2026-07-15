@@ -3,15 +3,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTVGlobal } from './TVGlobalProvider'
 import { useRadio } from '@/components/radio/RadioProvider'
+import { usePathname } from 'next/navigation'
 
 export function TVWidget() {
-  const { currentStation, isPlaying, status, error, stop, playStation } = useTVGlobal()
+  const { currentStation, isPlaying, status, error, stop, playStation, setStatus, setError } = useTVGlobal()
   const { currentStation: currentRadioStation, isPlaying: isRadioPlaying } = useRadio()
   const [minimized, setMinimized] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<{ destroy: () => void } | null>(null)
+  const pathname = usePathname()
 
-  // Initialize video element if not present
+  const isTVPage = pathname === '/tv' || pathname.startsWith('/tv/')
+
   useEffect(() => {
     if (!videoRef.current) {
       const video = document.createElement('video')
@@ -48,7 +51,12 @@ export function TVWidget() {
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url
         video.muted = true
-        video.play().catch(() => {})
+        video.play().then(() => {
+          setStatus('playing')
+        }).catch(() => {
+          setStatus('error')
+          setError('Stream unavailable')
+        })
         return
       }
 
@@ -69,7 +77,7 @@ export function TVWidget() {
           new (config?: Record<string, unknown>): {
             loadSource: (url: string) => void
             attachMedia: (video: HTMLVideoElement) => void
-            on: (event: string, cb: () => void) => void
+            on: (event: string, cb: (...args: any[]) => void) => void
             destroy: () => void
           }
           isSupported: () => boolean
@@ -81,13 +89,26 @@ export function TVWidget() {
           hls.attachMedia(video)
           hls.on('MANIFEST_PARSED', () => {
             video.muted = true
-            video.play().catch(() => {})
+            video.play().then(() => {
+              setStatus('playing')
+            }).catch(() => {})
+          })
+          hls.on('ERROR', (_: unknown, data: { fatal: boolean; type?: number }) => {
+            if (data.fatal) {
+              setStatus('error')
+              setError('Stream ended or unavailable')
+            }
           })
           hlsRef.current = hls
+        } else {
+          setStatus('error')
+          setError('HLS not supported in this browser')
         }
       }
 
       init()
+    } else if (currentStation.embedType === 'iframe') {
+      setStatus('playing')
     }
 
     return () => {
@@ -96,7 +117,7 @@ export function TVWidget() {
     }
   }, [currentStation, isPlaying])
 
-  if (!currentStation) return null
+  if (!currentStation || isTVPage) return null
 
   // Calculate position: if radio is playing, place TV above it
   const isRadioActive = currentRadioStation && isRadioPlaying
@@ -191,7 +212,7 @@ export function TVWidget() {
         <div className="px-3 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
           <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{currentStation.name}</p>
           <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-            {currentStation.genre} · {currentStation.viewers.toLocaleString()} watching
+            {currentStation.genre}
             {status === 'loading' && <span className="text-yellow-400 ml-1">(Connecting...)</span>}
             {status === 'error' && <span className="text-red-400 ml-1">({error})</span>}
           </p>

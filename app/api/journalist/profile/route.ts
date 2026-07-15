@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 // PATCH /api/journalist/profile — update own profile
 export async function PATCH(req: NextRequest) {
@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest) {
 
     const { name, bio, organization, portfolio, phone, twitter, linkedin } = await req.json()
 
-    const updates: Record<string, unknown> = {}
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
     if (name?.trim()) updates.name = name.trim()
     if (bio  !== undefined) updates.bio = bio
 
@@ -33,7 +33,8 @@ export async function PATCH(req: NextRequest) {
       ...(linkedin     !== undefined ? { linkedin     } : {}),
     }
 
-    const { error } = await supabase
+    const adminDb = await createAdminClient()
+    const { error } = await adminDb
       .from('users')
       .update(updates as never)
       .eq('user_id', profile.user_id)

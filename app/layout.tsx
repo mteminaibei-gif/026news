@@ -11,7 +11,7 @@ import { RadioProvider } from '@/components/radio/RadioProvider';
 import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
 import StyledJsxRegistry from './registry';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026newsblog.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
