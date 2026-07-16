@@ -13,7 +13,7 @@ export default async function JournalistLayout({ children }: { children: React.R
   const { data: rawProfile } = await supabase
     .from('users')
     .select('name, profile_image, role')
-    .eq('email', user.email ?? '')
+    .eq('auth_id', user.id)
     .single()
 
   const profile = rawProfile as unknown as UserProfile | null

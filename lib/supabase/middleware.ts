@@ -57,7 +57,7 @@ export async function updateSession(request: NextRequest) {
   const { data: rawProfile, error: profileErr } = await supabase
     .from('users')
     .select('role')
-    .eq('email', user.email ?? '')
+    .eq('auth_id', user.id)
     .single()
 
   const profile = rawProfile as { role: string } | null

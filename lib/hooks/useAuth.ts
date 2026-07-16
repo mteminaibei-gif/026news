@@ -66,7 +66,7 @@ export function useSignIn() {
       const { data: rawProfile } = await supabase
         .from('users')
         .select('role')
-        .eq('email', data.user?.email ?? '')
+        .eq('auth_id', data.user?.id ?? '')
         .single()
       const profile = rawProfile as unknown as { role: string } | null
       if (profile?.role === 'admin')      router.push('/admin/profile')

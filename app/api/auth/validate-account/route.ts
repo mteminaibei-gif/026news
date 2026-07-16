@@ -133,7 +133,7 @@ export async function PATCH(req: NextRequest) {
     const { data: adminUser } = await supabase
       .from('users')
       .select('role')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
 
     if ((adminUser as any)?.role !== 'admin') {

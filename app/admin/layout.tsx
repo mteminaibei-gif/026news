@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const { data: rawProfile } = await supabase
       .from('users')
       .select('name, profile_image, role')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
 
     const profile = rawProfile as unknown as UserProfile | null

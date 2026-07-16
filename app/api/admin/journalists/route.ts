@@ -8,7 +8,7 @@ async function verifyAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   const { data: rawProfile } = await supabase
-    .from('users').select('role').eq('email', user.email ?? '').single()
+    .from('users').select('role').eq('auth_id', user.id).single()
   const profile = rawProfile as unknown as Profile | null
   if (!profile || profile.role !== 'admin') {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const { data: userProfile } = await supabase
       .from('users')
       .select('user_id')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
 
     if (!userProfile) {

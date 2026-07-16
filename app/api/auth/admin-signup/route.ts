@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: rawProfile } = await supabase
-          .from('users').select('role').eq('email', user.email ?? '').single()
+          .from('users').select('role').eq('auth_id', user.id).single()
         const profile = rawProfile as { role: string } | null
         if (!profile || profile.role !== 'admin') {
           return NextResponse.json({ error: 'Forbidden: admin secret or admin session required' }, { status: 403 })
@@ -58,25 +58,26 @@ export async function POST(req: NextRequest) {
         { email_confirm: true }
       )
       if (confirmError) console.error('[admin-signup] auto-confirm failed:', confirmError.message)
+
+      // 2. Insert users row with role = admin (use admin client to bypass RLS)
+      const { error: profileError } = await admin
+        .from('users')
+        .upsert({
+          name: name.trim(),
+          email,
+          password_hash: '',
+          role: 'admin',
+          status: 'active',
+          auth_id: authData.user.id,
+        } as never, { onConflict: 'auth_id' })
+
+      if (profileError) {
+        console.error('[admin-signup] profile error:', profileError.message)
+        return NextResponse.json({ error: 'Failed to create admin profile' }, { status: 500 })
+      }
     }
 
-    // 2. Insert users row with role = admin
-    const { error: profileError } = await supabase
-      .from('users')
-      .insert({
-        name: name.trim(),
-        email,
-        password_hash: '',
-        role: 'admin',
-        status: 'active',
-        ...(authData.user?.id ? { auth_id: authData.user.id } : {}),
-      } as never)
-
-    if (profileError) {
-      console.error('[admin-signup] profile error:', profileError.message)
-    }
-
-    return NextResponse.json({ message: 'Admin account created! Check your email to confirm, then sign in.' })
+    return NextResponse.json({ message: 'Admin account created! You can now sign in.' })
   } catch (err) {
     console.error('[POST /api/auth/admin-signup]', err)
     return NextResponse.json({ error: 'Signup failed' }, { status: 500 })

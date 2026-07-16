@@ -32,32 +32,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Look up profile — try by email first, fall back to auth_id
+    // Look up profile by auth_id (reliable, never mismatches)
     let profile: UserProfile | null = null
     try {
       const { data: rawProfile, error: profileError } = await supabase
         .from('users')
         .select('role, name, profile_image, user_id')
-        .eq('email', email)
+        .eq('auth_id', verifiedUser.id)
         .single()
       if (profileError) {
-        // Fall back to auth_id lookup
-        const { data: byAuth, error: byAuthErr } = await supabase
-          .from('users')
-          .select('role, name, profile_image, user_id')
-          .eq('auth_id', verifiedUser.id)
-          .single()
-        if (byAuthErr || !byAuth) {
-          console.error('[Login] Profile lookup failed (email + auth_id):', profileError.message, byAuthErr?.message)
-          return NextResponse.json(
-            { error: 'User profile not found. Please ensure your account is properly set up.' },
-            { status: 401 }
-          )
-        }
-        profile = byAuth as unknown as UserProfile
-      } else {
-        profile = rawProfile as unknown as UserProfile | null
+        console.error('[Login] Profile lookup failed:', profileError.message)
+        return NextResponse.json(
+          { error: 'User profile not found. Please ensure your account is properly set up.' },
+          { status: 401 }
+        )
       }
+      profile = rawProfile as unknown as UserProfile | null
     } catch (err) {
       console.error('[Login] Profile query exception:', err)
       return NextResponse.json(
