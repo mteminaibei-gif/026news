@@ -71,7 +71,6 @@ export function Footer() {
             </div>
 
             <div className="made-in-kenya" style={{ justifyContent: 'flex-start', marginTop: 16 }}>
-              <span className="ke-flag" aria-hidden="true">🇰🇪</span>
               <span>Proudly Made in Kenya</span>
             </div>
           </div>
@@ -104,7 +103,6 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
           <span className="flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
-            <span>\uD83C\uDDF0\uD83C\uDDEA</span>
             &copy; {new Date().getFullYear()} 026Newsblog. All rights reserved.
           </span>
           <div className="flex gap-6">

@@ -228,7 +228,7 @@ export default function ProfilePage() {
           const fallback = { user_id: otherId, name: 'Unknown', profile_image: null, role: 'user' }
           convMap.set(otherId, {
             other_user: u || fallback,
-            last_message: msg.message,
+            last_message: msg.content,
             last_message_at: msg.created_at,
             unread: msg.sender_id !== userId && !msg.is_read ? 1 : 0,
           })
@@ -371,30 +371,68 @@ export default function ProfilePage() {
           {/* Saved Tab */}
           {activeTab === 'saved' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {savedArticles.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No saved articles yet.</p>}
+              {savedArticles.length === 0 && (
+                <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
+                  <Bookmark size={40} style={{ color: 'var(--text-tertiary)', marginBottom: 12, opacity: 0.5 }} />
+                  <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>No saved articles yet</p>
+                  <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem', marginBottom: 16 }}>Save articles to read them later and keep track of what matters to you.</p>
+                  <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', textDecoration: 'none' }}>
+                    Browse Articles
+                  </Link>
+                </div>
+              )}
               {savedArticles.map((a: any, i) => {
                 const article = a.articles || a
                 return (
-                  <Link key={i} href={`/article/${article.slug || '#'}`} className="profile-article-card" style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer' }}>
-                    <Image src={article.featured_image || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div key={i} className="profile-article-card" style={{ display: 'flex', gap: 16, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, transition: 'all 0.25s', cursor: 'pointer' }}>
+                    <Link href={`/article/${article.slug || '#'}`} style={{ flex: '0 0 140px', textDecoration: 'none' }}>
+                      <Image src={article.featured_image || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
+                    </Link>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
                       <div>
                         <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || 'Technology'}</span>
-                        <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
+                        <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          <Link href={`/article/${article.slug || '#'}`} style={{ color: 'inherit', textDecoration: 'none' }}>{article.title}</Link>
+                        </h3>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved {a.saved_at ? new Date(a.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
                         </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
-                            <Heart size={13} fill="currentColor" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            if (!a.saved_id) return
+                            try {
+                              await fetch('/api/saved-articles', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ saved_id: a.saved_id }),
+                              })
+                              setSaved((prev: any[]) => prev.filter((s: any) => s.saved_id !== a.saved_id))
+                              setStats((prev: any) => ({ ...prev, saved: Math.max(0, prev.saved - 1) }))
+                            } catch {}
+                          }}
+                          style={{
+                            width: 28, height: 28, borderRadius: 6,
+                            border: '1px solid var(--border-subtle)',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'var(--text-tertiary)',
+                            transition: 'all 0.15s',
+                          }}
+                          title="Remove from saved"
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--error-light)'; e.currentTarget.style.color = 'var(--error)'; e.currentTarget.style.borderColor = 'var(--error-light)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
+                        >
+                          <Bookmark size={13} fill="currentColor" />
+                        </button>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

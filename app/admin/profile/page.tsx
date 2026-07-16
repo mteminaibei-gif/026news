@@ -17,6 +17,7 @@ import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { AdminJournalistActions } from '@/components/admin/AdminJournalistActions'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
+import { RealtimeNotifications } from '@/components/admin/RealtimeNotifications'
 import { AdminControlPanel } from '@/components/admin/AdminControlPanel'
 import { ArticleManager } from '@/components/admin/ArticleManager'
 import { AccountCreationDialog } from '@/components/admin/AccountCreationDialog'
@@ -353,7 +354,7 @@ export default function AdminProfilePage() {
       if (!msgs?.length) { setConversations([]); return }
 
       const convMap = new Map<number, Conversation>()
-      for (const msg of msgs as { sender_id: number; receiver_id: number; message: string; created_at: string; is_read: boolean }[]) {
+      for (const msg of msgs as { sender_id: number; receiver_id: number; content: string; created_at: string; is_read: boolean }[]) {
         const otherId: number = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id
         if (otherId === currentUserId) continue
         if (!convMap.has(otherId)) {
@@ -361,7 +362,7 @@ export default function AdminProfilePage() {
           const fallback = { user_id: otherId, name: 'Unknown', profile_image: null }
           convMap.set(otherId, {
             other_user: u ? (u as { user_id: number; name: string; profile_image: string | null }) : fallback,
-            last_message: msg.message,
+            last_message: msg.content,
             last_message_at: msg.created_at,
             unread: 0,
           })
@@ -578,6 +579,19 @@ export default function AdminProfilePage() {
                     <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{formatCurrency(pendingPayout)} pending</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Real-time Notifications */}
+              <div className="flex items-center justify-between animate-fade-in-up">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>🔔 Notifications</h3>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--primary)' }} />
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Live</span>
+                </div>
+                <RealtimeNotifications />
               </div>
 
               {/* Pending Journalist Applications */}

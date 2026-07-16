@@ -8,7 +8,7 @@ interface Message {
   message_id: number
   sender_id: number
   receiver_id: number
-  message: string
+  content: string
   created_at: string
   sender: { name: string; profile_image: string | null }
   is_read: boolean
@@ -78,7 +78,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
         .insert({
           sender_id: currentUserId,
           receiver_id: receiverId,
-          message: newMessage.trim(),
+          content: newMessage.trim(),
         } as never)
 
       if (error) throw error
@@ -88,7 +88,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
         message_id: Date.now(),
         sender_id: currentUserId,
         receiver_id: receiverId,
-        message: newMessage.trim(),
+        content: newMessage.trim(),
         created_at: new Date().toISOString(),
         sender: { name: 'You', profile_image: null },
         is_read: false,
@@ -174,7 +174,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
                         : { background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }
                       }
                     >
-                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                       <p className={`text-[10px] mt-1 ${isMe ? 'opacity-60' : ''}`} style={{ color: isMe ? '#fff' : 'var(--text-tertiary)' }}>
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>

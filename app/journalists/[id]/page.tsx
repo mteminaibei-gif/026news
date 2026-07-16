@@ -178,7 +178,7 @@ export default function JournalistProfilePage() {
       if (!msgs?.length) { setConversations([]); return }
 
       const convMap = new Map<number, Conversation>()
-      for (const msg of msgs as { sender_id: number; receiver_id: number; message: string; created_at: string }[]) {
+      for (const msg of msgs as { sender_id: number; receiver_id: number; content: string; created_at: string }[]) {
         const otherId: number = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id
         if (otherId === currentUserId) continue
         if (!convMap.has(otherId)) {
@@ -186,7 +186,7 @@ export default function JournalistProfilePage() {
           const fallback = { user_id: otherId, name: 'Unknown', profile_image: null }
           convMap.set(otherId, {
             other_user: u ? (u as { user_id: number; name: string; profile_image: string | null }) : fallback,
-            last_message: msg.message,
+            last_message: msg.content,
             last_message_at: msg.created_at,
             unread: 0,
           })

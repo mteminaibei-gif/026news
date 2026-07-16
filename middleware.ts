@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function proxy(request: NextRequest) {
-  // Guard: if Supabase env vars are missing, skip auth and continue normally
+export async function middleware(request: NextRequest) {
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -13,8 +12,7 @@ export async function proxy(request: NextRequest) {
   try {
     return await updateSession(request)
   } catch (err) {
-    // Fail open — never block the request even if auth crashes
-    console.error('[proxy] updateSession failed:', err)
+    console.error('[middleware] updateSession failed:', err)
     return NextResponse.next()
   }
 }

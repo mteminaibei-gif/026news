@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// GET /api/messages - Get conversation history
-export async function GET(req: NextRequest) {
+// GET /api/messages — List conversations for current user
+// Returns each unique conversation partner with last message preview & unread count
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url)
-    const otherUserId = searchParams.get('userId')
-
-    if (!otherUserId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-    }
-
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get current user's profile
     const { data: profile } = await supabase
       .from('users')
       .select('user_id')
@@ -26,46 +18,101 @@ export async function GET(req: NextRequest) {
       .single() as { data: { user_id: number } | null }
 
     if (!profile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    const { data: messages, error } = await supabase
+    const uid = profile.user_id
+
+    // Fetch all messages involving this user
+    type MessageRow = { message_id: number; sender_id: number; receiver_id: number; content: string; is_read: boolean; created_at: string }
+    const { data: msgs, error } = await supabase
       .from('messages')
-      .select('*, sender:users(name, profile_image)')
-      .or(`and(sender_id.eq.${profile.user_id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${profile.user_id})`)
-      .order('created_at', { ascending: true })
-      .limit(100)
+      .select('message_id, sender_id, receiver_id, content, is_read, created_at')
+      .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+      .order('created_at', { ascending: false })
+      .limit(200) as { data: MessageRow[] | null; error: any }
 
     if (error) throw error
 
-    return NextResponse.json({ messages })
+    // Group by conversation partner
+    const convMap = new Map<number, {
+      other_user_id: number
+      last_message: string
+      last_message_at: string
+      unread: number
+    }>()
+
+    for (const msg of msgs ?? []) {
+      const otherId = msg.sender_id === uid ? msg.receiver_id : msg.sender_id
+      if (otherId === uid) continue
+
+      if (!convMap.has(otherId)) {
+        convMap.set(otherId, {
+          other_user_id: otherId,
+          last_message: msg.content,
+          last_message_at: msg.created_at,
+          unread: msg.sender_id !== uid && !msg.is_read ? 1 : 0,
+        })
+      } else {
+        // If we already have this conversation and find an unread message from other user
+        const existing = convMap.get(otherId)!
+        if (msg.sender_id !== uid && !msg.is_read) {
+          existing.unread++
+        }
+      }
+    }
+
+    const conversations = Array.from(convMap.values())
+
+    // Fetch user profiles in bulk
+    const userIds = conversations.map(c => c.other_user_id)
+    type UserRow = { user_id: number; name: string; profile_image: string | null; role: string }
+    const { data: users } = await supabase
+      .from('users')
+      .select('user_id, name, profile_image, role')
+      .in('user_id', userIds) as { data: UserRow[] | null; error: any }
+
+    const userMap = new Map<number, { name: string; profile_image: string | null; role: string }>()
+    for (const u of users ?? []) {
+      userMap.set(u.user_id, { name: u.name, profile_image: u.profile_image, role: u.role })
+    }
+
+    const result = conversations.map(c => ({
+      other_user: {
+        user_id: c.other_user_id,
+        ...userMap.get(c.other_user_id) ?? { name: 'Unknown', profile_image: null, role: 'reader' },
+      },
+      last_message: c.last_message,
+      last_message_at: c.last_message_at,
+      unread: c.unread,
+    }))
+
+    // Sort by last message time
+    result.sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+
+    return NextResponse.json({ conversations: result })
   } catch (err) {
     console.error('[GET /api/messages]', err)
-    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })
   }
 }
 
-// POST /api/messages - Send a message
+// POST /api/messages — Send a new message
 export async function POST(req: NextRequest) {
   try {
-    const { receiverId, message } = await req.json()
+    const body = await req.json()
+    const { receiverId, content } = body
 
-    if (!receiverId || !message) {
-      return NextResponse.json({ error: 'receiverId and message are required' }, { status: 400 })
-    }
-
-    if (!message.trim()) {
-      return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 })
+    if (!receiverId || !content?.trim()) {
+      return NextResponse.json({ error: 'receiverId and content are required' }, { status: 400 })
     }
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get current user's profile
     const { data: profile } = await supabase
       .from('users')
       .select('user_id')
@@ -73,17 +120,34 @@ export async function POST(req: NextRequest) {
       .single() as { data: { user_id: number } | null }
 
     if (!profile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
+
+    // Validate receiver exists
+    const { data: receiver } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('user_id', receiverId)
+      .single()
+
+    if (!receiver) {
+      return NextResponse.json({ error: 'Receiver not found' }, { status: 404 })
+    }
+
+    if (profile.user_id === receiverId) {
+      return NextResponse.json({ error: 'Cannot send message to yourself' }, { status: 400 })
+    }
+
+    const trimmed = content.trim().substring(0, 5000)
 
     const { data: newMessage, error } = await supabase
       .from('messages')
       .insert({
         sender_id: profile.user_id,
         receiver_id: receiverId,
-        message: message.trim(),
+        content: trimmed,
       } as never)
-      .select()
+      .select('message_id, sender_id, receiver_id, content, is_read, created_at')
       .single()
 
     if (error) throw error
