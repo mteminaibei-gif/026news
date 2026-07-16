@@ -60,7 +60,7 @@ export default function JournalistProfilePage() {
         const { data } = await supabase
           .from('users')
           .select('user_id, name, email, bio, profile_image, badge_level, rank_score, social_links')
-          .eq('email', user.email ?? '')
+          .eq('auth_id', user.id)
           .single()
         if (!data) return
         const p = data as unknown as Profile

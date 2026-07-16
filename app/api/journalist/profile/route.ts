@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest) {
 
     const { name, bio, organization, portfolio, phone, twitter, linkedin } = await req.json()
 
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    const updates: Record<string, unknown> = {}
     if (name?.trim()) updates.name = name.trim()
     if (bio  !== undefined) updates.bio = bio
 

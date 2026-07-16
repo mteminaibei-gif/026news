@@ -205,7 +205,7 @@ export default function AdminProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: adminData } = await supabase
-          .from('users').select('name, profile_image').eq('email', user.email ?? '').single() as { data: { name: string; profile_image: string | null } | null }
+          .from('users').select('name, profile_image').eq('auth_id', user.id).single() as { data: { name: string; profile_image: string | null } | null }
         if (adminData) {
           setAdmin({ name: adminData.name, profile_image: adminData.profile_image })
         } else {
