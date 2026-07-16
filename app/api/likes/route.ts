@@ -27,12 +27,12 @@ export async function GET(req: NextRequest) {
       const { data: prof } = await supabase
         .from('users')
         .select('user_id')
-        .eq('email', user.email ?? '')
+        .eq('auth_id', user.id)
         .single()
       if (prof) {
         const userId = (prof as unknown as { user_id: number }).user_id
         const { data: like } = await supabase
-          .from('likes')
+          .from('article_likes')
           .select('like_id')
           .eq('article_id', articleId)
           .eq('user_id', userId)
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const { data: prof } = await supabase
       .from('users')
       .select('user_id')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
     if (!prof) {
       return NextResponse.json({ error: 'User profile not found.' }, { status: 403 })
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: existing } = await supabase
-      .from('likes')
+      .from('article_likes')
       .select('like_id')
       .eq('article_id', articleId)
       .eq('user_id', userId)
@@ -102,10 +102,10 @@ export async function POST(req: NextRequest) {
 
     let liked: boolean
     if (existing) {
-      await supabase.from('likes').delete().eq('article_id', articleId).eq('user_id', userId)
+      await supabase.from('article_likes').delete().eq('article_id', articleId).eq('user_id', userId)
       liked = false
     } else {
-      await supabase.from('likes').insert({ article_id: articleId, user_id: userId } as never)
+      await supabase.from('article_likes').insert({ article_id: articleId, user_id: userId } as never)
       liked = true
     }
 

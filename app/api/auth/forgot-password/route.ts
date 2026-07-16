@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { randomBytes } from 'crypto'
 import { APP_URL } from '@/lib/constants/app'
 
@@ -65,8 +65,9 @@ export async function POST(req: NextRequest) {
       expires_at: expiresAt.toISOString(),
     }
 
-    // Use raw query to avoid TypeScript issues with new table
-    const { error: insertError } = await supabase
+    // Use admin client to insert token (bypass RLS)
+    const admin = await createAdminClient()
+    const { error: insertError } = await admin
       .from('password_reset_tokens')
       .insert(tokenRecord as never)
 

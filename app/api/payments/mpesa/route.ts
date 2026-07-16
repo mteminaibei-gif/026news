@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: rawProfile } = await supabase
-      .from('users').select('role, user_id').eq('email', user.email ?? '').single()
+      .from('users').select('role, user_id').eq('auth_id', user.id).single()
     const profile = rawProfile as { role: string; user_id: number } | null
     if (!profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })

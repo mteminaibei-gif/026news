@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('email', user.email ?? '').single()
+      .from('users').select('user_id, role').eq('auth_id', user.id).single()
     const profile = rawProfile as { user_id: number; role: string } | null
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 

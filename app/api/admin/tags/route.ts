@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('email', user.email ?? '').single()
+      .from('users').select('role').eq('auth_id', user.id).single()
     const profile = rawProfile as unknown as Profile | null
     if (!profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('email', user.email ?? '').single()
+      .from('users').select('role').eq('auth_id', user.id).single()
     const profile = rawProfile as unknown as Profile | null
     if (!profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -132,7 +132,7 @@ export async function DELETE(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('email', user.email ?? '').single()
+      .from('users').select('role').eq('auth_id', user.id).single()
     const profile = rawProfile as unknown as Profile | null
     if (!profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

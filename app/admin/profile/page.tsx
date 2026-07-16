@@ -305,7 +305,7 @@ export default function AdminProfilePage() {
 
     const { data: saved } = await supabase
       .from('saved_articles')
-      .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
+      .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, reading_time_minutes, created_at, author:users(name), category:categories(name))')
       .eq('user_id', currentUserId)
       .order('saved_at', { ascending: false })
       .limit(10)
@@ -313,9 +313,9 @@ export default function AdminProfilePage() {
 
     const { data: liked } = await supabase
       .from('article_likes')
-      .select('liked_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
+      .select('created_at, articles!inner(article_id, title, slug, featured_image, reading_time_minutes, created_at, author:users(name), category:categories(name))')
       .eq('user_id', currentUserId)
-      .order('liked_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(10)
     setLiked((liked as any[]) || [])
 
@@ -346,7 +346,7 @@ export default function AdminProfilePage() {
     try {
       const { data: msgs } = await supabase
         .from('messages')
-        .select('sender_id, receiver_id, message, created_at')
+        .select('sender_id, receiver_id, content, created_at')
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
         .order('created_at', { ascending: false })
         .limit(50)

@@ -105,7 +105,7 @@ export default function JournalistProfilePage() {
     try {
       const { data } = await supabase
         .from('saved_articles')
-        .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
+        .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, reading_time_minutes, created_at, author:users(name), category:categories(name))')
         .eq('user_id', currentUserId)
         .order('saved_at', { ascending: false })
         .limit(10)
@@ -117,8 +117,8 @@ export default function JournalistProfilePage() {
     if (!currentUserId) return
     try {
       const { data } = await supabase
-        .from('likes')
-        .select('created_at, articles!inner(article_id, title, slug, featured_image, read_time, created_at, users:user_id(name), categories:category_id(name))')
+        .from('article_likes')
+        .select('created_at, articles!inner(article_id, title, slug, featured_image, reading_time_minutes, created_at, author:users(name), category:categories(name))')
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(10)

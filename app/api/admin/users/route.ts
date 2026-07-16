@@ -99,7 +99,7 @@ export async function PATCH(req: NextRequest) {
       const { data: me } = (await supabase
         .from('users')
         .select('user_id')
-        .eq('email', admin.email)
+        .eq('auth_id', admin.id)
         .maybeSingle()) as { data: { user_id: number } | null | undefined }
       await supabase.from('admin_logs').insert({
         admin_id: me?.user_id ?? null,

@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
   const { data: rawUserData } = await supabase
     .from('users')
     .select('role')
-    .eq('email', user.email ?? '')
+    .eq('auth_id', user.id)
     .single()
   const userData = rawUserData as { role: string } | null
 

@@ -53,7 +53,7 @@ export function HeroCarousel({ articles }: Props) {
         className="hero-slideshow"
         style={{
           position: 'relative',
-          height: 'clamp(550px, 85vh, 1000px)',
+          height: 'clamp(500px, 75vh, 900px)',
           borderRadius: 16,
           overflow: 'hidden',
           background: 'var(--primary)',
@@ -97,7 +97,7 @@ export function HeroCarousel({ articles }: Props) {
           style={{
             position: 'absolute',
             bottom: 0, left: 0, right: 0,
-            padding: '80px 40px 140px',
+            padding: '80px 40px 120px',
             background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.15) 70%, transparent 100%)',
           }}
         >

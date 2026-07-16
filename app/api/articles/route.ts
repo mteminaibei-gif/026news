@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
 
     // Verify this user has journalist or admin role
     const { data: rawRole } = await supabase
-      .from('users').select('user_id, role').eq('email', user.email ?? '').single()
+      .from('users').select('user_id, role').eq('auth_id', user.id).single()
     const profile = rawRole as unknown as { user_id: number; role: string } | null
     if (!profile || !['journalist', 'admin'].includes(profile.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

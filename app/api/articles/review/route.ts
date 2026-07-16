@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const { data: rawProfile } = await supabase
       .from('users')
       .select('user_id, role')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
     const profile = rawProfile as unknown as Profile | null
 
@@ -112,7 +112,7 @@ export async function GET() {
     const { data: rawProfileGet } = await supabase
       .from('users')
       .select('role')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
     const profileGet = rawProfileGet as unknown as { role: string } | null
 

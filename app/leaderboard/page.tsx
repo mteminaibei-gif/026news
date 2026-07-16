@@ -15,7 +15,7 @@ type LeaderRow = {
   user_id: number; name: string; profile_image: string | null
   bio: string | null; total_views: number; rank_score: number; badge_level: string | null
   article_count: number; total_earnings: number
-  badges: { badge_type: string; badge_label: string }[]
+  badges: { badge_type: string; badge_name: string }[]
 }
 
 const MEDAL = ['🥇', '🥈', '🥉']
@@ -39,14 +39,14 @@ export default async function LeaderboardPage() {
         supabase.from('articles').select('article_id', { count: 'exact', head: true })
           .eq('author_id', u.user_id).eq('status', 'published' as never),
         supabase.from('earnings').select('amount').eq('user_id', u.user_id),
-        supabase.from('journalist_badges').select('badge_type, badge_label').eq('user_id', u.user_id),
+        supabase.from('journalist_badges').select('badge_type, badge_name').eq('user_id', u.user_id),
       ])
       const total_earnings = (earn ?? []).reduce((s, r) => s + Number((r as { amount: number }).amount), 0)
       return {
         ...u,
         article_count:   artCount ?? 0,
         total_earnings,
-        badges: (bdg ?? []) as { badge_type: string; badge_label: string }[],
+        badges: (bdg ?? []) as { badge_type: string; badge_name: string }[],
       }
     })
   )
@@ -100,7 +100,7 @@ export default async function LeaderboardPage() {
                 <p className="text-xs font-semibold" style={{ color: 'var(--success)' }}>{formatCurrency(j.total_earnings)}</p>
                 {j.badges.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-1 mt-3">
-                    {j.badges.slice(0, 2).map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
+                    {j.badges.slice(0, 2).map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />)}
                   </div>
                 )}
               </Link>
@@ -155,7 +155,7 @@ export default async function LeaderboardPage() {
                     <td className="px-4 py-3 text-right font-bold" style={{ color: 'var(--success)' }}>{formatCurrency(j.total_earnings)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {j.badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
+                        {j.badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />)}
                       </div>
                     </td>
                   </tr>

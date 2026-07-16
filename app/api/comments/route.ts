@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     // Resolve user_id
     const { data: rawProfile } = await supabase
-      .from('users').select('user_id').eq('email', user.email ?? '').single()
+      .from('users').select('user_id').eq('auth_id', user.id).single()
     const profile = rawProfile as unknown as Profile | null
     if (!profile) {
       return NextResponse.json({ error: 'User profile not found.' }, { status: 403 })
@@ -151,7 +151,7 @@ export async function DELETE(req: NextRequest) {
 
     // Get user's profile
     const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('email', user.email ?? '').single()
+      .from('users').select('user_id, role').eq('auth_id', user.id).single()
     const profile = rawProfile as unknown as { user_id: number; role: string } | null
     if (!profile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 403 })
@@ -221,7 +221,7 @@ export async function PUT(req: NextRequest) {
 
     // Get user's profile
     const { data: rawProfile } = await supabase
-      .from('users').select('user_id').eq('email', user.email ?? '').single()
+      .from('users').select('user_id').eq('auth_id', user.id).single()
     const profile = rawProfile as unknown as { user_id: number } | null
     if (!profile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 403 })

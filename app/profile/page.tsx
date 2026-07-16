@@ -139,7 +139,7 @@ export default function ProfilePage() {
     try {
       const { data } = await supabase
         .from('saved_articles')
-        .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, excerpt, status, author_id, read_time, created_at, users:user_id(name), categories:category_id(name))')
+        .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, excerpt, status, author_id, reading_time_minutes, created_at, author:users(name), category:categories(name))')
         .eq('user_id', userId)
         .order('saved_at', { ascending: false })
         .limit(10)
@@ -154,7 +154,7 @@ export default function ProfilePage() {
     try {
       const { data } = await supabase
         .from('article_likes')
-        .select('article_id, created_at, articles!inner(article_id, title, slug, featured_image, excerpt, status, read_time, created_at, users:user_id(name), categories:category_id(name))')
+        .select('article_id, created_at, articles!inner(article_id, title, slug, featured_image, excerpt, status, reading_time_minutes, created_at, author:users(name), category:categories(name))')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(10)
@@ -213,7 +213,7 @@ export default function ProfilePage() {
     try {
       const { data: msgs } = await supabase
         .from('messages')
-        .select('sender_id, receiver_id, message, created_at, is_read')
+        .select('sender_id, receiver_id, content, created_at, is_read')
         .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .order('created_at', { ascending: false })
         .limit(50)
@@ -398,7 +398,7 @@ export default function ProfilePage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved {a.saved_at ? new Date(a.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved {a.saved_at ? new Date(a.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.reading_time_minutes || 5} min read</div>
                         </div>
                         <button
                           onClick={async (e) => {
@@ -455,7 +455,7 @@ export default function ProfilePage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.reading_time_minutes || 5} min read</div>
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
@@ -508,7 +508,7 @@ export default function ProfilePage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.read_time || 5} min read</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.reading_time_minutes || 5} min read</div>
                         </div>
                       </div>
                     </div>

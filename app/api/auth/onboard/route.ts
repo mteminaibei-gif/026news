@@ -91,9 +91,10 @@ export async function POST(req: NextRequest) {
       role: 'reader',
       status: 'active',
       password_hash: '',
-      interests: Array.isArray(interests) ? interests : [],
-      notification_prefs:
-        notification_prefs && typeof notification_prefs === 'object' ? notification_prefs : {},
+      social_links: {
+        interests: Array.isArray(interests) ? interests : [],
+        notification_prefs: notification_prefs && typeof notification_prefs === 'object' ? notification_prefs : {},
+      },
     }
 
     if (applyAuthor) {

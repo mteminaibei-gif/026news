@@ -17,7 +17,7 @@ type Profile = {
   profile_image: string | null; badge_level: string | null; rank_score: number
   social_links: { organization?: string; portfolio?: string; phone?: string; twitter?: string; linkedin?: string } | null
 }
-type BadgeRow = { badge_type: string; badge_label: string }
+type BadgeRow = { badge_type: string; badge_name: string }
 type ArticleRow = { article_id: number; title: string; slug: string; status: string; featured_image: string | null; views: number; earnings: number; created_at: string }
 type EarningsRow = { amount: number; payout_status: string; created_at: string; source: string }
 type PayoutRow = { amount: number; journalist_cut: number; status: string; period_start: string; period_end: string; payment_method: string }
@@ -73,7 +73,7 @@ export default function JournalistProfilePage() {
         setTwitter(p.social_links?.twitter ?? '')
         setLinkedin(p.social_links?.linkedin ?? '')
         const { data: bdg } = await supabase
-          .from('journalist_badges').select('badge_type, badge_label').eq('user_id', p.user_id)
+          .from('journalist_badges').select('badge_type, badge_name').eq('user_id', p.user_id)
         setBadges((bdg ?? []) as BadgeRow[])
 
         // Load dashboard data
@@ -211,7 +211,7 @@ export default function JournalistProfilePage() {
             {badges.length > 0 && (
               <div className="flex items-center gap-3 p-4 rounded-2xl shadow-sm overflow-x-auto" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                 <span className="font-bold whitespace-nowrap" style={{ color: 'var(--primary)' }}>🏅 Badges</span>
-                {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
+                {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />)}
               </div>
             )}
 
@@ -379,7 +379,7 @@ export default function JournalistProfilePage() {
 
                 {badges.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_label} />)}
+                    {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />)}
                   </div>
                 )}
 

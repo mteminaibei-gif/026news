@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const { data: userProfile } = await supabase
     .from('users')
     .select('user_id')
-    .eq('email', user.email ?? '')
+    .eq('auth_id', user.id)
     .single()
 
   if (!userProfile) {
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const { data: userProfile } = await supabase
       .from('users')
       .select('user_id')
-      .eq('email', user.email ?? '')
+      .eq('auth_id', user.id)
       .single()
 
     if (!userProfile) {
@@ -147,11 +147,22 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'saved_id is required' }, { status: 400 })
     }
 
-    // Delete saved article
+    // Get user_id for ownership check
+    const { data: profile } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('auth_id', user.id)
+      .single()
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    // Delete saved article (only if owned by current user)
     const { error } = await (supabase as any)
       .from('saved_articles')
       .delete()
       .eq('saved_id', saved_id)
+      .eq('user_id', (profile as any).user_id)
 
     if (error) {
       console.error('[DELETE /api/saved-articles] Error:', error)

@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { HomeFeed } from '@/components/news/HomeFeed'
 import { ArticleCard } from '@/components/news/ArticleCard'
-import { RecommendationFeed } from '@/components/news/RecommendationFeed'
 import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
 import { BreakingNewsBanner } from '@/components/news/BreakingNewsBanner'
 import { BannerAd } from '@/components/ads/AdSense'
@@ -183,9 +182,6 @@ export default async function HomePage({ searchParams }: Props) {
 
           {/* Article Feed (auto-scroll, latest-first) */}
           <HomeFeed initialArticles={feedArticles} categoryFilterName={categoryParam} />
-
-          {/* Personalized Recommendations */}
-          <RecommendationFeed />
 
           {/* Top Stories */}
           <section style={{ marginTop: 48 }}>
