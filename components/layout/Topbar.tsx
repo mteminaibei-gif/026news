@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 
-type TopbarUser = { name: string | null; profile_image: string | null }
+type TopbarUser = { name: string | null; profile_image: string | null; role?: string }
 
 const ADMIN_LINKS = [
   { href: '/admin/profile', label: 'Dashboard' },
@@ -175,28 +175,31 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
                     Signed in as <strong style={{ color: 'var(--text-primary)' }}>{user.name || 'User'}</strong>
                   </div>
                   <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-                  <Link
-                    href="/admin/profile"
-                    onClick={() => setOpen(false)}
-                    style={{
-                      display: 'block',
-                      padding: '8px 12px',
-                      fontSize: 13,
-                      color: 'var(--text-primary)',
-                      textDecoration: 'none',
-                      borderRadius: 8,
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    Admin Dashboard
-                  </Link>
-                  <Link
-                    href="/journalist/profile"
-                    onClick={() => setOpen(false)}
-                    style={{
-                      display: 'block',
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin/profile"
+                      onClick={() => setOpen(false)}
+                      style={{
+                        display: 'block',
+                        padding: '8px 12px',
+                        fontSize: 13,
+                        color: 'var(--text-primary)',
+                        textDecoration: 'none',
+                        borderRadius: 8,
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  {user.role === 'journalist' && (
+                    <Link
+                      href="/journalist/profile"
+                      onClick={() => setOpen(false)}
+                      style={{
+                        display: 'block',
                       padding: '8px 12px',
                       fontSize: 13,
                       color: 'var(--text-primary)',
@@ -209,6 +212,7 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
                   >
                     Journalist Dashboard
                   </Link>
+                  )}
                   <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
                   <button
                     onClick={async () => {

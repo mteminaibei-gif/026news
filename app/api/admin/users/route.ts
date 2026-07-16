@@ -101,7 +101,7 @@ export async function PATCH(req: NextRequest) {
         .select('user_id')
         .eq('auth_id', admin.id)
         .maybeSingle()) as { data: { user_id: number } | null | undefined }
-      await supabase.from('admin_logs').insert({
+      await supabase.from('audit_log').insert({
         admin_id: me?.user_id ?? null,
         action: `Updated user #${user_id} → role=${body.role ?? '-'}, status=${body.status ?? '-'}`,
         ip_address: req.headers.get('x-forwarded-for') || 'unknown',

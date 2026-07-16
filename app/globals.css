@@ -45,6 +45,8 @@
   --ticker-text: #ffffff;
   --card-shadow: 0 0 0 1px #eff3f4;
   --card-hover-shadow: 0 0 0 1px #cfd9de;
+  --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.1);
+  --border-strong: #d1d9db;
   --hero-overlay: linear-gradient(to top, rgba(15,20,25,0.9) 0%, rgba(15,20,25,0.3) 50%, transparent 100%);
   --nav-bg: rgba(255,255,255,0.97);
   --category-bg: #e8f5fd;
@@ -95,6 +97,8 @@
   --text-muted: oklch(45% 0.008 175);
   --border: oklch(28% 0.015 175);
   --border-subtle: oklch(24% 0.012 175);
+  --border-strong: oklch(35% 0.015 175);
+  --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.3);
   --primary: oklch(65% 0.12 175);
   --primary-hover: oklch(72% 0.12 175);
   --primary-light: oklch(25% 0.04 175);

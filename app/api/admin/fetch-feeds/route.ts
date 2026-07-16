@@ -196,6 +196,13 @@ export async function POST(req: NextRequest) {
   let totalErrors = 0
   const results: Record<string, string> = {}
 
+  // Pre-fetch all existing content hashes to avoid N+1 queries
+  const { data: existingHashes } = await adminSupabase
+    .from('articles')
+    .select('content_hash')
+    .not('content_hash', 'is', null)
+  const existingHashSet = new Set((existingHashes ?? []).map((r: any) => r.content_hash))
+
   for (const feed of feeds) {
     try {
       const res = await fetch(feed.feed_url, {
@@ -219,13 +226,7 @@ export async function POST(req: NextRequest) {
         const hash = contentHash(item.title, item.link)
         const slug = makeUniqueSlug(item.title, hash)
 
-        const { data: existing } = await adminSupabase
-          .from('articles')
-          .select('article_id')
-          .eq('content_hash', hash)
-          .maybeSingle()
-
-        if (existing) { skipped++; continue }
+        if (existingHashSet.has(hash)) { skipped++; continue }
 
         // Stop pulling sourced articles once the admin-set limit is reached
         if (sourcedLimit > 0 && remainingSourced <= 0) {

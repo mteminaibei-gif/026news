@@ -10,6 +10,16 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verify user is actually an admin
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('auth_id', user.id)
+      .single()
+    if (!profile || (profile as any).role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await req.json()
     const { name, bio } = body
 

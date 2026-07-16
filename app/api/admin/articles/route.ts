@@ -119,28 +119,26 @@ export async function PATCH(req: NextRequest) {
     if (category_id !== undefined) update.category_id = category_id
     if (tags !== undefined) update.tags = tags
 
-    // Update each article
+    // Batch update articles
     let updated = 0
-    for (const id of ids) {
+    if (ids.length > 0) {
       const { error } = await adminDb
         .from('articles')
         .update(update as never)
-        .eq('article_id', id)
-      if (!error) updated++
+        .in('article_id', ids)
+      if (!error) updated = ids.length
     }
 
-    // Handle bulk delete — use admin client for child tables
-    if (action === 'delete') {
+    // Handle bulk delete — batch with .in() per child table
+    if (action === 'delete' && ids.length > 0) {
       updated = 0
-      for (const id of ids) {
-        await adminDb.from('analytics').delete().eq('article_id', id)
-        await adminDb.from('comments').delete().eq('article_id', id)
-        await adminDb.from('review_workflow').delete().eq('article_id', id)
-        await adminDb.from('earnings').delete().eq('article_id', id)
-        await adminDb.from('article_tag_mappings').delete().eq('article_id', id)
-        const { error } = await adminDb.from('articles').delete().eq('article_id', id)
-        if (!error) updated++
-      }
+      await adminDb.from('analytics').delete().in('article_id', ids)
+      await adminDb.from('comments').delete().in('article_id', ids)
+      await adminDb.from('review_workflow').delete().in('article_id', ids)
+      await adminDb.from('earnings').delete().in('article_id', ids)
+      await adminDb.from('article_tag_mappings').delete().in('article_id', ids)
+      const { error } = await adminDb.from('articles').delete().in('article_id', ids)
+      if (!error) updated = ids.length
     }
 
     // Also handle single article PATCH (backwards compat)

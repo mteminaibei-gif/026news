@@ -197,6 +197,13 @@ export async function GET(req: NextRequest) {
   let totalErrors    = 0
   const results: Record<string, string> = {}
 
+  // Pre-fetch all existing content hashes to avoid N+1 queries
+  const { data: existingHashes } = await supabase
+    .from('articles')
+    .select('content_hash')
+    .not('content_hash', 'is', null)
+  const existingHashSet = new Set((existingHashes ?? []).map((r: any) => r.content_hash))
+
   for (const feed of feeds) {
     try {
       const res = await fetch(feed.feed_url, {
@@ -224,14 +231,8 @@ export async function GET(req: NextRequest) {
         const hash = contentHash(item.title, item.link)
         const slug = makeUniqueSlug(item.title, hash)
 
-        // Check for duplicate
-        const { data: existing } = await supabase
-          .from('articles')
-          .select('article_id')
-          .eq('content_hash', hash)
-          .maybeSingle()
-
-        if (existing) { skipped++; continue }
+        // Check for duplicate using pre-fetched set
+        if (existingHashSet.has(hash)) { skipped++; continue }
 
         let finalImageUrl = item.imageUrl
         if (!finalImageUrl && item.link) {
