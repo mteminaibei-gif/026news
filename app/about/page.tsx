@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: 'About Us',
   description: '026Newsblog is a next-generation news platform combining aggregated global journalism with a thriving community of freelance contributors across Africa and the world.',
 }
+export const dynamic = 'force-dynamic'
 
 const STATS = [
   { value: '120K+', label: 'Monthly Readers' },

@@ -14,6 +14,8 @@ import type { Metadata } from 'next'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 import { APP_URL } from '@/lib/constants/app'
 
+export const dynamic = 'force-dynamic'
+
 const getSourceHost = (url?: string | null) => {
   if (!url) return null
   try { return new URL(url).hostname.replace(/^www\./, '') } catch { return null }
