@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -60,8 +59,6 @@ Payment is processed securely by Stripe or M-Pesa. We never store your full card
 export default function TermsPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
-
       <div className="bg-[#0a1628] text-white py-12 px-4 text-center">
         <h1 className="text-3xl font-extrabold mb-2">Terms of Service</h1>
         <p className="text-white/50 text-sm">Last updated: January 1, 2026 · Effective: January 1, 2026</p>
@@ -99,8 +96,6 @@ export default function TermsPage() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }

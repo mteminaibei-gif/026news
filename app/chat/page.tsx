@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 type Tab = 'news' | 'my'
 
@@ -51,8 +50,6 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <main className="flex-1 flex" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Sidebar */}
         <aside
@@ -343,8 +340,6 @@ export default function ChatPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

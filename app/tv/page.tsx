@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { TVGlobalProvider, useTVGlobal } from '@/components/tv/TVGlobalProvider'
 import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
 import { createClient } from '@/lib/supabase/client'
@@ -118,8 +117,6 @@ function TVPageContent() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <style>{`
         @keyframes eqBar1 { 0%, 100% { height: 4px; } 50% { height: 18px; } }
         @keyframes eqBar2 { 0%, 100% { height: 8px; } 50% { height: 14px; } }
@@ -349,8 +346,6 @@ function TVPageContent() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   )
 }

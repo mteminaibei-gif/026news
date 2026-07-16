@@ -4,8 +4,7 @@ import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 const confettiColors = ['#f2545b', '#f4a259', '#25a18e', '#3a86ff', '#8338ec', '#ffbe0b']
 const confettiPieces = Array.from({ length: 50 }).map((_, i) => ({
@@ -161,13 +160,11 @@ function VerifyEmailInner() {
 export default function VerifyEmailPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar />
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)', color: 'var(--text-tertiary)' }}>Loading…</div>
       }>
         <VerifyEmailInner />
       </Suspense>
-      <Footer />
     </div>
   )
 }

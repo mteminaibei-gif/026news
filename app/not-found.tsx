@@ -1,12 +1,8 @@
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
 
 export default function NotFoundPage() {
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <main className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="max-w-2xl w-full text-center">
           {/* 404 number */}
@@ -122,8 +118,6 @@ export default function NotFoundPage() {
           </form>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

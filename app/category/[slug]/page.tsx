@@ -4,8 +4,7 @@ import { use } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { TrendingUp, MessageSquare, Clock, Loader2, Eye, Bookmark, BookmarkCheck } from 'lucide-react'
@@ -113,8 +112,6 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
   return (
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      <Navbar />
-
       {/* Category Header */}
       <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 40px' }}>
@@ -290,8 +287,6 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
           </div>
         )}
       </div>
-
-      <Footer />
     </div>
   )
 }

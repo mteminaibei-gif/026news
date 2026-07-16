@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -62,8 +61,6 @@ To exercise any of these rights, email legal@026news.com or use the account dele
 export default function PrivacyPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
-
       <div className="bg-[#0a1628] text-white py-12 px-4 text-center">
         <h1 className="text-3xl font-extrabold mb-2">Privacy Policy</h1>
         <p className="text-white/50 text-sm">Last updated: January 1, 2026 · Effective: January 1, 2026</p>
@@ -111,8 +108,6 @@ export default function PrivacyPage() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }

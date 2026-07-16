@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { BadgePill } from '@/components/ui/BadgePill'
 import { createClient } from '@/lib/supabase/server'
 import { formatNumber, formatCurrency } from '@/lib/utils'
@@ -57,8 +56,6 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       {/* Hero */}
       <section
         className="text-white py-14 px-4 text-center"
@@ -190,7 +187,6 @@ export default async function LeaderboardPage() {
         </div>
 
       </div>
-      <Footer />
     </div>
   )
 }

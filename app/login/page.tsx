@@ -4,8 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 function LoginForm() {
   const params = useSearchParams()
@@ -212,7 +211,6 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar />
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
           <div style={{ color: 'var(--text-tertiary)' }}>Loading...</div>
@@ -220,7 +218,6 @@ export default function LoginPage() {
       }>
         <LoginForm />
       </Suspense>
-      <Footer />
     </div>
   )
 }

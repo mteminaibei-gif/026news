@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw } from 'lucide-react'
@@ -282,8 +281,6 @@ export default function NewsPage() {
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       {/* Breaking News Ticker */}
       <div style={{ background: 'var(--primary)', color: 'oklch(98% 0.005 175)', overflow: 'hidden' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
@@ -590,8 +587,6 @@ export default function NewsPage() {
           </>
         )}
       </main>
-
-      <Footer />
     </div>
   )
 }

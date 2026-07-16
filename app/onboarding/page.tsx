@@ -3,8 +3,7 @@
 import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/client'
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5
@@ -152,7 +151,6 @@ export default function OnboardingPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar />
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
       <div style={{ width: '100%', maxWidth: 600 }}>
         {/* Logo */}
@@ -419,7 +417,6 @@ export default function OnboardingPage() {
         </a>
       </div>
       </div>
-      <Footer />
     </div>
   )
 }

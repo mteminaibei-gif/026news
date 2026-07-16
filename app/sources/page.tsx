@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/server'
 import { formatNumber } from '@/lib/utils'
 import { Eye, TrendingUp, Search, ArrowUpRight } from 'lucide-react'
@@ -126,7 +125,6 @@ export default async function ExplorePage() {
 
   return (
     <>
-      <Navbar />
       <main style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
         {/* Search Hero */}
         <section style={{ maxWidth: 1200, margin: '0 auto', padding: '56px 24px 40px', textAlign: 'center' }}>
@@ -361,7 +359,6 @@ export default async function ExplorePage() {
           )}
         </div>
       </main>
-      <Footer />
     </>
   )
 }

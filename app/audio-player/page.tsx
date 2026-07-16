@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 interface PlaylistItem {
   id: string
@@ -31,8 +30,6 @@ export default function AudioPlayerPage() {
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <main className="flex-1" style={{ paddingInline: 'var(--space-lg)' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', paddingBlock: 'var(--space-xl)' }}>
           {/* Top links */}
@@ -467,8 +464,6 @@ export default function AudioPlayerPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

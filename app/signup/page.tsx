@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 type Role = 'reader' | 'journalist'
 
@@ -96,7 +95,6 @@ export default function SignupPage() {
 
   return (
     <>
-      <Navbar />
       <main className="auth-page">
         <div className="auth-card">
           <div className="auth-head">
@@ -221,7 +219,6 @@ export default function SignupPage() {
           </p>
         </div>
       </main>
-      <Footer />
 
       <style jsx>{`
         .auth-page {

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/client'
 import {
   useNotifications,
@@ -107,8 +106,6 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <main className="flex-1 w-full" style={{ maxWidth: '720px', marginInline: 'auto', paddingInline: 'var(--space-md)' }}>
         {/* Header */}
         <div
@@ -271,8 +268,6 @@ export default function NotificationsPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   )
 }

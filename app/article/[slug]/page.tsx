@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { ReadingProgress } from '@/components/ui/ReadingProgress'
 import { ViewTracker } from '@/components/ui/ViewTracker'
 import { ArticleEngagement } from '@/components/news/ArticleEngagement'
@@ -266,7 +265,6 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      <Navbar />
       <ReadingProgress />
 
       <style dangerouslySetInnerHTML={{ __html: ARTICLE_CSS }} />
@@ -405,8 +403,6 @@ export default async function ArticlePage({ params }: Props) {
           )}
         </div>
       </article>
-
-      <Footer />
     </div>
   )
 }

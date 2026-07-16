@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { formatNumber, formatDate, stripHtml } from '@/lib/utils'
 import { Search as SearchIcon, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -125,8 +124,6 @@ export default function SearchPage() {
 
   return (
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      <Navbar />
-
       <main className="max-w-[800px] mx-auto px-6 py-12">
         {/* Logo */}
         <div className="text-center mb-10">
@@ -345,8 +342,6 @@ export default function SearchPage() {
           </>
         )}
       </main>
-
-      <Footer />
     </div>
   )
 }

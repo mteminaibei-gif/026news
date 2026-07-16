@@ -9,6 +9,7 @@ import { RealtimeShell } from '@/components/providers/RealtimeShell';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
 import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
+import { LayoutNav } from '@/components/layout/LayoutNav';
 import StyledJsxRegistry from './registry';
 import { APP_URL } from '@/lib/constants/app'
 
@@ -98,7 +99,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <RadioProvider>
                 <TVGlobalProvider>
                   <StyledJsxRegistry>
-                    {children}
+                    <LayoutNav>
+                      {children}
+                    </LayoutNav>
                     <CookieConsent />
                   </StyledJsxRegistry>
                 </TVGlobalProvider>

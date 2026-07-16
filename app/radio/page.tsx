@@ -1,7 +1,6 @@
 'use client'
 
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { useRadio } from '@/components/radio/RadioProvider'
 import { KENYA_STATIONS, GLOBAL_STATIONS } from '@/lib/radio/stations'
 import type { RadioStation } from '@/lib/radio/stations'
@@ -169,8 +168,6 @@ export default function RadioPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <style>{`
         @keyframes waveform {
           0%, 100% { height: 6px; }
@@ -533,8 +530,6 @@ export default function RadioPage() {
           </section>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

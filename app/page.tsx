@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { HeroCarousel } from '@/components/news/HeroCarousel'
 import { HomeFeed } from '@/components/news/HomeFeed'
 import { ArticleCard } from '@/components/news/ArticleCard'
@@ -156,8 +155,6 @@ export default async function HomePage({ searchParams }: Props) {
 
   return (
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
-      <Navbar />
-
       {/* Breaking News Banner — appears when new article is published */}
       <BreakingNewsBanner />
 
@@ -257,8 +254,6 @@ export default async function HomePage({ searchParams }: Props) {
           </div>
         </aside>
       </div>
-
-      <Footer />
     </div>
   )
 }

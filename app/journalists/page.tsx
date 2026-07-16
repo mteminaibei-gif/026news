@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -66,8 +65,6 @@ export default async function JournalistsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
-
       <section
         className="text-white py-16 px-4 text-center"
         style={{ background: 'linear-gradient(to bottom right, var(--bg-elevated), var(--primary))' }}
@@ -148,8 +145,6 @@ export default async function JournalistsPage() {
           </Link>
         </div>
       </section>
-
-      <Footer />
     </div>
   )
 }

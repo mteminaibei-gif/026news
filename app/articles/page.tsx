@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 import { createClient } from '@/lib/supabase/server'
 import { stripHtml } from '@/lib/utils'
 import type { PostgrestResponse } from '@supabase/supabase-js'
@@ -119,8 +118,6 @@ export default async function ArticlesPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       <main className="flex-1">
         {/* Page Header */}
         <section
@@ -515,8 +512,6 @@ export default async function ArticlesPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

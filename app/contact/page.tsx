@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -17,8 +16,6 @@ const CONTACT_METHODS = [
 export default function ContactPage() {
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
-      <Navbar />
-
       {/* Hero */}
       <section className="py-16 px-4 text-center" style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}>
         <h1 className="text-4xl font-extrabold mb-4">Get in Touch</h1>
@@ -98,8 +95,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }
