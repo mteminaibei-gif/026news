@@ -47,7 +47,7 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
   }
 
   const items = getNavItems()
-  const homeHref = role === 'admin' ? '/admin/dashboard' : role === 'journalist' ? '/journalist/dashboard' : '/'
+  const homeHref = role === 'admin' ? '/admin/profile' : role === 'journalist' ? '/journalist/profile' : '/'
 
   return (
     <nav style={{

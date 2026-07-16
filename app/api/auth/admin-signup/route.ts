@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 // POST /api/auth/admin-signup
 // Allows creating the FIRST admin account, or adding admins if an
@@ -49,6 +49,16 @@ export async function POST(req: NextRequest) {
       options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
     })
     if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
+
+    // 1b. Auto-confirm email so admin can sign in immediately
+    if (authData.user?.id) {
+      const admin = await createAdminClient()
+      const { error: confirmError } = await admin.auth.admin.updateUserById(
+        authData.user.id,
+        { email_confirm: true }
+      )
+      if (confirmError) console.error('[admin-signup] auto-confirm failed:', confirmError.message)
+    }
 
     // 2. Insert users row with role = admin
     const { error: profileError } = await supabase

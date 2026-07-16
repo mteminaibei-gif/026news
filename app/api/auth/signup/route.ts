@@ -177,6 +177,14 @@ export async function POST(req: NextRequest) {
       throw new Error('No user ID returned from signup')
     }
 
+    // 1b. Auto-confirm email so user can sign in immediately
+    const adminForConfirm = await createAdminClient()
+    const { error: confirmError } = await adminForConfirm.auth.admin.updateUserById(
+      authData.user.id,
+      { email_confirm: true }
+    )
+    if (confirmError) console.error('[signup] auto-confirm failed:', confirmError.message)
+
     // 2. Persist profile row. The handle_new_user trigger may have already
     //    inserted a users row on signUp, so upsert on auth_id. Use the admin
     //    client: right after signUp there is no session cookie (email

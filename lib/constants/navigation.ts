@@ -22,7 +22,7 @@ export const ROUTES = {
   // Authors
   AUTHORS: '/journalists',
   AUTHOR_DETAIL: (id: string | number) => `/journalists/${id}`,
-  AUTHOR_DASHBOARD: '/journalist/dashboard',
+  AUTHOR_DASHBOARD: '/journalist/profile',
   AUTHOR_CREATE: '/journalist/create',
   AUTHOR_ARTICLES: '/journalist/articles',
   AUTHOR_ANALYTICS: '/journalist/analytics',
@@ -35,7 +35,7 @@ export const ROUTES = {
   LEADERBOARD: '/leaderboard',
   
   // Admin
-  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_DASHBOARD: '/admin/profile',
   ADMIN_ANALYTICS: '/admin/analytics',
   ADMIN_ARTICLES: '/admin/articles',
   ADMIN_EARNINGS: '/admin/earnings',

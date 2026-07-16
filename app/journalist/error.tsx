@@ -32,7 +32,7 @@ export default function JournalistError({ error, reset }: Props) {
           Try again
         </button>
         <Link
-          href="/journalist/dashboard"
+          href="/journalist/profile"
           className="font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }}
         >

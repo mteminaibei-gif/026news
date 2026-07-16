@@ -39,7 +39,7 @@ export default function manifest(): MetadataRoute.Manifest {
         name:        'Journalist Portal',
         short_name:  'Portal',
         description: 'Access your journalist dashboard',
-        url:         '/journalist/dashboard',
+        url:         '/journalist/profile',
         icons: [{ src: '/favicon.svg', sizes: 'any' }],
       },
     ],

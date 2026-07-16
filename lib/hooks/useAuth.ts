@@ -69,8 +69,8 @@ export function useSignIn() {
         .eq('email', data.user?.email ?? '')
         .single()
       const profile = rawProfile as unknown as { role: string } | null
-      if (profile?.role === 'admin')      router.push('/admin/dashboard')
-      else if (profile?.role === 'journalist') router.push('/journalist/dashboard')
+      if (profile?.role === 'admin')      router.push('/admin/profile')
+      else if (profile?.role === 'journalist') router.push('/journalist/profile')
       else router.push('/')
     },
   })

@@ -132,10 +132,10 @@ export default function CreatePostPage() {
       localStorage.removeItem('draft_create')
       if (action === 'submit') {
         setSubmitSuccess('Article submitted for review! You will be notified once an admin reviews it.')
-        setTimeout(() => router.push('/journalist/dashboard'), 3000)
+        setTimeout(() => router.push('/journalist/profile'), 3000)
       } else {
         setSaved(true)
-        router.push('/journalist/dashboard')
+        router.push('/journalist/profile')
       }
     } catch {
       setSubmitError('Unexpected error — please try again.')
@@ -151,7 +151,7 @@ export default function CreatePostPage() {
       <div className="sticky top-0 z-20 backdrop-blur-md shadow-sm" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link href="/journalist/dashboard"
+            <Link href="/journalist/profile"
               className="transition-colors shrink-0" style={{ color: 'var(--text-tertiary)' }}>
               ←
             </Link>
