@@ -4,6 +4,7 @@ import { slugify } from '@/lib/utils'
 import { fetchFullArticleContent } from '@/lib/rss/fulltext'
 import { curateArticle } from '@/lib/rss/curation'
 import { classifyPost } from '@/lib/rss/classify'
+import { sendPushToAll } from '@/lib/push/send'
 import crypto from 'crypto'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -196,6 +197,7 @@ export async function GET(req: NextRequest) {
   let totalSkipped   = 0
   let totalErrors    = 0
   const results: Record<string, string> = {}
+  const newArticles: { title: string; slug: string; excerpt: string }[] = []
 
   // Pre-fetch all existing content hashes to avoid N+1 queries
   const { data: existingHashes } = await supabase
@@ -298,6 +300,7 @@ export async function GET(req: NextRequest) {
           else { console.error(`[fetch-feeds] insert error for "${item.title}":`, insertError.message) }
         } else {
           inserted++
+          newArticles.push({ title: item.title, slug, excerpt: excerptText.substring(0, 120) })
         }
       }
 
@@ -322,12 +325,51 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Dispatch push notifications for new articles
+  let pushSent = 0
+  let pushStale = 0
+  if (newArticles.length > 0 && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+    try {
+      const { data: subs } = await supabase
+        .from('push_subscriptions' as never)
+        .select('endpoint, p256dh, auth')
+      const subscriptions = (subs ?? []) as unknown as { endpoint: string; p256dh: string; auth: string }[]
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+      for (const article of newArticles.slice(0, 5)) {
+        const result = await sendPushToAll(subscriptions, {
+          title: `New: ${article.title}`,
+          body: article.excerpt || 'Read the full story on 026News',
+          url: `${appUrl}/article/${article.slug}`,
+        })
+        pushSent += result.sent
+        pushStale += result.stale
+      }
+
+      if (pushStale > 0) {
+        const staleEndpoints = subscriptions
+          .filter(() => false)
+          .map(s => s.endpoint)
+        if (staleEndpoints.length > 0) {
+          await supabase
+            .from('push_subscriptions' as never)
+            .delete()
+            .in('endpoint', staleEndpoints as never)
+        }
+      }
+    } catch (err) {
+      console.error('[fetch-feeds] push dispatch error:', err)
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     feeds: feeds.length,
     inserted: totalInserted,
     skipped:  totalSkipped,
     errors:   totalErrors,
+    pushSent,
+    pushStale,
     results,
     timestamp: new Date().toISOString(),
   })

@@ -10,6 +10,7 @@ import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
 import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
 import { LayoutNav } from '@/components/layout/LayoutNav';
+import { PushSubscriptionManager } from '@/components/providers/PushSubscriptionManager';
 import StyledJsxRegistry from './registry';
 import { APP_URL } from '@/lib/constants/app'
 
@@ -110,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </QueryProvider>
         </ThemeProvider>
         <Analytics />
+        <PushSubscriptionManager />
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <Script
             async

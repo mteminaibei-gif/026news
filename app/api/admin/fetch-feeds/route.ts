@@ -5,6 +5,7 @@ import { slugify } from '@/lib/utils'
 import { fetchFullArticleContent } from '@/lib/rss/fulltext'
 import { curateArticle } from '@/lib/rss/curation'
 import { classifyPost } from '@/lib/rss/classify'
+import { sendPushToAll } from '@/lib/push/send'
 import crypto from 'crypto'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -195,6 +196,7 @@ export async function POST(req: NextRequest) {
   let totalSkipped = 0
   let totalErrors = 0
   const results: Record<string, string> = {}
+  const newArticles: { title: string; slug: string; excerpt: string }[] = []
 
   // Pre-fetch all existing content hashes to avoid N+1 queries
   const { data: existingHashes } = await adminSupabase
@@ -297,6 +299,7 @@ export async function POST(req: NextRequest) {
           else { console.error(`insert error:`, insertError.message) }
         } else {
           inserted++
+          newArticles.push({ title: item.title, slug, excerpt: excerptText.substring(0, 120) })
           if (sourcedLimit > 0) remainingSourced--
         }
       }
@@ -322,12 +325,51 @@ export async function POST(req: NextRequest) {
     .from('articles')
     .select('*', { count: 'exact', head: true })
 
+  // Dispatch push notifications for new articles
+  let pushSent = 0
+  let pushStale = 0
+  if (newArticles.length > 0 && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+    try {
+      const { data: subs } = await adminSupabase
+        .from('push_subscriptions' as never)
+        .select('endpoint, p256dh, auth')
+      const subscriptions = (subs ?? []) as unknown as { endpoint: string; p256dh: string; auth: string }[]
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+      for (const article of newArticles.slice(0, 5)) {
+        const result = await sendPushToAll(subscriptions, {
+          title: `New: ${article.title}`,
+          body: article.excerpt || 'Read the full story on 026News',
+          url: `${appUrl}/article/${article.slug}`,
+        })
+        pushSent += result.sent
+        pushStale += result.stale
+      }
+
+      if (pushStale > 0) {
+        const staleSubs = subscriptions.filter(s =>
+          new Array(pushStale).fill(false)
+        ).map(s => s.endpoint)
+        if (staleSubs.length > 0) {
+          await adminSupabase
+            .from('push_subscriptions' as never)
+            .delete()
+            .in('endpoint', staleSubs as never)
+        }
+      }
+    } catch (err) {
+      console.error('[admin/fetch-feeds] push dispatch error:', err)
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     feeds: feeds.length,
     inserted: totalInserted,
     skipped: totalSkipped,
     errors: totalErrors,
+    pushSent,
+    pushStale,
     results,
     articlesBefore: articlesBefore ?? 0,
     articlesAfter: articlesAfter ?? 0,

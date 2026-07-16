@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [commentNotifications, setCommentNotifications] = useState(true);
   const [followNotifications, setFollowNotifications] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
   const [theme, setTheme] = useState('system');
   const [profileVisibility, setProfileVisibility] = useState(true);
   const [readingHistory, setReadingHistory] = useState(true);
@@ -76,6 +77,7 @@ export default function SettingsPage() {
         if (typeof prefs.email_notifications === 'boolean') setEmailNotifications(prefs.email_notifications);
         if (typeof prefs.comment_notifications === 'boolean') setCommentNotifications(prefs.comment_notifications);
         if (typeof prefs.follow_notifications === 'boolean') setFollowNotifications(prefs.follow_notifications);
+        if (typeof prefs.push_notifications === 'boolean') setPushNotifications(prefs.push_notifications);
         if (typeof prefs.theme === 'string') setTheme(prefs.theme);
         if (typeof prefs.profile_visibility === 'boolean') setProfileVisibility(prefs.profile_visibility);
         if (typeof prefs.reading_history === 'boolean') setReadingHistory(prefs.reading_history);
@@ -93,6 +95,7 @@ export default function SettingsPage() {
         email_notifications: emailNotifications,
         comment_notifications: commentNotifications,
         follow_notifications: followNotifications,
+        push_notifications: pushNotifications,
         theme,
         profile_visibility: profileVisibility,
         reading_history: readingHistory,
@@ -231,6 +234,7 @@ export default function SettingsPage() {
                 <p style={subtextStyle}>Choose what notifications you receive.</p>
                 {[
                   { label: 'Email Notifications', desc: 'Receive updates about your account via email', value: emailNotifications, setter: setEmailNotifications },
+                  { label: 'Push Notifications', desc: 'Get browser notifications for breaking news and new articles', value: pushNotifications, setter: setPushNotifications },
                   { label: 'Comment Notifications', desc: 'Get notified when someone comments on your articles', value: commentNotifications, setter: setCommentNotifications },
                   { label: 'Follow Notifications', desc: 'Get notified when someone follows you', value: followNotifications, setter: setFollowNotifications },
                 ].map((item) => (
