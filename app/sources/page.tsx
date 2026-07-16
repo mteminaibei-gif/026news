@@ -36,92 +36,96 @@ const CAT_ICONS: Record<string, string> = {
 }
 
 export default async function ExplorePage() {
-  const supabase = await createClient()
-
-  // Fetch categories with article counts
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('category_id, name, slug, icon')
-    .order('name')
-    .limit(20)
-
-  const cats = (categories ?? []) as unknown as { category_id: number; name: string; slug: string; icon: string | null }[]
-
-  // Get article counts per category
-  const categoryCounts = await Promise.all(
-    cats.map(async (cat) => {
-      const { count } = await supabase
-        .from('articles')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published')
-        .eq('category_id', cat.category_id)
-      return { ...cat, count: count ?? 0 }
-    })
-  )
-
-  // Top viewed articles for trending
-  const { data: trendingArticles } = await supabase
-    .from('articles')
-    .select('article_id, title, slug, featured_image, views, created_at, category:categories(name), author:users(name)')
-    .eq('status', 'published')
-    .order('views', { ascending: false })
-    .limit(5)
-
-  const trendingList = (trendingArticles ?? []) as unknown as Array<{
+  let categoryCounts: Array<{ category_id: number; name: string; slug: string; icon: string | null; count: number }> = []
+  let trendingList: Array<{
     article_id: number; title: string; slug: string; featured_image: string | null
     views: number | null; created_at: string
     category: { name: string } | null; author: { name: string } | null
-  }>
-
-  // Editor's picks (featured or high-view articles)
-  const { data: featured } = await supabase
-    .from('articles')
-    .select('article_id, title, slug, excerpt, featured_image, views, category:categories(name), author:users(name)')
-    .eq('status', 'published')
-    .order('views', { ascending: false })
-    .limit(4)
-
-  const picks = (featured ?? []) as unknown as Array<{
+  }> = []
+  let picks: Array<{
     article_id: number; title: string; slug: string; excerpt: string | null
     featured_image: string | null; views: number | null
     category: { name: string } | null; author: { name: string } | null
-  }>
+  }> = []
+  let authors: Array<{
+    user_id: number; name: string; profile_image: string | null; role: string
+  }> = []
+  let trendingTags: Array<{ tag: string; count: number }> = []
+
+  try {
+    const supabase = await createClient()
+
+    const { data: categories } = await supabase
+      .from('categories')
+      .select('category_id, name, slug, icon')
+      .order('name')
+      .limit(20)
+
+    const cats = (categories ?? []) as unknown as { category_id: number; name: string; slug: string; icon: string | null }[]
+
+    categoryCounts = await Promise.all(
+      cats.map(async (cat) => {
+        const { count } = await supabase
+          .from('articles')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'published')
+          .eq('category_id', cat.category_id)
+        return { ...cat, count: count ?? 0 }
+      })
+    )
+
+    const { data: trendingArticles } = await supabase
+      .from('articles')
+      .select('article_id, title, slug, featured_image, views, created_at, category:categories(name), author:users(name)')
+      .eq('status', 'published')
+      .order('views', { ascending: false })
+      .limit(5)
+
+    trendingList = (trendingArticles ?? []) as typeof trendingList
+
+    const { data: featured } = await supabase
+      .from('articles')
+      .select('article_id, title, slug, excerpt, featured_image, views, category:categories(name), author:users(name)')
+      .eq('status', 'published')
+      .order('views', { ascending: false })
+      .limit(4)
+
+    picks = (featured ?? []) as typeof picks
+
+    const { data: journalists } = await supabase
+      .from('users')
+      .select('user_id, name, profile_image, role')
+      .eq('role', 'journalist')
+      .limit(6)
+
+    authors = (journalists ?? []) as typeof authors
+
+    const { data: trendingArticlesForTags } = await supabase
+      .from('articles')
+      .select('tags')
+      .eq('status', 'published')
+      .not('tags', 'is', null)
+      .order('views', { ascending: false })
+      .limit(50)
+
+    const tagCounts = new Map<string, number>()
+    for (const article of (trendingArticlesForTags ?? []) as unknown as { tags: string[] | null }[]) {
+      if (article.tags) {
+        for (const tag of article.tags) {
+          tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1)
+        }
+      }
+    }
+    trendingTags = Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([tag, count]) => ({ tag, count }))
+  } catch {
+    // Fallback to empty data
+  }
 
   const hero = picks[0]
   const side = picks.slice(1, 4)
-
-  // Journalists
-  const { data: journalists } = await supabase
-    .from('users')
-    .select('user_id, name, profile_image, role')
-    .eq('role', 'journalist')
-    .limit(6)
-
-  const authors = (journalists ?? []) as unknown as Array<{
-    user_id: number; name: string; profile_image: string | null; role: string
-  }>
-
-  // Trending tags
-  const { data: trendingArticlesForTags } = await supabase
-    .from('articles')
-    .select('tags')
-    .eq('status', 'published')
-    .not('tags', 'is', null)
-    .order('views', { ascending: false })
-    .limit(50)
-
-  const tagCounts = new Map<string, number>()
-  for (const article of (trendingArticlesForTags ?? []) as unknown as { tags: string[] | null }[]) {
-    if (article.tags) {
-      for (const tag of article.tags) {
-        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1)
-      }
-    }
-  }
-  const trendingTags = Array.from(tagCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([tag, count]) => ({ tag, count }))
 
   return (
     <>

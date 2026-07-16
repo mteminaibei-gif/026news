@@ -20,48 +20,51 @@ type JournalistRow = {
 }
 
 export default async function JournalistsPage() {
-  const supabase = await createClient()
+  let journalists: JournalistRow[] = []
 
-  // Fetch journalists with a count of their published articles
-  const { data: rawJournalists } = await supabase
-    .from('users')
-    .select('user_id, name, bio, profile_image')
-    .eq('role', 'journalist' as never)
-    .eq('status', 'active' as never)
-    .order('name', { ascending: true })
+  try {
+    const supabase = await createClient()
 
-  const baseJournalists = (rawJournalists ?? []) as {
-    user_id: number
-    name: string
-    bio: string | null
-    profile_image: string | null
-  }[]
+    const { data: rawJournalists } = await supabase
+      .from('users')
+      .select('user_id, name, bio, profile_image')
+      .eq('role', 'journalist' as never)
+      .eq('status', 'active' as never)
+      .order('name', { ascending: true })
 
-  // Fetch per-journalist article counts + first category in one query
-  const journalistIds = baseJournalists.map(j => j.user_id)
-  let articleData: { author_id: number; category_name: string | null }[] = []
+    const baseJournalists = (rawJournalists ?? []) as {
+      user_id: number
+      name: string
+      bio: string | null
+      profile_image: string | null
+    }[]
 
-  if (journalistIds.length > 0) {
-    const { data: rawArticles } = await supabase
-      .from('articles')
-      .select('author_id, category:categories(name)')
-      .eq('status', 'published' as never)
-      .in('author_id', journalistIds)
-    articleData = (rawArticles ?? []).map((a: unknown) => {
-      const row = a as { author_id: number; category: { name: string } | null }
-      return { author_id: row.author_id, category_name: row.category?.name ?? null }
-    })
-  }
+    const journalistIds = baseJournalists.map(j => j.user_id)
+    let articleData: { author_id: number; category_name: string | null }[] = []
 
-  // Build enriched journalist list
-  const journalists: JournalistRow[] = baseJournalists.map(j => {
-    const myArticles = articleData.filter(a => a.author_id === j.user_id)
-    return {
-      ...j,
-      article_count:  myArticles.length,
-      first_category: myArticles[0]?.category_name ?? null,
+    if (journalistIds.length > 0) {
+      const { data: rawArticles } = await supabase
+        .from('articles')
+        .select('author_id, category:categories(name)')
+        .eq('status', 'published' as never)
+        .in('author_id', journalistIds)
+      articleData = (rawArticles ?? []).map((a: unknown) => {
+        const row = a as { author_id: number; category: { name: string } | null }
+        return { author_id: row.author_id, category_name: row.category?.name ?? null }
+      })
     }
-  })
+
+    journalists = baseJournalists.map(j => {
+      const myArticles = articleData.filter(a => a.author_id === j.user_id)
+      return {
+        ...j,
+        article_count:  myArticles.length,
+        first_category: myArticles[0]?.category_name ?? null,
+      }
+    })
+  } catch {
+    // Fallback to empty list if DB queries fail
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

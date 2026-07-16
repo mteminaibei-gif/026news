@@ -27,31 +27,40 @@ const VALUES = [
 ]
 
 export default async function AboutPage() {
-  const supabase = await createClient()
+  let journalistsData: Array<{ user_id: number; name: string; bio: string | null; profile_image: string | null; total_views: number | null }> = []
+  let totalArticles = 0
+  let totalAuthors = 0
+  let totalCategories = 7
 
-  // Fetch real journalist data
-  const { data: journalists } = await supabase
-    .from('users')
-    .select('user_id, name, bio, profile_image, total_views')
-    .eq('role', 'journalist' as never)
-    .eq('status', 'active' as never)
-    .order('total_views', { ascending: false })
-    .limit(4)
+  try {
+    const supabase = await createClient()
 
-  const journalistsData = (journalists ?? []) as Array<{ user_id: number; name: string; bio: string | null; profile_image: string | null; total_views: number | null }>
+    const { data: journalists } = await supabase
+      .from('users')
+      .select('user_id, name, bio, profile_image, total_views')
+      .eq('role', 'journalist' as never)
+      .eq('status', 'active' as never)
+      .order('total_views', { ascending: false })
+      .limit(4)
+    journalistsData = (journalists ?? []) as typeof journalistsData
 
-  // Fetch real stats
-  const [{ count: totalArticles }, { count: totalAuthors }, { count: totalCategories }] = await Promise.all([
-    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'published' as never),
-    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'journalist' as never),
-    supabase.from('categories').select('*', { count: 'exact', head: true }),
-  ])
+    const [articlesRes, authorsRes, categoriesRes] = await Promise.all([
+      supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'published' as never),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'journalist' as never),
+      supabase.from('categories').select('*', { count: 'exact', head: true }),
+    ])
+    totalArticles = articlesRes.count ?? 0
+    totalAuthors = authorsRes.count ?? 0
+    totalCategories = categoriesRes.count ?? 7
+  } catch {
+    // Fallback to static data if DB queries fail (e.g. during build)
+  }
 
   const stats = [
     { value: '120K+', label: 'Monthly Readers' },
-    { value: `${totalAuthors ?? 0}+`, label: 'Freelance Authors' },
-    { value: `${formatNumber(totalArticles ?? 0)}+`, label: 'Articles Published' },
-    { value: `${totalCategories ?? 7}`, label: 'News Categories' },
+    { value: `${totalAuthors}+`, label: 'Freelance Authors' },
+    { value: `${formatNumber(totalArticles)}+`, label: 'Articles Published' },
+    { value: `${totalCategories}`, label: 'News Categories' },
   ]
 
   return (

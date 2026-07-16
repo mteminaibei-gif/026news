@@ -21,35 +21,40 @@ type LeaderRow = {
 const MEDAL = ['🥇', '🥈', '🥉']
 
 export default async function LeaderboardPage() {
-  const supabase = await createClient()
+  let enriched: LeaderRow[] = []
 
-  const { data: rawUsers } = await supabase
-    .from('users')
-    .select('user_id, name, profile_image, bio, total_views, rank_score, badge_level')
-    .eq('role', 'journalist' as never)
-    .eq('status', 'active' as never)
-    .order('rank_score', { ascending: false })
-    .limit(50)
-  const users = (rawUsers ?? []) as unknown as Omit<LeaderRow, 'article_count' | 'total_earnings' | 'badges'>[]
+  try {
+    const supabase = await createClient()
 
-  // Enrich with article count + earnings
-  const enriched: LeaderRow[] = await Promise.all(
-    users.map(async u => {
-      const [{ count: artCount }, { data: earn }, { data: bdg }] = await Promise.all([
-        supabase.from('articles').select('article_id', { count: 'exact', head: true })
-          .eq('author_id', u.user_id).eq('status', 'published' as never),
-        supabase.from('earnings').select('amount').eq('user_id', u.user_id),
-        supabase.from('journalist_badges').select('badge_type, badge_name').eq('user_id', u.user_id),
-      ])
-      const total_earnings = (earn ?? []).reduce((s, r) => s + Number((r as { amount: number }).amount), 0)
-      return {
-        ...u,
-        article_count:   artCount ?? 0,
-        total_earnings,
-        badges: (bdg ?? []) as { badge_type: string; badge_name: string }[],
-      }
-    })
-  )
+    const { data: rawUsers } = await supabase
+      .from('users')
+      .select('user_id, name, profile_image, bio, total_views, rank_score, badge_level')
+      .eq('role', 'journalist' as never)
+      .eq('status', 'active' as never)
+      .order('rank_score', { ascending: false })
+      .limit(50)
+    const users = (rawUsers ?? []) as unknown as Omit<LeaderRow, 'article_count' | 'total_earnings' | 'badges'>[]
+
+    enriched = await Promise.all(
+      users.map(async u => {
+        const [{ count: artCount }, { data: earn }, { data: bdg }] = await Promise.all([
+          supabase.from('articles').select('article_id', { count: 'exact', head: true })
+            .eq('author_id', u.user_id).eq('status', 'published' as never),
+          supabase.from('earnings').select('amount').eq('user_id', u.user_id),
+          supabase.from('journalist_badges').select('badge_type, badge_name').eq('user_id', u.user_id),
+        ])
+        const total_earnings = (earn ?? []).reduce((s, r) => s + Number((r as { amount: number }).amount), 0)
+        return {
+          ...u,
+          article_count:   artCount ?? 0,
+          total_earnings,
+          badges: (bdg ?? []) as { badge_type: string; badge_name: string }[],
+        }
+      })
+    )
+  } catch {
+    // Fallback to empty list if DB queries fail
+  }
 
   const top3 = enriched.slice(0, 3)
   const rest  = enriched.slice(3)

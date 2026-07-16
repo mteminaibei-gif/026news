@@ -29,53 +29,57 @@ type CommentWithUser = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('articles')
-    .select('title, excerpt, content, featured_image, created_at, tags, author:users(name), category:categories(name)')
-    .eq('slug', slug)
-    .single()
+  try {
+    const { slug } = await params
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('articles')
+      .select('title, excerpt, content, featured_image, created_at, tags, author:users(name), category:categories(name)')
+      .eq('slug', slug)
+      .single()
 
-  if (!data) return {}
-  const article = data as unknown as {
-    title: string; excerpt: string | null; content: string; featured_image: string | null; created_at: string; tags: string[] | null
-    author: { name: string } | null; category: { name: string } | null
-  }
+    if (!data) return {}
+    const article = data as unknown as {
+      title: string; excerpt: string | null; content: string; featured_image: string | null; created_at: string; tags: string[] | null
+      author: { name: string } | null; category: { name: string } | null
+    }
 
-  const description = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
+    const description = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
 
-  return {
-    title: article.title,
-    description,
-    keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026news']
-      .filter((k): k is string => !!k)
-      .concat(article.tags ?? []),
-    authors: article.author ? [{ name: article.author.name }] : [],
-    alternates: { canonical: `/article/${slug}` },
-    robots: { index: true, follow: true },
-    openGraph: {
+    return {
       title: article.title,
       description,
-      type: 'article',
-      url: `${APP_URL}/article/${slug}`,
-      siteName: '026Newsblog',
-      locale: 'en_KE',
-      publishedTime: article.created_at,
-      section: article.category?.name ?? undefined,
-      tags: article.tags ?? undefined,
-      authors: article.author ? [article.author.name] : [],
-      images: article.featured_image
-        ? [{ url: article.featured_image, width: 1200, height: 630, alt: article.title }]
-        : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: article.title,
-      description,
-      images: article.featured_image ? [article.featured_image] : [],
-      creator: article.author ? `@${article.author.name.toLowerCase().replace(/\s+/g, '')}` : '@026news',
-    },
+      keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026news']
+        .filter((k): k is string => !!k)
+        .concat(article.tags ?? []),
+      authors: article.author ? [{ name: article.author.name }] : [],
+      alternates: { canonical: `/article/${slug}` },
+      robots: { index: true, follow: true },
+      openGraph: {
+        title: article.title,
+        description,
+        type: 'article',
+        url: `${APP_URL}/article/${slug}`,
+        siteName: '026Newsblog',
+        locale: 'en_KE',
+        publishedTime: article.created_at,
+        section: article.category?.name ?? undefined,
+        tags: article.tags ?? undefined,
+        authors: article.author ? [article.author.name] : [],
+        images: article.featured_image
+          ? [{ url: article.featured_image, width: 1200, height: 630, alt: article.title }]
+          : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: article.title,
+        description,
+        images: article.featured_image ? [article.featured_image] : [],
+        creator: article.author ? `@${article.author.name.toLowerCase().replace(/\s+/g, '')}` : '@026news',
+      },
+    }
+  } catch {
+    return {}
   }
 }
 
@@ -182,12 +186,18 @@ export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data: rawArticle } = await supabase
-    .from('articles')
-    .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-    .eq('slug', slug)
-    .eq('status', 'published' as never)
-    .single()
+  let rawArticle: unknown = null
+  try {
+    const result = await supabase
+      .from('articles')
+      .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
+      .eq('slug', slug)
+      .eq('status', 'published' as never)
+      .single()
+    rawArticle = result.data
+  } catch {
+    notFound()
+  }
 
   if (!rawArticle) notFound()
   const article = rawArticle as unknown as ArticleWithAuthor & {
@@ -203,34 +213,41 @@ export default async function ArticlePage({ params }: Props) {
 
   const authorId = article.author?.user_id
 
-  const [{ data: rawComments }, { data: rawRelated }, authorStats] = await Promise.all([
-    supabase
-      .from('comments')
-      .select('comment_id, comment_text, created_at, user:users(name,profile_image)')
-      .eq('article_id', article.article_id)
-      .eq('status', 'visible' as never)
-      .order('created_at', { ascending: false })
-      .limit(50),
-    article.category_id
-      ? supabase
-          .from('articles')
-          .select('article_id, title, slug, featured_image, excerpt, views, author:users(name), category:categories(name)')
-          .eq('status', 'published' as never)
-          .eq('category_id', article.category_id)
-          .neq('slug', slug)
-          .limit(3)
-      : Promise.resolve({ data: [], error: null } as any),
-    authorId
-      ? supabase.from('articles').select('views', { count: 'exact' }).eq('author_id', authorId).eq('status', 'published' as never)
-      : Promise.resolve({ data: null, count: 0 } as any),
-  ])
-
-  const comments = (rawComments ?? []) as unknown as CommentWithUser[]
-  const related = (rawRelated ?? []) as unknown as Array<{
+  let comments: CommentWithUser[] = []
+  let related: Array<{
     article_id: number; title: string; slug: string; featured_image: string | null
     excerpt: string | null; views: number; author: { name: string } | null; category: { name: string } | null
-  }>
-  const authorArticleCount = authorStats?.count ?? 0
+  }> = []
+  let authorArticleCount = 0
+
+  try {
+    const [{ data: rawComments }, { data: rawRelated }, authorStats] = await Promise.all([
+      supabase
+        .from('comments')
+        .select('comment_id, comment_text, created_at, user:users(name,profile_image)')
+        .eq('article_id', article.article_id)
+        .eq('status', 'visible' as never)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      article.category_id
+        ? supabase
+            .from('articles')
+            .select('article_id, title, slug, featured_image, excerpt, views, author:users(name), category:categories(name)')
+            .eq('status', 'published' as never)
+            .eq('category_id', article.category_id)
+            .neq('slug', slug)
+            .limit(3)
+        : Promise.resolve({ data: [], error: null } as any),
+      authorId
+        ? supabase.from('articles').select('views', { count: 'exact' }).eq('author_id', authorId).eq('status', 'published' as never)
+        : Promise.resolve({ data: null, count: 0 } as any),
+    ])
+    comments = (rawComments ?? []) as unknown as CommentWithUser[]
+    related = (rawRelated ?? []) as typeof related
+    authorArticleCount = authorStats?.count ?? 0
+  } catch {
+    // Fallback to empty data
+  }
 
   const readTime = article.reading_time_minutes ?? readingTime(article.content)
   const likes = article.like_count ?? article.likes ?? 0
