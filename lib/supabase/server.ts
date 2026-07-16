@@ -29,8 +29,9 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
-            // Called from Server Component — safe to ignore
+          } catch (err) {
+            // In Route Handlers cookies().set() works — log failures instead of swallowing
+            console.error('[Supabase] Failed to set cookies:', err)
           }
         },
       },
@@ -55,7 +56,9 @@ export async function createAdminClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {}
+          } catch (err) {
+            console.error('[Supabase Admin] Failed to set cookies:', err)
+          }
         },
       },
     }

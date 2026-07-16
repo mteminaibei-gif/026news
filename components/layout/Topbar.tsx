@@ -2,11 +2,26 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 type TopbarUser = { name: string | null; profile_image: string | null }
 
+const ADMIN_LINKS = [
+  { href: '/admin/profile', label: 'Dashboard' },
+  { href: '/admin/articles', label: 'Articles' },
+  { href: '/admin/journalists', label: 'Journalists' },
+  { href: '/admin/categories', label: 'Categories' },
+  { href: '/admin/sources', label: 'Sources' },
+  { href: '/admin/users', label: 'Users' },
+  { href: '/admin/earnings', label: 'Earnings' },
+  { href: '/admin/reviews', label: 'Reviews' },
+  { href: '/admin/settings', label: 'Settings' },
+]
+
 export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+  const isAdmin = title === 'Admin'
 
   return (
     <header
@@ -227,6 +242,57 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
           </div>
         </div>
       </div>
+
+      {/* Admin secondary navigation */}
+      {isAdmin && (
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: '0 auto',
+            borderTop: '1px solid var(--border)',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+          }}
+        >
+          <nav
+            style={{
+              display: 'flex',
+              gap: 0,
+              padding: '0 16px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {ADMIN_LINKS.map((link) => {
+              const isActive = pathname === link.href || (link.href !== '/admin/profile' && pathname.startsWith(link.href))
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    display: 'block',
+                    padding: '10px 14px',
+                    fontSize: 13,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+                    textDecoration: 'none',
+                    borderBottom: isActive ? '2px solid var(--primary)' : '2px solid transparent',
+                    transition: 'all 0.15s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.color = 'var(--text-primary)'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'
+                  }}
+                >
+                  {link.label}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }

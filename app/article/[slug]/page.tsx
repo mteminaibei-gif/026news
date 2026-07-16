@@ -299,16 +299,6 @@ export default async function ArticlePage({ params }: Props) {
                   </span>
                 </div>
               </div>
-              <div className="article-meta-right">
-                <ArticleEngagement
-                  articleId={article.article_id}
-                  slug={article.slug}
-                  initialViews={article.views ?? 0}
-                  initialLikes={likes}
-                  initialComments={comments.length}
-                  initialSaves={article.save_count ?? 0}
-                />
-              </div>
             </div>
           </header>
 
@@ -348,6 +338,18 @@ export default async function ArticlePage({ params }: Props) {
               ))}
             </div>
           )}
+
+          {/* Like / Comment / Share bar — below article content */}
+          <div className="my-6">
+            <ArticleEngagement
+              articleId={article.article_id}
+              slug={article.slug}
+              initialViews={article.views ?? 0}
+              initialLikes={likes}
+              initialComments={comments.length}
+              initialSaves={article.save_count ?? 0}
+            />
+          </div>
 
           {/* Author card */}
           {article.author && (

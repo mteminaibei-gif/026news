@@ -17,8 +17,22 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) return NextResponse.json({ error: error.message }, { status: 401 })
+    if (error) {
+      console.error('[Login] signInWithPassword error:', error.message)
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
 
+    // Verify the session was established (cookies were set)
+    const { data: { user: verifiedUser }, error: verifyError } = await supabase.auth.getUser()
+    if (verifyError || !verifiedUser) {
+      console.error('[Login] Session verification failed:', verifyError?.message)
+      return NextResponse.json(
+        { error: 'Session could not be established. Please try again.' },
+        { status: 401 }
+      )
+    }
+
+    // Look up profile — try by email first, fall back to auth_id
     let profile: UserProfile | null = null
     try {
       const { data: rawProfile, error: profileError } = await supabase
@@ -26,10 +40,26 @@ export async function POST(req: NextRequest) {
         .select('role, name, profile_image, user_id')
         .eq('email', email)
         .single()
-      if (profileError) throw profileError
-      profile = rawProfile as unknown as UserProfile | null
+      if (profileError) {
+        // Fall back to auth_id lookup
+        const { data: byAuth, error: byAuthErr } = await supabase
+          .from('users')
+          .select('role, name, profile_image, user_id')
+          .eq('auth_id', verifiedUser.id)
+          .single()
+        if (byAuthErr || !byAuth) {
+          console.error('[Login] Profile lookup failed (email + auth_id):', profileError.message, byAuthErr?.message)
+          return NextResponse.json(
+            { error: 'User profile not found. Please ensure your account is properly set up.' },
+            { status: 401 }
+          )
+        }
+        profile = byAuth as unknown as UserProfile
+      } else {
+        profile = rawProfile as unknown as UserProfile | null
+      }
     } catch (err) {
-      console.error('Profile query failed:', err)
+      console.error('[Login] Profile query exception:', err)
       return NextResponse.json(
         { error: 'User profile not found. Please ensure your account is properly set up.' },
         { status: 401 }
@@ -45,8 +75,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       user: {
-        id:            data.user.id,
-        email:         data.user.email,
+        id:            verifiedUser.id,
+        email:         verifiedUser.email,
         role:          profile.role ?? 'reader',
         name:          profile.name ?? '',
         profile_image: profile.profile_image ?? null,

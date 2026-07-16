@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { BadgePill } from '@/components/ui/BadgePill'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
 import { createClient } from '@/lib/supabase/client'
+import { uploadProfileImage } from '@/lib/storage'
 import { formatDate, formatNumber, formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { Plus, Trophy, TrendingUp, DollarSign, Clock, CheckCircle, XCircle, AlertTriangle, Eye, Edit, Trash2, Award, BarChart as BarChartIcon, Users, FileText, Settings, Star, Send } from 'lucide-react'
+import { Plus, Trophy, TrendingUp, DollarSign, Clock, CheckCircle, XCircle, AlertTriangle, Eye, Edit, Trash2, Award, BarChart as BarChartIcon, Users, FileText, Settings, Star, Send, Camera, Loader2 } from 'lucide-react'
 
 type Profile = {
   user_id: number; name: string; email: string; bio: string | null
@@ -38,6 +39,8 @@ export default function JournalistProfilePage() {
   const [saving, setSaving]             = useState(false)
   const [saved, setSaved]               = useState(false)
   const [error, setError]               = useState('')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   // Dashboard data
   const [articles, setArticles]         = useState<ArticleRow[]>([])
@@ -113,6 +116,33 @@ export default function JournalistProfilePage() {
       setError('Network error — try again.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !profile?.user_id) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5MB')
+      return
+    }
+    setUploadingAvatar(true)
+    try {
+      const { url } = await uploadProfileImage(file, profile.user_id)
+      const res = await fetch('/api/profile/avatar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_image: url }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setProfile(p => p ? { ...p, profile_image: url } : p)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch {
+      setError('Avatar upload failed')
+    } finally {
+      setUploadingAvatar(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
     }
   }
 
@@ -319,18 +349,28 @@ export default function JournalistProfilePage() {
               <div className="h-28" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover), var(--accent))' }} />
               <div className="px-6 pb-6">
                 <div className="flex items-end gap-4 -mt-10 mb-4">
-                  {profile.profile_image ? (
-                    <Image
-                      src={profile.profile_image} alt={profile.name}
-                      width={80} height={80}
-                      className="rounded-full ring-4 ring-white object-cover shrink-0 shadow-md"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full ring-4 ring-white flex items-center justify-center text-2xl font-black shrink-0 shadow-md"
-                      style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                      {profile.name.charAt(0)}
+                  <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                  <div
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="relative shrink-0 cursor-pointer group"
+                    title="Change avatar"
+                  >
+                    {profile.profile_image ? (
+                      <Image
+                        src={profile.profile_image} alt={profile.name}
+                        width={80} height={80}
+                        className="rounded-full ring-4 ring-white object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full ring-4 ring-white flex items-center justify-center text-2xl font-black shadow-md"
+                        style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                        {profile.name.charAt(0)}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      {uploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
                     </div>
-                  )}
+                  </div>
                   <div className="pb-1">
                     <h2 className="text-lg font-extrabold" style={{ color: 'var(--text-primary)' }}>{profile.name}</h2>
                     <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{profile.email}</p>

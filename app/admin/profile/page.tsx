@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Loader2, Users, BarChart3, DollarSign, AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp, Users as UsersIcon, DollarSign as DollarSignIcon, Award, FileText, Settings as SettingsIcon, Plus, Eye, Edit, Trash2, Flag, Star, Share2, MoreHorizontal } from 'lucide-react'
+import { uploadProfileImage } from '@/lib/storage'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Loader2, Users, BarChart3, DollarSign, AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp, Users as UsersIcon, DollarSign as DollarSignIcon, Award, FileText, Settings as SettingsIcon, Plus, Eye, Edit, Trash2, Flag, Star, Share2, MoreHorizontal, Camera, UserCheck, UserX } from 'lucide-react'
 import { formatNumber, formatCurrency, stripHtml, timeAgo } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 import { StatCard } from '@/components/ui/StatCard'
@@ -55,9 +56,21 @@ export default function AdminProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'articles' | 'control-panel' | 'about'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'articles' | 'control-panel' | 'about' | 'profile'>('dashboard')
   const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null)
   const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false)
+
+  // Profile editing state
+  const [editName, setEditName] = useState('')
+  const [editBio, setEditBio] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  // Journalist applications state
+  const [pendingApplications, setPendingApplications] = useState<any[]>([])
+  const [processingApplication, setProcessingApplication] = useState<number | null>(null)
 
   // Dashboard state
   const [inhouseArticles, setInhouseArticles] = useState<Article[]>([])
@@ -101,6 +114,89 @@ export default function AdminProfilePage() {
       setCurrentUserId((data as { user_id: number }).user_id)
     }
     setLoading(false)
+  }
+
+  // Initialize edit fields when profile loads
+  useEffect(() => {
+    if (profile) {
+      setEditName(profile.name)
+      setEditBio(profile.bio ?? '')
+    }
+  }, [profile])
+
+  async function handleSaveProfile() {
+    if (!editName.trim()) return
+    setSavingProfile(true)
+    setProfileSaved(false)
+    try {
+      const res = await fetch('/api/admin/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName.trim(), bio: editBio.trim() }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      setProfile(p => p ? { ...p, name: editName.trim(), bio: editBio.trim() || null } : p)
+      setAdmin(a => ({ ...a, name: editName.trim() }))
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 3000)
+    } catch {
+      setNotification({ type: 'info', message: 'Failed to save profile' })
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !currentUserId) return
+    if (file.size > 5 * 1024 * 1024) {
+      setNotification({ type: 'info', message: 'Image must be under 5MB' })
+      return
+    }
+    setUploadingAvatar(true)
+    try {
+      const { url } = await uploadProfileImage(file, currentUserId)
+      const res = await fetch('/api/profile/avatar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_image: url }),
+      })
+      if (!res.ok) throw new Error('Failed to update avatar')
+      setProfile(p => p ? { ...p, profile_image: url } : p)
+      setAdmin(a => ({ ...a, profile_image: url }))
+      setNotification({ type: 'success', message: 'Avatar updated' })
+    } catch {
+      setNotification({ type: 'info', message: 'Avatar upload failed' })
+    } finally {
+      setUploadingAvatar(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }
+
+  async function loadPendingApplications() {
+    try {
+      const res = await fetch('/api/admin/journalists?status=pending')
+      const data = await res.json()
+      setPendingApplications(data.applications ?? [])
+    } catch { /* ignore */ }
+  }
+
+  async function handleApplicationAction(userId: number, action: 'approve' | 'decline') {
+    setProcessingApplication(userId)
+    try {
+      const res = await fetch('/api/admin/journalists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, action }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setPendingApplications(prev => prev.filter(a => a.user_id !== userId))
+      setNotification({ type: 'success', message: action === 'approve' ? 'Journalist approved' : 'Application declined' })
+    } catch {
+      setNotification({ type: 'info', message: 'Action failed' })
+    } finally {
+      setProcessingApplication(null)
+    }
   }
 
   const fetchDashboardData = useCallback(async () => {
@@ -166,6 +262,8 @@ export default function AdminProfilePage() {
 
       const { data: rawRecent } = await supabase.from('users').select('user_id, name, email, role, status, created_at').order('created_at', { ascending: false }).limit(10) as any
       setRecentUsers(rawRecent ?? [])
+
+      loadPendingApplications()
 
     } catch (err) {
       console.error('Error fetching dashboard data:', err)
@@ -378,15 +476,26 @@ export default function AdminProfilePage() {
 
       <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="admin-header" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px' }}>
-          {profile.profile_image ? (
-            <div style={{ width: 120, height: 120, borderRadius: 28, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)' }}>
+          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          <div
+            onClick={() => avatarInputRef.current?.click()}
+            style={{ width: 120, height: 120, borderRadius: 28, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)', cursor: 'pointer' }}
+            title="Change avatar"
+          >
+            {profile.profile_image ? (
               <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)' }}>
+                {profile.name.charAt(0)}
+              </div>
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+            >
+              {uploadingAvatar ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-6 h-6 text-white" />}
             </div>
-          ) : (
-            <div style={{ width: 120, height: 120, borderRadius: 28, background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
-              {profile.name.charAt(0)}
-            </div>
-          )}
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="admin-header-title">
               <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'Newsreader', Georgia, serif" }}>{profile.name}</h1>
@@ -419,6 +528,11 @@ export default function AdminProfilePage() {
           className="profile-tab-btn"
           style={{ fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'about' ? 'var(--primary)' : 'transparent' }}>
           About
+        </button>
+        <button onClick={() => setActiveTab('profile')}
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'profile' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'profile' ? 'var(--primary)' : 'transparent' }}>
+          Profile
         </button>
       </div>
 
@@ -465,6 +579,61 @@ export default function AdminProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Pending Journalist Applications */}
+              {pendingApplications.length > 0 && (
+                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }} className="animate-fade-in-up">
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>📝</div>
+                      <div>
+                        <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Pending Journalist Applications</h3>
+                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{pendingApplications.length} awaiting review</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+                    {pendingApplications.map((app) => (
+                      <div key={app.user_id} className="px-6 py-4 flex items-center gap-4">
+                        {app.profile_image ? (
+                          <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
+                            <Image src={app.profile_image} alt={app.name} fill className="object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                            {app.name?.charAt(0) ?? '?'}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{app.name}</p>
+                          <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>{app.email}</p>
+                          {app.author_application?.niche && (
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Niche: {app.author_application.niche}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            disabled={processingApplication === app.user_id}
+                            onClick={() => handleApplicationAction(app.user_id, 'approve')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                            style={{ background: 'var(--success-light)', color: 'var(--success)', border: '1px solid var(--success)' }}
+                          >
+                            <UserCheck className="w-3.5 h-3.5" /> Approve
+                          </button>
+                          <button
+                            disabled={processingApplication === app.user_id}
+                            onClick={() => handleApplicationAction(app.user_id, 'decline')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                            style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid var(--error)' }}
+                          >
+                            <UserX className="w-3.5 h-3.5" /> Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -660,6 +829,84 @@ export default function AdminProfilePage() {
               <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Total Views</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{formatNumber(articles.reduce((s, a) => s + (a.views ?? 0), 0))}</div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'profile' && (
+            <div className="p-6 max-w-2xl mx-auto">
+              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Edit Profile</h3>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Update your name and bio</p>
+                </div>
+                <div className="p-6 space-y-5">
+                  {/* Avatar */}
+                  <div className="flex items-center gap-4">
+                    <div
+                      onClick={() => avatarInputRef.current?.click()}
+                      style={{ width: 72, height: 72, borderRadius: 20, overflow: 'hidden', position: 'relative', cursor: 'pointer', flexShrink: 0, background: 'var(--bg-inset)' }}
+                      title="Change avatar"
+                    >
+                      {profile.profile_image ? (
+                        <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)' }}>
+                          {profile.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => avatarInputRef.current?.click()}
+                        disabled={uploadingAvatar}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                        style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                      >
+                        {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+                      </button>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>JPG, PNG. Max 5MB.</p>
+                    </div>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm"
+                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+
+                  {/* Bio */}
+                  <div>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Bio</label>
+                    <textarea
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm resize-none"
+                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      placeholder="Tell us about yourself..."
+                    />
+                  </div>
+
+                  {/* Save button */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={savingProfile || !editName.trim()}
+                      className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+                      style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}
+                    >
+                      {savingProfile ? 'Saving...' : profileSaved ? 'Saved!' : 'Save Changes'}
+                    </button>
+                    {profileSaved && <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>Profile saved successfully.</span>}
+                  </div>
+                </div>
               </div>
             </div>
           )}
