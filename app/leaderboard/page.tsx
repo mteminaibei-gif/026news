@@ -9,8 +9,8 @@ import { createClient } from '@/lib/supabase/server'
 import { formatNumber, formatCurrency } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Author Leaderboard — 026News',
-  description: 'Top-ranked authors on 026News ranked by article views and earnings.',
+  title: 'Author Leaderboard — 026connet!',
+  description: 'Top-ranked authors on 026connet! ranked by article views and earnings.',
 }
 
 type LeaderRow = {

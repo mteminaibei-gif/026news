@@ -11,7 +11,7 @@ Your migration is ready: `supabase/migrations/20240711_schema_enhancements.sql` 
 
 1. **Open Supabase Dashboard**
    - Go to: https://supabase.com/dashboard
-   - Select project: **026news**
+   - Select project: **026connet!**
 
 2. **Navigate to SQL Editor**
    - Left sidebar → **SQL Editor**
@@ -46,7 +46,7 @@ Your migration is ready: `supabase/migrations/20240711_schema_enhancements.sql` 
 ### Method 3: Use Supabase CLI (If authenticated)
 
 ```bash
-cd c:\Users\samtech\Downloads\026news-nextjs
+cd c:\Users\samtech\Downloads\026connet!-nextjs
 supabase db push
 ```
 

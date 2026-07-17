@@ -99,7 +99,7 @@ export default function SignupPage() {
         <div className="auth-card">
           <div className="auth-head">
             <h1>Create your account</h1>
-            <p>Join 026Newsblog to read, follow and publish. It takes less than a minute.</p>
+            <p>Join 026connet! to read, follow and publish. It takes less than a minute.</p>
           </div>
 
           <div className="role-toggle" role="tablist" aria-label="Account type">

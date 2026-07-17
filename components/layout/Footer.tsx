@@ -30,9 +30,9 @@ const FOOTER_LINKS = {
 }
 
 const SOCIAL_LINKS = [
-  { label: 'Twitter / X', href: 'https://twitter.com/026newsblog', icon: 'X' },
+  { label: 'Twitter / X', href: 'https://twitter.com/026connet!', icon: 'X' },
   { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61591846443015', icon: 'f' },
-  { label: 'YouTube', href: 'https://youtube.com/@026newsblog', icon: '\u25B6' },
+  { label: 'YouTube', href: 'https://youtube.com/@026connet!', icon: '\u25B6' },
   { label: 'WhatsApp', href: 'https://wa.me/254700000000', icon: '\uD83D\uDCAC' },
 ]
 
@@ -43,7 +43,7 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row gap-10 mb-10 pb-10" style={{ borderBottom: '1px solid var(--border)' }}>
           {/* Brand */}
           <div className="lg:w-1/3">
-            <Link href="/" aria-label="026Newsblog home" className="block mb-4">
+            <Link href="/" aria-label="026connet! home" className="block mb-4">
               <Logo size="md" />
             </Link>
             <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
@@ -102,7 +102,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
           <span className="flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
-            &copy; {new Date().getFullYear()} 026Newsblog. All rights reserved.
+            &copy; {new Date().getFullYear()} 026connet!. All rights reserved.
           </span>
           <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>Privacy</Link>

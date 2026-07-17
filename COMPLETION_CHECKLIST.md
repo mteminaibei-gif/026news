@@ -265,7 +265,7 @@ All documentation needed is in place:
 
 ✅ **ALL TASKS COMPLETED**
 
-The 026NEWS platform now has:
+The 026connet! platform now has:
 - ✅ Professional dark mode with logo-matching colors
 - ✅ Fully accessible journalist dashboard
 - ✅ Removed dummy credentials for better security

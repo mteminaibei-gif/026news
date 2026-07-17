@@ -2,12 +2,18 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
+    // Restrict the image optimizer to known hosts to prevent SSRF via user-stored URLs.
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-      { protocol: 'http',  hostname: '**' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.supabase.in' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'yt3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
     ],
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Disabled: user-controlled SVG can carry script. Serve avatars from Supabase
+    // storage (already sanitized on upload) instead of arbitrary SVG URLs.
+    dangerouslyAllowSVG: false,
   },
   // Force @swc/helpers into the proxy/middleware bundle on Vercel
   // Fixes: MIDDLEWARE_INVOCATION_FAILED — Cannot find module @swc/helpers
@@ -48,6 +54,25 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Permissions-Policy', value: "geolocation=(), microphone=(), camera=(), payment=()" },
+          // Content-Security-Policy: mitigate stored XSS, clickjacking, mixed content.
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://www.googletagmanager.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+            ].join('; '),
+          },
         ],
       },
     ]

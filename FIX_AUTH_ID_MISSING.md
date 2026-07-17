@@ -11,7 +11,7 @@
 You need to add the `auth_id` column to the `users` table.
 
 ### Step 1: Open Supabase Dashboard
-Go to https://supabase.com/dashboard → Select **026news** project
+Go to https://supabase.com/dashboard → Select **026connet!** project
 
 ### Step 2: Open SQL Editor
 Click **SQL Editor** → **+ New Query**

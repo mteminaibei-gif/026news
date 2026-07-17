@@ -2,19 +2,19 @@ import { Metadata } from 'next'
 import { APP_URL } from '@/lib/constants/app'
 
 export const SITE_CONFIG = {
-  name: '026NEWS',
-  title: '026NEWS — Breaking News, Journalism, and Analysis from Africa',
-  description: 'Get breaking news, in-depth analysis, and original journalism from Africa. Read articles by professional journalists, subscribe to topics you care about, and stay informed with 026NEWS.',
+  name: '026connet!',
+  title: '026connet! — Breaking News, Journalism, and Analysis from Africa',
+  description: 'Get breaking news, in-depth analysis, and original journalism from Africa. Read articles by professional journalists, subscribe to topics you care about, and stay informed with 026connet!.',
   url: APP_URL,
   logo: '/logo.svg',
   favicon: '/favicon.ico',
-  email: 'hello@026news.com',
-  twitter: '@026News',
+  email: 'hello@026connet!.com',
+  twitter: '@026connet!',
   socials: {
-    twitter: 'https://twitter.com/026News',
-    facebook: 'https://facebook.com/026News',
-    instagram: 'https://instagram.com/026News',
-    linkedin: 'https://linkedin.com/company/026news',
+    twitter: 'https://twitter.com/026connet!',
+    facebook: 'https://facebook.com/026connet!',
+    instagram: 'https://instagram.com/026connet!',
+    linkedin: 'https://linkedin.com/company/026connet!',
   },
 }
 
@@ -23,68 +23,68 @@ export const SITE_CONFIG = {
  */
 export const SEO_TEMPLATES = {
   HOME: {
-    title: '026NEWS — Breaking African News & Journalism',
+    title: '026connet! — Breaking African News & Journalism',
     description: 'Stay updated with breaking news, original journalism, and in-depth analysis from across Africa. Read articles by professional journalists and follow your favorite authors.',
     keywords: 'news, journalism, Africa, Kenya, breaking news, analysis, original reporting',
   },
 
   ABOUT: {
-    title: 'About 026NEWS — Empowering African Journalism',
-    description: 'Learn about 026NEWS mission to empower journalists and provide quality news coverage across Africa. Discover how we support freelance journalists and independent media.',
-    keywords: 'about 026news, journalism platform, African media, independent journalism',
+    title: 'About 026connet! — Empowering African Journalism',
+    description: 'Learn about 026connet! mission to empower journalists and provide quality news coverage across Africa. Discover how we support freelance journalists and independent media.',
+    keywords: 'about 026connet!, journalism platform, African media, independent journalism',
   },
 
   JOURNALISTS: {
-    title: 'Meet 026NEWS Authors — Professional Journalists',
-    description: 'Discover talented journalists, writers, and reporters on 026NEWS. Follow your favorite authors and read their latest articles on news, politics, business, tech, and more.',
+    title: 'Meet 026connet! Authors — Professional Journalists',
+    description: 'Discover talented journalists, writers, and reporters on 026connet!. Follow your favorite authors and read their latest articles on news, politics, business, tech, and more.',
     keywords: 'journalists, authors, writers, professional journalists, Africa',
   },
 
   LEADERBOARD: {
-    title: '026NEWS Journalist Leaderboard — Top Writers',
-    description: 'Explore the top-performing journalists on 026NEWS. See rankings based on article views, engagement, and earnings.',
+    title: '026connet! Journalist Leaderboard — Top Writers',
+    description: 'Explore the top-performing journalists on 026connet!. See rankings based on article views, engagement, and earnings.',
     keywords: 'leaderboard, top journalists, rankings, best writers, Africa',
   },
 
   RANKINGS: {
-    title: '026NEWS Rankings — Top News & Authors',
-    description: 'Browse trending articles, top journalists, and popular categories on 026NEWS. Find the best journalism and most-read stories.',
+    title: '026connet! Rankings — Top News & Authors',
+    description: 'Browse trending articles, top journalists, and popular categories on 026connet!. Find the best journalism and most-read stories.',
     keywords: 'rankings, trending, popular, top articles, most-read',
   },
 
   SIGNUP: {
-    title: 'Sign Up for 026NEWS — Join Our Community',
-    description: 'Create your free account on 026NEWS. Join thousands of readers and writers enjoying quality African journalism. Read unlimited articles and support independent journalists.',
-    keywords: 'signup, register, create account, join 026news, free account',
+    title: 'Sign Up for 026connet! — Join Our Community',
+    description: 'Create your free account on 026connet!. Join thousands of readers and writers enjoying quality African journalism. Read unlimited articles and support independent journalists.',
+    keywords: 'signup, register, create account, join 026connet!, free account',
   },
 
   LOGIN: {
-    title: 'Log In — 026NEWS',
-    description: 'Log in to your 026NEWS account to read personalized news, manage your profile, and access exclusive content.',
-    keywords: 'login, sign in, account, 026news',
+    title: 'Log In — 026connet!',
+    description: 'Log in to your 026connet! account to read personalized news, manage your profile, and access exclusive content.',
+    keywords: 'login, sign in, account, 026connet!',
   },
 
   JOURNALIST_DASHBOARD: {
-    title: 'Journalist Dashboard — 026NEWS',
-    description: 'Manage your articles, track analytics, monitor earnings, and grow your audience as a 026NEWS journalist.',
+    title: 'Journalist Dashboard — 026connet!',
+    description: 'Manage your articles, track analytics, monitor earnings, and grow your audience as a 026connet! journalist.',
     keywords: 'dashboard, journalist, analytics, earnings',
   },
 
   CONTACT: {
-    title: 'Contact 026NEWS — Get in Touch',
-    description: 'Have questions or feedback for 026NEWS? Contact our team. We\'d love to hear from you.',
+    title: 'Contact 026connet! — Get in Touch',
+    description: 'Have questions or feedback for 026connet!? Contact our team. We\'d love to hear from you.',
     keywords: 'contact, feedback, support, email',
   },
 
   PRIVACY: {
-    title: 'Privacy Policy — 026NEWS',
-    description: 'Learn how 026NEWS collects, uses, and protects your personal data. Read our comprehensive privacy policy.',
+    title: 'Privacy Policy — 026connet!',
+    description: 'Learn how 026connet! collects, uses, and protects your personal data. Read our comprehensive privacy policy.',
     keywords: 'privacy policy, data protection, GDPR',
   },
 
   TERMS: {
-    title: 'Terms of Service — 026NEWS',
-    description: 'Read the terms and conditions for using 026NEWS platform. Understand your rights and responsibilities.',
+    title: 'Terms of Service — 026connet!',
+    description: 'Read the terms and conditions for using 026connet! platform. Understand your rights and responsibilities.',
     keywords: 'terms of service, terms and conditions, user agreement',
   },
 } as const

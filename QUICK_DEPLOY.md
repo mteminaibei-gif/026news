@@ -5,7 +5,7 @@
 ### Step 1: Open Supabase Dashboard
 **Link:** https://supabase.com/dashboard
 
-Log in and select your project: **026news**
+Log in and select your project: **026connet!**
 
 ---
 

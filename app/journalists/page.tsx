@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Our Authors',
   description:
-    'Meet the award-winning freelance authors behind 026News. Covering politics, tech, business, science, and more from Africa and the world.',
+    'Meet the award-winning freelance authors behind 026connet!. Covering politics, tech, business, science, and more from Africa and the world.',
 }
 
 type JournalistRow = {
@@ -77,7 +77,7 @@ export default async function JournalistsPage() {
         <h1 className="text-4xl font-extrabold mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>Our Authors</h1>
         <p className="max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>
           Independent voices. Verified facts. Stories from across Africa and the world.
-          Meet the contributors behind 026News.
+          Meet the contributors behind 026connet!.
         </p>
       </section>
 
@@ -139,7 +139,7 @@ export default async function JournalistsPage() {
           <h3 className="text-2xl font-extrabold mb-3" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>Are you an author?</h3>
           <p className="mb-6 max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>
             Join our growing community of freelance contributors. Publish, earn, and build your
-            audience on 026News.
+            audience on 026connet!.
           </p>
           <Link
             href="/onboarding"

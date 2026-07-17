@@ -85,6 +85,7 @@ interface RealtimeContextValue extends RealtimeState {
   subscribeToArticle: (articleId: number) => () => void
   subscribeToComments: (articleId: number) => () => void
   markNotificationRead: (id: number) => void
+  markAllNotificationsRead: () => void
   clearBreakingNews: () => void
 }
 
@@ -132,15 +133,30 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
     channels.push(articlesCh)
 
     // 2. Notifications — INSERT/UPDATE/DELETE (filtered by user)
+    // Seed the authoritative unread count from the DB so the badge is correct on load.
+    Promise.resolve(
+      supabase
+        .from('notifications')
+        .select('notification_id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('read', false)
+    ).then(({ count }) => {
+      if (count != null) setState(s => ({ ...s, unreadCount: count }))
+    }).catch(() => {})
+
     const notifCh = supabase
       .channel(`rt:notifications:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
         const n = payload.new as LiveNotification
-        setState(s => ({ ...s, unreadCount: s.unreadCount + 1, latestNotification: n }))
+        if (!n.read) setState(s => ({ ...s, unreadCount: s.unreadCount + 1, latestNotification: n }))
+        else setState(s => ({ ...s, latestNotification: n }))
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
-        // Consumer handles local count via useNotifications; we just bump to trigger re-render
-        setState(s => ({ ...s }))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
+        // If a notification was marked read, decrement the unread count.
+        const updated = payload.new as LiveNotification
+        if (updated.read) {
+          setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
+        }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
         setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
@@ -252,6 +268,10 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
     }))
   }, [])
 
+  const markAllNotificationsRead = useCallback(() => {
+    setState(s => ({ ...s, unreadCount: 0 }))
+  }, [])
+
   const clearBreakingNews = useCallback(() => {
     setState(s => ({ ...s, breakingNews: null }))
   }, [])
@@ -261,6 +281,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
     subscribeToArticle,
     subscribeToComments,
     markNotificationRead,
+    markAllNotificationsRead,
     clearBreakingNews,
   }
 

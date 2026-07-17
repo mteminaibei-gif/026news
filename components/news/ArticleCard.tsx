@@ -47,7 +47,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   const Placeholder = () => (
     <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'var(--primary-light)' }}>
       <span className="text-sm font-bold select-none tracking-widest uppercase" style={{ color: 'var(--primary)', opacity: 0.2 }}>
-        {article.category?.name ?? '026News'}
+        {article.category?.name ?? '026connet!'}
       </span>
     </div>
   )

@@ -48,6 +48,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'not_connected' }, { status: 409 })
     }
     console.error('[gmail send]', err)
-    return NextResponse.json({ error: message }, { status: 502 })
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 502 })
   }
 }

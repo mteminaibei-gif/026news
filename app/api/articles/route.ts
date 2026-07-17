@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/server-auth'
 import { slugify } from '@/lib/utils'
 import { APP_URL } from '@/lib/constants/app'
+import { sanitizeArticleHtml } from '@/lib/sanitizeHtml'
 
 // ── simple in-process rate limiter ──────────────────────────
 const postLimiter = new Map<string, { count: number; reset: number }>()
@@ -35,6 +36,17 @@ function sanitize(str: string): string {
     .replace(/<[^>]*>/g, '')          // strip HTML tags
     .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '') // strip control chars
     .trim()
+}
+
+/** Allow only https URLs to avoid javascript:/data: injection via stored image fields */
+function isValidHttpsUrl(value: string): boolean {
+  if (!value) return false
+  try {
+    const u = new URL(value)
+    return u.protocol === 'https:' && !u.hostname.includes('..')
+  } catch {
+    return false
+  }
 }
 
 const getLimiter = new Map<string, { count: number; reset: number }>()
@@ -132,13 +144,14 @@ export async function POST(req: NextRequest) {
     catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 }) }
 
     const title              = sanitize(String(body.title ?? '')).substring(0, 300)
-    const content            = String(body.content ?? '').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim().substring(0, 100_000)
+    const content            = sanitizeArticleHtml(String(body.content ?? '')).trim().substring(0, 100_000)
     const category           = sanitize(String(body.category ?? '')).substring(0, 100)
     const source_reference   = String(body.source_reference ?? '').substring(0, 500)
     const monetization_type  = ['free', 'sponsored', 'ad'].includes(String(body.monetization_type))
       ? String(body.monetization_type) : 'free'
     const action             = body.action === 'submit' ? 'submit' : 'draft'
-    const featured_image     = String(body.featured_image ?? '').substring(0, 1000) || null
+    const featured_imageRaw  = String(body.featured_image ?? '').substring(0, 1000)
+    const featured_image     = isValidHttpsUrl(featured_imageRaw) ? featured_imageRaw : null
     const rawTags            = String(body.tags ?? '')
     const tags: string[]     = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : []
 

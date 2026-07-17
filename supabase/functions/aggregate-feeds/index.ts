@@ -92,7 +92,7 @@ Deno.serve(async () => {
 
       const response = await fetch(feed.url, {
         signal: controller.signal,
-        headers: { 'User-Agent': '026News/1.0 (Aggregator)' },
+        headers: { 'User-Agent': '026connet!/1.0 (Aggregator)' },
       })
       clearTimeout(timeoutId)
 

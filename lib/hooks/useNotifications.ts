@@ -60,7 +60,7 @@ function mapRow(r: Row): AppNotification {
 export function useNotifications(userId: number, _role?: string) {
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
-  const { latestNotification } = useRealtime()
+  const realtime = useRealtime()
 
   // Fetch initial notifications
   useEffect(() => {
@@ -85,32 +85,34 @@ export function useNotifications(userId: number, _role?: string) {
     return () => { active = false }
   }, [userId])
 
-  // Compute unread count from local notifications list
-  const unreadCount = notifications.filter(n => !n.read).length
+  // Single source of truth for the unread count is the RealtimeProvider,
+  // so the navbar badge and the dropdown never desync.
+  const unreadCount = realtime.unreadCount
 
   // Prepend new notifications from RealtimeProvider
   useEffect(() => {
-    if (!latestNotification || latestNotification.user_id !== userId) return
+    if (!realtime.latestNotification || realtime.latestNotification.user_id !== userId) return
     const n: AppNotification = {
-      id: String(latestNotification.notification_id),
-      type: (latestNotification.type as NotificationType) ?? 'system',
-      title: latestNotification.title,
-      message: latestNotification.message,
-      link: latestNotification.link,
-      read: latestNotification.read,
-      timestamp: latestNotification.created_at,
+      id: String(realtime.latestNotification.notification_id),
+      type: (realtime.latestNotification.type as NotificationType) ?? 'system',
+      title: realtime.latestNotification.title,
+      message: realtime.latestNotification.message,
+      link: realtime.latestNotification.link,
+      read: realtime.latestNotification.read,
+      timestamp: realtime.latestNotification.created_at,
     }
     setNotifications(prev => {
       if (prev.some(p => p.id === n.id)) return prev
       return [n, ...prev].slice(0, 50)
     })
-  }, [latestNotification, userId])
+  }, [realtime.latestNotification, userId])
 
   const markRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
     const supabase = createClient()
     supabase.from('notifications').update({ read: true } as never).eq('notification_id', Number(id))
-  }, [])
+    realtime.markNotificationRead(Number(id))
+  }, [realtime])
 
   const markUnread = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: false } : n))
@@ -123,7 +125,8 @@ export function useNotifications(userId: number, _role?: string) {
     if (!userId) return
     const supabase = createClient()
     supabase.from('notifications').update({ read: true } as never).eq('user_id', userId).eq('read', false)
-  }, [userId])
+    realtime.markAllNotificationsRead()
+  }, [userId, realtime])
 
   const deleteNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id))
@@ -136,7 +139,8 @@ export function useNotifications(userId: number, _role?: string) {
     if (!userId) return
     const supabase = createClient()
     supabase.from('notifications').delete().eq('user_id', userId)
-  }, [userId])
+    realtime.markAllNotificationsRead()
+  }, [userId, realtime])
 
   return {
     notifications,

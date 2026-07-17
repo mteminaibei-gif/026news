@@ -14,14 +14,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem('026news-dark-mode')
+    const saved = localStorage.getItem('026connet!-dark-mode')
     if (saved === 'true') setDarkMode(true)
     setMounted(true)
   }, [])
 
   useEffect(() => {
     if (!mounted) return
-    localStorage.setItem('026news-dark-mode', darkMode.toString())
+    localStorage.setItem('026connet!-dark-mode', darkMode.toString())
     const html = document.documentElement
     html.setAttribute('data-theme', darkMode ? 'dark' : 'light')
     if (darkMode) {

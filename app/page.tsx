@@ -16,7 +16,7 @@ import type { PostgrestResponse } from '@supabase/supabase-js'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 
 export const metadata: Metadata = {
-  title: '026News — Breaking News, Analysis & Freelance Journalism',
+  title: '026connet! — Breaking News, Analysis & Freelance Journalism',
   description: 'Kenya\'s leading digital news platform. Breaking news, in-depth analysis, and freelance journalism from across Africa.',
 }
 

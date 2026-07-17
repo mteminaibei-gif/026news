@@ -16,7 +16,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
 
   if (!isOpen) return null
 
-  const inviteMessage = `Join 026NEWS as an author and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=invite`
+  const inviteMessage = `Join 026connet! as an author and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=invite`
 
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=journalist_invite`
 
@@ -34,9 +34,9 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
   }
 
   const handleEmail = () => {
-    const subject = encodeURIComponent('Invite: Join 026NEWS as an Author')
+    const subject = encodeURIComponent('Invite: Join 026connet! as an Author')
     const body = encodeURIComponent(
-      `Hi ${authorName},\n\n${inviteMessage}\n\nBest regards,\n026NEWS Team`
+      `Hi ${authorName},\n\n${inviteMessage}\n\nBest regards,\n026connet! Team`
     )
     const url = `mailto:${authorEmail}?subject=${subject}&body=${body}`
     window.open(url)
@@ -44,7 +44,7 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
   }
 
   const handleTwitter = () => {
-    const text = encodeURIComponent(`I'm inviting you to join @026News as an author! Share your stories and start earning. ${inviteLink}`)
+    const text = encodeURIComponent(`I'm inviting you to join @026connet! as an author! Share your stories and start earning. ${inviteLink}`)
     const url = `https://twitter.com/intent/tweet?text=${text}`
     window.open(url, '_blank')
     setSelectedMethod('twitter')

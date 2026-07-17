@@ -64,7 +64,7 @@ export async function RelatedArticles({ currentSlug, categoryName, limit = 3 }: 
                 />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-orange-500/10 flex items-center justify-center">
-                  <span className="text-sm font-black text-gray-400 dark:text-gray-600 select-none tracking-wider">026NEWS</span>
+                  <span className="text-sm font-black text-gray-400 dark:text-gray-600 select-none tracking-wider">026connet!</span>
                 </div>
               )}
               <div className="absolute top-2 left-2 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: 'var(--accent)' }}>

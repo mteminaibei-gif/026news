@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
 
-    const { paypal_email, amount, currency = 'USD', payout_id, note = '026News journalist payout' } = await req.json()
+    const { paypal_email, amount, currency = 'USD', payout_id, note = '026connet! journalist payout' } = await req.json()
     if (!paypal_email || !amount || !payout_id) {
       return NextResponse.json({ error: 'paypal_email, amount and payout_id are required' }, { status: 400 })
     }
@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         sender_batch_header: {
-          sender_batch_id: `026news-payout-${payout_id}-${Date.now()}`,
-          email_subject:   '026News — Your Payout Has Been Sent',
+          sender_batch_id: `026connet!-payout-${payout_id}-${Date.now()}`,
+          email_subject:   '026connet! — Your Payout Has Been Sent',
           email_message:   note,
         },
         items: [{

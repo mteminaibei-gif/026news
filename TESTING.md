@@ -1,4 +1,4 @@
-# Testing Guide for 026NEWS
+# Testing Guide for 026connet!
 
 ## Setting Up Test Accounts
 
@@ -14,18 +14,18 @@
    - Click the **+ Create New User** button
 
 2. **Create Admin Account**
-   - Email: `admin@026news.com`
+   - Email: `admin@026connet!.com`
    - Password: (create a secure password and store it safely)
    - Click **Create User**
 
 3. **Create Journalist Accounts**
-   - Email: `journalist@026news.com` (or any custom email)
+   - Email: `journalist@026connet!.com` (or any custom email)
    - Password: (create a secure password)
    - Click **Create User**
    - Repeat for additional journalists
 
 4. **Create Reader Account**
-   - Email: `reader@026news.com`
+   - Email: `reader@026connet!.com`
    - Password: (create a secure password)
    - Click **Create User**
 
@@ -45,21 +45,21 @@ After creating authentication users, you must set their roles in the database:
 -- Set admin role
 UPDATE auth.users 
 SET raw_user_meta_data = jsonb_set(raw_user_meta_data, '{role}', '"admin"')
-WHERE email = 'admin@026news.com';
+WHERE email = 'admin@026connet!.com';
 
 -- Insert into users table with admin role
 INSERT INTO public.users (email, name, role)
-VALUES ('admin@026news.com', 'Admin User', 'admin')
+VALUES ('admin@026connet!.com', 'Admin User', 'admin')
 ON CONFLICT (email) DO UPDATE SET role = 'admin';
 
 -- Insert journalist role
 INSERT INTO public.users (email, name, role)
-VALUES ('journalist@026news.com', 'Journalist User', 'journalist')
+VALUES ('journalist@026connet!.com', 'Journalist User', 'journalist')
 ON CONFLICT (email) DO UPDATE SET role = 'journalist';
 
 -- Insert reader role
 INSERT INTO public.users (email, name, role)
-VALUES ('reader@026news.com', 'Reader User', 'reader')
+VALUES ('reader@026connet!.com', 'Reader User', 'reader')
 ON CONFLICT (email) DO UPDATE SET role = 'reader';
 ```
 
@@ -67,12 +67,12 @@ ON CONFLICT (email) DO UPDATE SET role = 'reader';
 
 **Admin Dashboard**
 - Navigate to `/admin/dashboard`
-- Log in with `admin@026news.com` and your chosen password
+- Log in with `admin@026connet!.com` and your chosen password
 - You should see the admin analytics and management panels
 
 **Journalist Dashboard**
 - Navigate to `/journalist/dashboard`
-- Log in with `journalist@026news.com` and your chosen password
+- Log in with `journalist@026connet!.com` and your chosen password
 - You should see the journalist articles, earnings, and analytics panels
 
 **Reader**

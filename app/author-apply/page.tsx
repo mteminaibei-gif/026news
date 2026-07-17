@@ -256,7 +256,7 @@ export default function AuthorApplyPage() {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={labelStyle}>Why do you want to write for 026NEWS?</label>
+                <label style={labelStyle}>Why do you want to write for 026connet!?</label>
                 <textarea
                   style={{ ...inputStyle, minHeight: '90px', resize: 'vertical' }}
                   value={motivation}
@@ -299,7 +299,7 @@ export default function AuthorApplyPage() {
                 Application Submitted!
               </h2>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', maxWidth: '380px', margin: '0 auto 1.5rem' }}>
-                Thank you for applying to become a writer on 026NEWS. We&apos;ll review your application and get back to you within 48 hours.
+                Thank you for applying to become a writer on 026connet!. We&apos;ll review your application and get back to you within 48 hours.
               </p>
               <button style={btnPrimary} onClick={() => window.location.href = '/'}>
                 Back to Homepage

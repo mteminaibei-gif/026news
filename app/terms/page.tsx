@@ -4,31 +4,31 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Read the Terms of Service governing your use of the 026News platform, including user responsibilities, content policy, and journalist agreements.',
+  description: 'Read the Terms of Service governing your use of the 026connet! platform, including user responsibilities, content policy, and journalist agreements.',
 }
 
 const SECTIONS = [
   {
     id: 'acceptance',
     title: '1. Acceptance of Terms',
-    content: `By accessing or using 026News, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the platform. These terms apply to all visitors, registered users, journalists, and administrators.`,
+    content: `By accessing or using 026connet!, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the platform. These terms apply to all visitors, registered users, journalists, and administrators.`,
   },
   {
     id: 'accounts',
     title: '2. User Accounts',
-    content: `You must provide accurate information when creating an account. You are responsible for maintaining the security of your credentials. Notify us immediately at support@026news.com if you suspect unauthorized access. We reserve the right to suspend or terminate accounts that violate these terms.`,
+    content: `You must provide accurate information when creating an account. You are responsible for maintaining the security of your credentials. Notify us immediately at support@026connet!.com if you suspect unauthorized access. We reserve the right to suspend or terminate accounts that violate these terms.`,
   },
   {
     id: 'content-policy',
     title: '3. Content Policy',
-    content: `All content submitted to 026News must be original or properly attributed, factually accurate to the best of the author's knowledge, free from defamatory, harassing, or illegal material, and must not infringe on any third party's intellectual property rights.
+    content: `All content submitted to 026connet! must be original or properly attributed, factually accurate to the best of the author's knowledge, free from defamatory, harassing, or illegal material, and must not infringe on any third party's intellectual property rights.
 
-026News reserves the right to remove any content that violates these standards without prior notice. Repeated violations will result in account termination.`,
+026connet! reserves the right to remove any content that violates these standards without prior notice. Repeated violations will result in account termination.`,
   },
   {
     id: 'author-agreement',
     title: '4. Author Agreement',
-    content: `Authors who publish on 026News grant us a non-exclusive license to display, distribute, and monetize their articles on the platform. Authors retain full copyright to their work. Payment terms: earnings are calculated monthly and paid on the 1st of each month, subject to a minimum threshold of $10 USD or equivalent.
+    content: `Authors who publish on 026connet! grant us a non-exclusive license to display, distribute, and monetize their articles on the platform. Authors retain full copyright to their work. Payment terms: earnings are calculated monthly and paid on the 1st of each month, subject to a minimum threshold of $10 USD or equivalent.
 
 Authors are responsible for the accuracy of their work and must disclose any conflicts of interest, sponsored content, or affiliate relationships.`,
   },
@@ -42,12 +42,12 @@ Payment is processed securely by Stripe or M-Pesa. We never store your full card
   {
     id: 'intellectual-property',
     title: '6. Intellectual Property',
-    content: `The 026News platform, including its design, code, and aggregated data, is owned by 026News and protected by copyright law. You may not reproduce, distribute, or create derivative works without written permission. The 026News name, logo, and brand assets are trademarks of 026News.`,
+    content: `The 026connet! platform, including its design, code, and aggregated data, is owned by 026connet! and protected by copyright law. You may not reproduce, distribute, or create derivative works without written permission. The 026connet! name, logo, and brand assets are trademarks of 026connet!.`,
   },
   {
     id: 'limitation',
     title: '7. Limitation of Liability',
-    content: `026News provides the platform "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform, including loss of data, revenue, or profits. Our total liability for any claim shall not exceed the amount you paid us in the 12 months preceding the claim.`,
+    content: `026connet! provides the platform "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform, including loss of data, revenue, or profits. Our total liability for any claim shall not exceed the amount you paid us in the 12 months preceding the claim.`,
   },
   {
     id: 'governing-law',
@@ -81,7 +81,7 @@ export default function TermsPage() {
 
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <p className="text-gray-600 leading-relaxed mb-8 text-sm">
-            Please read these Terms of Service carefully before using 026News. These terms constitute a legally binding agreement between you and 026News.
+            Please read these Terms of Service carefully before using 026connet!. These terms constitute a legally binding agreement between you and 026connet!.
           </p>
           {SECTIONS.map(section => (
             <section key={section.id} id={section.id} className="mb-10 scroll-mt-24">
@@ -92,7 +92,7 @@ export default function TermsPage() {
             </section>
           ))}
           <div className="mt-8 pt-6 border-t border-gray-100 text-sm text-gray-500">
-            <p>Questions about these terms? <a href="mailto:legal@026news.com" className="text-blue-600">legal@026news.com</a></p>
+            <p>Questions about these terms? <a href="mailto:legal@026connet!.com" className="text-blue-600">legal@026connet!.com</a></p>
           </div>
         </div>
       </div>

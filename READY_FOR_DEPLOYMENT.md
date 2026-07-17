@@ -46,7 +46,7 @@
 **Time:** 2 minutes | **Difficulty:** Easy | **Recommended:** ⭐⭐⭐
 
 1. Go to https://supabase.com/dashboard
-2. Select **026news** project
+2. Select **026connet!** project
 3. Click **SQL Editor** → **+ New Query**
 4. Copy contents of `supabase/migrations/20240711_schema_enhancements.sql`
 5. Paste into editor
@@ -72,7 +72,7 @@
 **Time:** 1 minute | **Difficulty:** Medium
 
 ```bash
-cd c:\Users\samtech\Downloads\026news-nextjs
+cd c:\Users\samtech\Downloads\026connet!-nextjs
 supabase db push
 ```
 
@@ -145,7 +145,7 @@ a1310ad refactor: update TypeScript types for new schema enhancements
 5cc2790 feat: comprehensive database schema enhancements and brand favicon redesign
 ```
 
-All pushed to: `https://github.com/mteminaibei-gif/026news`
+All pushed to: `https://github.com/mteminaibei-gif/026connet!`
 
 ---
 
@@ -261,7 +261,7 @@ All pushed to: `https://github.com/mteminaibei-gif/026news`
 🌐 **External:**
 - Supabase Docs: https://supabase.com/docs
 - Supabase Discord: https://discord.supabase.io
-- GitHub Repo: https://github.com/mteminaibei-gif/026news
+- GitHub Repo: https://github.com/mteminaibei-gif/026connet!
 
 ---
 

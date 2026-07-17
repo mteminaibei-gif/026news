@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (payoutErr) {
-      return NextResponse.json({ error: payoutErr.message }, { status: 400 })
+      console.error('[payout] insert failed:', payoutErr.message)
+      return NextResponse.json({ error: 'Unable to process payout request' }, { status: 400 })
     }
 
     // TODO: Integrate with actual M-Pesa or PayPal API

@@ -15,7 +15,7 @@ async function probe(url: string): Promise<boolean> {
       const res = await fetch(url, {
         method: 'HEAD',
         signal: ctrl.signal,
-        headers: { 'User-Agent': '026news-health/1.0' },
+        headers: { 'User-Agent': '026connet!-health/1.0' },
         redirect: 'follow',
       })
       clearTimeout(t)
@@ -26,7 +26,7 @@ async function probe(url: string): Promise<boolean> {
       const res2 = await fetch(url, {
         method: 'GET',
         signal: ctrl2.signal,
-        headers: { Range: 'bytes=0-1', 'User-Agent': '026news-health/1.0' },
+        headers: { Range: 'bytes=0-1', 'User-Agent': '026connet!-health/1.0' },
       })
       clearTimeout(t2)
       return res2.status < 500

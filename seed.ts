@@ -1,13 +1,13 @@
 /**
- * 026News — Demo Account Seeder
+ * 026connet! — Demo Account Seeder
  * 
  * Run AFTER you have applied the schema in Supabase SQL Editor:
  *   npx tsx --env-file=.env.local seed.ts
  * 
  * Creates:
- *   admin@026news.com      / Admin026!
- *   journalist@026news.com / Journalist026!
- *   bot@026news.com        / (system user for RSS aggregation)
+ *   admin@026connet!.com      / Admin026!
+ *   journalist@026connet!.com / Journalist026!
+ *   bot@026connet!.com        / (system user for RSS aggregation)
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -25,21 +25,21 @@ const supabase = createClient(supabaseUrl, serviceKey, {
 
 const ACCOUNTS = [
   {
-    email:    'admin@026news.com',
+    email:    'admin@026connet!.com',
     password: 'Admin026!',
     name:     'Admin User',
     role:     'admin',
     bio:      'Platform administrator.',
   },
   {
-    email:    'journalist@026news.com',
+    email:    'journalist@026connet!.com',
     password: 'Journalist026!',
     name:     'Demo Journalist',
     role:     'journalist',
     bio:      'Demo journalist for testing the platform.',
   },
   {
-    email:    'bot@026news.com',
+    email:    'bot@026connet!.com',
     password: crypto.randomUUID(), // random — this account is never signed in
     name:     'News Assistant',
     role:     'journalist',
@@ -48,7 +48,7 @@ const ACCOUNTS = [
 ]
 
 async function seed() {
-  console.log('🌱 026News seed starting...\n')
+  console.log('🌱 026connet! seed starting...\n')
 
   for (const account of ACCOUNTS) {
     process.stdout.write(`  Creating ${account.email}... `)
@@ -106,12 +106,12 @@ async function seed() {
 ✅  Seeding complete!
 
   Admin:
-    email:    admin@026news.com
+    email:    admin@026connet!.com
     password: Admin026!
     url:      /admin/dashboard
 
   Journalist:
-    email:    journalist@026news.com
+    email:    journalist@026connet!.com
     password: Journalist026!
     url:      /journalist/dashboard
 

@@ -7,7 +7,7 @@
 Go to your Supabase project → **Authentication** → **Users** → **+ Create New User**
 
 ```
-Email: journalist@026news.com (or your custom email)
+Email: journalist@026connet!.com (or your custom email)
 Password: [Create a strong password]
 ```
 
@@ -17,14 +17,14 @@ Go to **SQL Editor** → **New Query** and run:
 
 ```sql
 INSERT INTO public.users (email, name, role)
-VALUES ('journalist@026news.com', 'Your Name', 'journalist')
+VALUES ('journalist@026connet!.com', 'Your Name', 'journalist')
 ON CONFLICT (email) DO UPDATE SET role = 'journalist';
 ```
 
 ### 3. Login and Access Dashboard
 
 **URL**: `http://localhost:3000/login`
-- Email: `journalist@026news.com`
+- Email: `journalist@026connet!.com`
 - Password: [Yumy]
 
 After login, you'll be automatically redirected to: `/journalist/dashboard`

@@ -94,19 +94,53 @@ export async function POST(req: NextRequest) {
 }
 
 // GET /api/follow?targetUserId=xxx — Check follow status
+// GET /api/follow?mode=followers — list users who follow the current user
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const targetUserId = Number(searchParams.get('targetUserId'))
-
-    if (!targetUserId || isNaN(targetUserId)) {
-      return NextResponse.json({ error: 'targetUserId is required' }, { status: 400 })
-    }
+    const mode = searchParams.get('mode')
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ following: false })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: me } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('auth_id', user.id)
+      .single() as { data: { user_id: number } | null }
+
+    if (!me) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    // List followers (users who follow the current user)
+    if (mode === 'followers') {
+      const { data: links, error } = await supabase
+        .from('user_follows')
+        .select('follower_id')
+        .eq('following_id', me.user_id)
+        .limit(200)
+      if (error) throw error
+
+      const ids = (links ?? []).map(l => (l as { follower_id: number }).follower_id)
+      if (ids.length === 0) return NextResponse.json({ followers: [] })
+
+      const { data: users, error: uErr } = await supabase
+        .from('users')
+        .select('user_id, name, profile_image, role')
+        .in('user_id', ids)
+      if (uErr) throw uErr
+
+      return NextResponse.json({ followers: users ?? [] })
+    }
+
+    const targetUserId = Number(searchParams.get('targetUserId'))
+
+    if (!targetUserId || isNaN(targetUserId)) {
+      return NextResponse.json({ error: 'targetUserId is required' }, { status: 400 })
     }
 
     const { data: profile } = await supabase

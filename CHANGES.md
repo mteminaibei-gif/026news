@@ -3,7 +3,7 @@
 ## ✅ Completed Tasks
 
 ### 1. Fixed Dark Mode Color Scheme
-**Issue**: Dark mode colors were inconsistent and didn't match the 026NEWS logo accents
+**Issue**: Dark mode colors were inconsistent and didn't match the 026connet! logo accents
 
 **Solution**:
 - Updated `app/globals.css` dark mode CSS variables to match logo palette:
@@ -42,7 +42,7 @@
 
 - **Removed from `lib/supabase/middleware.ts`**:
   - Deleted email-based fallback role detection
-  - Removed special cases for `admin@026news.com` and `journalist@026news.com`
+  - Removed special cases for `admin@026connet!.com` and `journalist@026connet!.com`
   - Now strictly requires profile in database
 
 - **Removed from `app/api/auth/login/route.ts`**:
@@ -158,7 +158,7 @@ TESTING.md                         +0  +240 New file - testing guide
 - Accent: `#4caf28` (same bright green), `#e8b640` (warmer gold), `#ef534a` (vibrant red)
 - Text: `#e8f5ea` (bright cream)
 
-**Result**: Cohesive, accessible theme that matches 026NEWS brand identity
+**Result**: Cohesive, accessible theme that matches 026connet! brand identity
 
 ---
 

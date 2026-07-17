@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 /**
- * Brand logo — single source of truth for the 026Newsblog wordmark.
- * Matches the frontpage concept: bold wordmark with a red "Newsblog" suffix.
+ * Brand logo — single source of truth for the 026connet! wordmark.
+ * Matches the frontpage concept: bold wordmark with a red "connet!" suffix.
  * Use everywhere (navbar, footer, auth, profile, error pages) for consistency.
  */
 
@@ -41,13 +41,13 @@ export function Logo({
       className={`${SIZES[size]} font-bold tracking-tight`}
       style={{ color: baseColor ?? 'var(--text-primary)' }}
     >
-      026<span style={{ color: mono ? 'inherit' : suffixColor }}>Newsblog</span>
+      026<span style={{ color: mono ? 'inherit' : suffixColor }}>connet!</span>
     </span>
   )
 
   if (href) {
     return (
-      <Link href={href} aria-label="026Newsblog — home" className={`shrink-0 group inline-flex items-center ${className}`} onClick={onClick}>
+      <Link href={href} aria-label="026connet! — home" className={`shrink-0 group inline-flex items-center ${className}`} onClick={onClick}>
         {inner}
       </Link>
     )

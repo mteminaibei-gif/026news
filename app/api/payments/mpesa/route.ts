@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         PartyB:            shortcode,
         PhoneNumber:       normalizedPhone,
         CallBackURL:       callbackUrl,
-        AccountReference:  '026News Payout',
+        AccountReference:  '026connet! Payout',
         TransactionDesc:   `Journalist payout #${payout_id}`,
       }),
     })

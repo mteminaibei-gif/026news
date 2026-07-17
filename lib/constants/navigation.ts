@@ -1,5 +1,5 @@
 /**
- * Comprehensive navigation map for 026NEWS
+ * Comprehensive navigation map for 026connet!
  * All routes, links, and SEO metadata in one place
  */
 

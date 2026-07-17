@@ -14,7 +14,7 @@ export function ShareBar({ title, slug }: Props) {
 
   const url = typeof window !== 'undefined'
     ? window.location.href
-    : `https://026newsblog.vercel.app/article/${slug}`
+    : `https://026connet!.vercel.app/article/${slug}`
 
   useEffect(() => {
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
@@ -26,7 +26,7 @@ export function ShareBar({ title, slug }: Props) {
     try {
       await navigator.share({
         title,
-        text: `Read this article on 026News: ${title}`,
+        text: `Read this article on 026connet!: ${title}`,
         url,
       })
     } catch (err) {

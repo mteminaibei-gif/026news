@@ -69,7 +69,7 @@ Comprehensive database schema enhancements have been successfully designed, impl
 **File:** `public/favicon.svg`
 - Brand-matched SVG (512x512)
 - Colors: Dark green (#1a5c2a), light green (#4caf28), red (#c8102e)
-- Includes newspaper icon + "026NEWS" text
+- Includes newspaper icon + "026connet!" text
 - Support script: `scripts/generate-favicon.js`
 
 ### Task 4: Documentation Created ✓
@@ -150,7 +150,7 @@ a1310ad refactor: update TypeScript types for new schema enhancements
 
 ### Option 1: Dashboard (Fastest)
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard/projects)
-2. Select your 026news project
+2. Select your 026connet! project
 3. Click **SQL Editor** → **New Query**
 4. Open & copy: `supabase/migrations/20240711_schema_enhancements.sql`
 5. Paste into editor
@@ -159,7 +159,7 @@ a1310ad refactor: update TypeScript types for new schema enhancements
 
 ### Option 2: CLI
 ```bash
-cd c:\Users\samtech\Downloads\026news-nextjs
+cd c:\Users\samtech\Downloads\026connet!-nextjs
 supabase db push
 ```
 

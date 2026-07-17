@@ -130,7 +130,7 @@ function LoginForm() {
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Sign In</h2>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                New to 026Newsblog?{' '}
+                New to 026connet!?{' '}
                <Link href="/signup" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create an account</Link>
             </p>
           </div>

@@ -1,4 +1,4 @@
-# 026News — Next.js + Supabase Platform
+# 026connet! — Next.js + Supabase Platform
 
 A full-stack news platform with freelance journalism, content moderation, and monetization. Built with **Next.js 16**, **TailwindCSS v4**, and **Supabase**.
 
@@ -18,7 +18,7 @@ A full-stack news platform with freelance journalism, content moderation, and mo
 ## Project Structure
 
 ```
-026news-nextjs/
+026connet!-nextjs/
 ├── app/
 │   ├── page.tsx                    # Homepage
 │   ├── login/page.tsx              # Auth page

@@ -7,7 +7,7 @@ import { formatNumber } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'About Us',
-  description: '026Newsblog is a next-generation news platform combining aggregated global journalism with a thriving community of freelance contributors across Africa and the world.',
+  description: '026connet! is a next-generation news platform combining aggregated global journalism with a thriving community of freelance contributors across Africa and the world.',
 }
 export const dynamic = 'force-dynamic'
 
@@ -86,7 +86,7 @@ export default async function AboutPage() {
             Stories that <span style={{ color: 'var(--accent)' }}>connect.</span>
           </h1>
           <p className="text-lg leading-relaxed max-w-2xl mx-auto" style={{ color: 'rgba(255,255,255,0.65)' }}>
-            026News was founded with a simple belief: quality journalism should be accessible to everyone,
+            026connet! was founded with a simple belief: quality journalism should be accessible to everyone,
             and talented journalists deserve a platform that rewards their work fairly. We&apos;re building
             the future of news — open, transparent, and Africa-first.
           </p>
@@ -110,7 +110,7 @@ export default async function AboutPage() {
         <div>
           <h2 className="text-2xl font-extrabold mb-4" style={{ color: 'var(--primary)', fontFamily: "'Newsreader', Georgia, serif" }}>Our Mission</h2>
           <p className="leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
-            026Newsblog is a next-generation media platform that combines aggregated global news with
+            026connet! is a next-generation media platform that combines aggregated global news with
             original freelance journalism. We believe the best stories come from people who live them —
             local journalists, analysts, and contributors from across the African continent and beyond.
           </p>
@@ -202,7 +202,7 @@ export default async function AboutPage() {
       {/* CTA */}
       <section className="text-white py-16 px-4 text-center" style={{ background: 'var(--bg-elevated)' }}>
         <h2 className="text-2xl font-extrabold mb-3" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>Ready to contribute?</h2>
-        <p className="mb-6 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>Join hundreds of freelance authors already earning on 026News.</p>
+        <p className="mb-6 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.6)' }}>Join hundreds of freelance authors already earning on 026connet!.</p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link
             href="/login"

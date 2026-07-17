@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
 
       // ── M-Pesa payout (placeholder — wire in Daraja B2C API) ─────────────
       if (MPESA_CONSUMER_KEY) {
-        // await mpesaB2C({ phoneNumber, amount, remarks: '026News payout' })
+        // await mpesaB2C({ phoneNumber, amount, remarks: '026connet! payout' })
         console.log(`[M-Pesa] Would pay ${user.email} KES ${(amount * 130).toFixed(0)}`)
       }
 

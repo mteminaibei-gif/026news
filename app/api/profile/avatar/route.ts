@@ -10,6 +10,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'profile_image URL is required' }, { status: 400 })
     }
 
+    // Only allow https URLs (reject javascript:/data: and arbitrary schemes) to
+    // prevent stored resource/script injection via the avatar field.
+    let parsed: URL
+    try {
+      parsed = new URL(profile_image)
+    } catch {
+      return NextResponse.json({ error: 'Invalid profile_image URL' }, { status: 400 })
+    }
+    if (parsed.protocol !== 'https:' || parsed.hostname.includes('..')) {
+      return NextResponse.json({ error: 'profile_image must be an https URL' }, { status: 400 })
+    }
+
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {

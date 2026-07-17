@@ -25,7 +25,7 @@ The Supabase CLI requires project linking. Since you're working locally, the fas
 
 The file is located in your project at:
 ```
-026news-nextjs/supabase/migrations/20240711_fix_rss_feeds.sql
+026connet!-nextjs/supabase/migrations/20240711_fix_rss_feeds.sql
 ```
 
 ---

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const { data: botUser } = await adminSupabase
     .from('users')
     .select('user_id')
-    .eq('email', 'bot@026news.com')
+    .eq('email', 'bot@026connet!.com')
     .single()
   const botAuthorId = (botUser as { user_id: number } | null)?.user_id ?? null
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   for (const feed of feeds) {
     try {
       const res = await fetch(feed.feed_url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; 026NewsBot/1.0)' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; 026connet!Bot/1.0)' },
         signal: AbortSignal.timeout(10000),
       })
 
@@ -203,12 +203,12 @@ export async function POST(req: NextRequest) {
         .select('endpoint, p256dh, auth')
       const subscriptions = (subs ?? []) as unknown as { endpoint: string; p256dh: string; auth: string }[]
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026connet!.vercel.app'
       const allStaleEndpoints: string[] = []
       for (const article of newArticles.slice(0, 5)) {
         const result = await sendPushToAll(subscriptions, {
           title: `New: ${article.title}`,
-          body: article.excerpt || 'Read the full story on 026News',
+          body: article.excerpt || 'Read the full story on 026connet!',
           url: `${appUrl}/article/${article.slug}`,
         })
         pushSent += result.sent

@@ -1,5 +1,5 @@
 /**
- * 026News — Kenya & Africa RSS Feeds Seeder
+ * 026connet! — Kenya & Africa RSS Feeds Seeder
  *
  * Run with:
  *   npx tsx --env-file=.env.local seed-kenya-feeds.ts

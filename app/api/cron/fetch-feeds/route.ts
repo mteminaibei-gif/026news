@@ -18,10 +18,15 @@ export async function GET(req: NextRequest) {
   const isVercelCron = req.headers.get('x-vercel-cron') === '1'
   const cronSecret = process.env.CRON_SECRET
 
-  const isDevMode = !cronSecret
-  const isAuthorized = isDevMode
-    ? (console.warn('[cron/fetch-feeds] CRON_SECRET not set — allowing unauthenticated access (dev only)'), true)
-    : authHeader === `Bearer ${cronSecret}` || isVercelCron
+  // Require CRON_SECRET. The `x-vercel-cron` header is trivially spoofable by
+  // any client, so it is only accepted as a secondary signal and never alone.
+  const isAuthorized = Boolean(cronSecret) && (
+    authHeader === `Bearer ${cronSecret}` || (isVercelCron && process.env.VERCEL === '1')
+  )
+
+  if (!isAuthorized) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -35,11 +40,11 @@ export async function GET(req: NextRequest) {
   )
 
   // Find a default "aggregated" author — look for user with name "News Assistant"
-  // (create one in your DB: INSERT INTO users(name,email,role,password_hash) VALUES('News Assistant','bot@026news.com','journalist',''))
+  // (create one in your DB: INSERT INTO users(name,email,role,password_hash) VALUES('News Assistant','bot@026connet!.com','journalist',''))
   const { data: botUser } = await supabase
     .from('users')
     .select('user_id')
-    .eq('email', 'bot@026news.com')
+    .eq('email', 'bot@026connet!.com')
     .single()
   const botAuthorId = (botUser as { user_id: number } | null)?.user_id ?? null
 
@@ -66,7 +71,7 @@ export async function GET(req: NextRequest) {
   for (const feed of feeds) {
     try {
       const res = await fetch(feed.feed_url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; 026NewsBot/1.0)' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; 026connet!Bot/1.0)' },
         signal: AbortSignal.timeout(10000),
       })
 
@@ -193,11 +198,11 @@ export async function GET(req: NextRequest) {
         .select('endpoint, p256dh, auth')
       const subscriptions = (subs ?? []) as unknown as { endpoint: string; p256dh: string; auth: string }[]
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026connet!.vercel.app'
       for (const article of newArticles.slice(0, 5)) {
         const result = await sendPushToAll(subscriptions, {
           title: `New: ${article.title}`,
-          body: article.excerpt || 'Read the full story on 026News',
+          body: article.excerpt || 'Read the full story on 026connet!',
           url: `${appUrl}/article/${article.slug}`,
         })
         pushSent += result.sent

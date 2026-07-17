@@ -1,5 +1,5 @@
 /**
- * Enhanced SEO Analyzer v2 for 026News
+ * Enhanced SEO Analyzer v2 for 026connet!
  * Advanced AI-powered content analysis, optimization, and enhancement
  * Includes: content summarization, image placement, layout optimization, readability scoring
  */
@@ -227,7 +227,7 @@ function countLinks(content: string): { total: number; internal: number; externa
     const relMatch = link.match(/rel\s*=\s*["']([^"']*)["']/i)
     if (!hrefMatch) continue
     const href = hrefMatch[1]
-    if (href.startsWith('/') || href.startsWith('#') || href.includes('026newsblog') || href.includes('026news')) {
+    if (href.startsWith('/') || href.startsWith('#') || href.includes('026connet!') || href.includes('026connet!')) {
       internal++
     } else if (href.startsWith('http')) {
       external++
@@ -630,17 +630,17 @@ function generateSchemaMarkup(
     } : undefined,
     publisher: {
       '@type': 'Organization',
-      name: '026Newsblog',
+      name: '026connet!',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://026news.co.ke/logo.png'
+        url: 'https://026connet!.co.ke/logo.png'
       }
     },
     articleSection: category || 'General',
     keywords: tags?.join(', '),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': 'https://026news.co.ke/article/' // would be actual slug
+      '@id': 'https://026connet!.co.ke/article/' // would be actual slug
     }
   }
 
@@ -659,15 +659,15 @@ function generateSocialOptimization(
   return {
     ogTitle: title.length > 60 ? title.substring(0, 57) + '…' : title,
     ogDescription: excerpt,
-    ogImage: featuredImage || 'https://026news.co.ke/og-default.png',
+    ogImage: featuredImage || 'https://026connet!.co.ke/og-default.png',
     ogType: 'article',
-    ogSiteName: '026Newsblog',
+    ogSiteName: '026connet!',
     twitterCard: 'summary_large_image',
     twitterTitle: title.length > 70 ? title.substring(0, 67) + '…' : title,
     twitterDescription: excerpt,
-    twitterImage: featuredImage || 'https://026news.co.ke/twitter-default.png',
-    twitterSite: '@026news',
-    twitterCreator: '@026news',
+    twitterImage: featuredImage || 'https://026connet!.co.ke/twitter-default.png',
+    twitterSite: '@026connet!',
+    twitterCreator: '@026connet!',
   }
 }
 

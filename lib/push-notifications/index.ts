@@ -5,7 +5,7 @@ const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    'mailto:admin@026news.co.ke',
+    'mailto:admin@026connet!.co.ke',
     VAPID_PUBLIC_KEY,
     VAPID_PRIVATE_KEY
   )

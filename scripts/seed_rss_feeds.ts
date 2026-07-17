@@ -1,5 +1,5 @@
 /**
- * Seed RSS feeds for 026NEWS — verified URLs from the July 2024 audit.
+ * Seed RSS feeds for 026connet! — verified URLs from the July 2024 audit.
  * Run:  npx tsx --env-file=.env.local scripts/seed_rss_feeds.ts
  *
  * Sources are organised by tier (1 = highest priority).

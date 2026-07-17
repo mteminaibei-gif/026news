@@ -71,7 +71,7 @@ function VerifyEmailInner() {
             <div style={{ textAlign: 'left', background: 'var(--bg-inset)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
               {[
                 'Open your email inbox (check spam/promotions too)',
-                'Find the email from 026Newsblog',
+                'Find the email from 026connet!',
                 'Click the "Verify Email" button in the message',
               ].map((t, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: i < 2 ? 12 : 0 }}>
@@ -108,7 +108,7 @@ function VerifyEmailInner() {
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)', marginBottom: 12 }}>Email Verified!</h1>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '38ch', margin: '0 auto 28px' }}>
-              Your account is confirmed and ready to go. Welcome to the 026Newsblog community{email ? `, ${email.split('@')[0]}` : ''}.
+              Your account is confirmed and ready to go. Welcome to the 026connet! community{email ? `, ${email.split('@')[0]}` : ''}.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left', marginBottom: 28 }}>

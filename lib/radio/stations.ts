@@ -10,7 +10,7 @@ export interface RadioStation {
 }
 
 /**
- * Live radio streams for 026Newsblog Radio.
+ * Live radio streams for 026connet! Radio.
  *
  * Kenyan stations are listed first (region: 'ke') and prioritised on the
  * radio page. The global entries use public, CORS-friendly Icecast streams

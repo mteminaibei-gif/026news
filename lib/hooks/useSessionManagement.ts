@@ -50,7 +50,7 @@ export function useSessionManagement() {
       }
 
       // Store in sessionStorage
-      sessionStorage.setItem('026news-session', JSON.stringify(sessionData))
+      sessionStorage.setItem('026connet!-session', JSON.stringify(sessionData))
       setSession(sessionData)
       setLoading(false)
     } catch (err) {
@@ -60,7 +60,7 @@ export function useSessionManagement() {
   }, [supabase, generateSessionId])
 
   const updateActivity = useCallback(() => {
-    const storedSession = sessionStorage.getItem('026news-session')
+    const storedSession = sessionStorage.getItem('026connet!-session')
     if (!storedSession) return
 
     try {
@@ -71,7 +71,7 @@ export function useSessionManagement() {
       sessionData.lastActivity = now.toISOString()
       sessionData.expiresAt = expiresAt.toISOString()
 
-      sessionStorage.setItem('026news-session', JSON.stringify(sessionData))
+      sessionStorage.setItem('026connet!-session', JSON.stringify(sessionData))
       setSession(sessionData)
 
       // Check if approaching expiry
@@ -88,7 +88,7 @@ export function useSessionManagement() {
   }, [updateActivity])
 
   const endSession = useCallback(async () => {
-    sessionStorage.removeItem('026news-session')
+    sessionStorage.removeItem('026connet!-session')
     setSession(null)
     await supabase.auth.signOut()
   }, [supabase])
@@ -116,7 +116,7 @@ export function useSessionManagement() {
   // Check for session expiry
   useEffect(() => {
     const checkExpiry = setInterval(() => {
-      const storedSession = sessionStorage.getItem('026news-session')
+      const storedSession = sessionStorage.getItem('026connet!-session')
       if (!storedSession) return
 
       try {

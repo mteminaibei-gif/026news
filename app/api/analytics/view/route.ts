@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('[analytics/view]', error.message)
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, error: 'Failed to record view' }, { status: 500 })
     }
 
     // Record a per-user read (best-effort; ignore failures)

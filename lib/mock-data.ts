@@ -14,7 +14,7 @@ export const MOCK_CATEGORIES = [
 export const MOCK_USERS = [
   {
     user_id: 1, name: 'Alex Johnson', role: 'journalist' as const,
-    email: 'alex@026news.com',
+    email: 'alex@026connet!.com',
     bio: 'Experienced science and technology journalist with 8 years in the field.',
     profile_image: 'https://i.pravatar.cc/150?img=1',
     status: 'active' as const, password_hash: '', created_at: '2023-01-10',
@@ -22,14 +22,14 @@ export const MOCK_USERS = [
   },
   {
     user_id: 2, name: 'Admin User', role: 'admin' as const,
-    email: 'admin@026news.com', bio: 'Platform administrator.',
+    email: 'admin@026connet!.com', bio: 'Platform administrator.',
     profile_image: 'https://i.pravatar.cc/150?img=2',
     status: 'active' as const, password_hash: '', created_at: '2023-01-01',
     articles: 0, earnings: 0, subscribers: 0,
   },
   {
     user_id: 3, name: 'Sarah Mitchell', role: 'journalist' as const,
-    email: 'sarah@026news.com',
+    email: 'sarah@026connet!.com',
     bio: 'Environmental journalist covering climate, energy, and sustainability.',
     profile_image: 'https://i.pravatar.cc/150?img=5',
     status: 'active' as const, password_hash: '', created_at: '2023-02-14',
@@ -37,14 +37,14 @@ export const MOCK_USERS = [
   },
   {
     user_id: 4, name: 'Mark Johnson', role: 'journalist' as const,
-    email: 'mark@026news.com', bio: 'Political analyst and senior correspondent.',
+    email: 'mark@026connet!.com', bio: 'Political analyst and senior correspondent.',
     profile_image: 'https://i.pravatar.cc/150?img=3',
     status: 'active' as const, password_hash: '', created_at: '2023-03-20',
     articles: 52, earnings: 3200.00, subscribers: 2100,
   },
   {
     user_id: 5, name: 'Alice Carter', role: 'journalist' as const,
-    email: 'alice@026news.com', bio: 'Business and finance journalist.',
+    email: 'alice@026connet!.com', bio: 'Business and finance journalist.',
     profile_image: 'https://i.pravatar.cc/150?img=9',
     status: 'active' as const, password_hash: '', created_at: '2023-04-05',
     articles: 23, earnings: 1450.00, subscribers: 760,

@@ -80,7 +80,7 @@ export function Sidebar({ role, user }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between mb-2" style={{ padding: '0 12px' }}>
-          <Link href="/" aria-label="026Newsblog home" className="flex items-center gap-2 no-underline">
+          <Link href="/" aria-label="026connet! home" className="flex items-center gap-2 no-underline">
             {!isCollapsed && <Logo size="sm" href="" />}
           </Link>
           <button

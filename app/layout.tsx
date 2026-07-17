@@ -19,19 +19,19 @@ import { APP_URL } from '@/lib/constants/app'
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: '026Newsblog — Breaking News, Analysis & Freelance Journalism from Kenya',
-    template: '%s — 026Newsblog',
+    default: '026connet! — Breaking News, Analysis & Freelance Journalism from Kenya',
+    template: '%s — 026connet!',
   },
   description:
     "Kenya's digital news platform for breaking news, in-depth analysis, opinion and award-winning freelance journalism from across Africa and the world.",
-  applicationName: '026Newsblog',
-  authors: [{ name: '026Newsblog' }],
-  creator: '026Newsblog',
-  publisher: '026Newsblog',
+  applicationName: '026connet!',
+  authors: [{ name: '026connet!' }],
+  creator: '026connet!',
+  publisher: '026connet!',
   category: 'news',
   keywords: [
     'Kenya news', 'breaking news', 'journalism', 'freelance journalism',
-    'African news', 'news analysis', 'opinion', '026Newsblog',
+    'African news', 'news analysis', 'opinion', '026connet!',
   ],
   alternates: {
     canonical: '/',
@@ -39,22 +39,22 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: '026Newsblog',
-    title: '026Newsblog — Breaking News, Analysis & Freelance Journalism from Kenya',
+    siteName: '026connet!',
+    title: '026connet! — Breaking News, Analysis & Freelance Journalism from Kenya',
     description:
       "Kenya's digital news platform for breaking news, in-depth analysis and award-winning freelance journalism.",
     url: '/',
     locale: 'en_KE',
-    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: '026Newsblog' }],
+    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: '026connet!' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '026Newsblog — Breaking News, Analysis & Freelance Journalism from Kenya',
+    title: '026connet! — Breaking News, Analysis & Freelance Journalism from Kenya',
     description:
       "Kenya's digital news platform for breaking news, in-depth analysis and award-winning freelance journalism.",
     images: ['/og-image.svg'],
-    site: '@026news',
-    creator: '@026news',
+    site: '@026connet!',
+    creator: '@026connet!',
   },
   robots: {
     index: true,

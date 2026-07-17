@@ -4,8 +4,12 @@ const path = require('path');
 
 const migrationFile = path.join(__dirname, 'supabase', 'migrations', '20240710000000_region_prioritization.sql');
 
-// Try the direct connection string format
-const connectionString = 'postgresql://postgres:ejbE1De2iNeuKI4au1ollw_-2Q0p54B@db.dvvbafgpluxvaieguiwm.supabase.co:5432/postgres';
+// Use the database URL from the environment; never hardcode credentials.
+const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error('[run_migration] Set SUPABASE_DB_URL (or DATABASE_URL) in your environment. Refusing to run with a hardcoded password.');
+  process.exit(1);
+}
 
 async function runMigration() {
   const client = new Client({
@@ -74,9 +78,7 @@ async function runMigration() {
   } catch (err) {
     console.error('Connection error:', err.message);
     console.error('');
-    console.error('Connection string used:');
-    console.error(connectionString);
-    console.error('');
+    console.error('Check SUPABASE_DB_URL / DATABASE_URL and your network access to the database.');
     console.error('To get the correct connection string:');
     console.error('1. Go to https://dvvbafgpluxvaieguiwm.supabase.co');
     console.error('2. Navigate to Settings → Database');

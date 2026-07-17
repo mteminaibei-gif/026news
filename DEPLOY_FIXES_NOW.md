@@ -104,7 +104,7 @@ Or copy-paste the entire contents into SQL Editor and execute.
 
 1. **Open Supabase Dashboard**
    - https://supabase.com/dashboard
-   - Select **026news** project
+   - Select **026connet!** project
 
 2. **SQL Editor → + New Query**
 

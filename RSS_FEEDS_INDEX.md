@@ -210,7 +210,7 @@ curl -X POST http://localhost:3000/api/admin/fetch-feeds \
 ## 📂 File Structure
 
 ```
-026news-nextjs/
+026connet!-nextjs/
 ├── app/
 │   └── page.tsx                          [UPDATED]
 ├── supabase/

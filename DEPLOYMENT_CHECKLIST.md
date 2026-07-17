@@ -22,7 +22,7 @@
 
 ```bash
 # Option A: Using Supabase CLI (Recommended)
-cd c:\Users\samtech\Downloads\026news-nextjs
+cd c:\Users\samtech\Downloads\026connet!-nextjs
 supabase db push
 
 # Option B: Manual deployment

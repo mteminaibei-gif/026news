@@ -20,7 +20,7 @@
 ## 🚀 Deploy Now (4 SQL Fixes in Order)
 
 ### Step 1: Open Supabase Dashboard
-https://supabase.com/dashboard → Select **026news** → **SQL Editor**
+https://supabase.com/dashboard → Select **026connet!** → **SQL Editor**
 
 ### Fix 1: Add auth_id Column
 ```sql

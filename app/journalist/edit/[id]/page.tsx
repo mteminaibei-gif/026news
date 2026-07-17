@@ -5,7 +5,7 @@ import { EditArticleClient } from './EditArticleClient'
 
 export const metadata: Metadata = {
   title: 'Edit Article — Author Portal',
-  description: 'Edit your article draft on 026NEWS.',
+  description: 'Edit your article draft on 026connet!.',
 }
 
 interface Props {

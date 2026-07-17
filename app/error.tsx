@@ -20,7 +20,7 @@ export default function ErrorPage({
       {/* Minimal static header */}
       <header className="bg-white dark:bg-[#0a1628] border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center">
-          <Link href="/" aria-label="026Newsblog — home">
+          <Link href="/" aria-label="026connet! — home">
             <Logo size="md" href="" />
           </Link>
         </div>
@@ -74,7 +74,7 @@ export default function ErrorPage({
 
       <footer className="bg-[#0a1628] text-white py-6">
         <div className="max-w-7xl mx-auto px-4 text-center text-sm text-white/40">
-          &copy; {new Date().getFullYear()} 026News. All rights reserved.
+          &copy; {new Date().getFullYear()} 026connet!. All rights reserved.
         </div>
       </footer>
     </div>

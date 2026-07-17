@@ -22,9 +22,16 @@ export async function GET(request: NextRequest) {
   const next = url.searchParams.get('next') ?? '/'
   const origin = url.origin
 
-  let response = NextResponse.redirect(
-    `${origin}${next.startsWith('/') ? next : '/'}`,
-  )
+  // Only allow same-origin, app-relative paths. Reject protocol-relative (`//`),
+  // absolute URLs, and internal API routes.
+  const isSafeNext =
+    next.startsWith('/') &&
+    !next.startsWith('//') &&
+    !next.toLowerCase().startsWith('/api') &&
+    !next.includes('://')
+  const safeNext = isSafeNext ? next : '/'
+
+  let response: NextResponse
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON, {
     cookies: {
@@ -43,6 +50,7 @@ export async function GET(request: NextRequest) {
   try {
     if (code) {
       await supabase.auth.exchangeCodeForSession(code)
+      response = NextResponse.redirect(`${origin}${safeNext}`)
     } else if (token_hash && type) {
       const { error } = await supabase.auth.verifyOtp({
         token_hash,
@@ -58,6 +66,8 @@ export async function GET(request: NextRequest) {
         if (email) target.searchParams.set('email', email)
         response = NextResponse.redirect(target.toString())
       }
+    } else {
+      response = NextResponse.redirect(`${origin}${safeNext}`)
     }
   } catch {
     response = NextResponse.redirect(`${origin}/login?error=verification_failed`)

@@ -188,7 +188,7 @@ export default function OnboardingPage() {
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
                 <div style={{ fontSize: '2.4rem', marginBottom: 12 }}>📰</div>
                 <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.7rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Create your account</h1>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Join 026Newsblog and personalize your news experience.</p>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Join 026connet! and personalize your news experience.</p>
               </div>
               <div style={{ display: 'grid', gap: 14 }}>
                 <input style={inputStyle} placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -362,7 +362,7 @@ export default function OnboardingPage() {
                   </select>
                   <input style={inputStyle} placeholder="Portfolio URL (optional)" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
                   <input style={inputStyle} placeholder="LinkedIn profile (optional)" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} />
-                  <textarea style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }} placeholder="Why do you want to write for 026Newsblog?" value={motivation} onChange={(e) => setMotivation(e.target.value)} />
+                  <textarea style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }} placeholder="Why do you want to write for 026connet!?" value={motivation} onChange={(e) => setMotivation(e.target.value)} />
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                     <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
                     I agree to the terms and conditions

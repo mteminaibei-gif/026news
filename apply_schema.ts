@@ -1,5 +1,5 @@
 /**
- * 026News — Apply Schema to Supabase via Management API
+ * 026connet! — Apply Schema to Supabase via Management API
  * Run: npx tsx --env-file=.env.local apply_schema.ts
  */
 import { readFileSync } from 'fs'
@@ -438,7 +438,7 @@ const SCHEMA_CHUNKS = [
 ]
 
 async function main() {
-  console.log(`\n🚀 026News — Applying schema to Supabase project: ${PROJECT_REF}\n`)
+  console.log(`\n🚀 026connet! — Applying schema to Supabase project: ${PROJECT_REF}\n`)
   let passed = 0
   let failed = 0
 

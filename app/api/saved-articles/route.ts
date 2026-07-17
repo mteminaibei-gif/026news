@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('[GET /api/saved-articles] Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load saved articles' }, { status: 500 })
   }
 
   return NextResponse.json({
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Article already saved' }, { status: 409 })
       }
       console.error('[POST /api/saved-articles] Error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to save article' }, { status: 500 })
     }
 
     return NextResponse.json(data?.[0] || {}, { status: 201 })
@@ -166,7 +166,7 @@ export async function DELETE(req: NextRequest) {
 
     if (error) {
       console.error('[DELETE /api/saved-articles] Error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to remove saved article' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

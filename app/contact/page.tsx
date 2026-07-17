@@ -3,14 +3,14 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with the 026News team for editorial inquiries, advertising, partnerships, or technical support.',
+  description: 'Get in touch with the 026connet! team for editorial inquiries, advertising, partnerships, or technical support.',
 }
 
 const CONTACT_METHODS = [
-  { icon: '📧', title: 'Editorial', desc: 'Pitches, corrections, and editorial inquiries', email: 'editorial@026news.com' },
-  { icon: '💼', title: 'Advertising', desc: 'Ad placements, sponsorships, and partnerships', email: 'ads@026news.com' },
-  { icon: '🛠️', title: 'Technical Support', desc: 'Account issues, bugs, and platform help', email: 'support@026news.com' },
-  { icon: '⚖️', title: 'Legal & Privacy', desc: 'GDPR requests, DMCA, and legal matters', email: 'legal@026news.com' },
+  { icon: '📧', title: 'Editorial', desc: 'Pitches, corrections, and editorial inquiries', email: 'editorial@026connet!.com' },
+  { icon: '💼', title: 'Advertising', desc: 'Ad placements, sponsorships, and partnerships', email: 'ads@026connet!.com' },
+  { icon: '🛠️', title: 'Technical Support', desc: 'Account issues, bugs, and platform help', email: 'support@026connet!.com' },
+  { icon: '⚖️', title: 'Legal & Privacy', desc: 'GDPR requests, DMCA, and legal matters', email: 'legal@026connet!.com' },
 ]
 
 export default function ContactPage() {

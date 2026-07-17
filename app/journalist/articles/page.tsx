@@ -10,7 +10,7 @@ import { JournalistArticlesClient } from './JournalistArticlesClient'
 
 export const metadata: Metadata = {
   title: 'My Articles — Author Portal',
-  description: 'Manage and track all your submitted articles on 026NEWS.',
+  description: 'Manage and track all your submitted articles on 026connet!.',
 }
 
 export default async function JournalistArticlesPage() {

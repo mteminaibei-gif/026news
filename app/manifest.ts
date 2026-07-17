@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name:             '026Newsblog — Breaking News & Freelance Journalism',
-    short_name:       '026Newsblog',
+    name:             '026connet! — Breaking News & Freelance Journalism',
+    short_name:       '026connet!',
     description:      'Breaking news, in-depth analysis, and award-winning freelance journalism from Kenya, Africa and the world.',
     start_url:        '/',
     display:          'standalone',

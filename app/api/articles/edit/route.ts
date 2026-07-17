@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
+import { sanitizeArticleHtml } from '@/lib/sanitizeHtml'
 
 function sanitize(str: string): string {
   return str.replace(/<[^>]*>/g, '').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim()
+}
+
+function isValidHttpsUrl(value: string): boolean {
+  if (!value) return false
+  try {
+    const u = new URL(value)
+    return u.protocol === 'https:' && !u.hostname.includes('..')
+  } catch {
+    return false
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -37,12 +48,13 @@ export async function POST(req: NextRequest) {
     }
 
     const title = sanitize(String(body.title ?? '')).substring(0, 300)
-    const content = String(body.content ?? '').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim().substring(0, 100_000)
+    const content = sanitizeArticleHtml(String(body.content ?? '')).trim().substring(0, 100_000)
     const category = sanitize(String(body.category ?? '')).substring(0, 100)
     const rawTags = String(body.tags ?? '')
     const tags: string[] = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : []
     const action = body.action === 'submit' ? 'submit' : 'draft'
-    const featured_image = String(body.featured_image ?? '').substring(0, 1000) || null
+    const featured_imageRaw = String(body.featured_image ?? '').substring(0, 1000)
+    const featured_image = isValidHttpsUrl(featured_imageRaw) ? featured_imageRaw : null
     const excerpt = String(body.excerpt ?? '').trim().substring(0, 500)
     const source_reference = String(body.source_reference ?? '').substring(0, 500)
     const monetization_type = ['free', 'sponsored', 'ad'].includes(String(body.monetization_type)) ? String(body.monetization_type) : 'free'

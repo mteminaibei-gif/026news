@@ -1,7 +1,7 @@
 // Service Worker for Push Notifications
 // Place this in public/sw.js
 
-const CACHE_NAME = '026news-v1'
+const CACHE_NAME = '026connet!-v1'
 const VAPID_PUBLIC_KEY = self.__VAPID_PUBLIC_KEY || ''
 
 self.addEventListener('install', (event) => {
@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
   try {
     const data = event.data.json()
 
-    const title = data.title || '026News'
+    const title = data.title || '026connet!'
     const options: NotificationOptions = {
       body: data.body || data.message || 'You have a new notification',
       icon: data.icon || '/icon-192.png',

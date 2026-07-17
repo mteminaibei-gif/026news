@@ -192,7 +192,7 @@ export default function RadioPage() {
               </h1>
             </div>
             <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.7)', maxWidth: '600px' }}>
-              Listen to 026Newsblog live radio — streaming seamlessly across the site.
+              Listen to 026connet! live radio — streaming seamlessly across the site.
             </p>
           </div>
         </section>

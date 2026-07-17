@@ -125,7 +125,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-extrabold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Articles</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Manage, review and optimize every story on 026Newsblog.</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Manage, review and optimize every story on 026connet!.</p>
           </div>
           <Link href="/admin/write" className="text-sm font-bold px-4 py-2 rounded-xl transition-all" style={{ background: 'var(--primary)', color: '#fff' }}>
             + New Article

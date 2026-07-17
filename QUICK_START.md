@@ -2,7 +2,7 @@
 
 ## What Was Done ✅
 
-1. **Dark Mode Colors** - Now matches 026NEWS logo (Kenya flag colors)
+1. **Dark Mode Colors** - Now matches 026connet! logo (Kenya flag colors)
 2. **Journalist Dashboard** - Fully accessible with proper role validation
 3. **Removed Dummy Credentials** - Cleaner, more secure login page
 
@@ -27,13 +27,13 @@ http://localhost:3000
 Go to Supabase → SQL Editor → New Query → Run:
 ```sql
 INSERT INTO public.users (email, name, role)
-VALUES ('test.journalist@026news.com', 'Test Journalist', 'journalist')
+VALUES ('test.journalist@026connet!.com', 'Test Journalist', 'journalist')
 ON CONFLICT (email) DO UPDATE SET role = 'journalist';
 ```
 
 **Login:**
 1. Click "Sign In" at top right or `/login`
-2. Email: `test.journalist@026news.com`
+2. Email: `test.journalist@026connet!.com`
 3. Password: (whatever you set in Supabase)
 4. ✨ Automatically redirected to `/journalist/dashboard`
 

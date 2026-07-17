@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Subscribe — 026News',
-  description: 'Subscribe to the 026News daily digest and never miss a story.',
+  title: 'Subscribe — 026connet!',
+  description: 'Subscribe to the 026connet! daily digest and never miss a story.',
 }
 
 export default function SubscribePage() {

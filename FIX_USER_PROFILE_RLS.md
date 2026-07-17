@@ -9,7 +9,7 @@
 ## ⚡ Quick Fix (1 minute)
 
 ### Step 1: Open Supabase Dashboard
-Go to https://supabase.com/dashboard → Select **026news** project
+Go to https://supabase.com/dashboard → Select **026connet!** project
 
 ### Step 2: Open SQL Editor
 Click **SQL Editor** → **+ New Query**

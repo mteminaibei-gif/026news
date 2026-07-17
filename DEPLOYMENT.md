@@ -1,4 +1,4 @@
-# 026News — Deployment Guide
+# 026connet! — Deployment Guide
 
 ## Prerequisites
 
@@ -73,7 +73,7 @@ Fill in the **required** variables:
 
 ### One-click deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/mteminaibei-gif/026news)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/mteminaibei-gif/026connet!)
 
 ### Manual deploy
 
@@ -140,8 +140,8 @@ After seeding:
 
 | Role | Email | Password | URL |
 |---|---|---|---|
-| Admin | `admin@026news.com` | `Admin026!` | `/admin/dashboard` |
-| Journalist | `journalist@026news.com` | `Journalist026!` | `/journalist/dashboard` |
+| Admin | `admin@026connet!.com` | `Admin026!` | `/admin/dashboard` |
+| Journalist | `journalist@026connet!.com` | `Journalist026!` | `/journalist/dashboard` |
 
 **Change these passwords immediately after first login.**
 

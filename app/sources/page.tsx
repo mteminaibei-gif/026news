@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatNumber } from '@/lib/utils'
 import { Eye, TrendingUp, Search, ArrowUpRight } from 'lucide-react'
 
-export const metadata: Metadata = { title: 'Explore — 026Newsblog' }
+export const metadata: Metadata = { title: 'Explore — 026connet!' }
 export const dynamic = 'force-dynamic'
 
 const CAT_COLORS: Array<{ bg: string; stroke: string }> = [
@@ -136,7 +136,7 @@ export default async function ExplorePage() {
             Explore stories
           </h1>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: 32 }}>
-            Search articles, topics, and authors across 026Newsblog
+            Search articles, topics, and authors across 026connet!
           </p>
 
           <form action="/search" method="get" style={{ maxWidth: 640, margin: '0 auto', position: 'relative' }}>
@@ -281,7 +281,7 @@ export default async function ExplorePage() {
                         {hero.title}
                       </h3>
                       <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>
-                        {hero.author?.name ?? '026Newsblog'}{hero.views ? ` · ${hero.views.toLocaleString()} views` : ''}
+                        {hero.author?.name ?? '026connet!'}{hero.views ? ` · ${hero.views.toLocaleString()} views` : ''}
                       </span>
                     </div>
                   </Link>
@@ -310,7 +310,7 @@ export default async function ExplorePage() {
                           {a.title}
                         </h4>
                         <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
-                          {a.author?.name ?? '026Newsblog'}
+                          {a.author?.name ?? '026connet!'}
                         </span>
                       </div>
                     </Link>

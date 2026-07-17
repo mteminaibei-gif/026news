@@ -7,7 +7,7 @@ The schema enhancement migration is ready to deploy. Choose one of the methods b
 **Fastest method - works immediately:**
 
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project: **026news**
+2. Select your project: **026connet!**
 3. Navigate to **SQL Editor** (left sidebar)
 4. Click **New Query**
 5. Open file: `supabase/migrations/20240711_schema_enhancements.sql`
@@ -29,7 +29,7 @@ If you have Supabase CLI installed and authenticated:
 
 ```bash
 # Navigate to project directory
-cd c:\Users\samtech\Downloads\026news-nextjs
+cd c:\Users\samtech\Downloads\026connet!-nextjs
 
 # Link to your Supabase project (if not already linked)
 supabase link --project-ref dvvbafgpluxvaieguiwm

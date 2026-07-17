@@ -455,7 +455,7 @@ export default function NewsPage() {
                     </p>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.78rem', opacity: 0.8 }}>
-                    <span>{topStory.author?.name ?? '026Newsblog'}</span>
+                    <span>{topStory.author?.name ?? '026connet!'}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={13} /> {formatNumber(topStory.views ?? 0)}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> {new Date(topStory.created_at).toLocaleDateString()}</span>
                   </div>

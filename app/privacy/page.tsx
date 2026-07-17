@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Learn how 026News collects, uses, and protects your personal data in compliance with GDPR and applicable privacy laws.',
+  description: 'Learn how 026connet! collects, uses, and protects your personal data in compliance with GDPR and applicable privacy laws.',
 }
 
 const SECTIONS = [
@@ -34,7 +34,7 @@ If required by law or court order, we may disclose data to authorities, but will
     title: '4. Your Rights (GDPR)',
     content: `If you are in the European Economic Area, you have the right to: access your personal data, correct inaccurate data, delete your account and data ("right to be forgotten"), restrict or object to processing, data portability, and withdraw consent at any time.
 
-To exercise any of these rights, email legal@026news.com or use the account deletion option in your profile settings. We will respond within 30 days.`,
+To exercise any of these rights, email legal@026connet!.com or use the account deletion option in your profile settings. We will respond within 30 days.`,
   },
   {
     id: 'data-retention',
@@ -44,12 +44,12 @@ To exercise any of these rights, email legal@026news.com or use the account dele
   {
     id: 'security',
     title: '6. Security',
-    content: `We use industry-standard security measures including TLS/SSL encryption for all data in transit, bcrypt password hashing, row-level security policies on our database, and regular security audits. No system is 100% secure — if you suspect unauthorised access, contact support@026news.com immediately.`,
+    content: `We use industry-standard security measures including TLS/SSL encryption for all data in transit, bcrypt password hashing, row-level security policies on our database, and regular security audits. No system is 100% secure — if you suspect unauthorised access, contact support@026connet!.com immediately.`,
   },
   {
     id: 'children',
     title: '7. Children\'s Privacy',
-    content: `026News is not directed at children under 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us and we will delete it promptly.`,
+    content: `026connet! is not directed at children under 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us and we will delete it promptly.`,
   },
   {
     id: 'changes',
@@ -87,9 +87,9 @@ export default function PrivacyPage() {
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <p className="text-gray-600 leading-relaxed mb-8">
-            This Privacy Policy explains how 026News (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) collects, uses, and protects your
+            This Privacy Policy explains how 026connet! (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) collects, uses, and protects your
             personal information when you use our platform at{' '}
-            <Link href="/" className="text-blue-600 hover:underline">026news.com</Link>.
+            <Link href="/" className="text-blue-600 hover:underline">026connet!.com</Link>.
             We are committed to protecting your privacy and complying with the General Data Protection Regulation (GDPR)
             and other applicable privacy laws.
           </p>
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
           ))}
 
           <div className="mt-8 pt-6 border-t border-gray-100 text-sm text-gray-500">
-            <p>For privacy concerns, contact: <a href="mailto:legal@026news.com" className="text-blue-600">legal@026news.com</a></p>
+            <p>For privacy concerns, contact: <a href="mailto:legal@026connet!.com" className="text-blue-600">legal@026connet!.com</a></p>
           </div>
         </div>
       </div>

@@ -9,6 +9,25 @@ export const BUCKETS = {
 
 type BucketName = typeof BUCKETS[keyof typeof BUCKETS]
 
+// Only allow common, safe image types to be stored. SVG/XHTML/executables are
+// rejected to prevent stored malicious-content (XSS / drive-by) via uploads.
+const ALLOWED_IMAGE_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
+])
+const ALLOWED_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'])
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024 // 8 MB
+
+// Reject path traversal / absolute segments in caller-supplied prefixes.
+function safePathPrefix(prefix: string): string {
+  if (!prefix) return ''
+  const cleaned = prefix
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(p => p && p !== '.' && p !== '..')
+    .join('/')
+  return cleaned ? `${cleaned}/` : ''
+}
+
 // ─── Upload a file to a Supabase Storage bucket ───────────────────────────────
 export async function uploadFile(
   bucket: BucketName,
@@ -17,9 +36,17 @@ export async function uploadFile(
 ): Promise<{ url: string; path: string }> {
   const supabase = createClient()
 
-  // Sanitize filename
-  const ext  = file.name.split('.').pop() ?? 'jpg'
-  const name = `${pathPrefix}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  // Validate MIME type and size.
+  const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
+  if (!ALLOWED_IMAGE_TYPES.has(file.type) || !ALLOWED_EXT.has(ext)) {
+    throw new Error('Unsupported file type. Allowed: JPG, PNG, WEBP, GIF, AVIF.')
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error('File too large. Maximum size is 8 MB.')
+  }
+
+  const prefix = safePathPrefix(pathPrefix)
+  const name = `${prefix}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
   const { data, error } = await supabase.storage
     .from(bucket)

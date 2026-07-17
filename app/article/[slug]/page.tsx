@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: article.title,
       description,
-      keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026news']
+      keywords: [article.category?.name, article.author?.name, 'breaking news', 'journalism', '026connet!']
         .filter((k): k is string => !!k)
         .concat(article.tags ?? []),
       authors: article.author ? [{ name: article.author.name }] : [],
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         type: 'article',
         url: `${APP_URL}/article/${slug}`,
-        siteName: '026Newsblog',
+        siteName: '026connet!',
         locale: 'en_KE',
         publishedTime: article.created_at,
         section: article.category?.name ?? undefined,
@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: article.title,
         description,
         images: article.featured_image ? [article.featured_image] : [],
-        creator: article.author ? `@${article.author.name.toLowerCase().replace(/\s+/g, '')}` : '@026news',
+        creator: article.author ? `@${article.author.name.toLowerCase().replace(/\s+/g, '')}` : '@026connet!',
       },
     }
   } catch {
@@ -257,7 +257,7 @@ export default async function ArticlePage({ params }: Props) {
   const coverCaption = article.source_name
     ? `Source: ${article.source_name}`
     : article.featured_image
-      ? 'Image via 026News'
+      ? 'Image via 026connet!'
       : null
 
   const seoDescription = stripHtml((article.excerpt || article.content) ?? '').slice(0, 160)
@@ -271,10 +271,10 @@ export default async function ArticlePage({ params }: Props) {
     dateModified: (article as unknown as { updated_at?: string }).updated_at ?? article.created_at,
     author: article.author
       ? { '@type': 'Person', name: article.author.name }
-      : { '@type': 'Organization', name: '026Newsblog' },
+      : { '@type': 'Organization', name: '026connet!' },
     publisher: {
       '@type': 'Organization',
-      name: '026Newsblog',
+      name: '026connet!',
       logo: { '@type': 'ImageObject', url: `${APP_URL}/favicon.svg` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${APP_URL}/article/${article.slug}` },
@@ -310,7 +310,7 @@ export default async function ArticlePage({ params }: Props) {
                   <div className="author-avatar">{authorInitials}</div>
                 )}
                 <div className="author-info">
-                  <span className="author-name">{article.author?.name ?? '026News'}</span>
+                  <span className="author-name">{article.author?.name ?? '026connet!'}</span>
                   <span className="author-detail">
                     Published {formatDate(article.created_at)} · {readTime} min read
                   </span>
@@ -400,7 +400,7 @@ export default async function ArticlePage({ params }: Props) {
           {/* Related */}
           {related.length > 0 && (
             <section className="related-section">
-              <h2 className="related-title">More from 026News</h2>
+              <h2 className="related-title">More from 026connet!</h2>
               <div className="related-grid">
                 {related.map(r => (
                   <Link key={r.article_id} href={`/article/${r.slug}`} className="related-card">
@@ -413,7 +413,7 @@ export default async function ArticlePage({ params }: Props) {
                     <div className="related-card-body">
                       {r.category?.name && <span className="related-card-category">{r.category.name}</span>}
                       <h3 className="related-card-title">{r.title}</h3>
-                      <span className="related-card-meta">{r.author?.name ?? '026News'} · {readTime} min read</span>
+                      <span className="related-card-meta">{r.author?.name ?? '026connet!'} · {readTime} min read</span>
                     </div>
                   </Link>
                 ))}

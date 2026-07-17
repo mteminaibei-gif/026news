@@ -22,7 +22,7 @@ CREATE POLICY IF NOT EXISTS "Service can create users" ON public.users
 
 ### Run It:
 1. Open https://supabase.com/dashboard
-2. Select **026news** project
+2. Select **026connet!** project
 3. Go to **SQL Editor** → **+ New Query**
 4. **Paste the SQL above**
 5. Click **Execute**
