@@ -37,22 +37,33 @@ export function UserManagementTable() {
   const [q, setQ] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [stats, setStats] = useState({ total: 0, admins: 0, journalists: 0, readers: 0, active: 0 })
   const [busyId, setBusyId] = useState<number | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/users', { cache: 'no-store' })
+      const params = new URLSearchParams()
+      if (roleFilter !== 'all') params.set('role', roleFilter)
+      if (statusFilter !== 'all') params.set('status', statusFilter)
+      if (q) params.set('q', q)
+      params.set('page', String(page))
+      params.set('limit', '25')
+      const res = await fetch(`/api/admin/users?${params}`, { cache: 'no-store' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load users')
       setError(null)
       setUsers(data.users ?? [])
+      setTotalPages(data.totalPages ?? 1)
+      if (data.stats) setStats(data.stats)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load users')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page, q, roleFilter, statusFilter])
 
   useEffect(() => {
     // Data-fetch effect: setState happens inside async callbacks, not synchronously
@@ -96,23 +107,7 @@ export function UserManagementTable() {
     [load]
   )
 
-  const filtered = users.filter(u => {
-    if (roleFilter !== 'all' && u.role !== roleFilter) return false
-    if (statusFilter !== 'all' && u.status !== statusFilter) return false
-    if (q) {
-      const s = q.toLowerCase()
-      if (!u.name?.toLowerCase().includes(s) && !u.email?.toLowerCase().includes(s)) return false
-    }
-    return true
-  })
-
-  const stats = {
-    total: users.length,
-    admins: users.filter(u => u.role === 'admin').length,
-    journalists: users.filter(u => u.role === 'journalist').length,
-    readers: users.filter(u => u.role === 'reader').length,
-    active: users.filter(u => u.status === 'active').length,
-  }
+  const filtered = users
 
   const inputStyle = {
     border: '1px solid var(--border-subtle)',
@@ -176,20 +171,20 @@ export function UserManagementTable() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }} />
           <input
             value={q}
-            onChange={e => setQ(e.target.value)}
+            onChange={e => { setQ(e.target.value); setPage(1) }}
             placeholder="Search name or email…"
             aria-label="Search users"
             className="w-full pl-9 pr-3 py-2 text-sm focus:outline-none transition-all"
             style={inputStyle}
           />
         </div>
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} aria-label="Filter by role" style={inputStyle}>
+        <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1) }} aria-label="Filter by role" style={inputStyle}>
           <option value="all">All roles</option>
           <option value="admin">Admin</option>
           <option value="journalist">Author</option>
           <option value="reader">Reader</option>
         </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} aria-label="Filter by status" style={inputStyle}>
+        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} aria-label="Filter by status" style={inputStyle}>
           <option value="all">All status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
@@ -335,6 +330,34 @@ export function UserManagementTable() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div
+        className="flex items-center justify-between px-5 py-3 text-sm"
+        style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-muted)' }}
+      >
+        <span style={{ color: 'var(--text-tertiary)' }}>
+          Page {page} of {totalPages}
+        </span>
+        <div className="flex gap-2">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
+            style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+          >
+            Previous
+          </button>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(p => p + 1)}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
+            style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   )

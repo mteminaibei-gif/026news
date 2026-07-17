@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
-
-type Profile = { role: string }
+import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // GET /api/admin/skimmer — admin-only platform counts
 export async function GET(req: NextRequest) {
   try {
-    // ── Auth check ───────────────────────────────────────────────────────────
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('auth_id', user.id)
-      .single()
-    const profile = rawProfile as unknown as Profile | null
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
 
     // ── Queries (use admin client to bypass RLS for accurate counts) ─────────
     const adminClient = await createAdminClient()

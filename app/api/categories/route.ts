@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // GET /api/categories — public, returns all categories sorted by name
 export async function GET() {
@@ -20,16 +21,10 @@ export async function GET() {
 // POST /api/categories — admin only, create a new category
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as { role: string } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const { name, description } = await req.json()
     const trimmed = String(name ?? '').trim()
@@ -63,16 +58,10 @@ export async function POST(req: NextRequest) {
 // DELETE /api/categories?id=X — admin only, delete a category
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as { role: string } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const id = Number(new URL(req.url).searchParams.get('id'))
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })

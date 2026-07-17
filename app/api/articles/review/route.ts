@@ -1,27 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
-type Profile = { user_id: number; role: string }
 type ReviewRecord = { article_id: number; admin_id: number; review_notes: string | null; action: string; reviewed_at: string }
 
 // POST /api/articles/review
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users')
-      .select('user_id, role')
-      .eq('auth_id', user.id)
-      .single()
-    const profile = rawProfile as unknown as Profile | null
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
 
     const { id, action, notes, feature_homepage } = await req.json().catch(() => ({})) as { id?: number; action?: string; notes?: string; feature_homepage?: boolean }
     if (!id || !action) {
@@ -67,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     const reviewRecord = {
       article_id:   id,
-      admin_id:     profile.user_id,
+      admin_id:     admin.userId,
       review_notes: notes ?? null,
       action:       reviewAction,
       reviewed_at:  new Date().toISOString(),
@@ -103,22 +90,8 @@ export async function POST(req: NextRequest) {
 // GET /api/articles/review — list pending articles for admin
 export async function GET() {
   try {
-    const supabase = await createClient()
-
-    // ── Auth check ───────────────────────────────────────────────────────────
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfileGet } = await supabase
-      .from('users')
-      .select('role')
-      .eq('auth_id', user.id)
-      .single()
-    const profileGet = rawProfileGet as unknown as { role: string } | null
-
-    if (!profileGet || profileGet.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
 
     const adminDb = await createAdminClient()
     const { data, error } = await adminDb

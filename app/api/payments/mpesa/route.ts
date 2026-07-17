@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 const MPESA_BASE = process.env.MPESA_ENV === 'production'
   ? 'https://api.safaricom.co.ke'
@@ -30,16 +30,11 @@ function mpesaPassword(shortcode: string, passkey: string, timestamp: string): s
 // POST /api/payments/mpesa — initiate STK Push payout to journalist
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role, user_id').eq('auth_id', user.id).single()
-    const profile = rawProfile as { role: string; user_id: number } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-    }
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
     const { phone, amount, payout_id } = await req.json().catch(() => ({})) as { phone?: string; amount?: number; payout_id?: number }
     if (!phone || !amount || !payout_id) {

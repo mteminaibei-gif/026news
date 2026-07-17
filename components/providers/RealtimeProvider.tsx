@@ -115,11 +115,8 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
           }
         }
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'articles' }, () => {
-        setState(s => ({ ...s, articleCount: s.articleCount + 1 }))
-      })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'articles' }, () => {
-        setState(s => ({ ...s, articleCount: s.articleCount + 1 }))
+        setState(s => ({ ...s, articleCount: Math.max(0, s.articleCount - 1) }))
       })
       .subscribe()
     channels.push(articlesCh)
@@ -131,12 +128,9 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
         const n = payload.new as LiveNotification
         setState(s => ({ ...s, unreadCount: s.unreadCount + 1, latestNotification: n }))
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
-        const n = payload.new as LiveNotification
-        setState(s => ({
-          ...s,
-          unreadCount: n.read ? Math.max(0, s.unreadCount - 1) : s.unreadCount + 1,
-        }))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
+        // Consumer handles local count via useNotifications; we just bump to trigger re-render
+        setState(s => ({ ...s }))
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
         setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
@@ -185,7 +179,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
       .channel(key)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'articles', filter: `article_id=eq.${articleId}` }, () => {
         // Trigger a refetch in consuming components via state bump
-        setState(s => ({ ...s, articleCount: s.articleCount + 1 }))
+        setState(s => ({ ...s }))
       })
       .subscribe()
 

@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-
-type Profile = { user_id: number; role: string }
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // GET /api/admin/articles — list all articles with filtering & pagination
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const url = new URL(req.url)
     const status = url.searchParams.get('status')
@@ -73,16 +64,8 @@ export async function GET(req: NextRequest) {
 // PATCH /api/admin/articles — bulk update status, category, tags, featured, expire
 export async function PATCH(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()
     const { ids, action, status, category_id, tags, featured } = body as {
@@ -173,16 +156,8 @@ export async function PATCH(req: NextRequest) {
 // DELETE /api/admin/articles?id=123 — admin delete an article
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const id = new URL(req.url).searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })

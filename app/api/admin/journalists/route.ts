@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
-
-type Profile = { role: string }
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  const { data: rawProfile } = await supabase
-    .from('users').select('role').eq('auth_id', user.id).single()
-  const profile = rawProfile as unknown as Profile | null
-  if (!profile || profile.role !== 'admin') {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  }
-  return { admin: true }
-}
+import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // GET /api/admin/journalists — list journalist applications (pending + all)
 export async function GET(req: NextRequest) {
   try {
-    const { error } = await verifyAdmin()
-    if (error) return error
+    const session = await getCurrentAdmin()
+    if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const url = new URL(req.url)
     const status = url.searchParams.get('status') // 'pending', 'approved', 'declined', or null for all
@@ -48,8 +34,8 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/journalists — approve or decline a journalist application
 export async function POST(req: NextRequest) {
   try {
-    const { error } = await verifyAdmin()
-    if (error) return error
+    const session = await getCurrentAdmin()
+    if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { user_id, action, reason } = await req.json()
     if (!user_id || !['approve', 'decline'].includes(action)) {
@@ -115,8 +101,8 @@ export async function POST(req: NextRequest) {
 // PATCH /api/admin/journalists — update journalist account status (suspend/reactivate)
 export async function PATCH(req: NextRequest) {
   try {
-    const { error } = await verifyAdmin()
-    if (error) return error
+    const session = await getCurrentAdmin()
+    if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { user_id, status } = await req.json()
     if (!user_id || !status) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 interface CreateAccountRequest {
   email: string
@@ -43,31 +44,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
-
-    // Verify admin authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if user is admin
-    const { data: adminUser } = await supabase
-      .from('users')
-      .select('role')
-      .eq('auth_id', user.id)
-      .single()
-
-    if ((adminUser as any)?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
-    }
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
 
     // Privileged mutations need the service-role (admin) client: auth.admin.*
     // only works with the service key, and the users insert must bypass RLS.
-    const admin = await createAdminClient()
+    const adminClient = await createAdminClient()
 
     // Check if email already exists
-    const { data: existingUser } = await admin
+    const { data: existingUser } = await adminClient
       .from('users')
       .select('user_id')
       .eq('email', email.toLowerCase().trim())
@@ -81,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create auth user
-    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email: email.toLowerCase().trim(),
       password: password,
       email_confirm: true,
@@ -98,7 +83,7 @@ export async function POST(req: NextRequest) {
     // Create user profile in users table. The handle_new_user trigger may
     // have already inserted a row on createUser, so upsert on auth_id. Include
     // password_hash so the insert branch passes the NOT NULL constraint.
-    const { data: newUser, error: userError } = await admin
+    const { data: newUser, error: userError } = await adminClient
       .from('users')
       .upsert([{
         auth_id: authData.user.id,
@@ -116,7 +101,7 @@ export async function POST(req: NextRequest) {
     if (userError) {
       // Rollback: delete auth user if profile creation fails
       try {
-        await admin.auth.admin.deleteUser(authData.user.id)
+        await adminClient.auth.admin.deleteUser(authData.user.id)
       } catch (rollbackError) {
         console.error('[create-account] rollback failed:', rollbackError)
       }
@@ -129,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     // If journalist, create journalist profile
     if (role === 'journalist') {
-      const { error: journalistError } = await admin
+      const { error: journalistError } = await adminClient
         .from('journalists')
         .insert([{
           user_id: newUser.user_id,
@@ -148,10 +133,10 @@ export async function POST(req: NextRequest) {
 
     // Log admin action
     try {
-      await admin
+      await adminClient
         .from('admin_logs')
         .insert([{
-          admin_id: (adminUser as any)?.user_id,
+          admin_id: admin.userId,
           action: `Created ${role} account: ${email}`,
           ip_address: req.headers.get('x-forwarded-for') || 'unknown',
           created_at: new Date().toISOString(),

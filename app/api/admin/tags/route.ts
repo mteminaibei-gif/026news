@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-
-type Profile = { user_id: number; role: string }
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // GET /api/admin/tags — list all tags
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('article_tags')
@@ -33,16 +26,10 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/tags — create tag or assign tags to article
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const body = await req.json()
     const { action, tag_name, tag_id, article_id, article_ids, tags } = body as {
@@ -127,16 +114,10 @@ export async function POST(req: NextRequest) {
 // DELETE /api/admin/tags?id=123
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const id = new URL(req.url).searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })

@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-
-type Profile = { user_id: number; role: string }
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // POST /api/admin/sources — add a new RSS feed
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const { name, feed_url, category_id } = await req.json()
     if (!name?.trim() || !feed_url?.trim()) {
@@ -55,16 +48,10 @@ export async function POST(req: NextRequest) {
 // PATCH /api/admin/sources — toggle is_active or update a feed
 export async function PATCH(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as { role: string } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const { feed_id, is_active, name, feed_url, category_id } = await req.json()
     if (!feed_id) return NextResponse.json({ error: 'feed_id is required' }, { status: 400 })
@@ -92,16 +79,10 @@ export async function PATCH(req: NextRequest) {
 // DELETE /api/admin/sources?id=123 — remove a feed
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as { role: string } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const supabase = await createClient()
 
     const id = new URL(req.url).searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })

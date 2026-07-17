@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // PATCH /api/admin/profile — update admin's own profile
 export async function PATCH(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Verify user is actually an admin
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('auth_id', user.id)
-      .single()
-    if (!profile || (profile as any).role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const session = await getCurrentAdmin()
+    if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()
     const { name, bio } = body
@@ -35,7 +23,7 @@ export async function PATCH(req: NextRequest) {
     const { error } = await admin
       .from('users')
       .update(updates as never)
-      .eq('auth_id', user.id)
+      .eq('auth_id', session.id)
 
     if (error) {
       console.error('[Admin Profile] Update failed:', error.message)

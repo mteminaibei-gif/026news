@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 interface ValidationRequest {
   email: string
@@ -77,23 +78,13 @@ export async function PATCH(req: NextRequest) {
   try {
     const { primaryEmail, secondaryEmail } = await req.json()
 
-    // Verify admin
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: adminUser } = await supabase
-      .from('users')
-      .select('role')
-      .eq('auth_id', user.id)
-      .single()
-
-    if ((adminUser as any)?.role !== 'admin') {
+    const admin = await getCurrentAdmin()
+    if (!admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
     // Merge accounts: transfer secondary data to primary
     const result = await (supabase.rpc as any)('merge_duplicate_accounts', {

@@ -36,7 +36,7 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
   // Auto-mark all read when dropdown opens
   useEffect(() => {
     if (open && unreadCount > 0) markAllRead()
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, unreadCount, markAllRead])
 
   function openNotification(n: AppNotification) {
     markRead(n.id)

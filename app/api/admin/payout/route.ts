@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
-type Profile    = { user_id: number; role: string }
 type EarnRow    = { user_id: number; amount: number }
 type JournRow   = { user_id: number; name: string; email: string; social_links: Record<string, string> | null }
 
@@ -11,17 +11,10 @@ type JournRow   = { user_id: number; name: string; email: string; social_links: 
 // payment_method is provided.
 export async function POST(req: NextRequest) {
   try {
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
+
     const supabase = await createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as Profile | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-    }
 
     const { period_start, period_end, payment_method = 'manual', trigger_payment = false } = await req.json().catch(() => ({})) as { period_start?: string; period_end?: string; payment_method?: string; trigger_payment?: boolean }
 
@@ -78,7 +71,7 @@ export async function POST(req: NextRequest) {
           status:         'pending',
           period_start,
           period_end,
-          initiated_by:   profile.user_id,
+          initiated_by:   admin.userId,
         } as never)
         .select('payout_id')
         .single()
@@ -147,11 +140,10 @@ export async function POST(req: NextRequest) {
 // GET /api/admin/payout — list recent payouts
 export async function GET() {
   try {
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { data: rawP } = await supabase.from('users').select('role').eq('auth_id', user.id).single()
-    if ((rawP as { role: string } | null)?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { data } = await supabase
       .from('payout_requests')

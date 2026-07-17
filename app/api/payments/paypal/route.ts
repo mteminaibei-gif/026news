@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 const PAYPAL_BASE = process.env.PAYPAL_ENV === 'live'
   ? 'https://api-m.paypal.com'
@@ -26,16 +26,11 @@ async function getPayPalToken(): Promise<string> {
 // POST /api/payments/paypal — send payout to journalist via PayPal Payouts API
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
 
-    const { data: rawProfile } = await supabase
-      .from('users').select('role').eq('auth_id', user.id).single()
-    const profile = rawProfile as { role: string } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-    }
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
     const { paypal_email, amount, currency = 'USD', payout_id, note = '026News journalist payout' } = await req.json()
     if (!paypal_email || !amount || !payout_id) {

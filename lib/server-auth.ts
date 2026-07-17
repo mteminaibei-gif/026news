@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export type SessionUser = {
   id: string
+  userId: number | null
   email: string
   role: string
   name: string | null
@@ -16,17 +17,18 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
   const { data: rawProfile } = await supabase
     .from('users')
-    .select('role, name, email')
+    .select('user_id, role, name, email')
     .eq('email', user.email ?? '')
     .single()
 
   const profile = rawProfile as
-    | { role: string; name: string | null; email: string }
+    | { user_id: number; role: string; name: string | null; email: string }
     | null
   if (!profile) return null
 
   return {
     id: user.id,
+    userId: profile.user_id,
     email: user.email ?? profile.email,
     role: profile.role,
     name: profile.name,

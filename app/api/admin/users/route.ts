@@ -8,9 +8,8 @@ const COLUMNS =
 const VALID_ROLES = ['admin', 'journalist', 'reader']
 const VALID_STATUSES = ['active', 'inactive', 'banned']
 
-// GET /api/admin/users?q=&role=&status=
-// Returns the full user list (admin only). Used by the realtime
-// user-management panels.
+// GET /api/admin/users?q=&role=&status=&page=&limit=
+// Returns paginated, filtered user list with unfiltered stats.
 export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin()
   if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -19,29 +18,57 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get('q')?.trim().toLowerCase() ?? ''
   const role = searchParams.get('role') ?? 'all'
   const status = searchParams.get('status') ?? 'all'
+  const page = Math.max(1, Number(searchParams.get('page')) || 1)
+  const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit')) || 25))
+  const offset = (page - 1) * limit
 
   try {
     const supabase = await createAdminClient()
-    let query = supabase
+
+    // Unfiltered stats query (for the stats strip)
+    const { data: allUsers } = await supabase
       .from('users')
-      .select(COLUMNS)
-      .order('created_at', { ascending: false })
+      .select('role, status')
+    const allRows = (allUsers ?? []) as Array<{ role: string; status: string }>
+    const stats = {
+      total: allRows.length,
+      admins: allRows.filter(u => u.role === 'admin').length,
+      journalists: allRows.filter(u => u.role === 'journalist').length,
+      readers: allRows.filter(u => u.role === 'reader').length,
+      active: allRows.filter(u => u.status === 'active').length,
+    }
 
-    if (role && role !== 'all') query = query.eq('role', role)
-    if (status && status !== 'all') query = query.eq('status', status)
+    // Filtered + paginated query
+    let countQuery = supabase.from('users').select('*', { count: 'exact', head: true })
+    let dataQuery = supabase.from('users').select(COLUMNS).order('created_at', { ascending: false })
 
-    const { data, error } = await query
+    if (role !== 'all') {
+      countQuery = (countQuery as any).eq('role', role)
+      dataQuery = (dataQuery as any).eq('role', role)
+    }
+    if (status !== 'all') {
+      countQuery = (countQuery as any).eq('status', status)
+      dataQuery = (dataQuery as any).eq('status', status)
+    }
+    if (q) {
+      const filterStr = `%${q}%`
+      countQuery = (countQuery as any).or(`name.ilike.${filterStr},email.ilike.${filterStr}`)
+      dataQuery = (dataQuery as any).or(`name.ilike.${filterStr},email.ilike.${filterStr}`)
+    }
+
+    const { count } = await countQuery
+    const { data, error } = await dataQuery.range(offset, offset + limit - 1)
+
     if (error) throw error
 
-    let rows = (data ?? []) as Array<{ name?: string | null; email?: string | null }>
-    if (q) {
-      rows = rows.filter(
-        u =>
-          (u.name ?? '').toLowerCase().includes(q) ||
-          (u.email ?? '').toLowerCase().includes(q)
-      )
-    }
-    return NextResponse.json({ users: rows })
+    return NextResponse.json({
+      users: data ?? [],
+      total: count ?? 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count ?? 0) / limit),
+      stats,
+    })
   } catch (err) {
     console.error('[GET /api/admin/users]', err)
     return NextResponse.json({ error: 'Failed to load users' }, { status: 500 })

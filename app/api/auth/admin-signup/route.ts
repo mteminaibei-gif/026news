@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 
 // POST /api/auth/admin-signup
 // Allows creating the FIRST admin account, or adding admins if an
@@ -16,8 +17,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
     }
 
-    const supabase = await createClient()
-
     // Allow creation if:
     // (a) caller provides the correct ADMIN_SIGNUP_SECRET, OR
     // (b) a currently authenticated admin is making the request
@@ -25,19 +24,13 @@ export async function POST(req: NextRequest) {
     const secretMatch = adminSecret && secret === adminSecret
 
     if (!secretMatch) {
-      // Check if caller is an authenticated admin
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: rawProfile } = await supabase
-          .from('users').select('role').eq('auth_id', user.id).single()
-        const profile = rawProfile as { role: string } | null
-        if (!profile || profile.role !== 'admin') {
-          return NextResponse.json({ error: 'Forbidden: admin secret or admin session required' }, { status: 403 })
-        }
-      } else {
+      const admin = await getCurrentAdmin()
+      if (!admin) {
         return NextResponse.json({ error: 'Forbidden: admin secret or admin session required' }, { status: 403 })
       }
     }
+
+    const supabase = await createClient()
 
     const redirectTo = process.env.NEXT_PUBLIC_APP_URL
       ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback`

@@ -59,7 +59,7 @@ function mapRow(r: Row): AppNotification {
 export function useNotifications(userId: number, _role?: string) {
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
-  const { unreadCount: liveUnread, latestNotification } = useRealtime()
+  const { latestNotification } = useRealtime()
 
   // Fetch initial notifications
   useEffect(() => {
@@ -84,8 +84,8 @@ export function useNotifications(userId: number, _role?: string) {
     return () => { active = false }
   }, [userId])
 
-  // Sync live unread count from RealtimeProvider
-  const unreadCount = liveUnread
+  // Compute unread count from local notifications list
+  const unreadCount = notifications.filter(n => !n.read).length
 
   // Prepend new notifications from RealtimeProvider
   useEffect(() => {
