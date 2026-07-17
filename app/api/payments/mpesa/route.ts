@@ -6,9 +6,14 @@ const MPESA_BASE = process.env.MPESA_ENV === 'production'
   : 'https://sandbox.safaricom.co.ke'
 
 // ── M-Pesa Daraja STK Push helper ────────────────────────────
-async function getMpesaToken(): Promise<string> {
-  const key    = process.env.MPESA_CONSUMER_KEY!
-  const secret = process.env.MPESA_CONSUMER_SECRET!
+async function getSettings(supabase: Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>) {
+  const { data } = await (supabase.from('site_settings') as any).select('value').eq('key', 'monetization').single()
+  return (data?.value ?? {}) as Record<string, string>
+}
+
+async function getMpesaToken(consumerKey?: string, consumerSecret?: string): Promise<string> {
+  const key    = consumerKey  ?? process.env.MPESA_CONSUMER_KEY!
+  const secret = consumerSecret ?? process.env.MPESA_CONSUMER_SECRET!
   const creds  = Buffer.from(`${key}:${secret}`).toString('base64')
 
   const res = await fetch(`${MPESA_BASE}/oauth/v1/generate?grant_type=client_credentials`, {
@@ -42,11 +47,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'phone, amount and payout_id are required' }, { status: 400 })
     }
 
-    const shortcode = process.env.MPESA_SHORTCODE!
-    const passkey   = process.env.MPESA_PASSKEY!
+    // Load M-Pesa credentials from admin settings (fallback to env vars)
+    const settings = await getSettings(supabase)
+    const shortcode = settings.mpesa_shortcode || process.env.MPESA_SHORTCODE
+    const passkey   = settings.mpesa_passkey || process.env.MPESA_PASSKEY
+    const callbackUrl = settings.mpesa_callback_url || `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/mpesa/callback`
+
+    if (!shortcode || !passkey) {
+      return NextResponse.json({ error: 'M-Pesa credentials not configured. Add them in Admin → Settings → Monetization.' }, { status: 400 })
+    }
+
     const timestamp = mpesaTimestamp()
     const password  = mpesaPassword(shortcode, passkey, timestamp)
-    const token     = await getMpesaToken()
+    const token     = await getMpesaToken(settings.mpesa_consumer_key, settings.mpesa_consumer_secret)
 
     // Normalize phone: strip leading 0 / + and ensure 254 prefix
     const normalizedPhone = String(phone).replace(/^\+/, '').replace(/^0/, '254')
@@ -67,7 +80,7 @@ export async function POST(req: NextRequest) {
         PartyA:            normalizedPhone,
         PartyB:            shortcode,
         PhoneNumber:       normalizedPhone,
-        CallBackURL:       `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/mpesa/callback`,
+        CallBackURL:       callbackUrl,
         AccountReference:  '026News Payout',
         TransactionDesc:   `Journalist payout #${payout_id}`,
       }),

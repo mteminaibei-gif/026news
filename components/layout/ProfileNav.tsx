@@ -37,13 +37,14 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
       ]
     }
     // reader
-    return [
-      { href: '/profile', label: 'My Profile', icon: User },
-      { href: '/saved', label: 'Saved Articles', icon: Bookmark },
-      { href: '/inbox', label: 'Messages', icon: MessageSquare },
-      { href: '/notifications', label: 'Notifications', icon: Bell },
-      { href: '/settings', label: 'Settings', icon: Settings },
-    ]
+      return [
+        { href: '/profile', label: 'My Profile', icon: User },
+        { href: '/activity', label: 'My Activity', icon: BarChart3 },
+        { href: '/saved', label: 'Saved Articles', icon: Bookmark },
+        { href: '/inbox', label: 'Messages', icon: MessageSquare },
+        { href: '/notifications', label: 'Notifications', icon: Bell },
+        { href: '/settings', label: 'Settings', icon: Settings },
+      ]
   }
 
   const items = getNavItems()

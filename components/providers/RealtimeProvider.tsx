@@ -36,6 +36,13 @@ export interface LiveComment {
   created_at: string
 }
 
+export interface LiveActivity {
+  kind: 'read' | 'listen' | 'watch'
+  ref_id: number | string
+  name?: string
+  created_at: string
+}
+
 export interface LivePresence {
   user_id: number
   name: string
@@ -52,6 +59,8 @@ interface RealtimeState {
   latestNotification: LiveNotification | null
   // Comments
   latestComment: LiveComment | null
+  // Activity (reads/listens/watches)
+  latestActivity: LiveActivity | null
   // Presence
   onlineUsers: LivePresence[]
   // Breaking news
@@ -66,6 +75,7 @@ const initialState: RealtimeState = {
   unreadCount: 0,
   latestNotification: null,
   latestComment: null,
+  latestActivity: null,
   onlineUsers: [],
   breakingNews: null,
   connected: false,
@@ -137,6 +147,31 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
       })
       .subscribe()
     channels.push(notifCh)
+
+    // 2b. Per-user activity (reads / listens / watches)
+    const activityTables: { table: string; kind: LiveActivity['kind']; refCol: string }[] = [
+      { table: 'article_reads', kind: 'read', refCol: 'article_id' },
+      { table: 'listen_history', kind: 'listen', refCol: 'station_id' },
+      { table: 'watch_history', kind: 'watch', refCol: 'channel_id' },
+    ]
+    for (const a of activityTables) {
+      const ch = supabase
+        .channel(`rt:activity:${a.table}:${userId}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: a.table, filter: `user_id=eq.${userId}` }, (payload) => {
+          const row = payload.new as { [k: string]: unknown; created_at: string }
+          setState(s => ({
+            ...s,
+            latestActivity: {
+              kind: a.kind,
+              ref_id: row[a.refCol] as number | string,
+              name: (row.station_name as string) ?? (row.channel_name as string) ?? undefined,
+              created_at: row.created_at,
+            },
+          }))
+        })
+        .subscribe()
+      channels.push(ch)
+    }
 
     // 3. Presence — track online users
     const presenceCh = supabase

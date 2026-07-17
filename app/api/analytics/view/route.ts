@@ -18,6 +18,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
+    // Record a per-user read (best-effort; ignore failures)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await (supabase.from('users') as any)
+        .select('user_id').eq('auth_id', user.id).maybeSingle()
+      if (profile?.user_id) {
+        try {
+          await supabase
+            .from('article_reads')
+            .insert({ user_id: profile.user_id as number, article_id } as never)
+        } catch {}
+      }
+    }
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[POST /api/analytics/view]', err)

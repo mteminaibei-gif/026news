@@ -9,14 +9,24 @@ const TABS = ['General', 'RSS & Publishing', 'Monetization', 'Notifications', 'S
 const inputCls = 'w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none transition-all duration-300'
 
 type General = { site_name: string; tagline: string; contact_email: string; app_url: string }
-type Monetization = { revenue_share: number; min_payout: number; adsense_publisher_id: string; stripe_publishable_key: string; mpesa_consumer_key: string }
+type Monetization = {
+  revenue_share: number
+  min_payout: number
+  adsense_publisher_id: string
+  stripe_publishable_key: string
+  mpesa_consumer_key: string
+  mpesa_consumer_secret: string
+  mpesa_shortcode: string
+  mpesa_passkey: string
+  mpesa_callback_url: string
+}
 type AdminNotifs = Record<string, boolean>
 type Security = Record<string, boolean>
 type Publishing = { rss_auto_publish: boolean; rss_max_per_fetch: number; inhouse_publish_limit: number }
 
 const DEFAULTS = {
   general: { site_name: '026NEWS', tagline: "Kenya's Premier Digital News Platform", contact_email: 'hello@026news.com', app_url: 'https://026newsblog.vercel.app' } as General,
-  monetization: { revenue_share: 70, min_payout: 25, adsense_publisher_id: '', stripe_publishable_key: '', mpesa_consumer_key: '' } as Monetization,
+  monetization: { revenue_share: 70, min_payout: 25, adsense_publisher_id: '', stripe_publishable_key: '', mpesa_consumer_key: '', mpesa_consumer_secret: '', mpesa_shortcode: '', mpesa_passkey: '', mpesa_callback_url: '' } as Monetization,
   admin_notifications: { new_submission: true, article_decision: true, new_user: true, flagged_comment: true, payout_request: false, revenue_milestone: false } as AdminNotifs,
   security: { email_verification: true, two_factor: false, rate_limiting: true, block_vpn: false, rls_enabled: true } as Security,
   publishing_config: { rss_auto_publish: true, rss_max_per_fetch: 20, inhouse_publish_limit: 30 } as Publishing,
@@ -182,6 +192,10 @@ export default function AdminSettingsPage() {
               {field('adsense', 'Google AdSense Publisher ID', monetization.adsense_publisher_id, (v) => setMonetization((s) => ({ ...s, adsense_publisher_id: v })))}
               {field('stripe', 'Stripe Publishable Key', monetization.stripe_publishable_key, (v) => setMonetization((s) => ({ ...s, stripe_publishable_key: v })))}
               {field('mpesa', 'M-Pesa Consumer Key', monetization.mpesa_consumer_key, (v) => setMonetization((s) => ({ ...s, mpesa_consumer_key: v })))}
+              {field('mpesa-secret', 'M-Pesa Consumer Secret', monetization.mpesa_consumer_secret, (v) => setMonetization((s) => ({ ...s, mpesa_consumer_secret: v })))}
+              {field('mpesa-shortcode', 'M-Pesa Shortcode (Paybill / Till)', monetization.mpesa_shortcode, (v) => setMonetization((s) => ({ ...s, mpesa_shortcode: v })))}
+              {field('mpesa-passkey', 'M-Pesa Passkey', monetization.mpesa_passkey, (v) => setMonetization((s) => ({ ...s, mpesa_passkey: v })))}
+              {field('mpesa-callback', 'M-Pesa Callback URL', monetization.mpesa_callback_url, (v) => setMonetization((s) => ({ ...s, mpesa_callback_url: v })), 'url')}
               <SaveBtn tab="monetization" />
             </form>
           )}

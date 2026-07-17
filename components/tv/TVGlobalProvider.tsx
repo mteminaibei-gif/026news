@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { TVStation } from '@/lib/tv/stations'
 import { TVWidget } from './TVWidget'
+import { recordTVWatch } from '@/lib/activity'
 
 interface TVContextValue {
   currentStation: TVStation | null
@@ -39,6 +40,7 @@ export function TVGlobalProvider({ children }: { children: ReactNode }) {
     setIsPlaying(true)
     setStatus('loading')
     setError(null)
+    recordTVWatch(station.id, station.name)
   }
 
   const toggle = () => {

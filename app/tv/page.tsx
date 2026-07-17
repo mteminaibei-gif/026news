@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { Tv, Eye, Clock, Play, Pause, Globe, RefreshCw, Shuffle } from 'lucide-react'
 import { initHlsPlaybackWithRetry } from '@/lib/tv/hls-player'
+import { useMediaHealth } from '@/lib/hooks/useMediaHealth'
 
 type TVArticle = {
   article_id: number
@@ -27,6 +28,7 @@ type TVArticle = {
 
 function TVPageContent() {
   const { currentStation, isPlaying, playStation, stop, status, error, setStatus, setError } = useTVGlobal()
+  const { tvStatus } = useMediaHealth()
   const [articles, setArticles] = useState<TVArticle[]>([])
   const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'africa' | 'global'>('live')
 
@@ -51,6 +53,7 @@ function TVPageContent() {
 
   const renderStationCard = (station: TVStation) => {
     const active = currentStation?.id === station.id && isPlaying
+    const live = tvStatus(station.id)
     return (
       <div
         key={station.id}
@@ -90,8 +93,8 @@ function TVPageContent() {
             </div>
           )}
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-white text-[9px] font-bold uppercase">LIVE</span>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: live === false ? 'var(--text-tertiary)' : '#ef4444', animation: live === false ? 'none' : 'pulse 1.5s ease-in-out infinite' }} />
+            <span className="text-white text-[9px] font-bold uppercase">{live === false ? 'OFFLINE' : 'LIVE'}</span>
           </div>
         </div>
 

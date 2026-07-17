@@ -5,10 +5,12 @@ import { useRadio } from '@/components/radio/RadioProvider'
 import { KENYA_STATIONS, GLOBAL_STATIONS } from '@/lib/radio/stations'
 import type { RadioStation } from '@/lib/radio/stations'
 import { useMedia } from '@/components/radio/useMedia'
+import { useMediaHealth } from '@/lib/hooks/useMediaHealth'
 
 export default function RadioPage() {
   const { currentStation, isPlaying, volume, status, playStation, toggle, setVolume } = useRadio()
   const { kenyaPodcasts, globalPodcasts, recentlyPlayed, recordPlay } = useMedia()
+  const { radioStatus } = useMediaHealth()
   const nowPlaying = currentStation ?? KENYA_STATIONS[0]
   const isThisPlaying = currentStation?.id === nowPlaying.id && isPlaying
 
@@ -20,6 +22,7 @@ export default function RadioPage() {
   const renderStations = (stations: RadioStation[]) =>
     stations.map(station => {
       const active = currentStation?.id === station.id
+      const live = radioStatus(station.id)
       return (
         <div
           key={station.id}
@@ -66,12 +69,12 @@ export default function RadioPage() {
                   width: '7px',
                   height: '7px',
                   borderRadius: '50%',
-                  background: '#22c55e',
-                  animation: 'livePulse 1.5s ease-in-out infinite',
+                  background: live === false ? 'var(--text-tertiary)' : '#22c55e',
+                  animation: live === false ? 'none' : 'livePulse 1.5s ease-in-out infinite',
                 }}
               />
-              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#22c55e', textTransform: 'uppercase' }}>
-                Live
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: live === false ? 'var(--text-tertiary)' : '#22c55e', textTransform: 'uppercase' }}>
+                {live === false ? 'Offline' : 'Live'}
               </span>
             </div>
           </div>

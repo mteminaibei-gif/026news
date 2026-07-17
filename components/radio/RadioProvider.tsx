@@ -10,6 +10,7 @@ import {
 } from 'react'
 import type { RadioStation } from '@/lib/radio/stations'
 import { RadioWidget } from './RadioWidget'
+import { recordRadioListen } from '@/lib/activity'
 
 type Status = 'idle' | 'loading' | 'playing' | 'error'
 
@@ -94,6 +95,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     setCurrentStation(station)
     setStatus('loading')
     setError(null)
+    recordRadioListen(station.id, station.name)
     audio.src = station.streamUrl
     audio.volume = volume / 100
     audio.load()
