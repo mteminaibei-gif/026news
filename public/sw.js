@@ -1,5 +1,8 @@
-/* eslint-disable no-console */
-// 026News Push Notification Service Worker
+// Service Worker for Push Notifications
+// Place this in public/sw.js
+
+const CACHE_NAME = '026news-v1'
+const VAPID_PUBLIC_KEY = self.__VAPID_PUBLIC_KEY || ''
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
@@ -12,52 +15,83 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   if (!event.data) return
 
-  let payload
   try {
-    payload = event.data.json()
-  } catch {
-    payload = {
-      title: '026News',
-      body: event.data.text(),
-      url: '/',
-      icon: '/logo.svg',
-      badge: '/favicon.svg',
+    const data = event.data.json()
+
+    const title = data.title || '026News'
+    const options: NotificationOptions = {
+      body: data.body || data.message || 'You have a new notification',
+      icon: data.icon || '/icon-192.png',
+      badge: data.badge || '/badge-72.png',
+      image: data.image,
+      tag: data.tag || 'notification',
+      renotify: data.renotify !== false,
+      requireInteraction: data.requireInteraction !== false,
+      actions: data.actions || [],
+      data: data.data || {},
+      vibrate: data.vibrate || [200, 100, 200],
     }
-  }
 
-  const title = payload.title || '026News'
-  const options = {
-    body: payload.body || '',
-    icon: payload.icon || '/logo.svg',
-    badge: payload.badge || '/favicon.svg',
-    data: { url: payload.url || '/' },
-    vibrate: [100, 50, 100],
-    tag: payload.tag || '026news-push',
-    renotify: true,
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    )
+  } catch (err) {
+    console.error('[SW] Push notification error:', err)
   }
-
-  event.waitUntil(self.registration.showNotification(title, options))
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  const url = event.notification.data?.url || '/'
+  const data = event.notification.data || {}
+  const action = event.action
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url.includes(url) && 'focus' in client) {
-          return client.focus()
+  if (action === 'open' || action === 'reply' || !action) {
+    const url = data.url || data.link || '/'
+
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus()
+          }
         }
-      }
-      if (clients.openWindow) {
         return clients.openWindow(url)
-      }
-    }),
-  )
+      })
+    )
+  }
 })
 
-self.addEventListener('notificationclose', () => {
-  // Analytics placeholder
+self.addEventListener('notificationclose', (event) => {
+  const data = event.notification.data || {}
+  if (data.notificationId) {
+    fetch('/api/notifications/close', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationId: data.notificationId }),
+    }).catch(() => {})
+  }
+})
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+
+  if (request.method !== 'GET') return
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached
+
+      return fetch(request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response
+        }
+        const responseToCache = response.clone()
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache)
+        })
+        return response
+      })
+    })
+  )
 })

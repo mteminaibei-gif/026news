@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ''
 
-function urlBase64ToUint8Array(base64String: string) {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = atob(base64)
@@ -25,11 +25,13 @@ export function PushSubscriptionManager() {
   const checkSubscription = useCallback(async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
 
-    const reg = await navigator.serviceWorker.ready
-    const existing = await reg.pushManager.getSubscription()
-    if (existing) {
-      setSubscribed(true)
-    }
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const existing = await reg.pushManager.getSubscription()
+      if (existing) {
+        setSubscribed(true)
+      }
+    } catch {}
   }, [])
 
   useEffect(() => {
@@ -69,22 +71,27 @@ export function PushSubscriptionManager() {
       const reg = await navigator.serviceWorker.ready
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
       })
 
       const sub = subscription.toJSON()
-      await fetch('/api/push/subscribe', {
+      const p256dh = sub.keys?.p256dh ?? ''
+      const auth = sub.keys?.auth ?? ''
+
+      const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: sub.endpoint,
-          p256dh: sub.keys?.p256dh ?? '',
-          auth: sub.keys?.auth ?? '',
+          p256dh,
+          auth,
         }),
       })
 
-      setSubscribed(true)
-      setShowPrompt(false)
+      if (res.ok) {
+        setSubscribed(true)
+        setShowPrompt(false)
+      }
     } catch (err) {
       console.error('[PushManager] subscribe failed:', err)
     } finally {

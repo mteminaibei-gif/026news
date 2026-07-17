@@ -11,6 +11,7 @@ import { RadioProvider } from '@/components/radio/RadioProvider';
 import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
 import { LayoutNav } from '@/components/layout/LayoutNav';
 import { PushSubscriptionManager } from '@/components/providers/PushSubscriptionManager';
+import { PushProvider } from '@/components/providers/PushProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import StyledJsxRegistry from './registry';
 import { APP_URL } from '@/lib/constants/app'
@@ -101,12 +102,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RealtimeShell>
               <RadioProvider>
                 <TVGlobalProvider>
+                  <PushProvider>
                   <StyledJsxRegistry>
                     <LayoutNav>
                       {children}
                     </LayoutNav>
                     <CookieConsent />
                   </StyledJsxRegistry>
+                  </PushProvider>
                 </TVGlobalProvider>
               </RadioProvider>
             </RealtimeShell>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendPushNotification } from '@/lib/push-notifications'
 
 // GET /api/messages — List conversations for current user
 // Returns each unique conversation partner with last message preview & unread count
@@ -115,9 +116,9 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await supabase
       .from('users')
-      .select('user_id')
+      .select('user_id, name')
       .eq('auth_id', user.id)
-      .single() as { data: { user_id: number } | null }
+      .single() as { data: { user_id: number; name: string } | null }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest) {
     // Validate receiver exists
     const { data: receiver } = await supabase
       .from('users')
-      .select('user_id')
+      .select('user_id, name')
       .eq('user_id', receiverId)
       .single()
 
@@ -148,9 +149,37 @@ export async function POST(req: NextRequest) {
         content: trimmed,
       } as never)
       .select('message_id, sender_id, receiver_id, content, is_read, created_at')
-      .single()
+      .single() as { data: { message_id: number; sender_id: number; receiver_id: number; content: string; is_read: boolean; created_at: string } | null; error: any }
 
     if (error) throw error
+
+    if (!newMessage) {
+      return NextResponse.json({ error: 'Failed to create message' }, { status: 500 })
+    }
+
+    // Create notification for receiver
+    await supabase.from('notifications').insert({
+      user_id: receiverId,
+      actor_id: profile.user_id,
+      type: 'message',
+      title: 'New Message',
+      message: `${profile.name} sent you a message`,
+      metadata: { messageId: newMessage.message_id, senderId: profile.user_id },
+    } as never)
+
+    // Send push notification to receiver
+    await sendPushNotification(receiverId, {
+      title: `Message from ${profile.name}`,
+      body: trimmed.length > 100 ? trimmed.substring(0, 100) + '…' : trimmed,
+      icon: '/icon-192.png',
+      badge: '/badge-72.png',
+      data: {
+        type: 'message',
+        conversationId: profile.user_id,
+        senderName: profile.name,
+      },
+      tag: `message-${profile.user_id}`,
+    })
 
     return NextResponse.json({ message: newMessage }, { status: 201 })
   } catch (err) {

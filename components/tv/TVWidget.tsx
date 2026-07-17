@@ -12,6 +12,7 @@ export function TVWidget() {
   const { currentStation, isPlaying, status, error, stop, playStation, setStatus, setError } = useTVGlobal()
   const { currentStation: currentRadioStation, isPlaying: isRadioPlaying } = useRadio()
   const [minimized, setMinimized] = useState(false)
+  const [useFallback, setUseFallback] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
   const pathname = usePathname()
@@ -38,6 +39,7 @@ export function TVWidget() {
     if (!currentStation) return
     setStatus('loading')
     setError(null)
+    setUseFallback(false)
     cleanupRef.current?.()
     playStation(currentStation)
   }, [currentStation, playStation, setStatus, setError])
@@ -47,20 +49,31 @@ export function TVWidget() {
     if (!video || !currentStation || !isPlaying) return
 
     cleanupRef.current?.()
+    setUseFallback(false)
 
-    if (currentStation.embedType === 'hls') {
+    if (currentStation.embedType === 'hls' && !useFallback) {
       initHlsPlaybackWithRetry(video, currentStation.streamUrl, 3, 3000, {
         onPlaying: () => setStatus('playing'),
         onError: (msg) => { setStatus('error'); setError(msg) },
-        onFatal: () => { setStatus('error'); setError('Stream ended or unavailable') },
+        onFatal: () => {
+          // Fall back to YouTube embed when an HLS stream is dead/unavailable
+          if (currentStation.fallbackUrl) {
+            setUseFallback(true)
+            setStatus('playing')
+            setError(null)
+          } else {
+            setStatus('error')
+            setError('Stream ended or unavailable')
+          }
+        },
         onRetry: () => setStatus('loading'),
       }).then(cleanup => { cleanupRef.current = cleanup })
-    } else if (currentStation.embedType === 'iframe') {
+    } else {
       setStatus('playing')
     }
 
     return () => { cleanupRef.current?.() }
-  }, [currentStation, isPlaying, playStation, setStatus, setError])
+  }, [currentStation, isPlaying, useFallback, playStation, setStatus, setError])
 
   if (!currentStation || isTVPage) return null
 
@@ -114,10 +127,10 @@ export function TVWidget() {
       </div>
 
       {/* Video embed */}
-      {isPlaying && !minimized && currentStation.embedType === 'iframe' && (
+      {isPlaying && !minimized && (currentStation.embedType === 'iframe' || useFallback) && (
         <div className="relative" style={{ paddingBottom: '56.25%' }}>
           <iframe
-            src={currentStation.streamUrl}
+            src={useFallback ? currentStation.fallbackUrl ?? currentStation.streamUrl : currentStation.streamUrl}
             className="absolute inset-0 w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -126,7 +139,7 @@ export function TVWidget() {
         </div>
       )}
 
-      {isPlaying && !minimized && currentStation.embedType === 'hls' && (
+      {isPlaying && !minimized && currentStation.embedType === 'hls' && !useFallback && (
         <div className="relative" style={{ paddingBottom: '56.25%' }}>
           <video
             ref={videoRef}

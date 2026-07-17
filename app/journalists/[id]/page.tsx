@@ -199,13 +199,11 @@ export default function JournalistProfilePage() {
   async function checkFollowStatus() {
     if (!currentUserId) return
     try {
-      const { data } = await supabase
-        .from('user_follows')
-        .select('follow_id')
-        .eq('follower_id', currentUserId)
-        .eq('following_id', targetUserId)
-        .maybeSingle()
-      setIsFollowing(!!data)
+      const res = await fetch(`/api/follow?targetUserId=${targetUserId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setIsFollowing(data.following)
+      }
     } catch { setIsFollowing(false) }
   }
 
@@ -213,18 +211,16 @@ export default function JournalistProfilePage() {
     if (!currentUserId) { router.push('/login?redirect=' + encodeURIComponent(window.location.pathname)); return }
     setFollowLoading(true)
     try {
-      if (isFollowing) {
-        await supabase
-          .from('user_follows')
-          .delete()
-          .eq('follower_id', currentUserId)
-          .eq('following_id', targetUserId)
-        setIsFollowing(false)
-      } else {
-        await supabase
-          .from('user_follows')
-          .insert({ follower_id: currentUserId, following_id: targetUserId } as never)
-        setIsFollowing(true)
+      const res = await fetch('/api/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId,
+          action: isFollowing ? 'unfollow' : 'follow',
+        }),
+      })
+      if (res.ok) {
+        setIsFollowing(prev => !prev)
       }
     } catch {}
     setFollowLoading(false)

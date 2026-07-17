@@ -73,26 +73,14 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
     if (!newMessage.trim() || !currentUserId) return
     setSending(true)
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: currentUserId,
-          receiver_id: receiverId,
-          content: newMessage.trim(),
-        } as never)
-
-      if (error) throw error
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receiverId, content: newMessage.trim() }),
+      })
+      if (!res.ok) throw new Error('Failed to send')
       setNewMessage('')
-      // Optimistic append
-      setMessages(prev => [...prev, {
-        message_id: Date.now(),
-        sender_id: currentUserId,
-        receiver_id: receiverId,
-        content: newMessage.trim(),
-        created_at: new Date().toISOString(),
-        sender: { name: 'You', profile_image: null },
-        is_read: false,
-      }])
+      // Optimistic append handled by real-time subscription
     } catch (err) {
       console.error('Error sending message:', err)
     } finally {

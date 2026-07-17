@@ -4,36 +4,18 @@
 import { useRadio } from '@/components/radio/RadioProvider'
 import { KENYA_STATIONS, GLOBAL_STATIONS } from '@/lib/radio/stations'
 import type { RadioStation } from '@/lib/radio/stations'
-
-const KENYA_PODCASTS = [
-  { title: 'Kenya Talks', author: 'NRG Radio', episodes: 186, duration: '45 min', coverColor: '#e11d48' },
-  { title: 'The Trend Factory', author: 'Capital FM', episodes: 98, duration: '38 min', coverColor: '#0f766e' },
-  { title: 'Stories of Africa', author: 'Radio Citizen', episodes: 142, duration: '52 min', coverColor: '#16a34a' },
-  { title: 'Tech Pulse Africa', author: 'Kiss 100', episodes: 89, duration: '35 min', coverColor: '#db2777' },
-  { title: 'On the Pitch KE', author: 'Radio Jambo', episodes: 210, duration: '40 min', coverColor: '#0891b2' },
-  { title: 'Biz Breakfast', author: 'Classic 105', episodes: 178, duration: '32 min', coverColor: '#ea580c' },
-]
-
-const GLOBAL_PODCASTS = [
-  { title: 'The Daily', author: 'The New York Times', episodes: 1240, duration: '25 min', coverColor: '#2563eb' },
-  { title: 'BBC Global News', author: 'BBC World Service', episodes: 980, duration: '30 min', coverColor: '#7c3aed' },
-  { title: 'How I Built This', author: 'NPR', episodes: 410, duration: '50 min', coverColor: '#ca8a04' },
-  { title: 'TED Talks Daily', author: 'TED', episodes: 1560, duration: '15 min', coverColor: '#dc2626' },
-  { title: 'The Economist Asks', author: 'The Economist', episodes: 320, duration: '28 min', coverColor: '#16a34a' },
-  { title: 'Waveform', author: 'MrMobile & dbrand', episodes: 265, duration: '60 min', coverColor: '#0891b2' },
-]
-
-const RECENTLY_PLAYED = [
-  { title: 'Kenya Talk: Episode 156', station: '026 Sonic', time: '2h ago' },
-  { title: 'Tech Pulse: AI in Africa', station: '026 Indie', time: '5h ago' },
-  { title: 'Sports Zone: Premier League Review', station: '026 Beat', time: '1d ago' },
-  { title: 'Morning Vibes: Tuesday Edition', station: '026 Soul', time: '2d ago' },
-]
+import { useMedia } from '@/components/radio/useMedia'
 
 export default function RadioPage() {
   const { currentStation, isPlaying, volume, status, playStation, toggle, setVolume } = useRadio()
+  const { kenyaPodcasts, globalPodcasts, recentlyPlayed, recordPlay } = useMedia()
   const nowPlaying = currentStation ?? KENYA_STATIONS[0]
   const isThisPlaying = currentStation?.id === nowPlaying.id && isPlaying
+
+  const handlePlay = (station: RadioStation) => {
+    playStation(station)
+    recordPlay(station.name, station.name, 'radio', station.color)
+  }
 
   const renderStations = (stations: RadioStation[]) =>
     stations.map(station => {
@@ -51,7 +33,7 @@ export default function RadioPage() {
             cursor: 'pointer',
             transition: 'all 0.2s',
           }}
-          onClick={() => playStation(station)}
+          onClick={() => handlePlay(station)}
         >
           <div className="flex items-center gap-3" style={{ marginBottom: 'var(--space-md)' }}>
             <div
@@ -99,7 +81,7 @@ export default function RadioPage() {
               {station.listeners.toLocaleString()} listeners
             </span>
             <button
-              onClick={e => { e.stopPropagation(); playStation(station) }}
+              onClick={e => { e.stopPropagation(); handlePlay(station) }}
               style={{
                 width: '32px',
                 height: '32px',
@@ -123,7 +105,7 @@ export default function RadioPage() {
       )
     })
 
-  const renderPodcasts = (podcasts: typeof KENYA_PODCASTS) =>
+  const renderPodcasts = (podcasts: typeof kenyaPodcasts) =>
     podcasts.map(podcast => (
       <div
         key={podcast.title}
@@ -139,7 +121,7 @@ export default function RadioPage() {
         <div
           style={{
             height: '140px',
-            background: `linear-gradient(135deg, ${podcast.coverColor} 0%, ${podcast.coverColor}88 100%)`,
+            background: `linear-gradient(135deg, ${podcast.cover_color} 0%, ${podcast.cover_color}88 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -319,7 +301,7 @@ export default function RadioPage() {
                 {/* Play/Pause */}
                 <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-lg)' }}>
                   <button
-                    onClick={() => (currentStation?.id === nowPlaying.id ? toggle() : playStation(nowPlaying))}
+                     onClick={() => (currentStation?.id === nowPlaying.id ? toggle() : handlePlay(nowPlaying))}
                     style={{
                       width: '64px',
                       height: '64px',
@@ -443,7 +425,7 @@ export default function RadioPage() {
               </h2>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Made in Kenya</span>
             </div>
-            <div className="radio-podcasts-grid">{renderPodcasts(KENYA_PODCASTS)}</div>
+            <div className="radio-podcasts-grid">{renderPodcasts(kenyaPodcasts)}</div>
           </section>
 
           {/* Global Podcasts */}
@@ -461,7 +443,7 @@ export default function RadioPage() {
               </h2>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>From around the world</span>
             </div>
-            <div className="radio-podcasts-grid">{renderPodcasts(GLOBAL_PODCASTS)}</div>
+            <div className="radio-podcasts-grid">{renderPodcasts(globalPodcasts)}</div>
           </section>
 
           {/* Recently Played */}
@@ -486,7 +468,7 @@ export default function RadioPage() {
                 overflow: 'hidden',
               }}
             >
-              {RECENTLY_PLAYED.map((item, i) => (
+              {recentlyPlayed.map((item, i) => (
                 <div
                   key={i}
                   className="hover-lift"
@@ -495,7 +477,7 @@ export default function RadioPage() {
                     alignItems: 'center',
                     gap: 'var(--space-md)',
                     padding: 'var(--space-md) var(--space-lg)',
-                    borderBottom: i < RECENTLY_PLAYED.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    borderBottom: i < recentlyPlayed.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                     transition: 'background 0.15s',
                   }}
                 >

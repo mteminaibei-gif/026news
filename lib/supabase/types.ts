@@ -455,6 +455,38 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['email_templates']['Row'], 'template_id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['email_templates']['Insert']>
       }
+      podcasts: {
+        Row: {
+          podcast_id: number
+          title: string
+          author: string
+          region: string
+          episodes: number
+          duration: string
+          cover_color: string
+          feed_url: string | null
+          description: string | null
+          rank: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['podcasts']['Row'], 'podcast_id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['podcasts']['Insert']>
+      }
+      recently_played: {
+        Row: {
+          id: number
+          title: string
+          station: string
+          played_at: string
+          user_id: string | null
+          source: string
+          cover_color: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['recently_played']['Row'], 'id' | 'played_at'>
+        Update: Partial<Database['public']['Tables']['recently_played']['Insert']>
+      }
     }
     Views: {
       v_trending_articles: {
