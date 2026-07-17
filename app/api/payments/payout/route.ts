@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/server-auth'
 
 /**
  * POST /api/payments/payout
@@ -16,12 +17,14 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const currentUser = await getCurrentUser()
 
-    if (!user) {
+    if (!currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (currentUser.role !== 'journalist') {
+      return NextResponse.json({ error: 'Only journalists can request payouts' }, { status: 403 })
     }
 
     const { paymentMethod, amount, phoneNumber, email } = await req.json().catch(() => ({})) as { paymentMethod?: string; amount?: number; phoneNumber?: string; email?: string }
@@ -34,24 +37,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
 
-    // Verify user exists and is journalist
-    const { data: rawProfile, error: profileErr } = await supabase
-      .from('users')
-      .select('user_id, role')
-      .eq('auth_id', user.id)
-      .single()
-
-    const profile = rawProfile as any
-
-    if (profileErr || !profile || profile.role !== 'journalist') {
-      return NextResponse.json({ error: 'Only journalists can request payouts' }, { status: 403 })
-    }
-
     // Create payout record
     const { data: payout, error: payoutErr } = await supabase
       .from('payout_records')
       .insert({
-        user_id: profile.user_id,
+        user_id: currentUser.userId,
         payout_amount: amount,
         payout_method: paymentMethod,
         phone_number: phoneNumber || null,

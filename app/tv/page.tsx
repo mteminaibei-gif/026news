@@ -9,6 +9,7 @@ import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, ALL_TV_STA
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { Tv, Eye, Clock, Play, Pause, Globe, RefreshCw, Shuffle } from 'lucide-react'
+import { initHlsPlayback } from '@/lib/tv/hls-player'
 
 type TVArticle = {
   article_id: number
@@ -187,51 +188,9 @@ function TVPageContent() {
                   controls
                   ref={(el) => {
                     if (!el) return
-                    const loadStream = async () => {
-                      try {
-                        // Ensure HLS.js is loaded
-                        const win = window as unknown as Record<string, unknown>
-                        if (!win.Hls) {
-                          const script = document.createElement('script')
-                          script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest'
-                          script.async = true
-                          await new Promise<void>((resolve) => {
-                            script.onload = () => resolve()
-                            document.head.appendChild(script)
-                          })
-                        }
-                        const HlsClass = (window as unknown as Record<string, unknown>).Hls as {
-                          new (config?: Record<string, unknown>): {
-                            loadSource: (url: string) => void
-                            attachMedia: (video: HTMLVideoElement) => void
-                            on: (event: string, cb: (...args: any[]) => void) => void
-                            destroy: () => void
-                          }
-                          isSupported: () => boolean
-                        }
-                        if (HlsClass && HlsClass.isSupported()) {
-                          const hls = new HlsClass({ enableWorker: true, lowLatencyMode: true })
-                          hls.loadSource(currentStation.streamUrl)
-                          hls.attachMedia(el)
-                          hls.on('MANIFEST_PARSED', () => {
-                            el.muted = true
-                            el.play().catch(() => {})
-                          })
-                          hls.on('ERROR', (_: unknown, data: { fatal: boolean }) => {
-                            if (data.fatal) {
-                              el.poster = ''
-                            }
-                          })
-                        } else if (el.canPlayType('application/vnd.apple.mpegurl')) {
-                          el.src = currentStation.streamUrl
-                          el.muted = true
-                          el.play().catch(() => {})
-                        }
-                      } catch (err) {
-                        console.error('HLS load error:', err)
-                      }
-                    }
-                    loadStream()
+                    initHlsPlayback(el, currentStation.streamUrl, {
+                      onError: (msg) => console.error('HLS error:', msg),
+                    })
                   }}
                 />
               ) : (

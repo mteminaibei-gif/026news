@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/server-auth'
 
 // ── rate limiter: 20 comments/IP/min ──────────────────────
 const limiter = new Map<string, { count: number; reset: number }>()
@@ -143,18 +144,9 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const supabase = await createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
       return NextResponse.json({ error: 'You must be signed in' }, { status: 401 })
-    }
-
-    // Get user's profile
-    const { data: rawProfile } = await supabase
-      .from('users').select('user_id, role').eq('auth_id', user.id).single()
-    const profile = rawProfile as unknown as { user_id: number; role: string } | null
-    if (!profile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 403 })
     }
 
     // Check if comment exists and belongs to user (or user is admin)
@@ -169,7 +161,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Only allow delete if user owns comment or is admin
-    if (existingComment.user_id !== profile.user_id && profile.role !== 'admin') {
+    if (existingComment.user_id !== currentUser.userId && currentUser.role !== 'admin') {
       return NextResponse.json({ error: 'You can only delete your own comments' }, { status: 403 })
     }
 

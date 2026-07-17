@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/server-auth'
 import { slugify } from '@/lib/utils'
 import { APP_URL } from '@/lib/constants/app'
 
@@ -114,11 +115,8 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Verify this user has journalist or admin role
-    const { data: rawRole } = await supabase
-      .from('users').select('user_id, role').eq('auth_id', user.id).single()
-    const profile = rawRole as unknown as { user_id: number; role: string } | null
-    if (!profile || !['journalist', 'admin'].includes(profile.role)) {
+    const currentUser = await getCurrentUser()
+    if (!currentUser || !['journalist', 'admin'].includes(currentUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -169,7 +167,7 @@ export async function POST(req: NextRequest) {
         title, slug, content,
         excerpt,
         category_id:       cat?.category_id ?? null,
-        author_id:         profile.user_id,
+        author_id:         currentUser.userId,
         source_reference:  source_reference || null,
         status,
         monetization_type,
@@ -213,7 +211,7 @@ export async function POST(req: NextRequest) {
                 <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
                   <h2 style="color: #e23b3b;">New Article Submitted for Review</h2>
                   <p><strong>Title:</strong> ${title}</p>
-                  <p><strong>Author:</strong> ${profile ? `User #${profile.user_id}` : 'Unknown'}</p>
+                  <p><strong>Author:</strong> ${currentUser ? `User #${currentUser.userId}` : 'Unknown'}</p>
                   <p><strong>Category:</strong> ${category || 'Uncategorized'}</p>
                   <p><strong>Status:</strong> Under Review</p>
                   <hr style="border: 1px solid #eee; margin: 16px 0;" />
