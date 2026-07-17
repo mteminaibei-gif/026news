@@ -150,21 +150,19 @@ function makeUniqueSlug(title: string, hash: string): string {
 
 
 // ── Route handler ─────────────────────────────────────────────
-// Secured by CRON_SECRET header — set this as an env var and add
-// it to your Vercel cron job Authorization header.
+// Secured by CRON_SECRET — set this env var and configure your Vercel
+// cron job (vercel.json) to send `Authorization: Bearer <CRON_SECRET>`.
 export async function GET(req: NextRequest) {
-  const authHeader  = req.headers.get('authorization')
-  const vercelCron  = req.headers.get('x-vercel-cron') // Vercel sends this on cron invocations
-  const cronSecret  = process.env.CRON_SECRET
+  const authHeader = req.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
 
-  // Allow if:
-  // 1. No CRON_SECRET set (open — local dev / first deploy)
-  // 2. Valid Authorization: Bearer <secret> header
-  // 3. Request came from Vercel's own cron runner (x-vercel-cron present)
-  const isAuthorized =
-    !cronSecret ||
-    authHeader === `Bearer ${cronSecret}` ||
-    vercelCron === '1'
+  // If no secret is configured we are in local/dev mode — allow but warn.
+  // NOTE: never treat an empty/unset secret as "open" in production; set
+  // CRON_SECRET in Vercel env vars. The `x-vercel-cron` header is spoofable
+  // and is NOT used as a sole authority.
+  const isAuthorized = cronSecret
+    ? authHeader === `Bearer ${cronSecret}`
+    : (console.warn('[cron/fetch-feeds] CRON_SECRET not set — allowing unauthenticated access (dev only)'), true)
 
   if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

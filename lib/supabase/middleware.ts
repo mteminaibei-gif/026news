@@ -29,9 +29,21 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Routes that require a logged-in user (any role). These were previously
+  // only guarded client-side, allowing unauthenticated flashes / SSR data
+  // exposure. Edge protection closes that gap.
+  const ALL_ROLES = ['admin', 'journalist', 'reader']
+
   const protectedRoutes = [
-    { prefix: '/admin',      allowed: ['admin'] },
-    { prefix: '/journalist', allowed: ['journalist'] },
+    { prefix: '/admin',          allowed: ['admin'] },
+    { prefix: '/journalist',     allowed: ['journalist'] },
+    { prefix: '/inbox',          allowed: ALL_ROLES },
+    { prefix: '/profile',        allowed: ALL_ROLES },
+    { prefix: '/settings',       allowed: ALL_ROLES },
+    { prefix: '/notifications',  allowed: ALL_ROLES },
+    { prefix: '/mpesa-withdrawal', allowed: ALL_ROLES },
+    { prefix: '/onboarding',     allowed: ALL_ROLES },
+    { prefix: '/moderation',     allowed: ['admin', 'journalist'] },
   ]
 
   const pathname = request.nextUrl.pathname

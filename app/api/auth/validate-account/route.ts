@@ -6,21 +6,23 @@ interface ValidationRequest {
   operation: 'signup' | 'login' | 'check'
 }
 
-interface DuplicateAccount {
-  exists: boolean
-  email: string
-  role: string
-  lastLogin?: string
-  createdAt?: string
-  status: string
-}
-
 /**
  * POST /api/auth/validate-account
- * Check for duplicate accounts and validate signup/login
+ * Check for duplicate accounts and validate signup/login.
+ *
+ * SECURITY: requires authentication. Previously this endpoint was fully
+ * public and leaked each user's role/status/last_login/created_at for ANY
+ * email (account enumeration). It is now auth-gated and returns only a
+ * boolean `exists` — no sensitive profile fields are exposed.
  */
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { email, operation } = (await req.json()) as ValidationRequest
 
     if (!email || !operation) {
@@ -32,13 +34,11 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Check in Supabase auth
-    const supabase = await createClient()
-
-    // Query users table for account info
+    // Query users table — select ONLY the primary key so no sensitive
+    // profile data (role, status, timestamps) is read into the response.
     const { data: userAccount, error: userError } = await supabase
       .from('users')
-      .select('user_id, email, role, last_login, created_at, status')
+      .select('user_id')
       .eq('email', normalizedEmail)
       .maybeSingle() as any
 
@@ -50,60 +50,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const duplicate: DuplicateAccount = {
-      exists: !!userAccount,
-      email: normalizedEmail,
-      role: userAccount?.role || 'reader',
-      lastLogin: userAccount?.last_login,
-      createdAt: userAccount?.created_at,
-      status: userAccount?.status || 'inactive',
-    }
+    const exists = !!userAccount
 
-    // Check operation-specific rules
-    if (operation === 'signup') {
-      if (duplicate.exists) {
-        return NextResponse.json(
-          {
-            error: 'Account already exists',
-            duplicate,
-            suggestion: 'Try logging in or use a different email',
-          },
-          { status: 409 }
-        )
-      }
-    }
-
-    if (operation === 'login') {
-      if (!duplicate.exists) {
-        return NextResponse.json(
-          {
-            error: 'Account not found',
-            duplicate,
-            suggestion: 'Create a new account or check your email',
-          },
-          { status: 404 }
-        )
-      }
-
-      if (duplicate.status === 'suspended') {
-        return NextResponse.json(
-          {
-            error: 'Account is suspended',
-            duplicate,
-            suggestion: 'Contact support for assistance',
-          },
-          { status: 403 }
-        )
-      }
-    }
-
-    // Return validation result
+    // Return ONLY a boolean — never role/status/timestamps (enumeration fix)
     return NextResponse.json({
-      valid: operation === 'signup' ? !duplicate.exists : duplicate.exists,
-      duplicate,
+      exists,
+      valid: operation === 'signup' ? !exists : exists,
       message: operation === 'signup'
-        ? 'Account available'
-        : 'Account found',
+        ? (exists ? 'Account already exists' : 'Account available')
+        : (exists ? 'Account found' : 'Account not found'),
     })
   } catch (err) {
     console.error('[POST /api/auth/validate-account]', err)

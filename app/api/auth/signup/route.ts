@@ -54,8 +54,10 @@ function validateSignupInput(input: {
     errors.push({ field: 'name', message: 'Name must be at least 2 characters' })
   }
 
-  // Role validation
-  if (!input.role || !['journalist', 'reader', 'admin'].includes(input.role)) {
+  // Role validation — only reader/journalist may self-register.
+  // Admin accounts are created exclusively via /api/auth/admin-signup
+  // (gated by ADMIN_SIGNUP_SECRET), never from public signup.
+  if (!input.role || !['journalist', 'reader'].includes(input.role)) {
     errors.push({ field: 'role', message: 'Invalid role selected' })
   }
 

@@ -1,52 +1,221 @@
 'use client'
 
-import { useState } from 'react'
-
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Send, Plus, Users } from 'lucide-react'
 
 type Tab = 'news' | 'my'
 
-interface ChatItem {
-  id: string
-  title: string
-  preview: string
-  time: string
-  unread: number
+interface ChatRoom {
+  room_id: number
+  name: string
+  description: string | null
+  created_by: number
+  is_public: boolean
+  created_at: string
+  member_count?: number
+  last_message?: string
+  last_message_at?: string
 }
 
-interface Message {
-  id: string
-  author: string
-  initials: string
-  avatarBg: string
-  time: string
+interface ChatMessage {
+  message_id: number
+  room_id: number
+  sender_id: number
   content: string
-  reactions: { heart: number; thumbsUp: number; thumbsDown: number; flag: number }
+  is_deleted: boolean
+  created_at: string
+  sender_name?: string
+  sender_image?: string | null
 }
-
-const MOCK_CHATS: ChatItem[] = [
-  { id: '1', title: 'Breaking News Kenya', preview: 'Election results are coming in...', time: '2m', unread: 3 },
-  { id: '2', title: 'Tech Desk', preview: 'AI regulation update from parliament', time: '15m', unread: 0 },
-  { id: '3', title: 'Sports Roundup', preview: 'Kenya qualifies for World Cup qualifiers', time: '1h', unread: 1 },
-  { id: '4', title: 'Climate Watch', preview: 'New drought relief measures announced', time: '3h', unread: 0 },
-  { id: '5', title: 'Business Daily', preview: 'NSE hits record high amid foreign inflows', time: '5h', unread: 0 },
-  { id: '6', title: 'Opinion Desk', preview: 'Columnist: Why devolution matters', time: '1d', unread: 0 },
-]
-
-const MOCK_MESSAGES: Message[] = [
-  { id: '1', author: 'Sarah Kimani', initials: 'SK', avatarBg: 'var(--primary)', time: '10:32 AM', content: 'The latest developments in the election coverage are really shaping up. We should discuss the editorial angle for tonight\'s broadcast.', reactions: { heart: 4, thumbsUp: 7, thumbsDown: 0, flag: 0 } },
-  { id: '2', author: 'James Odhiambo', initials: 'JO', avatarBg: 'var(--accent)', time: '10:35 AM', content: 'Agreed. I have field reports from three counties ready. The turnout numbers are significant.', reactions: { heart: 2, thumbsUp: 5, thumbsDown: 1, flag: 0 } },
-  { id: '3', author: 'Amina Hassan', initials: 'AH', avatarBg: 'var(--success)', time: '10:41 AM', content: 'I can provide the data visualizations we prepared earlier. The demographic breakdowns are quite revealing.', reactions: { heart: 6, thumbsUp: 3, thumbsDown: 0, flag: 0 } },
-  { id: '4', author: 'Peter Mwangi', initials: 'PM', avatarBg: 'var(--warning)', time: '10:48 AM', content: 'Let me coordinate with the graphics team. We should have the animated maps ready by 2 PM.', reactions: { heart: 1, thumbsUp: 8, thumbsDown: 0, flag: 0 } },
-  { id: '5', author: 'Grace Wanjiku', initials: 'GW', avatarBg: 'var(--error)', time: '11:02 AM', content: 'Security clearance for the polling station live feed has been confirmed. We are good to go.', reactions: { heart: 3, thumbsUp: 12, thumbsDown: 0, flag: 0 } },
-]
 
 export default function ChatPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('news')
-  const [activeChat, setActiveChat] = useState('1')
-  const [messageInput, setMessageInput] = useState('')
-  const [toggle, setToggle] = useState<'latest' | 'relevant' | 'favourites'>('latest')
+  const router = useRouter()
+  const supabase = createClient()
 
-  const activeChatData = MOCK_CHATS.find(c => c.id === activeChat)
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<Tab>('news')
+  const [rooms, setRooms] = useState<ChatRoom[]>([])
+  const [activeRoom, setActiveRoom] = useState<number | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messageInput, setMessageInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [newRoomName, setNewRoomName] = useState('')
+  const [newRoomDesc, setNewRoomDesc] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // ── Auth ────────────────────────────────────────────
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.id) {
+        router.push('/login?redirect=/chat')
+        setLoading(false)
+        return
+      }
+      const { data } = await supabase
+        .from('users')
+        .select('user_id')
+        .eq('auth_id', user.id)
+        .single()
+      if (data) setCurrentUserId((data as { user_id: number }).user_id)
+      setLoading(false)
+    })()
+  }, [router, supabase])
+
+  // ── Load rooms ──────────────────────────────────────
+  const loadRooms = useCallback(async () => {
+    if (!currentUserId) return
+    try {
+      // Public rooms, plus rooms the user is a member of.
+      const { data } = await supabase
+        .from('chat_rooms')
+        .select(`
+          room_id, name, description, created_by, is_public, created_at,
+          chat_room_members ( user_id ),
+          chat_messages ( content, created_at )
+        `)
+        .or(`is_public.eq.true,room_id.in.(select room_id from chat_room_members where user_id.eq.${currentUserId})`)
+        .order('created_at', { ascending: false })
+
+      const list = (data ?? []) as unknown as Array<{
+        room_id: number; name: string; description: string | null;
+        created_by: number; is_public: boolean; created_at: string;
+        chat_room_members: { user_id: number }[];
+        chat_messages: { content: string; created_at: string }[];
+      }>
+
+      const roomsMapped: ChatRoom[] = list.map(r => {
+        const msgs = r.chat_messages ?? []
+        const last = msgs.length ? msgs[msgs.length - 1] : null
+        return {
+          room_id: r.room_id,
+          name: r.name,
+          description: r.description,
+          created_by: r.created_by,
+          is_public: r.is_public,
+          created_at: r.created_at,
+          member_count: (r.chat_room_members ?? []).length || 1,
+          last_message: last?.content ?? undefined,
+          last_message_at: last?.created_at ?? undefined,
+        }
+      })
+
+      // Filter by tab
+      const filtered = activeTab === 'my'
+        ? roomsMapped.filter(r => (r as any).chat_room_members?.some((m: any) => m.user_id === currentUserId))
+        : roomsMapped
+
+      setRooms(filtered)
+      if (!activeRoom && filtered.length > 0) setActiveRoom(filtered[0].room_id)
+    } catch {
+      setRooms([])
+    }
+  }, [currentUserId, activeTab, activeRoom, supabase])
+
+  useEffect(() => {
+    if (currentUserId) loadRooms()
+  }, [currentUserId, loadRooms])
+
+  // ── Load + subscribe to messages for active room ────
+  useEffect(() => {
+    if (!activeRoom) return
+    ;(async () => {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('message_id, room_id, sender_id, content, is_deleted, created_at, sender:users!chat_messages_sender_id_fkey(name, profile_image)')
+        .eq('room_id', activeRoom)
+        .order('created_at', { ascending: true })
+        .limit(100)
+      const msgs = (data ?? []) as unknown as Array<{
+        message_id: number; room_id: number; sender_id: number; content: string;
+        is_deleted: boolean; created_at: string;
+        sender: { name: string; profile_image: string | null } | null;
+      }>
+      setMessages(msgs.map(m => ({
+        message_id: m.message_id,
+        room_id: m.room_id,
+        sender_id: m.sender_id,
+        content: m.content,
+        is_deleted: m.is_deleted,
+        created_at: m.created_at,
+        sender_name: m.sender?.name ?? 'Unknown',
+        sender_image: m.sender?.profile_image ?? null,
+      })))
+    })()
+
+    const channel = supabase
+      .channel(`chat-room-${activeRoom}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `room_id=eq.${activeRoom}`,
+      }, (payload) => {
+        const m = payload.new as ChatMessage
+        setMessages(prev => prev.some(x => x.message_id === m.message_id) ? prev : [...prev, m])
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [activeRoom, supabase])
+
+  // ── Auto-scroll ─────────────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // ── Join a public room ──────────────────────────────
+  async function joinRoom(roomId: number) {
+    if (!currentUserId) return
+    await supabase.from('chat_room_members').upsert({ room_id: roomId, user_id: currentUserId } as never)
+    loadRooms()
+  }
+
+  // ── Create a room ───────────────────────────────────
+  async function createRoom() {
+    if (!currentUserId || !newRoomName.trim()) return
+    const { data } = await supabase
+      .from('chat_rooms')
+      .insert({ name: newRoomName.trim(), description: newRoomDesc.trim() || null, created_by: currentUserId, is_public: true } as never)
+      .select('room_id')
+      .single()
+    if (data) {
+      const rid = (data as { room_id: number }).room_id
+      await supabase.from('chat_room_members').upsert({ room_id: rid, user_id: currentUserId } as never)
+      setNewRoomName(''); setNewRoomDesc(''); setShowCreate(false)
+      setActiveRoom(rid)
+      loadRooms()
+    }
+  }
+
+  // ── Send message ────────────────────────────────────
+  async function handleSend() {
+    if (!messageInput.trim() || !activeRoom || !currentUserId || sending) return
+    setSending(true)
+    const content = messageInput.trim()
+    setMessageInput('')
+    try {
+      await supabase
+        .from('chat_messages')
+        .insert({ room_id: activeRoom, sender_id: currentUserId, content } as never)
+    } catch {
+      // failed silently; realtime will not deliver, user can retry
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const activeRoomData = rooms.find(r => r.room_id === activeRoom)
+  const initials = (name: string) =>
+    name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+
+  if (loading) {
+    return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading chat…</div>
+  }
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
@@ -61,26 +230,52 @@ export default function ChatPage() {
             borderRight: '1px solid var(--border-subtle)',
           }}
         >
-          {/* Search */}
-          <div style={{ padding: 'var(--space-md)', borderBottom: '1px solid var(--border-subtle)' }}>
+          {/* Search / create */}
+          <div style={{ padding: 'var(--space-md)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 8 }}>
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder="Search rooms..."
               style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-inset)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
+                flex: 1, padding: '10px 14px', borderRadius: '8px',
+                border: '1px solid var(--border)', background: 'var(--bg-inset)',
+                color: 'var(--text-primary)', fontSize: '0.85rem',
               }}
             />
+            <button
+              onClick={() => setShowCreate(v => !v)}
+              title="Create room"
+              style={{ width: 42, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--primary)', color: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Plus size={18} />
+            </button>
           </div>
+
+          {showCreate && (
+            <div style={{ padding: 'var(--space-md)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input
+                value={newRoomName}
+                onChange={e => setNewRoomName(e.target.value)}
+                placeholder="Room name"
+                style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-inset)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
+              />
+              <input
+                value={newRoomDesc}
+                onChange={e => setNewRoomDesc(e.target.value)}
+                placeholder="Description (optional)"
+                style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-inset)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
+              />
+              <button
+                onClick={createRoom}
+                style={{ padding: '9px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: 'var(--bg-elevated)', fontWeight: 600, cursor: 'pointer', fontSize: '0.82rem' }}
+              >
+                Create Room
+              </button>
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="flex" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-            {([['news', 'News Feed'], ['my', 'My Feed']] as const).map(([key, label]) => (
+            {([['news', 'Public Rooms'], ['my', 'My Rooms']] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -101,17 +296,22 @@ export default function ChatPage() {
             ))}
           </div>
 
-          {/* Chat list */}
+          {/* Room list */}
           <div className="flex-1 overflow-y-auto">
-            {MOCK_CHATS.map(chat => (
+            {rooms.length === 0 && (
+              <p style={{ padding: '1.5rem', fontSize: '0.8rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                No rooms yet. Create one to start the conversation.
+              </p>
+            )}
+            {rooms.map(room => (
               <button
-                key={chat.id}
-                onClick={() => setActiveChat(chat.id)}
+                key={room.room_id}
+                onClick={() => setActiveRoom(room.room_id)}
                 className="w-full text-left"
                 style={{
                   padding: '0.875rem var(--space-md)',
-                  background: activeChat === chat.id ? 'var(--primary-light)' : 'transparent',
-                  borderLeft: activeChat === chat.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  background: activeRoom === room.room_id ? 'var(--primary-light)' : 'transparent',
+                  borderLeft: activeRoom === room.room_id ? '3px solid var(--primary)' : '3px solid transparent',
                   borderBottom: '1px solid var(--border-subtle)',
                   cursor: 'pointer',
                   transition: 'all 0.15s',
@@ -126,13 +326,13 @@ export default function ChatPage() {
                       className="font-semibold"
                       style={{
                         fontSize: '0.85rem',
-                        color: activeChat === chat.id ? 'var(--primary)' : 'var(--text-primary)',
+                        color: activeRoom === room.room_id ? 'var(--primary)' : 'var(--text-primary)',
                       }}
                     >
-                      {chat.title}
+                      {room.name}
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0 }}>
-                      {chat.time}
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Users size={11} /> {room.member_count}
                     </span>
                   </div>
                   <p
@@ -146,27 +346,9 @@ export default function ChatPage() {
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    {chat.preview}
+                    {room.last_message ?? room.description ?? 'No messages yet'}
                   </p>
                 </div>
-                {chat.unread > 0 && (
-                  <span
-                    className="flex items-center justify-center font-semibold"
-                    style={{
-                      minWidth: '20px',
-                      height: '20px',
-                      paddingInline: '6px',
-                      borderRadius: '9999px',
-                      background: 'var(--primary)',
-                      color: 'var(--bg-elevated)',
-                      fontSize: '0.7rem',
-                      flexShrink: 0,
-                      marginTop: '2px',
-                    }}
-                  >
-                    {chat.unread}
-                  </span>
-                )}
               </button>
             ))}
           </div>
@@ -185,42 +367,33 @@ export default function ChatPage() {
           >
             <div>
               <h2 className="font-semibold" style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
-                {activeChatData?.title ?? 'Select a chat'}
+                {activeRoomData?.name ?? 'Select a room'}
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '1px' }}>
-                5 participants
+                {activeRoomData ? `${activeRoomData.member_count} participant${activeRoomData.member_count === 1 ? '' : 's'}` : 'Newsroom group chat'}
               </p>
             </div>
-            <div className="flex gap-1">
-              {(['latest', 'relevant', 'favourites'] as const).map(key => (
-                <button
-                  key={key}
-                  onClick={() => setToggle(key)}
-                  style={{
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid',
-                    borderColor: toggle === key ? 'var(--primary)' : 'var(--border)',
-                    background: toggle === key ? 'var(--primary)' : 'transparent',
-                    color: toggle === key ? 'var(--bg-elevated)' : 'var(--text-secondary)',
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </button>
-              ))}
-            </div>
+            {activeRoomData && !activeRoomData.is_public && (
+              <button
+                onClick={() => joinRoom(activeRoomData.room_id)}
+                style={{ padding: '0.45rem 0.9rem', borderRadius: 8, border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Join Room
+              </button>
+            )}
           </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto" style={{ padding: 'var(--space-lg)', background: 'var(--bg-base)' }}>
             <div className="flex flex-col gap-4">
-              {MOCK_MESSAGES.map(msg => (
+              {messages.length === 0 && (
+                <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.82rem', marginTop: '2rem' }}>
+                  No messages yet. Be the first to post!
+                </p>
+              )}
+              {messages.map(msg => (
                 <div
-                  key={msg.id}
+                  key={msg.message_id}
                   className="flex gap-3"
                   style={{
                     padding: 'var(--space-md)',
@@ -236,60 +409,36 @@ export default function ChatPage() {
                       width: '40px',
                       height: '40px',
                       borderRadius: '9999px',
-                      background: msg.avatarBg,
+                      background: msg.sender_image ? 'transparent' : 'var(--primary)',
+                      overflow: 'hidden',
                       color: 'var(--bg-elevated)',
                       fontSize: '0.85rem',
                     }}
                   >
-                    {msg.initials}
+                    {msg.sender_image ? (
+                      <img src={msg.sender_image} alt={msg.sender_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      initials(msg.sender_name ?? '?')
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    {/* Author + time */}
                     <div className="flex items-center gap-2">
                       <span className="font-semibold" style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                        {msg.author}
+                        {msg.sender_name}
                       </span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        {msg.time}
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
 
-                    {/* Content */}
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                      {msg.content}
+                      {msg.is_deleted ? <em style={{ color: 'var(--text-tertiary)' }}>Message deleted</em> : msg.content}
                     </p>
-
-                    {/* Reactions */}
-                    <div className="flex items-center gap-3" style={{ marginTop: '0.6rem' }}>
-                      {[
-                        { key: 'heart', icon: '\u2764', count: msg.reactions.heart },
-                        { key: 'thumbsUp', icon: '\uD83D\uDC4D', count: msg.reactions.thumbsUp },
-                        { key: 'thumbsDown', icon: '\uD83D\uDC4E', count: msg.reactions.thumbsDown },
-                        { key: 'flag', icon: '\uD83D\uDEA9', count: msg.reactions.flag },
-                      ].map(r => (
-                        <button
-                          key={r.key}
-                          className="flex items-center gap-1"
-                          style={{
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '6px',
-                            border: '1px solid var(--border-subtle)',
-                            background: 'var(--bg-inset)',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          <span>{r.icon}</span>
-                          <span style={{ fontSize: '0.72rem' }}>{r.count}</span>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
           </div>
 
@@ -305,8 +454,10 @@ export default function ChatPage() {
               <textarea
                 value={messageInput}
                 onChange={e => setMessageInput(e.target.value)}
-                placeholder="Type a message..."
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+                placeholder={activeRoom ? 'Type a message...' : 'Select a room to chat'}
                 rows={1}
+                disabled={!activeRoom}
                 className="flex-1"
                 style={{
                   padding: '10px 14px',
@@ -320,6 +471,8 @@ export default function ChatPage() {
                 }}
               />
               <button
+                onClick={handleSend}
+                disabled={!activeRoom || sending}
                 className="flex items-center justify-center"
                 style={{
                   width: '42px',
@@ -328,13 +481,14 @@ export default function ChatPage() {
                   border: 'none',
                   background: 'var(--primary)',
                   color: 'var(--bg-elevated)',
-                  cursor: 'pointer',
+                  cursor: activeRoom && !sending ? 'pointer' : 'not-allowed',
                   fontSize: '1.1rem',
                   flexShrink: 0,
                   transition: 'background 0.2s',
+                  opacity: activeRoom && !sending ? 1 : 0.5,
                 }}
               >
-                {'\u27A4'}
+                <Send size={18} />
               </button>
             </div>
           </div>
