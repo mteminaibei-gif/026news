@@ -43,12 +43,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
         // Compress + don't re-buffer API/HTML responses at the edge
         source: '/:path*',
         headers: [
