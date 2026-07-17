@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Radio, Tv } from 'lucide-react'
 import { formatDate, formatNumber, readingTime, stripHtml } from '@/lib/utils'
 
@@ -62,133 +63,159 @@ export function HeroCarousel({ articles }: Props) {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* Slide images */}
-        {slides.map((s, i) => (
-          <div
-            key={s.article_id}
-            aria-hidden={i !== current}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: i === current ? 'block' : 'none',
-            }}
+        {/* Slide images with crossfade */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide.article_id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            style={{ position: 'absolute', inset: 0 }}
           >
-            {hasValidImage(s.featured_image) && !imgErrors.has(s.article_id) ? (
+            {hasValidImage(slide.featured_image) && !imgErrors.has(slide.article_id) ? (
               <Image
-                src={s.featured_image!}
-                alt={s.title}
+                src={slide.featured_image!}
+                alt={slide.title}
                 fill
                 className="object-cover"
-                priority={i === 0}
+                priority
                 sizes="100vw"
                 unoptimized
-                onError={() => setImgErrors(prev => new Set([...prev, s.article_id]))}
+                onError={() => setImgErrors(prev => new Set([...prev, slide.article_id]))}
               />
             ) : (
               <div className="absolute inset-0" style={{ background: 'var(--primary)' }} />
             )}
-          </div>
-        ))}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Content (bottom-left) */}
-        <div
-          key={current}
-          className="hero-content"
-          style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            padding: '80px 40px 120px',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.15) 70%, transparent 100%)',
-          }}
-        >
-          {/* Category */}
-          <span
-            className="hero-cat"
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide.article_id}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="hero-content"
             style={{
-              display: 'inline-block',
-              background: isKenyan(slide.category?.name) ? 'var(--error)' : 'var(--accent)',
-              color: '#fff',
-              padding: '4px 12px',
-              borderRadius: 999,
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: 16,
+              position: 'absolute',
+              bottom: 0, left: 0, right: 0,
+              padding: '80px 40px 120px',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.15) 70%, transparent 100%)',
             }}
           >
-            {isKenyan(slide.category?.name) ? '🇰🇪 ' : '🔴 '}
-            {slide.category?.name ?? 'Breaking'}
-          </span>
+            {/* Category */}
+            <motion.span
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="hero-cat"
+              style={{
+                display: 'inline-block',
+                background: isKenyan(slide.category?.name) ? 'var(--error)' : 'var(--accent)',
+                color: '#fff',
+                padding: '4px 12px',
+                borderRadius: 999,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: 16,
+              }}
+            >
+              {isKenyan(slide.category?.name) ? '🇰🇪 ' : '🔴 '}
+              {slide.category?.name ?? 'Breaking'}
+            </motion.span>
 
-          {/* Title */}
-          <h1
-            style={{
-              fontFamily: "'Newsreader', Georgia, serif",
-              fontSize: 'clamp(1.8rem, 4vw, 3rem)',
-              fontWeight: 700,
-              color: '#fff',
-              lineHeight: 1.15,
-              marginBottom: 16,
-              display: '-webkit-box',
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {slide.title}
-          </h1>
+            {/* Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.5 }}
+              style={{
+                fontFamily: "'Newsreader', Georgia, serif",
+                fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+                fontWeight: 700,
+                color: '#fff',
+                lineHeight: 1.15,
+                marginBottom: 16,
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {slide.title}
+            </motion.h1>
 
-          {/* Excerpt */}
-          {stripHtml(slide.content).length > 10 && (
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: 20, maxWidth: 700, display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {stripHtml(slide.content).replace(/\n+/g, ' ').slice(0, 400).trim()}…
-            </p>
-          )}
-
-          {/* Meta */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', flexWrap: 'wrap' }}>
-            {slide.author?.profile_image ? (
-              <Image src={slide.author.profile_image} alt={slide.author.name} width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} unoptimized />
-            ) : (
-              <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-light)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 700, fontSize: 13 }}>
-                {slide.author?.name?.charAt(0) ?? 'S'}
-              </span>
+            {/* Excerpt */}
+            {stripHtml(slide.content).length > 10 && (
+              <motion.p
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.5 }}
+                style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: 20, maxWidth: 700, display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+              >
+                {stripHtml(slide.content).replace(/\n+/g, ' ').slice(0, 400).trim()}…
+              </motion.p>
             )}
-            <span>{slide.author?.name ?? 'Staff Writer'}</span>
-            <span>·</span>
-            <span>{formatDate(slide.created_at)}</span>
-            <span>·</span>
-            <span>{readTime} min read</span>
-            <span>·</span>
-            <span>{formatNumber(slide.views)} views</span>
-          </div>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link
-              href={`/article/${slide.slug}`}
-              className="hero-btn"
-              style={{ background: 'var(--accent)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s, transform 0.2s' }}
+            {/* Meta */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45, duration: 0.4 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', flexWrap: 'wrap' }}
             >
-              Read Story →
-            </Link>
-            <Link
-              href="/tv"
-              className="hero-btn-secondary"
-              style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
+              {slide.author?.profile_image ? (
+                <Image src={slide.author.profile_image} alt={slide.author.name} width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} unoptimized />
+              ) : (
+                <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-light)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 700, fontSize: 13 }}>
+                  {slide.author?.name?.charAt(0) ?? 'S'}
+                </span>
+              )}
+              <span>{slide.author?.name ?? 'Staff Writer'}</span>
+              <span>·</span>
+              <span>{formatDate(slide.created_at)}</span>
+              <span>·</span>
+              <span>{readTime} min read</span>
+              <span>·</span>
+              <span>{formatNumber(slide.views)} views</span>
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.4 }}
+              style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}
             >
-              <Tv size={16} className="inline mr-1.5" />Watch
-            </Link>
-            <Link
-              href="/radio"
-              className="hero-btn-secondary"
-              style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <Radio size={16} className="inline mr-1.5" />Listen
-            </Link>
-          </div>
-        </div>
+              <Link
+                href={`/article/${slide.slug}`}
+                className="hero-btn"
+                style={{ background: 'var(--accent)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s, transform 0.2s' }}
+              >
+                Read Story →
+              </Link>
+              <Link
+                href="/tv"
+                className="hero-btn-secondary"
+                style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Tv size={16} className="inline mr-1.5" />Watch
+              </Link>
+              <Link
+                href="/radio"
+                className="hero-btn-secondary"
+                style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Radio size={16} className="inline mr-1.5" />Listen
+              </Link>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Arrows */}
         {slides.length > 1 && (

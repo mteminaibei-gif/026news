@@ -1,16 +1,20 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useTVGlobal } from './TVGlobalProvider'
 import { useRadio } from '@/components/radio/RadioProvider'
 import { usePathname } from 'next/navigation'
+import { RefreshCw, Shuffle } from 'lucide-react'
+import { ALL_TV_STATIONS } from '@/lib/tv/stations'
 
 export function TVWidget() {
   const { currentStation, isPlaying, status, error, stop, playStation, setStatus, setError } = useTVGlobal()
   const { currentStation: currentRadioStation, isPlaying: isRadioPlaying } = useRadio()
   const [minimized, setMinimized] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<{ destroy: () => void } | null>(null)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pathname = usePathname()
 
   const isTVPage = pathname === '/tv' || pathname.startsWith('/tv/')
@@ -29,13 +33,24 @@ export function TVWidget() {
       if (videoRef.current) {
         videoRef.current.remove()
       }
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
     }
   }, [])
+
+  const retry = useCallback(() => {
+    if (!currentStation) return
+    setRetryCount(c => c + 1)
+    setStatus('loading')
+    setError(null)
+    playStation(currentStation)
+  }, [currentStation, playStation, setStatus, setError])
 
   // Handle HLS playback for the widget
   useEffect(() => {
     const video = videoRef.current
     if (!video || !currentStation || !isPlaying) return
+
+    setRetryCount(0)
 
     const cleanupHLS = () => {
       if (hlsRef.current) {
@@ -46,17 +61,28 @@ export function TVWidget() {
 
     if (currentStation.embedType === 'hls') {
       const url = currentStation.streamUrl
+      let retries = 0
+      const MAX_RETRIES = 3
 
-      // Try native HLS support (Safari)
-      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      const tryNativePlay = () => {
         video.src = url
         video.muted = true
         video.play().then(() => {
           setStatus('playing')
         }).catch(() => {
-          setStatus('error')
-          setError('Stream unavailable')
+          if (retries < MAX_RETRIES) {
+            retries++
+            retryTimerRef.current = setTimeout(tryNativePlay, 3000)
+          } else {
+            setStatus('error')
+            setError('Stream unavailable')
+          }
         })
+      }
+
+      // Try native HLS support (Safari)
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        tryNativePlay()
         return
       }
 
@@ -84,22 +110,31 @@ export function TVWidget() {
         }
 
         if (HlsClass && HlsClass.isSupported()) {
-          const hls = new HlsClass({ enableWorker: true, lowLatencyMode: true })
-          hls.loadSource(url)
-          hls.attachMedia(video)
-          hls.on('MANIFEST_PARSED', () => {
-            video.muted = true
-            video.play().then(() => {
-              setStatus('playing')
-            }).catch(() => {})
-          })
-          hls.on('ERROR', (_: unknown, data: { fatal: boolean; type?: number }) => {
-            if (data.fatal) {
-              setStatus('error')
-              setError('Stream ended or unavailable')
-            }
-          })
-          hlsRef.current = hls
+          const attemptPlay = () => {
+            const hls = new HlsClass({ enableWorker: true, lowLatencyMode: true })
+            hls.loadSource(url)
+            hls.attachMedia(video)
+            hls.on('MANIFEST_PARSED', () => {
+              video.muted = true
+              video.play().then(() => {
+                setStatus('playing')
+              }).catch(() => {})
+            })
+            hls.on('ERROR', (_: unknown, data: { fatal: boolean; type?: number }) => {
+              if (data.fatal) {
+                if (retries < MAX_RETRIES) {
+                  retries++
+                  hls.destroy()
+                  retryTimerRef.current = setTimeout(attemptPlay, 3000)
+                } else {
+                  setStatus('error')
+                  setError('Stream ended or unavailable')
+                }
+              }
+            })
+            hlsRef.current = hls
+          }
+          attemptPlay()
         } else {
           setStatus('error')
           setError('HLS not supported in this browser')
@@ -114,8 +149,12 @@ export function TVWidget() {
     return () => {
       cleanupHLS()
       video.src = ''
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
     }
-  }, [currentStation, isPlaying])
+  }, [currentStation, isPlaying, playStation])
 
   if (!currentStation || isTVPage) return null
 
@@ -214,8 +253,22 @@ export function TVWidget() {
           <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
             {currentStation.genre}
             {status === 'loading' && <span className="text-yellow-400 ml-1">(Connecting...)</span>}
-            {status === 'error' && <span className="text-red-400 ml-1">({error})</span>}
           </p>
+          {status === 'error' && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-red-400">({error})</span>
+              <button onClick={retry}
+                className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: 'var(--primary)', color: '#fff' }}>
+                <RefreshCw size={10} /> Retry
+              </button>
+              <button onClick={() => { const others = ALL_TV_STATIONS.filter(s => s.id !== currentStation.id); if (others.length) playStation(others[Math.floor(Math.random() * others.length)]) }}
+                className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>
+                <Shuffle size={10} /> Try Another
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

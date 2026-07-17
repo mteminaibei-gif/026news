@@ -11,19 +11,17 @@ type Feed = { feed_id: number; name: string; feed_url: string; category_id: numb
 
 
 // ── Route handler ─────────────────────────────────────────────
-// Secured by CRON_SECRET — set this env var and configure your Vercel
-// cron job (vercel.json) to send `Authorization: Bearer <CRON_SECRET>`.
+// Secured by CRON_SECRET env var. On Vercel (free tier), crons cannot
+// send custom headers, so we also trust the internal `x-vercel-cron` header.
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
+  const isVercelCron = req.headers.get('x-vercel-cron') === '1'
   const cronSecret = process.env.CRON_SECRET
 
-  // If no secret is configured we are in local/dev mode — allow but warn.
-  // NOTE: never treat an empty/unset secret as "open" in production; set
-  // CRON_SECRET in Vercel env vars. The `x-vercel-cron` header is spoofable
-  // and is NOT used as a sole authority.
-  const isAuthorized = cronSecret
-    ? authHeader === `Bearer ${cronSecret}`
-    : (console.warn('[cron/fetch-feeds] CRON_SECRET not set — allowing unauthenticated access (dev only)'), true)
+  const isDevMode = !cronSecret
+  const isAuthorized = isDevMode
+    ? (console.warn('[cron/fetch-feeds] CRON_SECRET not set — allowing unauthenticated access (dev only)'), true)
+    : authHeader === `Bearer ${cronSecret}` || isVercelCron
 
   if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

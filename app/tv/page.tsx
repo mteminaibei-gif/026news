@@ -5,10 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { TVGlobalProvider, useTVGlobal } from '@/components/tv/TVGlobalProvider'
-import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
+import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, ALL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
-import { Tv, Eye, Clock, Play, Pause, Globe } from 'lucide-react'
+import { Tv, Eye, Clock, Play, Pause, Globe, RefreshCw, Shuffle } from 'lucide-react'
 
 type TVArticle = {
   article_id: number
@@ -248,8 +248,32 @@ function TVPageContent() {
             {/* Station info footer */}
             <div className="px-4 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
               <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{currentStation.name} — {currentStation.genre}</p>
-              {status === 'loading' && <p className="text-xs text-yellow-400 mt-1">Connecting...</p>}
-              {status === 'error' && <p className="text-xs text-red-400 mt-1">{error}</p>}
+              {status === 'loading' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1 text-xs text-yellow-400">
+                    <Clock size={12} className="animate-spin" />
+                    Connecting...
+                  </div>
+                </div>
+              )}
+              {status === 'error' && (
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-xs text-red-400">{error}</span>
+                  <button onClick={() => playStation(currentStation)}
+                    className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
+                    style={{ background: currentStation.color, color: '#fff' }}>
+                    <RefreshCw size={12} /> Retry
+                  </button>
+                  <button onClick={() => {
+                    const others = ALL_TV_STATIONS.filter(s => s.id !== currentStation.id)
+                    if (others.length) playStation(others[Math.floor(Math.random() * others.length)])
+                  }}
+                    className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
+                    style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>
+                    <Shuffle size={12} /> Try Another
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

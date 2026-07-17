@@ -30,6 +30,7 @@
     "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "framer-motion": "^12.42.2",
     "linkedom": "^0.18.13",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { motion } from 'framer-motion'
 import { Heart, MessageCircle, Share2 } from 'lucide-react'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 import { formatNumber, formatDate, stripHtml } from '@/lib/utils'
@@ -28,7 +29,13 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
     `https://picsum.photos/seed/${article.article_id}/440/300`
 
   return (
-    <article className="article-card">
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-30px' }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="article-card"
+    >
       <div className="article-card-body">
         {article.category?.name && (
           <span className="article-card-cat">{article.category.name}</span>
@@ -93,6 +100,6 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
           sizes="220px"
         />
       </div>
-    </article>
+    </motion.article>
   )
 }

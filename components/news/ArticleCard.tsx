@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { formatDate, formatNumber, stripHtml } from '@/lib/utils'
 
 interface ArticleCardProps {
@@ -53,7 +54,11 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
 
   if (variant === 'horizontal') {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.35 }}
         className="flex gap-4 py-4 last:border-0 transition-all duration-200 rounded-xl px-3 group"
         style={{ borderBottom: '1px solid var(--border-subtle)' }}
       >
@@ -85,12 +90,16 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
             <span>{formatDate(article.created_at)}</span>
           </p>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <article
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.4 }}
       className="rounded-2xl overflow-hidden transition-all duration-300 group"
       style={{
         background: 'var(--bg-surface)',
@@ -162,6 +171,6 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   )
 }
