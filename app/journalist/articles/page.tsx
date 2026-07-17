@@ -20,7 +20,7 @@ export default async function JournalistArticlesPage() {
 
   const { data: profile } = await supabase
     .from('users').select('user_id, name, role, profile_image').eq('email', user.email ?? '').single()
-  if (!profile || !['journalist', 'admin'].includes((profile as { role: string }).role)) redirect('/login')
+  if (!profile || (profile as { role: string }).role !== 'journalist') redirect('/login')
 
   const { data: articles } = await supabase
     .from('articles')

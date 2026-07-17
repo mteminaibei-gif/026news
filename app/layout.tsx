@@ -11,6 +11,7 @@ import { RadioProvider } from '@/components/radio/RadioProvider';
 import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
 import { LayoutNav } from '@/components/layout/LayoutNav';
 import { PushSubscriptionManager } from '@/components/providers/PushSubscriptionManager';
+import { ToastProvider } from '@/components/ui/Toast';
 import StyledJsxRegistry from './registry';
 import { APP_URL } from '@/lib/constants/app'
 
@@ -95,7 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="light" className={`h-full antialiased ${spaceGrotesk.variable} ${newsreader.variable}`}>
       <body className="min-h-full flex flex-col font-sans" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
         <ThemeProvider>
-          <QueryProvider>
+          <ToastProvider>
+            <QueryProvider>
             <RealtimeShell>
               <RadioProvider>
                 <TVGlobalProvider>
@@ -109,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </RadioProvider>
             </RealtimeShell>
           </QueryProvider>
+          </ToastProvider>
         </ThemeProvider>
         <Analytics />
         <PushSubscriptionManager />

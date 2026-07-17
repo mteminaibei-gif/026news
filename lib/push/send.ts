@@ -67,20 +67,25 @@ export async function sendPushNotification(
 export async function sendPushToAll(
   subscriptions: PushSubscription[],
   payload: PushPayload,
-): Promise<{ sent: number; stale: number }> {
+): Promise<{ sent: number; stale: number; staleEndpoints: string[] }> {
   let sent = 0
   let stale = 0
+  const staleEndpoints: string[] = []
 
   const results = await Promise.allSettled(
     subscriptions.map(sub => sendPushNotification(sub, payload)),
   )
 
-  for (const result of results) {
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i]
     if (result.status === 'fulfilled') {
       if (result.value.ok) sent++
-      if (result.value.stale) stale++
+      if (result.value.stale) {
+        stale++
+        staleEndpoints.push(subscriptions[i].endpoint)
+      }
     }
   }
 
-  return { sent, stale }
+  return { sent, stale, staleEndpoints }
 }

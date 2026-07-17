@@ -20,7 +20,7 @@ export default async function EditArticlePage({ params }: Props) {
 
   const { data: profile } = await supabase
     .from('users').select('user_id, role').eq('email', user.email ?? '').single()
-  if (!profile || !['journalist', 'admin'].includes((profile as { role: string }).role)) redirect('/login')
+  if (!profile || (profile as { role: string }).role !== 'journalist') redirect('/login')
 
   const adminDb = await import('@/lib/supabase/server').then(m => m.createAdminClient())
   const { data: article } = await adminDb

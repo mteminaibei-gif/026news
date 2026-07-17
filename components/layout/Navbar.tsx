@@ -252,15 +252,24 @@ export function Navbar() {
                         href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
                         style={{
                           width: 44, height: 44, borderRadius: 10,
-                          background: 'var(--primary)',
+                          background: profile?.profile_image ? 'transparent' : 'var(--primary)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: 'var(--bg-elevated)',
                           fontSize: '0.8rem', fontWeight: 700,
                           textDecoration: 'none',
                           cursor: 'pointer',
+                          overflow: 'hidden',
                         }}
                       >
-                        {profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />}
+                        {profile?.profile_image ? (
+                          <img
+                            src={profile.profile_image}
+                            alt={profile?.name ?? 'Profile'}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
+                          />
+                        ) : (
+                          profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />
+                        )}
                       </Link>
                       <button
                         onClick={() => signOutMutation.mutate()}
@@ -423,12 +432,21 @@ export function Navbar() {
               >
                 <div style={{
                   width: 40, height: 40, borderRadius: 10,
-                  background: 'var(--primary)',
+                  background: profile?.profile_image ? 'transparent' : 'var(--primary)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'var(--bg-elevated)', fontSize: '0.8rem', fontWeight: 700,
                   flexShrink: 0,
+                  overflow: 'hidden',
                 }}>
-                  {profile?.name?.charAt(0).toUpperCase() ?? '?'}
+                  {profile?.profile_image ? (
+                    <img
+                      src={profile.profile_image}
+                      alt={profile?.name ?? 'Profile'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
+                    />
+                  ) : (
+                    profile?.name?.charAt(0).toUpperCase() ?? '?'
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{profile?.name ?? 'Account'}</p>

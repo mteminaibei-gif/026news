@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   articleId: number
@@ -11,6 +12,7 @@ interface Props {
 
 export function AdminArticleActions({ articleId, currentStatus }: Props) {
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState<'approve' | 'reject' | 'delete' | null>(null)
 
   async function handleApprove() {
@@ -24,12 +26,13 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
       })
       if (!res.ok) {
         const d = await res.json()
-        alert(d.error ?? 'Approve failed.')
+        toast(d.error ?? 'Approve failed.', 'error')
         return
       }
+      toast('Article approved!', 'success')
       router.refresh()
     } catch {
-      alert('Network error. Please try again.')
+      toast('Network error. Please try again.', 'error')
     } finally {
       setLoading(null)
     }
@@ -46,12 +49,13 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
       })
       if (!res.ok) {
         const d = await res.json()
-        alert(d.error ?? 'Reject failed.')
+        toast(d.error ?? 'Reject failed.', 'error')
         return
       }
+      toast('Article rejected.', 'info')
       router.refresh()
     } catch {
-      alert('Network error. Please try again.')
+      toast('Network error. Please try again.', 'error')
     } finally {
       setLoading(null)
     }
@@ -64,12 +68,13 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
       const res = await fetch(`/api/admin/articles?id=${articleId}`, { method: 'DELETE' })
       if (!res.ok) {
         const d = await res.json()
-        alert(d.error ?? 'Delete failed.')
+        toast(d.error ?? 'Delete failed.', 'error')
         return
       }
+      toast('Article deleted.', 'success')
       router.refresh()
     } catch {
-      alert('Network error. Please try again.')
+      toast('Network error. Please try again.', 'error')
     } finally {
       setLoading(null)
     }

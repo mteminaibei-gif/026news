@@ -336,6 +336,7 @@ export async function POST(req: NextRequest) {
       const subscriptions = (subs ?? []) as unknown as { endpoint: string; p256dh: string; auth: string }[]
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://026news.vercel.app'
+      const allStaleEndpoints: string[] = []
       for (const article of newArticles.slice(0, 5)) {
         const result = await sendPushToAll(subscriptions, {
           title: `New: ${article.title}`,
@@ -344,18 +345,15 @@ export async function POST(req: NextRequest) {
         })
         pushSent += result.sent
         pushStale += result.stale
+        allStaleEndpoints.push(...result.staleEndpoints)
       }
 
-      if (pushStale > 0) {
-        const staleSubs = subscriptions.filter(s =>
-          new Array(pushStale).fill(false)
-        ).map(s => s.endpoint)
-        if (staleSubs.length > 0) {
-          await adminSupabase
-            .from('push_subscriptions' as never)
-            .delete()
-            .in('endpoint', staleSubs as never)
-        }
+      if (allStaleEndpoints.length > 0) {
+        const uniqueStale = [...new Set(allStaleEndpoints)]
+        await adminSupabase
+          .from('push_subscriptions' as never)
+          .delete()
+          .in('endpoint', uniqueStale as never)
       }
     } catch (err) {
       console.error('[admin/fetch-feeds] push dispatch error:', err)

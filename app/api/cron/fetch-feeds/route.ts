@@ -328,6 +328,7 @@ export async function GET(req: NextRequest) {
   // Dispatch push notifications for new articles
   let pushSent = 0
   let pushStale = 0
+  const allStaleEndpoints: string[] = []
   if (newArticles.length > 0 && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
     try {
       const { data: subs } = await supabase
@@ -344,18 +345,16 @@ export async function GET(req: NextRequest) {
         })
         pushSent += result.sent
         pushStale += result.stale
+        allStaleEndpoints.push(...result.staleEndpoints)
       }
 
-      if (pushStale > 0) {
-        const staleEndpoints = subscriptions
-          .filter(() => false)
-          .map(s => s.endpoint)
-        if (staleEndpoints.length > 0) {
-          await supabase
-            .from('push_subscriptions' as never)
-            .delete()
-            .in('endpoint', staleEndpoints as never)
-        }
+      // Clean up stale subscriptions
+      if (allStaleEndpoints.length > 0) {
+        const uniqueStale = [...new Set(allStaleEndpoints)]
+        await supabase
+          .from('push_subscriptions' as never)
+          .delete()
+          .in('endpoint', uniqueStale as never)
       }
     } catch (err) {
       console.error('[fetch-feeds] push dispatch error:', err)

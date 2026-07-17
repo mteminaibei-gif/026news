@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { timeAgo, formatNumber } from '@/lib/utils'
 import { FileText, Eye, CheckCircle, XCircle, RotateCcw, Clock, User, Folder } from 'lucide-react'
+import { useToast } from '@/components/ui/Toast'
 
 interface ReviewArticle {
   article_id: number
@@ -24,6 +25,7 @@ interface ReviewArticle {
 type ActionState = 'idle' | 'approving' | 'rejecting' | 'returning'
 
 export default function AdminReviewsPage() {
+  const { toast } = useToast()
   const [articles, setArticles] = useState<ReviewArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<ReviewArticle | null>(null)
@@ -77,9 +79,9 @@ export default function AdminReviewsPage() {
         fetchArticles()
       } else {
         const d = await res.json()
-        alert(d.error ?? 'Action failed')
+        toast(d.error ?? 'Action failed', 'error')
       }
-    } catch { alert('Network error') }
+    } catch { toast('Network error', 'error') }
     setActionState('idle')
   }
 

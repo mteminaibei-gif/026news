@@ -102,6 +102,7 @@ export default function InboxPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
+  const selectedConvRef = useRef<Conversation | null>(null)
 
   // ── Auth & init ────────────────────────────────────
   useEffect(() => {
@@ -217,8 +218,9 @@ export default function InboxPage() {
     setNewMessage('')
 
     // Optimistic append
+    const optimisticId = -(Date.now() + Math.random())
     const optimistic: Message = {
-      message_id: Date.now(),
+      message_id: optimisticId,
       sender_id: currentUserId,
       receiver_id: selectedConv.other_user.user_id,
       content,
@@ -243,7 +245,7 @@ export default function InboxPage() {
       loadConversations()
     } catch {
       // Remove optimistic on failure
-      setMessages(prev => prev.filter(m => m.message_id !== optimistic.message_id))
+      setMessages(prev => prev.filter(m => m.message_id !== optimisticId))
       setNewMessage(content)
     } finally {
       setSending(false)
@@ -264,6 +266,7 @@ export default function InboxPage() {
       unread: 0,
     }
     setSelectedConv(conv)
+    selectedConvRef.current = conv
     setShowSearch(false)
     setSearchQuery('')
     setSearchResults([])
@@ -273,6 +276,7 @@ export default function InboxPage() {
   // ── Select existing conversation ───────────────────
   function selectConversation(conv: Conversation) {
     setSelectedConv(conv)
+    selectedConvRef.current = conv
     setShowMobileThread(true)
   }
 
@@ -291,11 +295,9 @@ export default function InboxPage() {
         },
         (payload) => {
           const msg = payload.new as Message
+          const conv = selectedConvRef.current
           // If in the active conversation, append to messages
-          if (
-            selectedConv &&
-            msg.sender_id === selectedConv.other_user.user_id
-          ) {
+          if (conv && msg.sender_id === conv.other_user.user_id) {
             setMessages(prev => {
               if (prev.some(m => m.message_id === msg.message_id)) return prev
               return [...prev, msg]
@@ -324,7 +326,7 @@ export default function InboxPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [currentUserId, selectedConv, supabase, loadConversations])
+  }, [currentUserId, supabase, loadConversations])
 
   // ── Keyboard shortcuts ─────────────────────────────
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -929,6 +931,7 @@ export default function InboxPage() {
                 <button
                   onClick={() => {
                     setSelectedConv(null)
+                    selectedConvRef.current = null
                     setShowMobileThread(false)
                   }}
                   style={{

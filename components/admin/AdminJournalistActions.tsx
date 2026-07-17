@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   userId: number
@@ -10,6 +11,7 @@ interface Props {
 
 export function AdminJournalistActions({ userId, currentStatus }: Props) {
   const router  = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
   async function handleStatusChange(newStatus: string) {
@@ -24,12 +26,13 @@ export function AdminJournalistActions({ userId, currentStatus }: Props) {
       })
       if (!res.ok) {
         const d = await res.json()
-        alert(d.error ?? `${label} failed.`)
+        toast(d.error ?? `${label} failed.`, 'error')
         return
       }
+      toast(`Author ${newStatus === 'banned' ? 'suspended' : 'reactivated'}.`, 'success')
       router.refresh()
     } catch {
-      alert('Network error. Please try again.')
+      toast('Network error. Please try again.', 'error')
     } finally {
       setLoading(false)
     }
