@@ -3,17 +3,20 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 
 function LoginForm() {
   const params = useSearchParams()
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(params.get('message') || '')
   const urlError = params.get('error')
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,6 +55,25 @@ function LoginForm() {
     } catch {
       setError('An error occurred. Please try again.')
       setLoading(false)
+    }
+  }
+
+  async function handleOAuthSignIn(provider: 'google' | 'github' | 'twitter' | 'facebook') {
+    setOauthLoading(provider)
+    setError('')
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      })
+      if (error) setError(error.message)
+    } catch {
+      setError('Failed to sign in with ' + provider)
+    } finally {
+      setOauthLoading(null)
     }
   }
 
@@ -184,19 +206,25 @@ function LoginForm() {
           {/* OAuth */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { name: 'Google', color: '#4285F4', path: 'M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z' },
-              { name: 'X', color: 'currentColor', path: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.629L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z' },
-              { name: 'Facebook', color: '#1877F2', path: 'M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z' },
+              { name: 'Google', provider: 'google' as const, color: '#4285F4', path: 'M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z' },
+              { name: 'X', provider: 'twitter' as const, color: 'currentColor', path: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.629L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z' },
+              { name: 'GitHub', provider: 'github' as const, color: 'currentColor', path: 'M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z' },
             ].map(provider => (
               <button
                 key={provider.name}
                 type="button"
-                className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all"
+                disabled={oauthLoading === provider.provider}
+                onClick={() => handleOAuthSignIn(provider.provider)}
+                className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
                 style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'var(--bg-surface)' }}
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill={provider.color}>
-                  <path d={provider.path} />
-                </svg>
+                {oauthLoading === provider.provider ? (
+                  <span className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--primary)' }} />
+                ) : (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill={provider.color}>
+                    <path d={provider.path} />
+                  </svg>
+                )}
                 <span className="hidden sm:inline">{provider.name}</span>
               </button>
             ))}

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { uploadProfileImage } from '@/lib/storage';
 
 const tabs = [
   { id: 'profile', label: 'Profile' },
@@ -23,6 +24,8 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Account
   const [newEmail, setNewEmail] = useState('');
@@ -135,6 +138,43 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5MB');
+      return;
+    }
+    setUploadingAvatar(true);
+    setError('');
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { data: profile } = await supabase
+        .from('users')
+        .select('user_id')
+        .eq('auth_id', user.id)
+        .single();
+      if (!profile) throw new Error('Profile not found');
+      const { url } = await uploadProfileImage(file, (profile as { user_id: number }).user_id);
+      const res = await fetch('/api/profile/avatar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_image: url }),
+      });
+      if (!res.ok) throw new Error('Failed to save avatar');
+      setProfileImage(url);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setError('Avatar upload failed');
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>
@@ -192,10 +232,22 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <div>
-                    <Link href="/profile" style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', fontWeight: 500, textDecoration: 'none' }}>
-                      Change Photo
-                    </Link>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '6px' }}>Managed on your profile page.</p>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleAvatarUpload}
+                    />
+                    <button
+                      type="button"
+                      disabled={uploadingAvatar}
+                      onClick={() => avatarInputRef.current?.click()}
+                      style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', fontWeight: 500 }}
+                    >
+                      {uploadingAvatar ? 'Uploading…' : 'Change Photo'}
+                    </button>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '6px' }}>Upload a profile picture (max 5MB).</p>
                   </div>
                 </div>
                 <div style={sectionStyle}>
