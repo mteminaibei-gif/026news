@@ -48,6 +48,7 @@ export interface EnhancedSEOAnalysis {
   metrics: SEOMetrics
   improvedTitle?: string
   improvedExcerpt?: string
+  improvedSlug?: string
   suggestedTags?: string[]
   contentSummary: SEOContentSummary
   imageRecommendations: ImageRecommendation[]
@@ -117,6 +118,17 @@ const STOP_WORDS = new Set([
   'my', 'your', 'his', 'her', 'our', 'their', 'what', 'which', 'who', 'whom',
   'said', 'says', 'according', 'reported', 'added', 'explained', 'noted', 'confirmed'
 ])
+
+function slugifyText(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
 
 function stripHtml(html: string): string {
   return html
@@ -921,6 +933,7 @@ export function enhancedAnalyzeSEO(params: {
     },
     improvedTitle: generateImprovedTitle(title, keywords),
     improvedExcerpt: excerpt && excerptLength < 20 ? generateImprovedExcerpt(content) : undefined,
+    improvedSlug: slugifyText(generateImprovedTitle(title, keywords) || title),
     suggestedTags: suggestTags(title, content, tags ?? []),
     contentSummary,
     imageRecommendations,

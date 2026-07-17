@@ -16,6 +16,7 @@ interface Props {
   onApplyExcerpt?: (excerpt: string) => void
   onApplyTags?: (tags: string[]) => void
   onApplyContent?: (content: string) => void
+  onApplySlug?: (slug: string) => void
 }
 
 type IssueType = 'error' | 'warning' | 'info' | 'success'
@@ -136,7 +137,7 @@ function ContentSummaryCard({ summary }: { summary: EnhancedSEOAnalysis['content
 
 export function SEOAnalyzer({
   title, content, excerpt, slug, featuredImage, tags, category, authorName,
-  onApplyTitle, onApplyExcerpt,
+  onApplyTitle, onApplyExcerpt, onApplyTags, onApplyContent, onApplySlug,
 }: Props) {
   const [data, setData] = useState<EnhancedSEOAnalysis | null>(null)
   const [loading, setLoading] = useState(false)
@@ -248,6 +249,32 @@ export function SEOAnalyzer({
                     </button>
                   </div>
                 )}
+                {data.suggestedTags && data.suggestedTags.length > 0 && onApplyTags && (
+                  <div style={{ marginTop: 12, padding: 10, borderRadius: 8, border: '1px dashed var(--primary)' }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 6px' }}>Suggested Tags</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                      {data.suggestedTags.map((t, i) => (
+                        <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 600 }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <button onClick={() => onApplyTags!(data.suggestedTags!)}
+                      style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      Apply Tags
+                    </button>
+                  </div>
+                )}
+                {data.improvedSlug && onApplySlug && (
+                  <div style={{ marginTop: 12, padding: 10, borderRadius: 8, border: '1px dashed var(--primary)' }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 4px' }}>Suggested Slug</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px' }}>{data.improvedSlug}</p>
+                    <button onClick={() => onApplySlug(data.improvedSlug!)}
+                      style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      Use This Slug
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -276,6 +303,18 @@ export function SEOAnalyzer({
             {activeTab === 'content' && (
               <div>
                 <ContentSummaryCard summary={data.contentSummary} />
+                {data.optimizedContent && onApplyContent && (
+                  <div style={{ marginTop: 12, padding: 10, borderRadius: 8, border: '1px dashed var(--primary)' }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 4px' }}>AI-Optimized Content</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 8px' }}>
+                      Restructures headings, trims filler, and improves readability. Review before applying.
+                    </p>
+                    <button onClick={() => onApplyContent!(data.optimizedContent)}
+                      style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      Apply Optimized Content
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

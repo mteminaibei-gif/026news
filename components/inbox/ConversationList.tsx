@@ -34,11 +34,12 @@ interface Props {
   conversations: Conversation[]
   selectedConv: Conversation | null
   currentUserId: number | null
+  onlineUsers: Set<number>
   onSelectConversation: (conv: Conversation) => void
   onStartConversation: (user: SearchResult) => void
 }
 
-export function ConversationList({ conversations, selectedConv, onSelectConversation, onStartConversation }: Props) {
+export function ConversationList({ conversations, selectedConv, onSelectConversation, onStartConversation, onlineUsers }: Props) {
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
@@ -144,7 +145,7 @@ export function ConversationList({ conversations, selectedConv, onSelectConversa
                 {conv.other_user.profile_image ? (
                   <div style={{ position: 'relative', width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
                     <Image src={conv.other_user.profile_image} alt={conv.other_user.name} fill style={{ objectFit: 'cover' }} />
-                    <span style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />
+                    <span style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: onlineUsers.has(conv.other_user.user_id) ? 'var(--success)' : 'var(--bg-inset)', border: '2px solid var(--bg-surface)' }} />
                   </div>
                 ) : (
                   <div style={{ width: 50, height: 50, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', fontWeight: 700, color: isActive ? '#fff' : 'var(--text-secondary)', flexShrink: 0 }}>

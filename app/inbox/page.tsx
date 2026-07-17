@@ -24,8 +24,11 @@ export default function InboxPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null)
   const [showMobileThread, setShowMobileThread] = useState(false)
+  const [typingUserId, setTypingUserId] = useState<number | null>(null)
+  const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set())
 
   const selectedConvRef = useRef<Conversation | null>(null)
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Auth & init
   useEffect(() => {
@@ -49,11 +52,11 @@ export default function InboxPage() {
 
   useEffect(() => { if (currentUserId) loadConversations() }, [currentUserId, loadConversations])
 
-  // Real-time subscription
+  // Real-time subscription + presence + typing
   useEffect(() => {
     if (!currentUserId) return
     const channel = supabase
-      .channel('inbox-realtime')
+      .channel('inbox-realtime', { config: { presence: { key: String(currentUserId) } } })
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUserId}` },
         (payload) => {
@@ -69,7 +72,30 @@ export default function InboxPage() {
         { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${currentUserId}` },
         () => loadConversations()
       )
-      .subscribe()
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        const p = payload.payload as { userId: number; isTyping: boolean }
+        if (p.userId === selectedConvRef.current?.other_user.user_id) {
+          setTypingUserId(p.isTyping ? p.userId : null)
+          if (typingTimer.current) clearTimeout(typingTimer.current)
+          if (p.isTyping) {
+            typingTimer.current = setTimeout(() => setTypingUserId(null), 4000)
+          }
+        }
+      })
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState()
+        const ids = new Set<number>()
+        for (const key of Object.keys(state)) {
+          const meta = (state[key][0] as { userId?: number }) ?? {}
+          if (meta.userId) ids.add(meta.userId)
+        }
+        setOnlineUsers(ids)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ userId: currentUserId, online_at: new Date().toISOString() })
+        }
+      })
     return () => { supabase.removeChannel(channel) }
   }, [currentUserId, supabase, loadConversations])
 
@@ -106,6 +132,7 @@ export default function InboxPage() {
             conversations={conversations}
             selectedConv={selectedConv}
             currentUserId={currentUserId}
+            onlineUsers={onlineUsers}
             onSelectConversation={selectConversation}
             onStartConversation={handleStartConversation}
           />
@@ -117,7 +144,16 @@ export default function InboxPage() {
             <MessageThread
               conversation={selectedConv}
               currentUserId={currentUserId}
+              isOnline={onlineUsers.has(selectedConv.other_user.user_id)}
+              isTyping={typingUserId === selectedConv.other_user.user_id}
               onBack={() => { setSelectedConv(null); selectedConvRef.current = null; setShowMobileThread(false) }}
+              onTyping={(isTyping) => {
+                supabase.channel('inbox-realtime').send({
+                  type: 'broadcast',
+                  event: 'typing',
+                  payload: { userId: currentUserId, isTyping },
+                })
+              }}
             />
           </div>
         ) : (

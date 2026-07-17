@@ -187,3 +187,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
   }
 }
+
+// DELETE /api/messages?id=xxx — delete own message
+export async function DELETE(req: NextRequest) {
+  try {
+    const id = Number(req.nextUrl.searchParams.get('id'))
+    if (!id) return NextResponse.json({ error: 'Message id required' }, { status: 400 })
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await supabase
+      .from('users').select('user_id').eq('auth_id', user.id).single() as { data: { user_id: number } | null }
+    if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('message_id', id)
+      .eq('sender_id', profile.user_id)
+
+    if (error) throw error
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('[DELETE /api/messages]', err)
+    return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 })
+  }
+}
