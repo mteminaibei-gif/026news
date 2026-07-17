@@ -98,14 +98,16 @@ export async function POST(req: NextRequest) {
           if (payment_method === 'mpesa' && phone) {
             await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/payments/mpesa`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', Cookie: req.headers.get('cookie') ?? '' },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ phone, amount: journalist_cut, payout_id: payoutId }),
+              signal: AbortSignal.timeout(15000),
             })
           } else if (payment_method === 'paypal') {
             await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/payments/paypal`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', Cookie: req.headers.get('cookie') ?? '' },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paypal_email: paypalEmail, amount: journalist_cut, payout_id: payoutId }),
+              signal: AbortSignal.timeout(15000),
             })
           }
         } catch (e) {

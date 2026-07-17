@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { autoCategorize } from '@/lib/auto-categorize'
 
 export async function GET(req: NextRequest) {
   try {

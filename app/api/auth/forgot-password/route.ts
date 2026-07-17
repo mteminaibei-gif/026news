@@ -7,10 +7,18 @@ import { APP_URL } from '@/lib/constants/app'
 const rateLimiter = new Map<string, { count: number; reset: number }>()
 const MAX_REQUESTS = 3 // Max 3 requests per minute
 
+function trimLimiter() {
+  const now = Date.now()
+  if (rateLimiter.size > 10_000) {
+    for (const [k, v] of rateLimiter) { if (now > v.reset) rateLimiter.delete(k) }
+  }
+}
+
 function rateLimit(ip: string): boolean {
   const now = Date.now()
   const entry = rateLimiter.get(ip)
   if (!entry || now > entry.reset) {
+    trimLimiter()
     rateLimiter.set(ip, { count: 1, reset: now + 60_000 })
     return true
   }

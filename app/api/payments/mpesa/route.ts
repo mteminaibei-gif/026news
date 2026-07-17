@@ -13,6 +13,7 @@ async function getMpesaToken(): Promise<string> {
 
   const res = await fetch(`${MPESA_BASE}/oauth/v1/generate?grant_type=client_credentials`, {
     headers: { Authorization: `Basic ${creds}` },
+    signal: AbortSignal.timeout(15000),
   })
   if (!res.ok) throw new Error(`M-Pesa auth failed: ${res.status}`)
   const data = await res.json()
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         BusinessShortCode: shortcode,
         Password:          password,

@@ -17,6 +17,7 @@ async function getPayPalToken(): Promise<string> {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
+    signal: AbortSignal.timeout(15000),
   })
   if (!res.ok) throw new Error(`PayPal auth failed: ${res.status}`)
   const data = await res.json()
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         sender_batch_header: {
           sender_batch_id: `026news-payout-${payout_id}-${Date.now()}`,

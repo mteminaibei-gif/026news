@@ -5,10 +5,17 @@ import { getCurrentUser } from '@/lib/server-auth'
 // ── rate limiter: 20 comments/IP/min ──────────────────────
 const limiter = new Map<string, { count: number; reset: number }>()
 
+function trimLimiter() {
+  const now = Date.now()
+  if (limiter.size > 10_000) {
+    for (const [k, v] of limiter) { if (now > v.reset) limiter.delete(k) }
+  }
+}
+
 function rateLimit(ip: string): boolean {
   const now = Date.now()
   const e   = limiter.get(ip)
-  if (!e || now > e.reset) { limiter.set(ip, { count: 1, reset: now + 60_000 }); return true }
+  if (!e || now > e.reset) { trimLimiter(); limiter.set(ip, { count: 1, reset: now + 60_000 }); return true }
   if (e.count >= 20) return false
   e.count++
   return true

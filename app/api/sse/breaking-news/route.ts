@@ -8,10 +8,18 @@ export const dynamic = 'force-dynamic'
 const connTracker = new Map<string, { count: number; reset: number }>()
 const MAX_CONN_PER_MIN = 30
 
+function trimTracker() {
+  const now = Date.now()
+  if (connTracker.size > 10_000) {
+    for (const [k, v] of connTracker) { if (now > v.reset) connTracker.delete(k) }
+  }
+}
+
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
   const entry = connTracker.get(ip)
   if (!entry || now > entry.reset) {
+    trimTracker()
     connTracker.set(ip, { count: 1, reset: now + 60_000 })
     return true
   }

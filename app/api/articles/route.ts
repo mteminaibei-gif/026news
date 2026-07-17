@@ -9,10 +9,17 @@ const postLimiter = new Map<string, { count: number; reset: number }>()
 const GET_LIMIT   = 60  // requests per minute per IP
 const POST_LIMIT  = 10
 
+function trimLimiter(store: Map<string, { count: number; reset: number }>) {
+  const now = Date.now()
+  if (store.size > 10_000) {
+    for (const [k, v] of store) { if (now > v.reset) store.delete(k) }
+  }
+}
+
 function rateLimit(ip: string, store: Map<string, { count: number; reset: number }>, max: number) {
   const now = Date.now()
   const e   = store.get(ip)
-  if (!e || now > e.reset) { store.set(ip, { count: 1, reset: now + 60_000 }); return true }
+  if (!e || now > e.reset) { trimLimiter(store); store.set(ip, { count: 1, reset: now + 60_000 }); return true }
   if (e.count >= max) return false
   e.count++
   return true
