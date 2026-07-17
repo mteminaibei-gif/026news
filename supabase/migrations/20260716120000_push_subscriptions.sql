@@ -17,6 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint
 
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own push subscriptions" ON public.push_subscriptions;
 CREATE POLICY "Users manage own push subscriptions" ON public.push_subscriptions
   FOR ALL USING (
     auth.uid() IN (SELECT auth_id FROM public.users WHERE user_id = push_subscriptions.user_id)

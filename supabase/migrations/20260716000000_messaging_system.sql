@@ -4,6 +4,20 @@
 --  RLS policies, indexes, and realtime publication.
 -- ============================================================
 
+-- ── Reconcile drifted schema ─────────────────────────────
+-- If a previous (uuid-based) `messages` table exists with mismatched
+-- column types, drop it so it is recreated with the correct integer schema.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'messages'
+      AND column_name = 'sender_id' AND data_type <> 'bigint'
+  ) THEN
+    DROP TABLE IF EXISTS public.messages CASCADE;
+  END IF;
+END $$;
+
 -- ── Create table if it doesn't exist ─────────────────────
 CREATE TABLE IF NOT EXISTS public.messages (
   message_id  BIGSERIAL    PRIMARY KEY,
@@ -45,6 +59,22 @@ BEGIN
     WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'is_read'
   ) THEN
     ALTER TABLE public.messages ADD COLUMN is_read BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+
+  -- Ensure `sender_id` column exists (drift reconciliation)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'sender_id'
+  ) THEN
+    ALTER TABLE public.messages ADD COLUMN sender_id BIGINT NOT NULL DEFAULT 0;
+  END IF;
+
+  -- Ensure `receiver_id` column exists (drift reconciliation)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'receiver_id'
+  ) THEN
+    ALTER TABLE public.messages ADD COLUMN receiver_id BIGINT NOT NULL DEFAULT 0;
   END IF;
 END $$;
 

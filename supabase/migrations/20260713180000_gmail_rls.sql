@@ -5,6 +5,7 @@
 ALTER TABLE public.gmail_integration ENABLE ROW LEVEL SECURITY;
 
 -- Only admins may access Gmail integration tokens
+DROP POLICY IF EXISTS "Admins can manage gmail_integration" ON public.gmail_integration;
 CREATE POLICY "Admins can manage gmail_integration"
   ON public.gmail_integration
   FOR ALL
