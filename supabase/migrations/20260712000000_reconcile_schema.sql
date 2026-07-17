@@ -340,7 +340,10 @@ CREATE TRIGGER on_auth_user_created
 
 -- engagement: article like_count
 CREATE OR REPLACE FUNCTION public.update_article_like_count()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     UPDATE public.articles SET like_count = like_count + 1 WHERE article_id = NEW.article_id;
@@ -358,7 +361,10 @@ CREATE TRIGGER trg_article_like_count
 
 -- engagement: article save_count
 CREATE OR REPLACE FUNCTION public.update_article_save_count()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     UPDATE public.articles SET save_count = save_count + 1 WHERE article_id = NEW.article_id;
@@ -376,7 +382,10 @@ CREATE TRIGGER trg_article_save_count
 
 -- engagement: analytics.comments_count
 CREATE OR REPLACE FUNCTION public.update_comment_count()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO public.analytics (article_id, comments_count)
