@@ -33,6 +33,7 @@ export function MessagesProfileSidebar({ userId, profile }: { userId: number; pr
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [unreadByUser, setUnreadByUser] = useState<Record<number, number>>({})
+  const [isSending, setIsSending] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   const onlineIds = new Set(onlineUsers.map(o => o.user_id))
@@ -41,22 +42,23 @@ export function MessagesProfileSidebar({ userId, profile }: { userId: number; pr
   // Load followers only once
   useEffect(() => {
     if (!userId) return
-    supabase
-      .from('user_follows')
-      .select('follower_id')
-      .eq('following_id', userId)
-      .limit(200)
-      .then(({ data }) => {
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('user_follows')
+          .select('follower_id')
+          .eq('following_id', userId)
+          .limit(200)
         if (!data) return
         const ids = data.map(d => (d as { follower_id: number }).follower_id)
         if (ids.length === 0) return
-        supabase
+        const { data: u } = await supabase
           .from('users')
           .select('user_id, name, profile_image, role')
           .in('user_id', ids)
-          .then(({ data: u }) => setFollowers(u ?? []))
-      })
-      .catch(() => {})
+        setFollowers(u ?? [])
+      } catch {}
+    })()
   }, [userId])
 
   const loadThread = useCallback(async (other: Follower) => {
@@ -97,6 +99,7 @@ export function MessagesProfileSidebar({ userId, profile }: { userId: number; pr
         body: JSON.stringify({ receiverId: active.user_id, content }),
       })
     } catch {}
+    finally { setIsSending(false) }
   }, [draft, active, userId])
 
   const filtered = followers.filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
