@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { EnhancedSEOAnalysis } from '@/lib/seo/enhanced-analyzer'
 
 interface Props {
@@ -97,6 +98,22 @@ function LayoutRecCard({ rec }: { rec: EnhancedSEOAnalysis['layoutRecommendation
       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 6px' }}>{rec.reason}</p>
       <pre style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-inset)', padding: 8, borderRadius: 6, overflowX: 'auto', margin: 0, whiteSpace: 'pre-wrap' }}>{rec.recommendedHtml}</pre>
     </div>
+  )
+}
+
+function ApplyButton({ label, onClick }: { label: string; onClick: () => void }) {
+  const [done, setDone] = useState(false)
+  return (
+    <button
+      onClick={() => { onClick(); setDone(true); setTimeout(() => setDone(false), 1200) }}
+      style={{
+        padding: '6px 12px', borderRadius: 8, border: 'none',
+        background: done ? 'var(--success)' : 'var(--primary)', color: '#fff',
+        fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.3s',
+      }}
+    >
+      {done ? '✓ Applied' : label}
+    </button>
   )
 }
 
@@ -233,6 +250,14 @@ export function SEOAnalyzer({
           </div>
 
           <div style={{ padding: '16px 20px', maxHeight: 440, overflowY: 'auto' }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+              >
             {activeTab === 'seo' && (
               <div>
                 <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px' }}>Issues</h4>
@@ -243,10 +268,7 @@ export function SEOAnalyzer({
                   <div style={{ marginTop: 12, padding: 10, borderRadius: 8, border: '1px dashed var(--primary)' }}>
                     <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 4px' }}>Suggested Title</p>
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px' }}>{data.improvedTitle}</p>
-                    <button onClick={() => onApplyTitle(data.improvedTitle!)}
-                      style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Use This Title
-                    </button>
+                    <ApplyButton label="Use This Title" onClick={() => onApplyTitle(data.improvedTitle!)} />
                   </div>
                 )}
                 {data.suggestedTags && data.suggestedTags.length > 0 && onApplyTags && (
@@ -259,20 +281,14 @@ export function SEOAnalyzer({
                         </span>
                       ))}
                     </div>
-                    <button onClick={() => onApplyTags!(data.suggestedTags!)}
-                      style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Apply Tags
-                    </button>
+                    <ApplyButton label="Apply Tags" onClick={() => onApplyTags!(data.suggestedTags!)} />
                   </div>
                 )}
                 {data.improvedSlug && onApplySlug && (
                   <div style={{ marginTop: 12, padding: 10, borderRadius: 8, border: '1px dashed var(--primary)' }}>
                     <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 4px' }}>Suggested Slug</p>
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px' }}>{data.improvedSlug}</p>
-                    <button onClick={() => onApplySlug(data.improvedSlug!)}
-                      style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Use This Slug
-                    </button>
+                    <ApplyButton label="Use This Slug" onClick={() => onApplySlug(data.improvedSlug!)} />
                   </div>
                 )}
               </div>
@@ -291,10 +307,7 @@ export function SEOAnalyzer({
                   <div style={{ marginTop: 12, padding: 10, borderRadius: 8, border: '1px dashed var(--primary)' }}>
                     <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 4px' }}>Suggested Meta Description</p>
                     <p style={{ fontSize: 13, color: 'var(--text-primary)', margin: '0 0 6px' }}>{data.improvedExcerpt}</p>
-                    <button onClick={() => onApplyExcerpt(data.improvedExcerpt!)}
-                      style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Use This Excerpt
-                    </button>
+                    <ApplyButton label="Use This Excerpt" onClick={() => onApplyExcerpt(data.improvedExcerpt!)} />
                   </div>
                 )}
               </div>
@@ -309,10 +322,7 @@ export function SEOAnalyzer({
                     <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 8px' }}>
                       Restructures headings, trims filler, and improves readability. Review before applying.
                     </p>
-                    <button onClick={() => onApplyContent!(data.optimizedContent)}
-                      style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Apply Optimized Content
-                    </button>
+                    <ApplyButton label="Apply Optimized Content" onClick={() => onApplyContent!(data.optimizedContent)} />
                   </div>
                 )}
               </div>
@@ -375,6 +385,8 @@ export function SEOAnalyzer({
                 )}
               </div>
             )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </>
       )}

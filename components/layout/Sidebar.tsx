@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { Logo } from '@/components/layout/Logo'
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, PenLine, Newspaper, TrendingUp, Users, User,
@@ -79,12 +80,8 @@ export function Sidebar({ role, user }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between mb-2" style={{ padding: '0 12px' }}>
-          <Link href="/" aria-label="026NEWS home" className="flex items-center gap-2 no-underline">
-            {!isCollapsed && (
-              <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                 026<span style={{ color: '#e23b3b' }}>News</span>
-              </span>
-            )}
+          <Link href="/" aria-label="026Newsblog home" className="flex items-center gap-2 no-underline">
+            {!isCollapsed && <Logo size="sm" href="" />}
           </Link>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}

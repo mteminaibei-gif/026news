@@ -25,7 +25,7 @@ type Security = Record<string, boolean>
 type Publishing = { rss_auto_publish: boolean; rss_max_per_fetch: number; inhouse_publish_limit: number }
 
 const DEFAULTS = {
-  general: { site_name: '026NEWS', tagline: "Kenya's Premier Digital News Platform", contact_email: 'hello@026news.com', app_url: 'https://026newsblog.vercel.app' } as General,
+  general: { site_name: '026Newsblog', tagline: "Kenya's Premier Digital News Platform", contact_email: 'hello@026news.com', app_url: 'https://026newsblog.vercel.app' } as General,
   monetization: { revenue_share: 70, min_payout: 25, adsense_publisher_id: '', stripe_publishable_key: '', mpesa_consumer_key: '', mpesa_consumer_secret: '', mpesa_shortcode: '', mpesa_passkey: '', mpesa_callback_url: '' } as Monetization,
   admin_notifications: { new_submission: true, article_decision: true, new_user: true, flagged_comment: true, payout_request: false, revenue_milestone: false } as AdminNotifs,
   security: { email_verification: true, two_factor: false, rate_limiting: true, block_vpn: false, rls_enabled: true } as Security,

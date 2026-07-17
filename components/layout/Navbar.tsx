@@ -12,6 +12,7 @@ import { useNotifications } from '@/lib/hooks/useNotifications'
 import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
 import { MessageWidget } from '@/components/layout/MessageWidget'
 import { NAV_LINKS } from '@/lib/constants/navigation'
+import { Logo } from '@/components/layout/Logo'
 
 const NAVBAR_H = 64
 
@@ -53,6 +54,13 @@ export function Navbar() {
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
 
+  const handleGlow = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget
+    const rect = el.getBoundingClientRect()
+    el.style.setProperty('--mx', `${e.clientX - rect.left}px`)
+    el.style.setProperty('--my', `${e.clientY - rect.top}px`)
+  }, [])
+
   // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
@@ -69,7 +77,8 @@ export function Navbar() {
     <>
       <header
         role="banner"
-        className="sticky top-0 z-50 border-b transition-all duration-300"
+        className="sticky top-0 z-50 border-b transition-all duration-300 glow-track"
+        onMouseMove={handleGlow}
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(20px)',
@@ -77,13 +86,10 @@ export function Navbar() {
           borderColor: 'var(--border-subtle)',
         }}
       >
+        <span className="glow-spot" aria-hidden="true" />
         <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" aria-label="026Newsblog — home" className="shrink-0 group">
-            <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-               026<span style={{ color: '#e23b3b' }}>Newsblog</span>
-            </span>
-          </Link>
+          <Logo size="md" />
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex flex-1 items-center justify-center gap-8" aria-label="Main navigation">
@@ -102,15 +108,13 @@ export function Navbar() {
                 : href === '/journalists' ? PenLine
                 : href === '/inbox' ? MessageSquare
                 : null
-              return (
+               return (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    'text-sm font-medium transition-colors duration-200 flex items-center gap-1.5',
-                    isActive
-                      ? 'font-semibold'
-                      : 'hover:opacity-100'
+                    'nav-link text-sm font-medium transition-colors duration-200 flex items-center gap-1.5 rounded-md px-2 py-1.5',
+                    isActive ? 'active font-semibold' : 'hover:opacity-100'
                   )}
                   style={{
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -161,7 +165,7 @@ export function Navbar() {
               <button
                 onClick={() => setSearchOpen(true)}
                 aria-label="Open search"
-                className="icon-btn"
+                className="icon-btn hover:shadow-[0_0_18px_-4px_var(--primary)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
                 style={{
                   width: 44, height: 44, borderRadius: 10,
                   border: '1px solid var(--border)',
@@ -169,7 +173,7 @@ export function Navbar() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'var(--text-secondary)',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.2s var(--ease-out-expo)',
                 }}
               >
                 <Search size={18} />
@@ -180,6 +184,7 @@ export function Navbar() {
             <button
               onClick={toggleDarkMode}
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="hover:shadow-[0_0_18px_-4px_var(--primary)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
               style={{
                 width: 40, height: 40, borderRadius: 10,
                 border: '1px solid var(--border)',
@@ -374,9 +379,10 @@ export function Navbar() {
         id="mobile-nav"
         aria-label="Mobile navigation"
         className={cn(
-          'lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain',
+          'lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain glow-track',
           mobileOpen ? 'flex' : 'hidden'
         )}
+        onMouseMove={handleGlow}
         style={{
           width: 320, maxWidth: '85vw',
           background: 'var(--bg-surface)',
@@ -387,6 +393,7 @@ export function Navbar() {
           transition: 'transform 0.3s var(--ease-out-expo)',
         }}
       >
+        <span className="glow-spot" aria-hidden="true" />
         <div className="flex-1 p-5">
           <p style={{
             fontSize: '0.65rem', fontWeight: 600,
@@ -412,7 +419,7 @@ export function Navbar() {
                   <Link
                     href={href}
                     onClick={closeMobile}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-[var(--primary-light)] hover:shadow-[0_0_20px_-4px_var(--primary)]"
                     style={{
                       color: pathname === href ? 'var(--text-primary)' : 'var(--text-secondary)',
                       background: pathname === href ? 'var(--primary-light)' : 'transparent',

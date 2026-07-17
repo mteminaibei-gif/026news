@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Logo } from '@/components/layout/Logo'
 
 
 function LoginForm() {
@@ -95,9 +96,7 @@ function LoginForm() {
         <div style={{ position: 'absolute', bottom: '-10%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, oklch(50% 0.1 55 / 0.15) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <span className="text-2xl font-bold" style={{ color: 'oklch(95% 0.005 175)' }}>
-             026<span style={{ color: '#e23b3b' }}>Newsblog</span>
-          </span>
+          <Logo size="lg" href="" baseColor="oklch(95% 0.005 175)" suffixColor="#e23b3b" />
         </div>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -125,15 +124,13 @@ function LoginForm() {
         <div style={{ width: '100%', maxWidth: 400 }}>
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-               026<span style={{ color: '#e23b3b' }}>Newsblog</span>
-            </span>
+            <Logo size="lg" href="" />
           </div>
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Sign In</h2>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-               New to 026NEWS?{' '}
+                New to 026Newsblog?{' '}
                <Link href="/signup" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create an account</Link>
             </p>
           </div>

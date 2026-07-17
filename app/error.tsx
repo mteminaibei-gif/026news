@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { Logo } from '@/components/layout/Logo'
 
 export default function ErrorPage({
   error,
@@ -20,8 +20,8 @@ export default function ErrorPage({
       {/* Minimal static header */}
       <header className="bg-white dark:bg-[#0a1628] border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center">
-          <Link href="/">
-            <Image src="/logo.svg" alt="026NEW Blog" width={140} height={44} className="h-20 w-auto" />
+          <Link href="/" aria-label="026Newsblog — home">
+            <Logo size="md" href="" />
           </Link>
         </div>
       </header>

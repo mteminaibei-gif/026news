@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Heart, Bookmark, MessageSquare, Bell, Settings, Sun, Moon, Send, ThumbsUp, Reply, Star } from 'lucide-react'
 import { ProfileNav } from '@/components/layout/ProfileNav'
+import { Logo } from '@/components/layout/Logo'
 
 interface UserProfile {
   name: string; role: string; email?: string; created_at?: string
@@ -291,9 +292,7 @@ export default function ProfilePage() {
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60, padding: '0 24px' }}>
-          <Link href="/" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>
-            <span style={{ color: 'var(--primary)' }}>026</span>Newsblog
-          </Link>
+          <Logo size="md" href="/" />
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button onClick={toggleTheme} className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}

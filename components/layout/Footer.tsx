@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Logo } from '@/components/layout/Logo'
 
 const FOOTER_LINKS = {
   Company: [
@@ -43,9 +44,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:w-1/3">
             <Link href="/" aria-label="026Newsblog home" className="block mb-4">
-              <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                 026<span style={{ color: '#e23b3b' }}>Newsblog</span>
-              </span>
+              <Logo size="md" />
             </Link>
             <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
               Kenya&apos;s premier digital news platform. Breaking news, in-depth analysis, and community journalism from Nairobi and across Africa.

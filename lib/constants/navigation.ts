@@ -54,7 +54,7 @@ export const ROUTES = {
   
   // User
   PROFILE: '/profile',
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/profile',
   INBOX: '/inbox',
   
   // Other

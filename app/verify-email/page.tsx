@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Logo } from '@/components/layout/Logo'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -48,9 +49,7 @@ function VerifyEmailInner() {
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
       <div style={{ width: '100%', maxWidth: 480, textAlign: 'center' }}>
         <Link href="/" style={{ display: 'inline-block', marginBottom: 40 }}>
-          <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-             026<span style={{ color: '#e23b3b' }}>Newsblog</span>
-          </span>
+          <Logo size="md" href="" />
         </Link>
 
         {/* ── Check your email ── */}

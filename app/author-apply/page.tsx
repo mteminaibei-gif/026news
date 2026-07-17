@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Logo } from '@/components/layout/Logo';
 
 const steps = [
   { number: 1, label: 'About You' },
@@ -76,7 +77,7 @@ export default function AuthorApplyPage() {
       <div style={{ maxWidth: '620px', width: '100%' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>026NEWS</h1>
+          <Logo size="lg" href="" />
         </div>
 
         {/* Progress Indicator */}

@@ -344,6 +344,28 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 .nav-link.active::after { left: 0; right: 0; }
 .nav-link.active { color: var(--primary); font-weight: 600; }
 
+/* ── Cursor torch / glow ─────────────────────────────────── */
+/* Tracks pointer via --mx/--my CSS vars and paints a soft radial light.
+   Add class `.glow-track` to a relatively-positioned container and drop a
+   `<span className="glow-spot" />` child inside it. */
+.glow-track { position: relative; }
+.glow-spot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out-expo);
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--primary) 16%, transparent),
+    transparent 70%
+  );
+  z-index: 0;
+}
+.glow-track:hover .glow-spot { opacity: 1; }
+.glow-track > * { position: relative; z-index: 1; }
+
 /* ── Article body ───────────────────────────────────────── */
 .article-body p { margin-bottom: 1.25rem; line-height: 1.9; }
 .article-body h2 {

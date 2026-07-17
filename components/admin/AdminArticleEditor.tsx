@@ -50,6 +50,8 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   const [title,        setTitle]        = useState(initialData?.title ?? '')
   const [content,      setContent]      = useState(initialData?.content ?? '')
   const [excerpt,      setExcerpt]      = useState(initialData?.excerpt ?? '')
+  const [slug,         setSlug]         = useState(initialData?.title ? slugify(initialData.title) : '')
+  const [slugEdited,   setSlugEdited]   = useState(false)
   const [tags,         setTags]         = useState('')
   const [categoryId,   setCategoryId]   = useState<number | ''>(initialData?.category_id ?? '')
   const [sourceRef,    setSourceRef]    = useState(initialData?.source_reference ?? '')
@@ -135,6 +137,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
         status: overrideStatus ?? status,
         source_reference: sourceRef.trim() || null,
         tags: tags.trim() || null,
+        ...(slugEdited ? { slug: slug.trim() } : {}),
       }
       const res = await fetch('/api/admin/articles/edit', {
         method: isEdit ? 'PUT' : 'POST',
@@ -237,24 +240,28 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               className="text-xs font-bold text-white px-4 py-1.5 rounded-lg transition-all hover:shadow-md disabled:opacity-40" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
               {saving ? (imageUploading ? '⏫ Uploading…' : '⏳ Saving…') : '🚀 Publish'}
             </button>
-              </div>
             </div>
+          </div>
+          </div>
 
-            {/* SEO Analyzer */}
+          {/* SEO Analyzer */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
             <SEOAnalyzer
               title={title}
               content={content}
               excerpt={excerpt}
-              slug={slugify(title)}
+              slug={slug}
               featuredImage={imagePreview ?? undefined}
               tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
               category={categories.find(c => c.category_id === categoryId)?.name}
               onApplyTitle={(t) => setTitle(t)}
               onApplyExcerpt={(e) => setExcerpt(e)}
               onApplyContent={(c) => setContent(c)}
+              onApplySlug={(s) => { setSlug(s); setSlugEdited(true) }}
+              onApplyTags={(t) => setTags(t.join(', '))}
             />
-
           </div>
+
       {/* ── Body ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {saveError && (
@@ -275,7 +282,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                 id="ed-title"
                 rows={2}
                 value={title}
-                onChange={e => setTitle(e.target.value)}
+                onChange={e => { setTitle(e.target.value); if (!slugEdited) setSlug(slugify(e.target.value)) }}
                 placeholder="Write your headline here…"
                 className="w-full text-2xl md:text-3xl font-black bg-transparent outline-none resize-none leading-tight"
                 style={{ color: 'var(--text-primary)', fontFamily: 'Georgia, "Times New Roman", serif' }}
@@ -316,6 +323,13 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                   <input id="ed-source" type="url" value={sourceRef}
                     onChange={e => setSourceRef(e.target.value)}
                     placeholder="https://original-source.com"
+                    className={fieldCls} style={fieldStyle} />
+                </div>
+                <div>
+                  <label className={labelCls} htmlFor="ed-slug">🔗 Slug</label>
+                  <input id="ed-slug" type="text" value={slug}
+                    onChange={e => { setSlug(e.target.value); setSlugEdited(true) }}
+                    placeholder="article-url-slug"
                     className={fieldCls} style={fieldStyle} />
                 </div>
               </div>

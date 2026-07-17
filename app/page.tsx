@@ -7,6 +7,7 @@ import { BreakingNewsTicker } from '@/components/news/BreakingNewsTicker'
 import { BreakingNewsBanner } from '@/components/news/BreakingNewsBanner'
 import { BannerAd } from '@/components/ads/AdSense'
 import { LiveActivityFeed } from '@/components/news/LiveActivityFeed'
+import { HomeMediaStrip } from '@/components/news/HomeMediaStrip'
 import { formatNumber } from '@/lib/utils'
 import { TrendingUp, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -76,6 +77,8 @@ export default async function HomePage({ searchParams }: Props) {
   }, [])
 
   const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
+
+  const entertainmentArticles = articles.filter(a => a.category?.name === 'Entertainment').slice(0, 4)
 
   const kenyaArticles = articles.filter(a =>
     ['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? '') ||
@@ -167,6 +170,9 @@ export default async function HomePage({ searchParams }: Props) {
       {/* Banner Ad */}
       <BannerAd />
 
+      {/* Live Media strip — Radio + TV */}
+      {!categoryParam && <HomeMediaStrip />}
+
       {/* Main Content Grid */}
       <div className="main-layout">
         <main>
@@ -198,6 +204,26 @@ export default async function HomePage({ searchParams }: Props) {
               ))}
             </div>
           </section>
+
+          {/* Entertainment */}
+          {!categoryParam && entertainmentArticles.length > 0 && (
+            <section style={{ marginTop: 48 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <h2 className="feed-heading" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: 'var(--accent)' }}>🎬</span> Entertainment
+                </h2>
+                <Link href="/?category=Entertainment" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  See More
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </Link>
+              </div>
+              <div className="top-stories-grid">
+                {entertainmentArticles.map(article => (
+                  <ArticleCard key={article.article_id} article={article} variant="default" />
+                ))}
+              </div>
+            </section>
+          )}
         </main>
 
         {/* Sidebar */}

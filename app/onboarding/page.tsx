@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
+import { Logo } from '@/components/layout/Logo'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
@@ -155,11 +156,7 @@ export default function OnboardingPage() {
       <div style={{ width: '100%', maxWidth: 600 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Link href="/">
-            <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-               026<span style={{ color: '#e23b3b' }}>Newsblog</span>
-            </span>
-          </Link>
+          <Logo size="md" href="/" />
         </div>
 
         {/* Progress */}

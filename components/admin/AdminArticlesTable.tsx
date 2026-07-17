@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Sparkles } from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
@@ -28,6 +29,7 @@ type ArticleRow = {
 }
 
 export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
+  const router = useRouter()
   const [seoFor, setSeoFor] = useState<{ article_id: number; title: string; slug: string; status: string } | null>(null)
 
   if (articles.length === 0) {
@@ -154,6 +156,7 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
         <ArticleSEOPanel
           article={seoFor}
           onClose={() => setSeoFor(null)}
+          onApplied={() => { setSeoFor(null); router.refresh() }}
         />
       )}
     </>
