@@ -10,7 +10,7 @@ import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio,
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
-import { MessageWidget } from '@/components/layout/MessageWidget'
+import { MessagePopout } from '@/components/layout/MessagePopout'
 import { NAV_LINKS } from '@/lib/constants/navigation'
 import { Logo } from '@/components/layout/Logo'
 
@@ -199,11 +199,7 @@ export function Navbar() {
 
             {/* Notification bell (authenticated) — dropdown */}
             {!userLoading && user && profile && (
-              <>
-                {/* Message widget — global quick chat */}
-                <MessageWidget userId={profile?.user_id ?? null} role={profile?.role} />
-
-                <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative' }}>
                   <button
                     onClick={() => {
                       setNotifOpen(!notifOpen)
@@ -248,10 +244,14 @@ export function Navbar() {
                         role={(profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader'}
                         onClose={() => setNotifOpen(false)}
                       />
-                    </>
+</>
                   )}
-                </div>
-              </>
+                  </div>
+                )}
+
+            {/* Message popout (authenticated) */}
+            {!userLoading && user && profile && (
+              <MessagePopout />
             )}
 
             {/* Auth states */}
