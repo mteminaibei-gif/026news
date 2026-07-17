@@ -43,6 +43,16 @@ export const RADIO_STATIONS: RadioStation[] = [
   { id: 'uliza', name: 'Uliza FM', genre: 'News / Talk (Swahili)', color: '#1d4ed8', streamUrl: 'https://stream.zeno.fm/ulizafm', listeners: 3100, region: 'ke', country: 'Kenya' },
   { id: 'sucess', name: 'Success FM', genre: 'Gospel / Inspirational', color: '#ca8a04', streamUrl: 'https://stream.zeno.fm/successfm', listeners: 2700, region: 'ke', country: 'Kenya' },
   { id: 'coro', name: 'Coro FM', genre: 'News / Talk (Kisii)', color: '#dc2626', streamUrl: 'https://stream.zeno.fm/corofm', listeners: 2200, region: 'ke', country: 'Kenya' },
+  { id: 'milele', name: 'Milele FM', genre: 'Swahili Entertainment / Talk', color: '#eab308', streamUrl: 'https://milelefm-atunwadigital.streamguys1.com/milelefm', listeners: 6800, region: 'ke', country: 'Kenya' },
+  { id: 'maisha', name: 'Radio Maisha', genre: 'News / Talk (Swahili)', color: '#0ea5e9', streamUrl: 'https://radiomaisha-atunwadigital.streamguys1.com/radiomaisha', listeners: 5900, region: 'ke', country: 'Kenya' },
+  { id: 'ghetto', name: 'Ghetto Radio', genre: 'Urban Youth / Swahili', color: '#f43f5e', streamUrl: 'https://stream.zeno.fm/ghettoradiokenya', listeners: 4500, region: 'ke', country: 'Kenya' },
+  { id: 'kameme', name: 'Kameme FM', genre: 'News / Talk (Kikuyu)', color: '#16a34a', streamUrl: 'https://kamemefm-atunwadigital.streamguys1.com/kamemefm', listeners: 5200, region: 'ke', country: 'Kenya' },
+  { id: 'mbaitu', name: 'Mbaitu FM', genre: 'Swahili Entertainment', color: '#d946ef', streamUrl: 'https://stream.zeno.fm/mbaitufm', listeners: 3500, region: 'ke', country: 'Kenya' },
+  { id: 'bahari', name: 'Bahari FM', genre: 'News / Talk (Coast)', color: '#06b6d4', streamUrl: 'https://stream.zeno.fm/baharifm', listeners: 2800, region: 'ke', country: 'Kenya' },
+  { id: 'baraka', name: 'Baraka FM', genre: 'Gospel / Inspirational', color: '#84cc16', streamUrl: 'https://stream.zeno.fm/barakafm', listeners: 3100, region: 'ke', country: 'Kenya' },
+  { id: 'muuga', name: 'Muuga FM', genre: 'News / Talk (Kamba)', color: '#f97316', streamUrl: 'https://stream.zeno.fm/muugafm', listeners: 2600, region: 'ke', country: 'Kenya' },
+  { id: 'sulwe', name: 'Sulwe FM', genre: 'Swahili Entertainment', color: '#ec4899', streamUrl: 'https://stream.zeno.fm/sulwefm', listeners: 3300, region: 'ke', country: 'Kenya' },
+  { id: 'mayian', name: 'Mayian FM', genre: 'News / Talk (Maa/Swahili)', color: '#8b5cf6', streamUrl: 'https://stream.zeno.fm/mayianfm', listeners: 1900, region: 'ke', country: 'Kenya' },
 
   // ── Global stations ────────────────────────────────────────
   { id: 'groove', name: '026 Groove', genre: 'Ambient / Downtempo', color: '#0f766e', streamUrl: 'https://ice1.somafm.com/groovesalad-128-mp3', listeners: 8420, region: 'global' },

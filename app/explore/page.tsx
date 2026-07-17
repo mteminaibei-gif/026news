@@ -3,12 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
-import { formatNumber, stripHtml } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 import { autoCategorize, getCategoryName, type CategorizationResult } from '@/lib/auto-categorize'
 import {
   Compass, TrendingUp, Loader2, Eye, Clock,
-  ChevronRight, Sparkles, ArrowLeft, Tag,
+  ChevronRight, Sparkles, ArrowLeft, Tag, Search, X,
 } from 'lucide-react'
 
 interface CategoryItem {
@@ -62,6 +61,7 @@ export default function ExplorePage() {
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [articles, setArticles] = useState<ExploreArticle[]>([])
   const [featuredArticles, setFeaturedArticles] = useState<ExploreArticle[]>([])
+  const [latestArticles, setLatestArticles] = useState<ExploreArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<CategoryItem | null>(null)
   const [analyzing, setAnalyzing] = useState<Set<number>>(new Set())
@@ -69,6 +69,9 @@ export default function ExplorePage() {
   const [page, setPage] = useState(1)
   const [totalArticles, setTotalArticles] = useState(0)
   const [hasMore, setHasMore] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<ExploreArticle[]>([])
+  const [searching, setSearching] = useState(false)
 
   const loadExploreData = useCallback(async () => {
     setLoading(true)
@@ -77,6 +80,7 @@ export default function ExplorePage() {
       const data = await res.json()
       if (data.categories) setCategories(data.categories)
       if (data.featuredArticles) setFeaturedArticles(data.featuredArticles as ExploreArticle[])
+      if (data.latestArticles) setLatestArticles(data.latestArticles as ExploreArticle[])
       if (data.totalArticles != null) setTotalArticles(data.totalArticles)
     } catch (err) {
       console.error('Failed to load explore data:', err)
@@ -127,6 +131,22 @@ export default function ExplorePage() {
     const nextPage = page + 1
     setPage(nextPage)
     loadCategoryArticles(activeCategory.id, nextPage)
+  }
+
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setSearchResults([]); return }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/explore?q=${encodeURIComponent(q)}`)
+      const data = await res.json()
+      setSearchResults(data.articles ?? [])
+    } catch { setSearchResults([]) }
+    finally { setSearching(false) }
+  }, [])
+
+  const clearSearch = () => {
+    setSearchQuery('')
+    setSearchResults([])
   }
 
   const classifyArticle = async (article: ExploreArticle) => {
@@ -182,7 +202,7 @@ export default function ExplorePage() {
     return sug && sug.bestCategoryId !== a.category_id
   })
 
-  if (loading && categories.length === 0 && articles.length === 0) {
+  if (loading && categories.length === 0 && articles.length === 0 && latestArticles.length === 0 && searchResults.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
         <div className="flex items-center gap-3">
@@ -197,7 +217,7 @@ export default function ExplorePage() {
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <section style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', padding: '32px 0 28px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', paddingInline: 24 }}>
-          <div className="flex items-center gap-3" style={{ marginBottom: activeCategory ? 16 : 4 }}>
+          <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
             {activeCategory ? (
               <button onClick={backToAll}
                 className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
@@ -211,22 +231,52 @@ export default function ExplorePage() {
                 <Compass size={22} style={{ color: '#fff' }} />
               </div>
             )}
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl font-extrabold text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                {activeCategory ? activeCategory.name : 'Explore'}
+                {activeCategory ? activeCategory.name : searchQuery ? `Search: ${searchQuery}` : 'Explore'}
               </h1>
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 {activeCategory
                   ? `${activeCategory.articleCount} articles · ${activeCategory.description || ''}`
-                  : `${totalArticles} articles across ${categories.length} categories`}
+                  : searchQuery
+                    ? `${searchResults.length} results`
+                    : `${totalArticles} articles across ${categories.length} categories`}
               </p>
             </div>
           </div>
+
+          {/* Search bar */}
+          {!activeCategory && (
+            <div className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.35)' }} />
+              <input
+                type="text"
+                placeholder="Search articles..."
+                value={searchQuery}
+                onChange={e => {
+                  setSearchQuery(e.target.value)
+                  if (e.target.value.trim()) doSearch(e.target.value)
+                  else setSearchResults([])
+                }}
+                className="w-full rounded-xl border-0 text-sm outline-none transition-all"
+                style={{
+                  padding: '10px 36px 10px 36px',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#fff',
+                }}
+              />
+              {searchQuery && (
+                <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 border-0 bg-transparent cursor-pointer" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 64px', width: '100%' }}>
-        {!activeCategory && (
+        {!activeCategory && !searchQuery && (
           <>
             {featuredArticles.length > 0 && (
               <section style={{ marginBottom: 36 }}>
@@ -271,6 +321,50 @@ export default function ExplorePage() {
               </section>
             )}
 
+            {/* Latest News section - always shown */}
+            {latestArticles.length > 0 && (
+              <section style={{ marginBottom: 36 }}>
+                <h2 className="text-base font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                  <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
+                  Latest News
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {latestArticles.map(a => (
+                    <Link key={a.article_id} href={`/article/${a.slug}`} style={{
+                      display: 'flex', gap: 12, padding: 12,
+                      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                      borderRadius: 14, textDecoration: 'none', color: 'inherit',
+                      transition: 'all 0.2s',
+                    }}>
+                      {a.featured_image ? (
+                        <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                          <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-16 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
+                          <Tag size={16} style={{ color: 'var(--text-tertiary)' }} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        {a.category?.name && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category.name] || 'var(--text-tertiary)' }}>
+                            {a.category.name}
+                          </span>
+                        )}
+                        <h3 className="text-xs font-semibold leading-tight mt-0.5 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+                          {a.title}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                          <span className="flex items-center gap-0.5"><Eye size={9} /> {formatNumber(a.views)}</span>
+                          <span>{new Date(a.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section>
               <h2 className="text-base font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                 <Compass size={16} style={{ color: 'var(--primary)' }} />
@@ -295,6 +389,67 @@ export default function ExplorePage() {
               </div>
             </section>
           </>
+        )}
+
+        {/* Search results */}
+        {!activeCategory && searchQuery && (
+          <section>
+            <h2 className="text-base font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <Search size={16} style={{ color: 'var(--primary)' }} />
+              Search Results
+            </h2>
+            {searching ? (
+              <div className="text-center py-16">
+                <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: 'var(--primary)' }} />
+                <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Searching...</p>
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                <Search size={40} className="mx-auto mb-4" style={{ color: 'var(--text-tertiary)' }} />
+                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No articles found</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Try a different search term.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {searchResults.map(a => (
+                  <Link key={a.article_id} href={`/article/${a.slug}`} style={{
+                    display: 'flex', gap: 16, padding: 16,
+                    background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 14, textDecoration: 'none', color: 'inherit',
+                    transition: 'all 0.2s',
+                  }}>
+                    {a.featured_image ? (
+                      <div className="relative w-24 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                        <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized sizes="96px" />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-20 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
+                        <Tag size={18} style={{ color: 'var(--text-tertiary)' }} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category?.name || ''] || 'var(--text-tertiary)' }}>
+                          {a.category?.name || 'Uncategorized'}
+                        </span>
+                        {a.is_aggregated && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: 'var(--bg-muted)', color: 'var(--text-muted)' }}>RSS</span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+                        {a.title}
+                      </h3>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                        <span className="flex items-center gap-1"><Eye size={11} /> {formatNumber(a.views)}</span>
+                        <span className="flex items-center gap-1"><Clock size={11} /> {new Date(a.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} style={{ color: 'var(--text-tertiary)', flexShrink: 0, alignSelf: 'center' }} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         {activeCategory && (

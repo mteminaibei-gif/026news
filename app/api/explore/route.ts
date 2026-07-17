@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+const ARTICLE_SELECT = 'article_id,title,slug,excerpt,content,featured_image,views,created_at,tags,source_name,source_reference,is_aggregated,category_id,author:users(name,profile_image),category:categories(name)'
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const categoryId = searchParams.get('category_id')
+    const query = searchParams.get('q')
     const page = Math.max(Number(searchParams.get('page') ?? '1'), 1)
     const limit = Math.min(Number(searchParams.get('limit') ?? '20'), 50)
     const offset = (page - 1) * limit
@@ -13,17 +16,35 @@ export async function GET(req: NextRequest) {
 
     if (categoryId) {
       const catId = Number(categoryId)
-      const { data: articles, count } = await supabase
+      let qb = supabase
         .from('articles')
         .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)', { count: 'exact' })
         .eq('status', 'published')
         .eq('category_id', catId)
+      if (query) qb = qb.ilike('title', `%${query}%`)
+      const { data: articles, count } = await qb
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
 
       return NextResponse.json({
         articles: articles ?? [],
         total: count ?? 0,
+        page,
+        limit,
+      })
+    }
+
+    if (query) {
+      const { data: articles } = await supabase
+        .from('articles')
+        .select(ARTICLE_SELECT, { count: 'exact' })
+        .eq('status', 'published')
+        .ilike('title', `%${query}%`)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
+      return NextResponse.json({
+        articles: articles ?? [],
+        query,
         page,
         limit,
       })
@@ -74,7 +95,7 @@ export async function GET(req: NextRequest) {
       for (const cat of categories.slice(0, 6)) {
         const { data: catArts } = await supabase
           .from('articles')
-          .select('article_id,title,slug,excerpt,content,featured_image,views,created_at,tags,source_name,source_reference,is_aggregated,category_id,author:users(name,profile_image),category:categories(name)')
+          .select(ARTICLE_SELECT)
           .eq('status', 'published')
           .eq('category_id', cat.id)
           .order('views', { ascending: false })
@@ -91,10 +112,19 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Always fetch latest articles as fallback content
+    const { data: latestArticles } = await supabase
+      .from('articles')
+      .select(ARTICLE_SELECT)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(18)
+
     return NextResponse.json({
       categories,
       totalArticles,
       featuredArticles,
+      latestArticles,
     })
   } catch (err) {
     console.error('[GET /api/explore]', err)

@@ -5,6 +5,7 @@ export interface TVStation {
   color: string
   streamUrl: string
   embedType: 'hls' | 'iframe'
+  fallbackUrl?: string
   website: string
   logo: string
   region: 'ke' | 'africa' | 'global'
@@ -18,13 +19,13 @@ export interface TVStation {
  * - HLS streams work natively in Safari; other browsers need hls.js (loaded via CDN).
  */
 export const KENYAN_TV_STATIONS: TVStation[] = [
-  { id: 'citizen', name: 'Citizen TV', genre: 'News / Entertainment', color: '#16a34a', streamUrl: 'https://live.citizentv.co.ke/live/citizentv/playlist.m3u8', embedType: 'hls', website: 'https://www.citizen.digital', logo: '🟢', region: 'ke', country: 'Kenya' },
-  { id: 'ntv', name: 'NTV Kenya', genre: 'News / Current Affairs', color: '#2563eb', streamUrl: 'https://uvotv-aniview.global.ssl.fastly.net/hls/live/2119696/ntvken/playlist.m3u8', embedType: 'hls', website: 'https://ntvkenya.co.ke', logo: '🔵', region: 'ke', country: 'Kenya' },
+  { id: 'citizen', name: 'Citizen TV', genre: 'News / Entertainment', color: '#16a34a', streamUrl: 'https://live.citizentv.co.ke/live/citizentv/playlist.m3u8', fallbackUrl: 'https://www.youtube.com/embed/live_stream?channel=UCKtlDdGB0tYAsB5l3dEHICA&autoplay=1', embedType: 'hls', website: 'https://www.citizen.digital', logo: '🟢', region: 'ke', country: 'Kenya' },
+  { id: 'ntv', name: 'NTV Kenya', genre: 'News / Current Affairs', color: '#2563eb', streamUrl: 'https://uvotv-aniview.global.ssl.fastly.net/hls/live/2119696/ntvken/playlist.m3u8', fallbackUrl: 'https://www.youtube.com/embed/live_stream?channel=UCh7eENaG0tKPyN3JvlW8uQQ&autoplay=1', embedType: 'hls', website: 'https://ntvkenya.co.ke', logo: '🔵', region: 'ke', country: 'Kenya' },
   { id: 'kbc', name: 'KBC TV', genre: 'News / Public Service', color: '#0f766e', streamUrl: 'https://live.kbc.co.ke/live/kbc1/playlist.m3u8', embedType: 'hls', website: 'https://www.kbc.co.ke', logo: '🟦', region: 'ke', country: 'Kenya' },
-  { id: 'k24', name: 'K24 TV', genre: 'News / Entertainment', color: '#e11d48', streamUrl: 'https://live.k24tv.co.ke/live/k24/playlist.m3u8', embedType: 'hls', website: 'https://www.k24tv.co.ke', logo: '🔴', region: 'ke', country: 'Kenya' },
+  { id: 'k24', name: 'K24 TV', genre: 'News / Entertainment', color: '#e11d48', streamUrl: 'https://live.k24tv.co.ke/live/k24/playlist.m3u8', fallbackUrl: 'https://www.youtube.com/embed/live_stream?channel=UCzDMJPHNQMX2v7z7aRsf1Og&autoplay=1', embedType: 'hls', website: 'https://www.k24tv.co.ke', logo: '🔴', region: 'ke', country: 'Kenya' },
   { id: 'nation', name: 'Nation TV', genre: 'News / Business', color: '#ea580c', streamUrl: 'https://live.ntvkenya.co.ke/live/nation/playlist.m3u8', embedType: 'hls', website: 'https://nation.africa', logo: '🟠', region: 'ke', country: 'Kenya' },
-  { id: 'switch', name: 'Switch TV', genre: 'Youth / Entertainment', color: '#7c3aed', streamUrl: 'https://live.switchtv.ke/live/switchtv/playlist.m3u8', embedType: 'hls', website: 'https://www.switchtv.ke', logo: '🟣', region: 'ke', country: 'Kenya' },
-  { id: 'tv47', name: 'TV47', genre: 'News / Sports', color: '#ca8a04', streamUrl: 'https://live.tv47.ke/live/tv47/playlist.m3u8', embedType: 'hls', website: 'https://tv47.ke', logo: '🟡', region: 'ke', country: 'Kenya' },
+  { id: 'switch', name: 'Switch TV', genre: 'Youth / Entertainment', color: '#7c3aed', streamUrl: 'https://live.switchtv.ke/live/switchtv/playlist.m3u8', fallbackUrl: 'https://www.youtube.com/embed/live_stream?channel=UCU0JWNJ2HKK2N8QLoqZErCg&autoplay=1', embedType: 'hls', website: 'https://www.switchtv.ke', logo: '🟣', region: 'ke', country: 'Kenya' },
+  { id: 'tv47', name: 'TV47', genre: 'News / Sports', color: '#ca8a04', streamUrl: 'https://live.tv47.ke/live/tv47/playlist.m3u8', fallbackUrl: 'https://www.youtube.com/embed/live_stream?channel=UCLRHRTZnNhkB1FUQ8SblLZw&autoplay=1', embedType: 'hls', website: 'https://tv47.ke', logo: '🟡', region: 'ke', country: 'Kenya' },
   { id: 'kiss', name: 'Kiss TV', genre: 'Entertainment / Music', color: '#db2777', streamUrl: 'https://live.kisstv.co.ke/live/kisstv/playlist.m3u8', embedType: 'hls', website: 'https://www.kiss.co.ke', logo: '🩷', region: 'ke', country: 'Kenya' },
 ]
 

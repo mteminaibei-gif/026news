@@ -9,7 +9,7 @@ import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, ALL_TV_STA
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { Tv, Eye, Clock, Play, Pause, Globe, RefreshCw, Shuffle } from 'lucide-react'
-import { initHlsPlayback } from '@/lib/tv/hls-player'
+import { initHlsPlaybackWithRetry } from '@/lib/tv/hls-player'
 
 type TVArticle = {
   article_id: number
@@ -26,7 +26,7 @@ type TVArticle = {
 }
 
 function TVPageContent() {
-  const { currentStation, isPlaying, playStation, stop, status, error } = useTVGlobal()
+  const { currentStation, isPlaying, playStation, stop, status, error, setStatus, setError } = useTVGlobal()
   const [articles, setArticles] = useState<TVArticle[]>([])
   const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'africa' | 'global'>('live')
 
@@ -149,6 +149,7 @@ function TVPageContent() {
         {/* Inline Player — shows when a station is selected */}
         {currentStation && (
           <div
+            key={currentStation.id}
             className="rounded-2xl overflow-hidden mb-8"
             style={{ border: `2px solid ${currentStation.color}`, boxShadow: `0 8px 32px ${currentStation.color}22` }}
           >
@@ -181,20 +182,34 @@ function TVPageContent() {
             <div className="relative bg-black" style={{ paddingBottom: '56.25%', minHeight: 200 }}>
               {currentStation.embedType === 'hls' ? (
                 <video
+                  key={currentStation.id}
                   className="absolute inset-0 w-full h-full object-contain"
                   playsInline
                   muted
                   autoPlay
                   controls
                   ref={(el) => {
-                    if (!el) return
-                    initHlsPlayback(el, currentStation.streamUrl, {
-                      onError: (msg) => console.error('HLS error:', msg),
+                    if (!el || el.dataset.hlsInit) return
+                    el.dataset.hlsInit = '1'
+                    const doFallback = () => {
+                      if (!currentStation.fallbackUrl) return
+                      const iframe = document.createElement('iframe')
+                      iframe.className = 'absolute inset-0 w-full h-full'
+                      iframe.src = currentStation.fallbackUrl
+                      iframe.allow = 'autoplay; encrypted-media; fullscreen'
+                      iframe.allowFullscreen = true
+                      el.parentNode?.replaceChild(iframe, el)
+                    }
+                    initHlsPlaybackWithRetry(el, currentStation.streamUrl, 2, 3000, {
+                      onPlaying: () => { if (status !== 'playing') setStatus('playing') },
+                      onError: (msg) => { if (!currentStation.fallbackUrl) setError(msg) },
+                      onFatal: () => { if (currentStation.fallbackUrl) doFallback(); else setError('Stream ended') },
                     })
                   }}
                 />
               ) : (
                 <iframe
+                  key={currentStation.id}
                   className="absolute inset-0 w-full h-full"
                   src={currentStation.streamUrl}
                   allow="autoplay; encrypted-media; fullscreen"
