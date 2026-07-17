@@ -8,7 +8,7 @@ import { sendPushToAll } from '@/lib/push/send'
 import { parseRssXml, contentHash, makeUniqueSlug, fetchOgImage, normalizeImageUrl } from '@/lib/rss/parser'
 
 // ── Types ─────────────────────────────────────────────────────
-type Feed = { feed_id: number; name: string; feed_url: string; category_id: number | null }
+type Feed = { feed_id: number; name: string; feed_url: string; category_id: number | null; error_count?: number }
 
 // ── Route handler ─────────────────────────────────────────────
 export async function POST(req: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   // Fetch active RSS feeds
   const { data: rawFeeds } = await adminSupabase
     .from('rss_feeds')
-    .select('feed_id, name, feed_url, category_id')
+    .select('feed_id, name, feed_url, category_id, error_count')
     .eq('is_active', true)
   const feeds = (rawFeeds ?? []) as unknown as Feed[]
 
@@ -181,6 +181,10 @@ export async function POST(req: NextRequest) {
       const msg = err instanceof Error ? err.message : 'unknown error'
       results[feed.name] = `ERROR: ${msg}`
       totalErrors++
+      await adminSupabase
+        .from('rss_feeds')
+        .update({ last_error: msg, error_count: ((feed as { error_count?: number }).error_count ?? 0) + 1 } as never)
+        .eq('feed_id', feed.feed_id)
     }
   }
 

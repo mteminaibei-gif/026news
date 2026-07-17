@@ -1,7 +1,9 @@
 /**
- * Seed RSS feeds for 026NEWS — Real, active feeds covering Kenya,
- * East Africa, Africa, World, Sports, Tech, Business & Health.
+ * Seed RSS feeds for 026NEWS — verified URLs from the July 2024 audit.
  * Run:  npx tsx --env-file=.env.local scripts/seed_rss_feeds.ts
+ *
+ * Sources are organised by tier (1 = highest priority).
+ * See RSS_FEEDS_AUDIT.md for the full audit report.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -12,104 +14,111 @@ const supabase = createClient(
   { auth: { persistSession: false } }
 )
 
-// Map category names exactly as they appear in your DB
-const CATEGORY_MAP: Record<string, { name: string; url: string }[]> = {
+interface FeedEntry { name: string; url: string; priority: number }
+
+const FEEDS_BY_CATEGORY: Record<string, FeedEntry[]> = {
   'Kenya': [
-    { name: 'Nation Africa Kenya', url: 'https://nation.africa/kenya/rss.xml' },
-    { name: 'The Standard Kenya', url: 'https://www.standardmedia.co.ke/rss/latest_news.php' },
-    { name: 'Citizen Digital Kenya', url: 'https://www.citizen.digital/rss' },
-    { name: 'Tuko Kenya', url: 'https://www.tuko.co.ke/rss' },
-    { name: 'Capital FM Kenya', url: 'https://www.capitalfm.co.ke/news/feed/' },
-    { name: 'KBC Kenya', url: 'https://www.kbc.co.ke/feed/' },
-    { name: 'Business Daily Africa', url: 'https://www.businessdailyafrica.com/rss.xml' },
-    { name: 'The East African', url: 'https://www.theeastafrican.co.ke/rss.xml' },
+    // ── Tier 1: Premium Kenyan News (Priority 95) ──
+    { name: 'Nation Africa — Top Stories',     url: 'https://nation.africa/kenya/feed.xml',              priority: 95 },
+    { name: 'Nation Africa — Business',        url: 'https://nation.africa/kenya/business/feed.xml',    priority: 95 },
+    { name: 'Nation Africa — Politics',        url: 'https://nation.africa/kenya/politics/feed.xml',    priority: 95 },
+    { name: 'Nation Africa — Sports',          url: 'https://nation.africa/kenya/sports/feed.xml',      priority: 95 },
+    { name: 'Nation Africa — Technology',      url: 'https://nation.africa/kenya/tech/feed.xml',        priority: 95 },
+    { name: 'The Standard — Kenya News',       url: 'https://www.standardmedia.co.ke/feeds/news.xml',   priority: 95 },
+    { name: 'The Standard — Business',         url: 'https://www.standardmedia.co.ke/feeds/business.xml', priority: 95 },
+    { name: 'The Standard — Sports',           url: 'https://www.standardmedia.co.ke/feeds/sports.xml',  priority: 95 },
+    { name: 'KBC — Kenya News',                url: 'https://www.kbc.co.ke/category/kenya-news/feed/',  priority: 95 },
+    { name: 'KBC — Business',                  url: 'https://www.kbc.co.ke/category/business/feed/',    priority: 95 },
+    { name: 'Citizen Digital — Top Stories',   url: 'https://www.citizen.digital/feed',                 priority: 95 },
+    { name: 'Citizen Digital — Politics',      url: 'https://www.citizen.digital/category/politics/feed', priority: 95 },
+    // ── Tier 2: Quality Kenyan Media (Priority 80-89) ──
+    { name: 'The Star Kenya — News',           url: 'https://www.the-star.co.ke/rss/',                  priority: 85 },
+    { name: 'The Star Kenya — Business',       url: 'https://www.the-star.co.ke/rss/business/',         priority: 85 },
+    { name: 'Capital FM — News',              url: 'https://www.capitalfm.co.ke/news/feed/',           priority: 85 },
+    { name: 'Capital FM — Business',           url: 'https://www.capitalfm.co.ke/business/feed/',       priority: 85 },
+    { name: 'Business Daily Africa',           url: 'https://businessdailyafrica.com/feed/',             priority: 80 },
+    // ── Tier 3: Pan-African with Kenya focus ──
+    { name: 'AllAfrica — Kenya Stories',       url: 'https://allafrica.com/tools/headlines/rdf/kenya/headlines.rdf', priority: 65 },
   ],
   'Africa': [
-    { name: 'BBC Africa', url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml' },
-    { name: 'Al Jazeera Africa', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
-    { name: 'AllAfrica', url: 'https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf' },
-    { name: 'African Arguments', url: 'https://africanarguments.org/feed/' },
-    { name: 'The Africa Report', url: 'https://www.theafricareport.com/feed/' },
-    { name: 'Quartz Africa', url: 'https://qz.com/africa/rss' },
+    { name: 'BBC News — Africa',               url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', priority: 50 },
+    { name: 'AllAfrica — East Africa',         url: 'https://allafrica.com/tools/headlines/rdf/eastafrica/headlines.rdf', priority: 65 },
+    { name: 'Quartz Africa',                   url: 'https://qz.com/africa/feed',                       priority: 60 },
+    { name: 'The East African',                url: 'https://www.theeastafrican.co.ke/tea/rss/',         priority: 60 },
+    { name: 'Africanews',                      url: 'https://www.africanews.com/feed/',                  priority: 55 },
   ],
   'World': [
-    { name: 'BBC World News', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
-    { name: 'Reuters World', url: 'https://feeds.reuters.com/reuters/worldnews' },
-    { name: 'AP World News', url: 'https://rsshub.app/apnews/topics/world-news' },
-    { name: 'Al Jazeera English', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
-    { name: 'France24 English', url: 'https://www.france24.com/en/rss' },
-    { name: 'DW World', url: 'https://rss.dw.com/rdf/rss-en-world' },
-  ],
-  'Politics': [
-    { name: 'BBC Politics', url: 'https://feeds.bbci.co.uk/news/politics/rss.xml' },
-    { name: 'The East African Politics', url: 'https://www.theeastafrican.co.ke/rss.xml' },
-    { name: 'Daily Nation Politics', url: 'https://nation.africa/kenya/politics/rss.xml' },
+    { name: 'BBC News — World',                url: 'https://feeds.bbci.co.uk/news/world/rss.xml',       priority: 45 },
+    { name: 'Al Jazeera English',              url: 'https://www.aljazeera.com/xml/rss/all.xml',         priority: 40 },
+    { name: 'NPR News',                        url: 'https://feeds.npr.org/1001/rss.xml',               priority: 40 },
   ],
   'Business': [
-    { name: 'Reuters Business', url: 'https://feeds.reuters.com/reuters/businessnews' },
-    { name: 'Bloomberg Feed', url: 'https://feeds.bloomberg.com/markets/news.rss' },
-    { name: 'Business Daily Africa', url: 'https://www.businessdailyafrica.com/rss.xml' },
-    { name: 'CNBC Business', url: 'https://www.cnbc.com/id/10001147/device/rss/rss.html' },
-    { name: 'Quartz Business', url: 'https://qz.com/rss' },
+    { name: 'BBC News — Business',             url: 'https://feeds.bbci.co.uk/news/business/rss.xml',    priority: 40 },
+    { name: 'Stratechery',                     url: 'https://stratechery.com/feed/',                    priority: 25 },
   ],
   'Technology': [
-    { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
-    { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml' },
-    { name: 'Wired', url: 'https://www.wired.com/feed/rss' },
-    { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index' },
-    { name: 'Disrupt Africa Tech', url: 'https://disrupt-africa.com/feed/' },
-    { name: 'Techpoint Africa', url: 'https://techpoint.africa/feed/' },
+    { name: 'Techweez — Kenya Tech',           url: 'https://techweez.com/feed/',                       priority: 80 },
+    { name: 'AllAfrica — Technology',          url: 'https://allafrica.com/tools/headlines/rdf/technology/headlines.rdf', priority: 50 },
+    { name: 'BBC News — Technology',           url: 'https://feeds.bbci.co.uk/news/technology/rss.xml',  priority: 35 },
+    { name: 'TechCrunch',                      url: 'https://techcrunch.com/feed/',                     priority: 25 },
+    { name: 'The Verge',                       url: 'https://www.theverge.com/rss/index.xml',            priority: 25 },
+    { name: 'Wired',                           url: 'https://www.wired.com/feed/rss',                    priority: 25 },
+    { name: 'Ars Technica',                    url: 'https://feeds.arstechnica.com/arstechnica/index',   priority: 25 },
+    { name: 'HackerNoon',                      url: 'https://hackernoon.com/feed',                      priority: 20 },
+    { name: 'MIT Technology Review',           url: 'https://www.technologyreview.com/feed/',            priority: 20 },
   ],
   'Sports': [
-    { name: 'BBC Sport', url: 'https://feeds.bbci.co.uk/sport/rss.xml' },
-    { name: 'ESPN FC', url: 'https://www.espn.com/espn/rss/soccer/news' },
-    { name: 'Goal.com', url: 'https://www.goal.com/feeds/en/news' },
-    { name: 'Sky Sports', url: 'https://www.skysports.com/rss/12040' },
-    { name: 'SuperSport Africa', url: 'https://www.supersport.com/rss/news' },
-    { name: 'KPL Kenya Premier League', url: 'https://www.kpl.co.ke/feed' },
+    { name: 'BBC Sport',                       url: 'https://feeds.bbci.co.uk/sport/rss.xml',            priority: 40 },
+  ],
+  'Science': [
+    { name: 'BBC News — Science',              url: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', priority: 35 },
+    { name: 'NASA Breaking News',              url: 'https://www.nasa.gov/rss/dyn/breaking_news.rss',    priority: 20 },
+    { name: 'Quanta Magazine',                 url: 'https://www.quantamagazine.org/feed/',             priority: 20 },
+    { name: 'ScienceDaily',                    url: 'https://www.sciencedaily.com/rss/all.xml',          priority: 20 },
   ],
   'Health': [
-    { name: 'WHO News', url: 'https://www.who.int/rss-feeds/news-english.xml' },
-    { name: 'BBC Health', url: 'https://feeds.bbci.co.uk/news/health/rss.xml' },
-    { name: 'Reuters Health', url: 'https://feeds.reuters.com/reuters/healthnews' },
-    { name: 'Medical Xpress Africa', url: 'https://medicalxpress.com/rss-feed/' },
+    { name: 'BBC Health',                      url: 'https://feeds.bbci.co.uk/news/health/rss.xml',      priority: 40 },
   ],
   'Entertainment': [
-    { name: 'Pulse Kenya Entertainment', url: 'https://www.pulselive.co.ke/entertainment/rss' },
-    { name: 'BBC Entertainment', url: 'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml' },
-    { name: 'Variety', url: 'https://variety.com/feed/' },
+    { name: 'BBC Entertainment',               url: 'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml', priority: 40 },
+    { name: 'Variety',                         url: 'https://variety.com/feed/',                        priority: 30 },
   ],
 }
 
 async function main() {
-  // Fetch all categories from DB
   const { data: cats, error: catErr } = await supabase
     .from('categories')
     .select('category_id, name')
-  
+
   if (catErr || !cats) {
     console.error('Failed to fetch categories:', catErr?.message)
     process.exit(1)
   }
 
-  console.log(`Found ${cats.length} categories:`, cats.map((c: any) => c.name).join(', '))
+  console.log(`Found ${cats.length} categories:`, (cats as any[]).map((c: any) => c.name).join(', '))
 
   let inserted = 0
   let skipped = 0
+  const seenUrls = new Set<string>()
 
-  for (const [categoryName, feeds] of Object.entries(CATEGORY_MAP)) {
-    // Try exact match first, then case-insensitive
+  for (const [categoryName, feeds] of Object.entries(FEEDS_BY_CATEGORY)) {
     const cat = (cats as any[]).find(
       (c: any) => c.name.toLowerCase() === categoryName.toLowerCase()
     )
 
     if (!cat) {
-      console.warn(`⚠️  Category "${categoryName}" not found in DB — skipping ${(feeds as any[]).length} feeds`)
+      console.warn(`⚠  Category "${categoryName}" not found — skipping ${feeds.length} feeds`)
       continue
     }
 
-    for (const feed of feeds as any[]) {
-      // Check if already exists
+    for (const feed of feeds) {
+      if (seenUrls.has(feed.url)) {
+        console.log(`⏩  Duplicate URL skipped: ${feed.name}`)
+        skipped++
+        continue
+      }
+      seenUrls.add(feed.url)
+
       const { data: existing } = await supabase
         .from('rss_feeds')
         .select('feed_id')
@@ -127,20 +136,21 @@ async function main() {
         feed_url: feed.url,
         category_id: cat.category_id,
         is_active: true,
+        priority: feed.priority,
         fetch_count: 0,
       } as never)
 
       if (error) {
-        console.error(`❌ Failed to insert ${feed.name}:`, error.message)
+        console.error(`✖ Failed to insert ${feed.name}:`, error.message)
       } else {
-        console.log(`✅ Inserted: ${feed.name} → ${categoryName}`)
+        console.log(`✓ Inserted: ${feed.name} → ${categoryName} (priority ${feed.priority})`)
         inserted++
       }
     }
   }
 
-  console.log(`\n🎉 Done! ${inserted} feeds inserted, ${skipped} already existed.`)
-  console.log('Now go to /admin/sources or call /api/cron/fetch-feeds to pull articles.')
+  console.log(`\nDone! ${inserted} feeds inserted, ${skipped} skipped.`)
+  console.log('Go to /admin/sources or call /api/cron/fetch-feeds to pull articles.')
 }
 
 main().catch(console.error)
