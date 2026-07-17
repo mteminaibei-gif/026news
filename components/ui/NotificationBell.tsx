@@ -24,6 +24,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   follow: '👤',
   article_published: '📰',
   mention: '🏷️',
+  message: '✉️',
   system: '🔔',
 }
 

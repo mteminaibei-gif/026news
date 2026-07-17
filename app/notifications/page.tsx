@@ -34,6 +34,7 @@ const TYPE_META: Record<NotificationType, { icon: string; bg: string; color: str
   follow:             { icon: '👤', bg: 'var(--primary-light)', color: 'var(--primary)' },
   article_published:  { icon: '📰', bg: 'var(--success-light)', color: 'var(--success)' },
   mention:            { icon: '🏷️', bg: 'var(--warning-light)', color: 'var(--warning)' },
+  message:            { icon: '✉️', bg: 'var(--accent-light)', color: 'var(--accent)' },
   system:             { icon: '🔔', bg: 'var(--bg-inset)', color: 'var(--text-tertiary)' },
 }
 

@@ -16,6 +16,7 @@ export type NotificationType =
   | 'follow'
   | 'article_published'
   | 'mention'
+  | 'message'
   | 'system'
 
 export interface AppNotification {

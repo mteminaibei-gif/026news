@@ -19,6 +19,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   follow: '👤',
   article_published: '📰',
   mention: '🏷️',
+  message: '✉️',
   system: '🔔',
 }
 
@@ -53,7 +54,8 @@ export function NavbarNotificationDropdown({ userId, role, onClose }: Props) {
     <div
       style={{
         position: 'absolute', right: 0, top: '100%', marginTop: 8,
-        width: 380, maxHeight: 480,
+        width: 'min(380px, calc(100vw - 24px))',
+        maxHeight: 'min(480px, calc(100dvh - 80px))',
         background: 'var(--bg-elevated)',
         borderRadius: 14,
         boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
@@ -216,6 +218,30 @@ export function NavbarNotificationDropdown({ userId, role, onClose }: Props) {
           View all notifications
         </Link>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          div[role="dialog"][aria-label="Notifications"] {
+            position: fixed !important;
+            right: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            top: auto !important;
+            margin: 0 !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 75dvh !important;
+            max-height: 75dvh !important;
+            border-radius: 18px 18px 0 0 !important;
+            border-bottom: none !important;
+            animation: notif-sheet-up 0.25s var(--ease-out-expo, ease);
+          }
+          @keyframes notif-sheet-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+          }
+        }
+      `}</style>
     </div>
   )
 }
