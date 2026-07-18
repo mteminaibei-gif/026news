@@ -39,6 +39,7 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
     // reader
       return [
         { href: '/profile', label: 'My Profile', icon: User },
+        { href: '/stats', label: 'Reading Stats', icon: BarChart3 },
         { href: '/activity', label: 'My Activity', icon: BarChart3 },
         { href: '/saved', label: 'Saved Articles', icon: Bookmark },
         { href: '/inbox', label: 'Messages', icon: MessageSquare },

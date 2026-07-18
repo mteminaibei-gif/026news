@@ -510,6 +510,16 @@ html:not(.dark):not([data-theme="dark"]) .bg-white { background-color: #ffffff !
 html:not(.dark):not([data-theme="dark"]) .bg-gray-50 { background-color: oklch(97% 0.008 180) !important; }
 html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(95% 0.006 180) !important; }
 
+/* ── Reader stats heatmap ──────────────────────────────── */
+.heat-cell.l1 { background: oklch(88% 0.03 175) !important; }
+.heat-cell.l2 { background: oklch(75% 0.06 175) !important; }
+.heat-cell.l3 { background: oklch(60% 0.09 175) !important; }
+.heat-cell.l4 { background: oklch(45% 0.12 175) !important; }
+[data-theme="dark"] .heat-cell.l1 { background: oklch(25% 0.03 175) !important; }
+[data-theme="dark"] .heat-cell.l2 { background: oklch(32% 0.06 175) !important; }
+[data-theme="dark"] .heat-cell.l3 { background: oklch(42% 0.09 175) !important; }
+[data-theme="dark"] .heat-cell.l4 { background: oklch(55% 0.12 175) !important; }
+
 /* ── Mobile navigation ──────────────────────────────────── */
 @media (max-width: 1024px) {
   nav#mobile-nav {

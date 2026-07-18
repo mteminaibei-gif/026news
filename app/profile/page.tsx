@@ -6,9 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Sun, Moon, Send, ThumbsUp, Reply, Star } from 'lucide-react'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, ThumbsUp, Reply, Star, BarChart3 } from 'lucide-react'
 import { ProfileNav } from '@/components/layout/ProfileNav'
-import { Logo } from '@/components/layout/Logo'
 
 interface UserProfile {
   name: string; role: string; email?: string; created_at?: string
@@ -22,10 +21,11 @@ export default function ProfilePage() {
   const [userId, setUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('saved')
-  const [theme, setTheme] = useState('light')
 
   const [savedArticles, setSaved] = useState([])
   const [likedArticles, setLiked] = useState([])
+  const [comments, setComments] = useState([])
+  const [following, setFollowing] = useState([])
   const [conversations, setConversations] = useState([])
   const [notifs, setNotifs] = useState([])
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
@@ -37,8 +37,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadProfile()
-    const savedTheme = localStorage.getItem('026-theme')
-    if (savedTheme) { setTheme(savedTheme); document.documentElement.setAttribute('data-theme', savedTheme) }
   }, [])
 
   useEffect(() => {
@@ -53,13 +51,6 @@ export default function ProfilePage() {
     loadInterests()
     loadReadingActivity()
   }, [userId])
-
-  const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
-    setTheme(next)
-    document.documentElement.setAttribute('data-theme', next)
-    localStorage.setItem('026-theme', next)
-  }
 
   const loadProfile = async () => {
     try {
@@ -327,26 +318,6 @@ export default function ProfilePage() {
 
   return (
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
-      {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60, padding: '0 24px' }}>
-          <Logo size="md" href="/" />
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button onClick={toggleTheme} className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-            <button className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', position: 'relative' }}>
-              <MessageSquare size={18} />
-              <span style={{ position: 'absolute', top: 7, right: 7, width: 7, height: 7, background: 'var(--error)', borderRadius: '50%', border: '2px solid var(--bg-base)' }} />
-            </button>
-            <button className="icon-btn" style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', position: 'relative' }}>
-              <Bell size={18} />
-              <span style={{ position: 'absolute', top: 7, right: 7, width: 7, height: 7, background: 'var(--error)', borderRadius: '50%', border: '2px solid var(--bg-base)' }} />
-            </button>
-          </div>
-        </div>
-      </nav>
-
       {/* Profile Header */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0' }}>
         <div className="profile-header" style={{ marginBottom: 32 }}>
@@ -369,6 +340,9 @@ export default function ProfilePage() {
           <div className="profile-header-actions">
             <Link href="/settings" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <Settings size={15} /> Settings
+            </Link>
+            <Link href="/stats" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <BarChart3 size={15} /> Stats
             </Link>
             <Link href="/settings" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: 'none', color: 'oklch(98% 0.005 175)', background: 'var(--primary)', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               Edit Profile

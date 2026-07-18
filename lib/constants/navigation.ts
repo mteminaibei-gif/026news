@@ -55,6 +55,9 @@ export const ROUTES = {
   // User
   PROFILE: '/profile',
   DASHBOARD: '/profile',
+  STATS: '/stats',
+  ACTIVITY: '/activity',
+  SAVED: '/saved',
   INBOX: '/inbox',
   
   // Other

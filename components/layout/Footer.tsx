@@ -43,9 +43,9 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row gap-10 mb-10 pb-10" style={{ borderBottom: '1px solid var(--border)' }}>
           {/* Brand */}
           <div className="lg:w-1/3">
-            <Link href="/" aria-label="026connet! home" className="block mb-4">
+            <div className="block mb-4">
               <Logo size="md" />
-            </Link>
+            </div>
             <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
               Kenya&apos;s premier digital news platform. Breaking news, in-depth analysis, and community journalism from Nairobi and across Africa.
             </p>
