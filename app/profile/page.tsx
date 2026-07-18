@@ -71,27 +71,29 @@ export default function ProfilePage() {
         setUserId(p.user_id)
         return
       }
-      // New reader account with no users row yet: fall back to the auth
-      // user so the page renders, then lazily create the profile row.
-      const fallback: UserProfile = {
+      // No users row yet — ask the server to create it (server-side,
+      // bypasses RLS so it always succeeds for a valid session).
+      try {
+        const res = await fetch('/api/profile/ensure', { method: 'POST' })
+        if (res.ok) {
+          const { profile } = await res.json()
+          if (profile) {
+            setUser(profile as UserProfile)
+            setUserId((profile as any).user_id)
+            return
+          }
+        }
+      } catch {}
+      // Last-resort fallback so the page still renders.
+      setUser({
         name: (authUser.user_metadata?.name as string) || (authUser.email ? authUser.email.split('@')[0] : 'Reader'),
         role: (authUser.user_metadata?.role as string) || 'reader',
         email: authUser.email ?? undefined,
         profile_image: (authUser.user_metadata?.avatar_url as string) || null,
         created_at: authUser.created_at,
-      }
-      setUser(fallback)
+      })
       setUserId(null)
-      try {
-        const { data: created } = await supabase
-          .from('users')
-          .upsert({ auth_id: authUser.id, name: fallback.name, email: (authUser.email || '').toLowerCase(), role: fallback.role, status: 'active' } as never, { onConflict: 'auth_id' })
-          .select('user_id')
-          .maybeSingle()
-        if (created) setUserId((created as any).user_id)
-      } catch {}
     } catch {
-      // Ensure we still render something instead of an endless spinner.
       setUser({ name: 'Reader', role: 'reader' })
       setUserId(null)
     } finally {

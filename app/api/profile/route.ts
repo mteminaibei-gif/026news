@@ -1,6 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+// POST /api/profile/ensure — guarantee a users row exists for the
+// logged-in auth user. The handle_new_user trigger normally creates
+// it on signup, but if that didn't run (or the row is missing for
+// any reason) we create it here server-side using the admin client
+// so the profile page never breaks for a valid session.
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+    const name =
+      (typeof meta.name === 'string' && meta.name.trim()) ||
+      (user.email ? user.email.split('@')[0] : '') ||
+      'Reader'
+    const role = (typeof meta.role === 'string' ? meta.role : 'reader') as string
+    const email = (user.email || '').toLowerCase()
+
+    const adminDb = await createAdminClient()
+    const { data, error } = await adminDb
+      .from('users')
+      .upsert(
+        { auth_id: user.id, name, email, role, status: 'active', password_hash: '' } as never,
+        { onConflict: 'auth_id' },
+      )
+      .select('user_id, name, role, email, profile_image, bio, created_at')
+      .maybeSingle()
+
+    if (error) throw error
+    return NextResponse.json({ profile: data })
+  } catch (err) {
+    console.error('[POST /api/profile/ensure]', err)
+    return NextResponse.json({ error: 'Failed to ensure profile' }, { status: 500 })
+  }
+}
+
 // PATCH /api/profile — update reader's own profile
 export async function PATCH(req: NextRequest) {
   try {
