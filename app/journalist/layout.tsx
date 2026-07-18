@@ -4,7 +4,7 @@ import { Topbar } from '@/components/layout/Topbar'
 import { ChatWidget } from '@/components/layout/ChatWidget'
 import { JournalistSidebar } from '@/components/journalist/JournalistSidebar'
 
-type UserProfile = { name: string; profile_image: string | null; role: string }
+type UserProfile = { user_id: number; name: string; profile_image: string | null; role: string }
 
 const JOURNALIST_MOBILE_NAV = [
   {
@@ -33,7 +33,7 @@ export default async function JournalistLayout({ children }: { children: React.R
 
   const { data: rawProfile } = await supabase
     .from('users')
-    .select('name, profile_image, role')
+      .select('user_id, name, profile_image, role')
     .eq('auth_id', user.id)
     .single()
 
@@ -50,6 +50,7 @@ export default async function JournalistLayout({ children }: { children: React.R
         <Topbar
           title="Journalist"
           user={{ name: profile.name, profile_image: profile.profile_image }}
+          notifications={{ userId: profile.user_id, role: 'journalist' }}
           mobileNav={{
             title: 'Journalist',
             groups: JOURNALIST_MOBILE_NAV,

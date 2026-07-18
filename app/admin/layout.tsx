@@ -5,7 +5,7 @@ import { ChatWidget } from '@/components/layout/ChatWidget'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { MobileDrawerNav } from '@/components/layout/MobileDrawerNav'
 
-type UserProfile = { name: string; profile_image: string | null; role: string }
+type UserProfile = { user_id: number; name: string; profile_image: string | null; role: string }
 
 const ADMIN_MOBILE_NAV = [
   {
@@ -45,7 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
     const { data: rawProfile } = await supabase
       .from('users')
-      .select('name, profile_image, role')
+      .select('user_id, name, profile_image, role')
       .eq('auth_id', user.id)
       .single()
 
@@ -62,6 +62,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Topbar
           title="Admin"
           user={{ name: profile.name, profile_image: profile.profile_image }}
+          notifications={{ userId: profile.user_id, role: 'admin' }}
           mobileNav={{
             title: 'Admin',
             groups: ADMIN_MOBILE_NAV,

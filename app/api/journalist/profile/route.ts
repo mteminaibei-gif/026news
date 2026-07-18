@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 // PATCH /api/journalist/profile — update own profile
 export async function PATCH(req: NextRequest) {
@@ -33,8 +33,10 @@ export async function PATCH(req: NextRequest) {
       ...(linkedin     !== undefined ? { linkedin     } : {}),
     }
 
-    const adminDb = await createAdminClient()
-    const { error } = await adminDb
+    // Update using the authenticated user's own client. The `users_update_own`
+    // RLS policy (USING auth.uid() = user_id) permits updating their own row,
+    // so this no longer depends on a service-role key being configured.
+    const { error } = await supabase
       .from('users')
       .update(updates as never)
       .eq('user_id', profile.user_id)

@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { Bell } from 'lucide-react'
 import { MobileDrawerNav } from '@/components/layout/MobileDrawerNav'
+import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
 
 type TopbarUser = { name: string | null; profile_image: string | null; role?: string }
 
@@ -13,8 +15,19 @@ interface MobileNavConfig {
   logoutHref: string
 }
 
-export function Topbar({ title, user, mobileNav }: { title: string; user: TopbarUser; mobileNav?: MobileNavConfig }) {
+interface TopbarNotifications {
+  userId: number
+  role: 'admin' | 'journalist'
+}
+
+export function Topbar({ title, user, mobileNav, notifications }: {
+  title: string
+  user: TopbarUser
+  mobileNav?: MobileNavConfig
+  notifications?: TopbarNotifications
+}) {
   const [open, setOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
 
   return (
     <header
@@ -63,6 +76,34 @@ export function Topbar({ title, user, mobileNav }: { title: string; user: Topbar
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {notifications && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setNotifOpen(v => !v)}
+                aria-label="Notifications"
+                className="flex items-center justify-center"
+                style={{
+                  width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border)',
+                  background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
+                }}
+              >
+                <Bell size={16} />
+              </button>
+              {notifOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} onClick={() => setNotifOpen(false)} />
+                  <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, zIndex: 60 }}>
+                    <NavbarNotificationDropdown
+                      userId={notifications.userId}
+                      role={notifications.role}
+                      onClose={() => setNotifOpen(false)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           <Link
             href="/"
             style={{
