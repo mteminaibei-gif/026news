@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
 
     const totalArticles = (countRows || []).length
 
-    let featuredArticles: unknown[] = []
+    const featuredArticles: unknown[] = []
     if (categories.length > 0) {
       const picks: unknown[] = []
       for (const cat of categories.slice(0, 6)) {

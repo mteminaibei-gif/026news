@@ -562,7 +562,7 @@ export function optimizeContentLayout(html: string): string {
   const plain = stripHtml(html)
   if (countWordsInText(plain) < 400) return html
 
-  let result = html
+  const result = html
 
   // Split into paragraphs (double newline or </p> tags)
   const paragraphs = result.split(/\n\n+|<\/p>\s*<p[^>]*>/gi).filter(p => {

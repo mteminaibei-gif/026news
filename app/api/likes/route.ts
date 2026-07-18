@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       .eq('article_id', articleId)
       .single()
 
-    let count = (art as unknown as { like_count: number } | null)?.like_count ?? 0
+    const count = (art as unknown as { like_count: number } | null)?.like_count ?? 0
     let liked = false
 
     const { data: { user } } = await supabase.auth.getUser()

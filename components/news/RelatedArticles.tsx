@@ -20,7 +20,7 @@ export async function RelatedArticles({ currentSlug, categoryName, limit = 3 }: 
   const supabase = await createClient()
 
   // First try same category
-  let { data: rawRelated } = await supabase
+  const { data: rawRelated } = await supabase
     .from('articles')
     .select('article_id, title, slug, featured_image, created_at, views, author:users(name), category:categories(name)')
     .eq('status', 'published' as never)
