@@ -119,11 +119,28 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(18)
 
+    // Top authors to follow, ranked by follower count
+    const { data: authorRows } = await supabaseAdmin
+      .from('users')
+      .select('user_id, name, profile_image, bio, follower_count')
+      .in('role', ['journalist', 'admin'])
+      .order('follower_count', { ascending: false })
+      .limit(12) as unknown as { data: Array<{ user_id: number; name: string; profile_image: string | null; bio: string | null; follower_count: number }> | null }
+
+    const authors = (authorRows ?? []).map(a => ({
+      user_id: a.user_id,
+      name: a.name,
+      profile_image: a.profile_image,
+      bio: a.bio,
+      followers: a.follower_count ?? 0,
+    }))
+
     return NextResponse.json({
       categories,
       totalArticles,
       featuredArticles,
       latestArticles,
+      authors,
     })
   } catch (err) {
     console.error('[GET /api/explore]', err)
