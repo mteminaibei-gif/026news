@@ -106,7 +106,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
   }
 
-  const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  const update: Record<string, unknown> = {}
   if (body.role) {
     if (!VALID_ROLES.includes(body.role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
