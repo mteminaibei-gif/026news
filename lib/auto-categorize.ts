@@ -1,3 +1,22 @@
+// ============================================================================
+//  Intelligent auto-categorization
+//
+//  Improvements over the previous version:
+//   • Term-frequency (TF) scoring instead of raw match counts — longer
+//     articles no longer dominate just because they have more words.
+//   • Dynamic taxonomy: categories can be supplied at runtime (from the DB)
+//     instead of being hard-coded to IDs 80–91. A built-in default
+//     taxonomy is used as a fallback when none is supplied.
+//   • Title / excerpt / tag weighting (title hits matter most).
+//   • Multi-category output: a primary category plus ranked secondary
+//     categories, each with a confidence band.
+//   • Novel-theme detection: when an article clearly belongs to a topic
+//     that no existing category covers, the engine can auto-generate a
+//     new category (name + slug + keywords) so future articles on the
+//     same theme land in the right place.
+//   • Graceful fallbacks (Trending Now / a supplied "default" category).
+// ============================================================================
+
 export interface CategorizationInput {
   title: string
   content: string
@@ -10,6 +29,8 @@ export interface CategorizationInput {
 
 export interface CategoryScore {
   categoryId: number
+  name?: string
+  slug?: string
   score: number
   confidence: 'high' | 'medium' | 'low'
   matchedTerms: string[]
@@ -20,227 +41,447 @@ export interface CategorizationResult {
   scores: CategoryScore[]
   confidence: 'high' | 'medium' | 'low'
   matchedTerms: string[]
+  /** Set when a brand-new category should be created for this article. */
+  suggestedNewCategory?: { name: string; slug: string; keywords: string[]; sampleTerms: string[] }
 }
 
-interface KeywordEntry {
-  patterns: RegExp[]
+// ── Keyword taxonomy ────────────────────────────────────────────────────────
+// Each category: a list of { keywords, weight }. `weight` reflects how
+// strongly a match points at that category. A keyword may be a plain word
+// (matched as a whole word) or a phrase (matched literally).
+
+export interface CategoryKeyword {
+  keywords: string[]
   weight: number
 }
 
-// Category IDs correspond to the rows inserted by migration 20260718091047.
-// IDs 80-91 in insertion order after the old rows are deleted.
-const CATEGORY_KEYWORDS: Record<number, KeywordEntry[]> = {
-  // World Updates
-  80: [
-    { patterns: [/\binternational\b/i, /\bglobal\b/i, /\bworld\b/i, /\bforeign\b/i, /\boverseas\b/i], weight: 10 },
-    { patterns: [/\bunited nations\b/i, /\bnato\b/i, /\beuropean union\b/i, /\beuropean\b/i, /\bbrics\b/i], weight: 9 },
-    { patterns: [/\bwar\b/i, /\bconflict\b/i, /\bceasefire\b/i, /\brefugee\b/i, /\bhumanitarian\b/i, /\bsanction\b/i, /\bsanctions\b/i], weight: 8 },
-    { patterns: [/\btrump\b/i, /\bbiden\b/i, /\bputin\b/i, /\bxi jinping\b/i, /\bmacron\b/i, /\bzelensky\b/i, /\bmodi\b/i], weight: 7 },
-    { patterns: [/\breuters\b/i, /\bap\b(?!\w)/i, /\bagence france-presse\b/i, /\bbc world\b/i], weight: 6 },
-    { patterns: [/\bdiplomatic\b/i, /\bdiplomacy\b/i, /\bembassy\b/i, /\btreaty\b/i, /\bsummit\b/i, /\bbilateral\b/i, /\bmultilateral\b/i], weight: 5 },
-  ],
-  // Kenya Focus
-  81: [
-    { patterns: [/\bkenya\b/i, /\bnairobi\b/i, /\bmombasa\b/i, /\bkisumu\b/i, /\bnakuru\b/i, /\beldoret\b/i, /\bthika\b/i, /\bmeru\b/i], weight: 10 },
-    { patterns: [/\bkenyan\b/i, /\bkenyans\b/i, /\bkenyatta\b/i, /\bruto\b/i, /\braila\b/i, /\bodinga\b/i, /\bsafaricom\b/i, /\bmpesa\b/i, /\bm-pesa\b/i, /\bkra\b/i], weight: 9 },
-    { patterns: [/\bcounty\b/i, /\bgovernor\b.*\bkenya\b/i, /\bnational assembly\b/i, /\bsenate\b.*\bkenya\b/i], weight: 8 },
-    { patterns: [/\bnysc\b/i, /\bhelb\b/i, /\bnhif\b/i, /\bntsa\b/i, /\bkdf\b/i, /\bepra\b/i], weight: 7 },
-    { patterns: [/\beast africa\b/i, /\beast african\b/i, /\beac\b/i], weight: 4 },
-  ],
-  // Politics & Governance
-  82: [
-    { patterns: [/\belection\b/i, /\belections\b/i, /\bvoting\b/i, /\bballot\b/i, /\bpoll\b/i, /\bpolls\b/i, /\bpolling\b/i], weight: 10 },
-    { patterns: [/\bpresident\b/i, /\bgovernor\b/i, /\bsenator\b/i, /\bparliament\b/i, /\bparliamentary\b/i, /\blegislature\b/i, /\bcongress\b/i, /\bassembly\b/i], weight: 9 },
-    { patterns: [/\bdemocrat\b/i, /\brepublican\b/i, /\bpolitical\b/i, /\bpolitics\b/i, /\bpolitician\b/i, /\bpartisan\b/i], weight: 8 },
-    { patterns: [/\bgovernment\b/i, /\bgovernments\b/i, /\bminister\b/i, /\bcabinet\b/i, /\bopposition\b/i, /\bcoalition\b/i, /\bparty\b/i], weight: 7 },
-    { patterns: [/\blaw\b/i, /\blaws\b/i, /\bbill\b/i, /\bbills\b/i, /\blegislation\b/i, /\bimpeach\b/i, /\breferendum\b/i, /\bconstitution\b/i], weight: 6 },
-    { patterns: [/\bspeaker\b/i, /\bmajority leader\b/i, /\bminority leader\b/i, /\bwhip\b/i, /\bcaucus\b/i, /\bfloor\b/i], weight: 5 },
-  ],
-  // Business & Economy
-  83: [
-    { patterns: [/\beconomic\b/i, /\beconomy\b/i, /\bgdp\b/i, /\binflation\b/i, /\bstock market\b/i, /\btrading\b/i, /\binvestor\b/i, /\binvestors\b/i], weight: 10 },
-    { patterns: [/\bbusiness\b/i, /\bcompanies\b/i, /\bcompany\b/i, /\bcorporate\b/i, /\bcorporation\b/i, /\bstartup\b/i, /\bstartups\b/i, /\bentrepreneur\b/i, /\bventures\b/i], weight: 9 },
-    { patterns: [/\brevenue\b/i, /\bprofit\b/i, /\bprofits\b/i, /\bearning\b/i, /\bearnings\b/i, /\bfiscal\b/i, /\bbudget\b/i, /\btax\b/i, /\btaxes\b/i, /\btariff\b/i, /\btariffs\b/i], weight: 8 },
-    { patterns: [/\bbank\b/i, /\bbanking\b/i, /\bfinance\b/i, /\bfinancial\b/i, /\binsurance\b/i, /\bcredit\b/i, /\bloan\b/i, /\bdebt\b/i, /\bcentral bank\b/i], weight: 7 },
-    { patterns: [/\bmarket\b/i, /\bmarkets\b/i, /\btrade\b/i, /\bexport\b/i, /\bexports\b/i, /\bimport\b/i, /\bcommodity\b/i, /\boil price\b/i], weight: 6 },
-    { patterns: [/\bipo\b/i, /\bshares\b/i, /\bstock\b/i, /\bbond\b/i, /\bforex\b/i, /\bcurrency\b/i, /\bdollar\b/i, /\bshilling\b/i, /\bnse\b/i], weight: 5 },
-  ],
-  // Tech & Innovation
-  84: [
-    { patterns: [/\bartificial intelligence\b/i, /\bmachine learning\b/i, /\bdeep learning\b/i, /\bchatgpt\b/i, /\bopenai\b/i, /\bclaude\b/i, /\bgemini\b/i, /\bgrok\b/i], weight: 10 },
-    { patterns: [/\btech\b/i, /\btechs\b/i, /\btechnology\b/i, /\btechnologies\b/i, /\bsoftware\b/i, /\bhardware\b/i, /\bunicorn\b/i, /\bsaas\b/i], weight: 9 },
-    { patterns: [/\bcybersecurity\b/i, /\bhacking\b/i, /\bhack\b/i, /\bhacker\b/i, /\bdata breach\b/i, /\bprivacy\b/i, /\bencryption\b/i, /\bmalware\b/i, /\bransomware\b/i], weight: 8 },
-    { patterns: [/\bgoogle\b/i, /\bmicrosoft\b/i, /\bamazon\b/i, /\bmeta\b/i, /\bapple\b/i, /\btiktok\b/i, /\bsamsung\b/i, /\bnvidia\b/i, /\btesla\b/i, /\bspaceX\b/i, /\bxiaomi\b/i], weight: 7 },
-    { patterns: [/\b5g\b/i, /\binternet\b/i, /\bbroadband\b/i, /\bdigital\b/i, /\bblockchain\b/i, /\bcrypto\b/i, /\bbitcoin\b/i, /\bethereum\b/i, /\bweb3\b/i], weight: 6 },
-    { patterns: [/\brobot\b/i, /\brobots\b/i, /\bautonomous\b/i, /\bdrone\b/i, /\bdrones\b/i, /\binnovation\b/i, /\bstartup\b/i, /\bpatent\b/i, /\bsilicon valley\b/i, /\bapp\b/i], weight: 5 },
-  ],
-  // Health & Wellness
-  85: [
-    { patterns: [/\bhealth\b/i, /\bmedical\b/i, /\bdoctor\b/i, /\bdoctors\b/i, /\bhospital\b/i, /\bhospitals\b/i, /\bclinic\b/i, /\bpatient\b/i, /\bpatients\b/i], weight: 10 },
-    { patterns: [/\bdisease\b/i, /\bdiseases\b/i, /\bvirus\b/i, /\bvaccines?\b/i, /\bcovid\b/i, /\bpandemic\b/i, /\bepidemic\b/i, /\boutbreak\b/i, /\binfection\b/i], weight: 9 },
-    { patterns: [/\bmental health\b/i, /\bdepression\b/i, /\banxiety\b/i, /\btherapy\b/i, /\bcounseling\b/i, /\bstress\b/i, /\bburnout\b/i], weight: 8 },
-    { patterns: [/\bdrug\b/i, /\bdrugs\b/i, /\bmedication\b/i, /\bpharmaceutical\b/i, /\bpharma\b/i, /\btreatment\b/i, /\bcure\b/i, /\bdiagnosis\b/i, /\bsurgery\b/i], weight: 7 },
-    { patterns: [/\bnutrition\b/i, /\bdiet\b/i, /\bexercise\b/i, /\bfitness\b/i, /\bwellness\b/i, /\bobesity\b/i, /\bworkout\b/i, /\byoga\b/i, /\bmeditation\b/i], weight: 6 },
-    { patterns: [/\bwho\b/i, /\bcdc\b/i, /\bhealth ministry\b/i, /\bpublic health\b/i, /\bmaternal\b/i, /\bnutrition\b/i], weight: 5 },
-  ],
-  // Arts & Culture
-  86: [
-    { patterns: [/\bfilm\b/i, /\bfilms\b/i, /\bmovie\b/i, /\bmovies\b/i, /\bcinema\b/i, /\bhollywood\b/i, /\bbollywood\b/i, /\bnetflix\b/i, /\bdisney\b/i], weight: 10 },
-    { patterns: [/\bmusic\b/i, /\bsong\b/i, /\bsongs\b/i, /\balbum\b/i, /\balbums\b/i, /\bconcert\b/i, /\bconcerts\b/i, /\bgrammy\b/i, /\bbillboard\b/i], weight: 9 },
-    { patterns: [/\bcelebrity\b/i, /\bcelebrities\b/i, /\bactor\b/i, /\bactress\b/i, /\bsinger\b/i, /\brapper\b/i, /\bartiste\b/i], weight: 8 },
-    { patterns: [/\btv show\b/i, /\bseries\b/i, /\bepisode\b/i, /\bstreaming\b/i, /\breality tv\b/i, /\baward\b/i, /\bawards\b/i, /\boscar\b/i], weight: 7 },
-    { patterns: [/\barts?\b/i, /\bculture\b/i, /\bcultural\b/i, /\btradition\b/i, /\btraditions\b/i, /\bliterature\b/i, /\bpoetry\b/i, /\btheatre\b/i, /\btheater\b/i], weight: 6 },
-    { patterns: [/\bfestival\b/i, /\bcarnival\b/i, /\bexhibition\b/i, /\bmuseum\b/i, /\bgallery\b/i, /\bdance\b/i, /\bchoreograph\b/i], weight: 5 },
-  ],
-  // Sports Arena
-  87: [
-    { patterns: [/\bfootball\b/i, /\bsoccer\b/i, /\bpremier league\b/i, /\bchampions league\b/i, /\bworld cup\b/i, /\bfifa\b/i, /\buefa\b/i, /\bla liga\b/i], weight: 10 },
-    { patterns: [/\bbasketball\b/i, /\bnba\b/i, /\brugby\b/i, /\bcricket\b/i, /\btennis\b/i, /\bgolf\b/i, /\bf1\b/i, /\bformula 1\b/i, /\bboxing\b/i, /\bmma\b/i, /\bufc\b/i], weight: 9 },
-    { patterns: [/\bathletics\b/i, /\bathlete\b/i, /\bathletes\b/i, /\bmarathon\b/i, /\bolympics\b/i, /\bolympic\b/i, /\bsport\b/i, /\bsports\b/i, /\bplayer\b/i, /\bteam\b/i], weight: 8 },
-    { patterns: [/\bmatch\b/i, /\bgame\b/i, /\bscore\b/i, /\bgoal\b/i, /\bwon\b/i, /\bdefeated\b/i, /\bvictory\b/i, /\bchampion\b/i, /\btrophy\b/i, /\bleague\b/i], weight: 7 },
-    { patterns: [/\bcoach\b/i, /\bmanager\b/i, /\btransfer\b/i, /\btransfers\b/i, /\bsigning\b/i, /\bstadium\b/i, /\btournament\b/i, /\bqualifier\b/i], weight: 6 },
-  ],
-  // Opinion & Analysis
-  88: [
-    { patterns: [/\bopinion\b/i, /\beditorial\b/i, /\bcommentary\b/i, /\banalysis\b/i, /\bperspective\b/i, /\bviewpoint\b/i, /\bop-ed\b/i], weight: 10 },
-    { patterns: [/\bcolumn\b/i, /\bdebate\b/i, /\bdiscussion\b/i, /\bargue\b/i, /\bcritique\b/i, /\breview\b/i, /\bcomment\b/i], weight: 8 },
-    { patterns: [/\bwe argue\b/i, /\bin our view\b/i, /\bthe case for\b/i, /\bthe case against\b/i, /\bwhy\b.*\bshould\b/i], weight: 6 },
-  ],
-  // Trending Now
-  89: [
-    { patterns: [/\bviral\b/i, /\btrending\b/i, /\bmemes?\b/i, /\bviral video\b/i, /\bblow up\b/i, /\bblowing up\b/i, /\bbroke the internet\b/i], weight: 10 },
-    { patterns: [/\btiktok\b/i, /\binstagram\b/i, /\byoutube\b/i, /\btwitter\b/i, /\bx\.com\b/i, /\bsnapchat\b/i, /\breddit\b/i], weight: 8 },
-    { patterns: [/\bsocial media\b/i, /\bonline\b/i, /\bcyber\b/i, /\bhashtag\b/i, /\bchallenge\b/i, /\bdance challenge\b/i, /\bprank\b/i], weight: 7 },
-    { patterns: [/\bcelebrity\b/i, /\bceleb\b/i, /\binfluencer\b/i, /\bcontent creator\b/i, /\bvlogger\b/i, /\bstreamer\b/i], weight: 6 },
-  ],
-  // Features & Profiles
-  90: [
-    { patterns: [/\bprofile\b/i, /\binterview\b/i, /\bbiography\b/i, /\blife story\b/i, /\binspirational\b/i, /\bjourney\b/i], weight: 10 },
-    { patterns: [/\bin depth\b/i, /\bin-depth\b/i, /\blong.read\b/i, /\bfeature\b/i, /\bfeatures\b/i, /\bexclusive\b/i, /\bspecial report\b/i], weight: 9 },
-    { patterns: [/\bpioneer\b/i, /\btrailblazer\b/i, /\bvisionary\b/i, /\bleader\b/i, /\bicon\b/i, /\blegend\b/i, /\bpioneer\b/i], weight: 8 },
-    { patterns: [/\bhuman interest\b/i, /\bcommunity\b/i, /\bgrassroots\b/i, /\blocal hero\b/i, /\brags to riches\b/i, /\bovercoming\b/i], weight: 7 },
-  ],
-  // Environment & Climate
-  91: [
-    { patterns: [/\benvironment\b/i, /\benvironmental\b/i, /\becology\b/i, /\bbiodiversity\b/i, /\bdeforestation\b/i, /\bconservation\b/i], weight: 10 },
-    { patterns: [/\bclimate change\b/i, /\bglobal warming\b/i, /\bcarbon\b/i, /\bemission\b/i, /\bemissions\b/i, /\brenewable\b/i, /\bsustainability\b/i, /\bsustainable\b/i], weight: 9 },
-    { patterns: [/\bpollution\b/i, /\bplastic\b/i, /\bocean\b/i, /\bforests?\b/i, /\bwildlife\b/i, /\bendangered\b/i, /\bcoral reef\b/i], weight: 8 },
-    { patterns: [/\bsolar\b/i, /\bwind energy\b/i, /\bgeothermal\b/i, /\bhydro\b/i, /\bclean energy\b/i, /\bgreen\b/i, /\bnet zero\b/i, /\bcarbon neutral\b/i], weight: 7 },
-    { patterns: [/\bdrought\b/i, /\bflood\b/i, /\bfloods\b/i, /\bwildfire\b/i, /\bheatwave\b/i, /\bweather\b/i, /\bstorm\b/i, /\bcyclone\b/i], weight: 6 },
-  ],
+export interface CategoryDef {
+  id: number | 'NEW'
+  name: string
+  slug: string
+  keywords: CategoryKeyword[]
 }
 
-const CATEGORY_NAMES: Record<number, string> = {
-  80: 'World Updates',         81: 'Kenya Focus',         82: 'Politics & Governance',
-  83: 'Business & Economy',    84: 'Tech & Innovation',   85: 'Health & Wellness',
-  86: 'Arts & Culture',        87: 'Sports Arena',        88: 'Opinion & Analysis',
-  89: 'Trending Now',          90: 'Features & Profiles', 91: 'Environment & Climate',
+const DEFAULT_TAXONOMY: CategoryDef[] = [
+  {
+    id: 80, name: 'World Updates', slug: 'world-updates',
+    keywords: [
+      { keywords: ['international', 'global', 'world', 'foreign', 'overseas'], weight: 10 },
+      { keywords: ['united nations', 'un', 'nato', 'european union', 'european', 'brics'], weight: 9 },
+      { keywords: ['war', 'conflict', 'ceasefire', 'refugee', 'humanitarian', 'sanction', 'sanctions'], weight: 8 },
+      { keywords: ['trump', 'biden', 'putin', 'xi jinping', 'macron', 'zelensky', 'modi'], weight: 7 },
+      { keywords: ['reuters', 'associated press', 'agence france-presse', 'bbc world'], weight: 6 },
+      { keywords: ['diplomatic', 'diplomacy', 'embassy', 'treaty', 'summit', 'bilateral', 'multilateral'], weight: 5 },
+    ],
+  },
+  {
+    id: 81, name: 'Kenya Focus', slug: 'kenya-focus',
+    keywords: [
+      { keywords: ['kenya', 'nairobi', 'mombasa', 'kisumu', 'nakuru', 'eldoret', 'thika', 'meru'], weight: 10 },
+      { keywords: ['kenyan', 'kenyans', 'kenyatta', 'ruto', 'raila', 'odinga', 'safaricom', 'mpesa', 'm-pesa', 'kra'], weight: 9 },
+      { keywords: ['county', 'governor', 'national assembly', 'senate'], weight: 8 },
+      { keywords: ['nysc', 'helb', 'nhif', 'ntsa', 'kdf', 'epra'], weight: 7 },
+      { keywords: ['east africa', 'east african', 'eac'], weight: 4 },
+    ],
+  },
+  {
+    id: 82, name: 'Politics & Governance', slug: 'politics-governance',
+    keywords: [
+      { keywords: ['election', 'elections', 'voting', 'ballot', 'poll', 'polls', 'polling'], weight: 10 },
+      { keywords: ['president', 'governor', 'senator', 'parliament', 'parliamentary', 'legislature', 'congress', 'assembly'], weight: 9 },
+      { keywords: ['democrat', 'republican', 'political', 'politics', 'politician', 'partisan'], weight: 8 },
+      { keywords: ['government', 'governments', 'minister', 'cabinet', 'opposition', 'coalition', 'party'], weight: 7 },
+      { keywords: ['law', 'laws', 'bill', 'bills', 'legislation', 'impeach', 'referendum', 'constitution'], weight: 6 },
+      { keywords: ['speaker', 'majority leader', 'minority leader', 'whip', 'caucus', 'floor'], weight: 5 },
+    ],
+  },
+  {
+    id: 83, name: 'Business & Economy', slug: 'business-economy',
+    keywords: [
+      { keywords: ['economic', 'economy', 'gdp', 'inflation', 'stock market', 'trading', 'investor', 'investors'], weight: 10 },
+      { keywords: ['business', 'companies', 'company', 'corporate', 'corporation', 'startup', 'startups', 'entrepreneur', 'ventures'], weight: 9 },
+      { keywords: ['revenue', 'profit', 'profits', 'earning', 'earnings', 'fiscal', 'budget', 'tax', 'taxes', 'tariff', 'tariffs'], weight: 8 },
+      { keywords: ['bank', 'banking', 'finance', 'financial', 'insurance', 'credit', 'loan', 'debt', 'central bank'], weight: 7 },
+      { keywords: ['market', 'markets', 'trade', 'export', 'exports', 'import', 'commodity', 'oil price'], weight: 6 },
+      { keywords: ['ipo', 'shares', 'stock', 'bond', 'forex', 'currency', 'dollar', 'shilling', 'nse'], weight: 5 },
+    ],
+  },
+  {
+    id: 84, name: 'Tech & Innovation', slug: 'tech-innovation',
+    keywords: [
+      { keywords: ['artificial intelligence', 'machine learning', 'deep learning', 'chatgpt', 'openai', 'claude', 'gemini', 'grok'], weight: 10 },
+      { keywords: ['tech', 'technology', 'technologies', 'software', 'hardware', 'unicorn', 'saas'], weight: 9 },
+      { keywords: ['cybersecurity', 'hacking', 'hacker', 'data breach', 'privacy', 'encryption', 'malware', 'ransomware'], weight: 8 },
+      { keywords: ['google', 'microsoft', 'amazon', 'meta', 'apple', 'tiktok', 'samsung', 'nvidia', 'tesla', 'spacex', 'xiaomi'], weight: 7 },
+      { keywords: ['5g', 'internet', 'broadband', 'digital', 'blockchain', 'crypto', 'bitcoin', 'ethereum', 'web3'], weight: 6 },
+      { keywords: ['robot', 'robots', 'autonomous', 'drone', 'drones', 'innovation', 'patent', 'silicon valley', 'app'], weight: 5 },
+    ],
+  },
+  {
+    id: 85, name: 'Health & Wellness', slug: 'health-wellness',
+    keywords: [
+      { keywords: ['health', 'medical', 'doctor', 'doctors', 'hospital', 'hospitals', 'clinic', 'patient', 'patients'], weight: 10 },
+      { keywords: ['disease', 'diseases', 'virus', 'vaccine', 'vaccines', 'covid', 'pandemic', 'epidemic', 'outbreak', 'infection'], weight: 9 },
+      { keywords: ['mental health', 'depression', 'anxiety', 'therapy', 'counseling', 'stress', 'burnout'], weight: 8 },
+      { keywords: ['drug', 'drugs', 'medication', 'pharmaceutical', 'pharma', 'treatment', 'cure', 'diagnosis', 'surgery'], weight: 7 },
+      { keywords: ['nutrition', 'diet', 'exercise', 'fitness', 'wellness', 'obesity', 'workout', 'yoga', 'meditation'], weight: 6 },
+      { keywords: ['who', 'cdc', 'health ministry', 'public health', 'maternal'], weight: 5 },
+    ],
+  },
+  {
+    id: 86, name: 'Arts & Culture', slug: 'arts-culture',
+    keywords: [
+      { keywords: ['film', 'films', 'movie', 'movies', 'cinema', 'hollywood', 'bollywood', 'netflix', 'disney'], weight: 10 },
+      { keywords: ['music', 'song', 'songs', 'album', 'albums', 'concert', 'concerts', 'grammy', 'billboard'], weight: 9 },
+      { keywords: ['celebrity', 'celebrities', 'actor', 'actress', 'singer', 'rapper', 'artiste'], weight: 8 },
+      { keywords: ['tv show', 'series', 'episode', 'streaming', 'reality tv', 'award', 'awards', 'oscar'], weight: 7 },
+      { keywords: ['arts', 'culture', 'cultural', 'tradition', 'traditions', 'literature', 'poetry', 'theatre', 'theater'], weight: 6 },
+      { keywords: ['festival', 'carnival', 'exhibition', 'museum', 'gallery', 'dance', 'choreograph'], weight: 5 },
+    ],
+  },
+  {
+    id: 87, name: 'Sports Arena', slug: 'sports-arena',
+    keywords: [
+      { keywords: ['football', 'soccer', 'premier league', 'champions league', 'world cup', 'fifa', 'uefa', 'la liga'], weight: 10 },
+      { keywords: ['basketball', 'nba', 'rugby', 'cricket', 'tennis', 'golf', 'f1', 'formula 1', 'boxing', 'mma', 'ufc'], weight: 9 },
+      { keywords: ['athletics', 'athlete', 'athletes', 'marathon', 'olympics', 'olympic', 'sport', 'sports', 'player', 'team'], weight: 8 },
+      { keywords: ['match', 'game', 'score', 'goal', 'won', 'defeated', 'victory', 'champion', 'trophy', 'league'], weight: 7 },
+      { keywords: ['coach', 'manager', 'transfer', 'transfers', 'signing', 'stadium', 'tournament', 'qualifier'], weight: 6 },
+    ],
+  },
+  {
+    id: 88, name: 'Opinion & Analysis', slug: 'opinion-analysis',
+    keywords: [
+      { keywords: ['opinion', 'editorial', 'commentary', 'analysis', 'perspective', 'viewpoint', 'op-ed'], weight: 10 },
+      { keywords: ['column', 'debate', 'discussion', 'argue', 'critique', 'review', 'comment'], weight: 8 },
+      { keywords: ['we argue', 'in our view', 'the case for', 'the case against', 'why should'], weight: 6 },
+    ],
+  },
+  {
+    id: 89, name: 'Trending Now', slug: 'trending-now',
+    keywords: [
+      { keywords: ['viral', 'trending', 'meme', 'memes', 'viral video', 'blow up', 'blowing up', 'broke the internet'], weight: 10 },
+      { keywords: ['instagram', 'youtube', 'twitter', 'x.com', 'snapchat', 'reddit'], weight: 8 },
+      { keywords: ['social media', 'online', 'cyber', 'hashtag', 'challenge', 'dance challenge', 'prank'], weight: 7 },
+      { keywords: ['celebrity', 'celeb', 'influencer', 'content creator', 'vlogger', 'streamer'], weight: 6 },
+    ],
+  },
+  {
+    id: 90, name: 'Features & Profiles', slug: 'features-profiles',
+    keywords: [
+      { keywords: ['profile', 'interview', 'biography', 'life story', 'inspirational', 'journey'], weight: 10 },
+      { keywords: ['in depth', 'in-depth', 'long read', 'long-read', 'feature', 'features', 'exclusive', 'special report'], weight: 9 },
+      { keywords: ['pioneer', 'trailblazer', 'visionary', 'leader', 'icon', 'legend'], weight: 8 },
+      { keywords: ['human interest', 'community', 'grassroots', 'local hero', 'rags to riches', 'overcoming'], weight: 7 },
+    ],
+  },
+  {
+    id: 91, name: 'Environment & Climate', slug: 'environment-climate',
+    keywords: [
+      { keywords: ['environment', 'environmental', 'ecology', 'biodiversity', 'deforestation', 'conservation'], weight: 10 },
+      { keywords: ['climate change', 'global warming', 'carbon', 'emission', 'emissions', 'renewable', 'sustainability', 'sustainable'], weight: 9 },
+      { keywords: ['pollution', 'plastic', 'ocean', 'forest', 'forests', 'wildlife', 'endangered', 'coral reef'], weight: 8 },
+      { keywords: ['solar', 'wind energy', 'geothermal', 'hydro', 'clean energy', 'green', 'net zero', 'carbon neutral'], weight: 7 },
+      { keywords: ['drought', 'flood', 'floods', 'wildfire', 'heatwave', 'weather', 'storm', 'cyclone'], weight: 6 },
+    ],
+  },
+]
+
+export const CATEGORY_NAMES: Record<number, string> = Object.fromEntries(
+  DEFAULT_TAXONOMY.map(c => [c.id, c.name])
+)
+
+// ── Novel-theme detection lexicon ────────────────────────────────────────────
+// Used only when an article is clearly topical but NO existing category
+// scores high. Each entry is "topic → seed keywords". If a cluster of
+// related terms dominates the text we can mint a new category.
+
+const NOVEL_TOPICS: { name: string; slug: string; keywords: string[] }[] = [
+  { name: 'Education', slug: 'education', keywords: ['education', 'school', 'university', 'students', 'teachers', 'curriculum', 'exam', 'learning', 'scholarship', 'lecturer', 'professor', 'classroom'] },
+  { name: 'Crime & Justice', slug: 'crime-justice', keywords: ['crime', 'police', 'arrest', 'murder', 'theft', 'robbery', 'fraud', 'court', 'trial', 'jailed', 'sentenced', 'investigation', 'detective', 'homicide'] },
+  { name: 'Science', slug: 'science', keywords: ['scientist', 'research', 'study', 'physics', 'chemistry', 'biology', 'space', 'nasa', 'astronomy', 'genes', 'quantum', 'laboratory', 'discovery'] },
+  { name: 'Travel & Tourism', slug: 'travel-tourism', keywords: ['travel', 'tourism', 'tourist', 'hotel', 'safari', 'destination', 'vacation', 'flight', 'airline', 'airport', 'holiday', 'resort'] },
+  { name: 'Food & Drink', slug: 'food-drink', keywords: ['food', 'cuisine', 'recipe', 'restaurant', 'chef', 'cooking', 'dining', 'meal', 'culinary', 'beverage', 'wine', 'coffee'] },
+  { name: 'Real Estate', slug: 'real-estate', keywords: ['real estate', 'property', 'housing', 'mortgage', 'rent', 'land', 'construction', 'building', 'realtor', 'tenant', 'landlord'] },
+  { name: 'Religion & Faith', slug: 'religion-faith', keywords: ['religion', 'church', 'mosque', 'faith', 'spiritual', 'worship', 'bible', 'quran', 'prayer', 'sermon', 'congregation', 'bishop', 'imam'] },
+  { name: 'Agriculture', slug: 'agriculture', keywords: ['agriculture', 'farming', 'farmers', 'crop', 'harvest', 'livestock', 'irrigation', 'food security', 'horticulture', 'plantation'] },
+  { name: 'Transport & Infrastructure', slug: 'transport-infrastructure', keywords: ['transport', 'roads', 'railway', 'rail', 'highway', 'aviation', 'infrastructure', 'bridge', 'port', 'traffic', 'commute', 'transit'] },
+  { name: 'Gaming', slug: 'gaming', keywords: ['gaming', 'video game', 'videogame', 'playstation', 'xbox', 'nintendo', 'esports', 'gamer', 'console', 'fortnite', 'call of duty'] },
+]
+
+// ── Text helpers ────────────────────────────────────────────────────────────
+
+function stripHtml(html?: string | null): string {
+  if (!html) return ''
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
-function countMatches(text: string, patterns: RegExp[]): { count: number; terms: string[] } {
+const WORD_RE = /[a-z0-9]+(?:['’-][a-z0-9]+)*/g
+
+function tokenize(text: string): string[] {
+  return (text.toLowerCase().match(WORD_RE) || []).filter(w => w.length > 1)
+}
+
+function wordCount(text: string): number {
+  return tokenize(text).length
+}
+
+// Pre-compiled matchers: phrase (multi-word) and term (single-word) lists.
+function buildMatchers(keywords: string[]) {
+  const phrases: { re: RegExp; kw: string }[] = []
   const terms = new Set<string>()
-  let count = 0
-  for (const pattern of patterns) {
-    const matches = text.match(new RegExp(pattern.source, 'gi'))
-    if (matches) {
-      count += matches.length
-      const example = matches[0].toLowerCase()
-      if (example.length > 2) terms.add(example)
+  for (const kw of keywords) {
+    const k = kw.trim().toLowerCase()
+    if (!k) continue
+    if (k.includes(' ')) {
+      const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      phrases.push({ re: new RegExp(`\\b${escaped}\\b`, 'i'), kw: k })
+    } else {
+      terms.add(k)
     }
   }
-  return { count, terms: Array.from(terms) }
+  return { phrases, terms }
 }
 
-export function autoCategorize(input: CategorizationInput): CategorizationResult {
-  const { title, content, excerpt, tags, sourceName, sourceReference, currentCategoryId } = input
-  const allScores: Record<number, { score: number; terms: Set<string> }> = {}
+// Count how many distinct keywords from a matcher set appear in `tokens`
+// plus any phrase matches inside the raw text. Returns { hits, density }.
+function scoreAgainst(tokens: string[], rawText: string, matchers: { phrases: { re: RegExp; kw: string }[]; terms: Set<string> }) {
+  let hits = 0
+  const matched = new Set<string>()
 
-  const cleanContent = (content || '').replace(/<[^>]+>/g, ' ').toLowerCase()
-  const cleanExcerpt = (excerpt || '').replace(/<[^>]+>/g, ' ').toLowerCase()
-  const cleanTitle = (title || '').toLowerCase()
-  const cleanTags = (tags || []).map(t => t.toLowerCase())
-  const cleanSource = (sourceName || sourceReference || '').toLowerCase()
-
-  for (const [catIdStr, keywordSets] of Object.entries(CATEGORY_KEYWORDS)) {
-    const catId = Number(catIdStr)
-    let score = 0
-    const matchedTerms = new Set<string>()
-
-    for (const { patterns, weight } of keywordSets) {
-      const titleMatch = countMatches(cleanTitle, patterns)
-      score += titleMatch.count * weight * 3
-      titleMatch.terms.forEach(t => matchedTerms.add(t))
-
-      const excerptMatch = countMatches(cleanExcerpt, patterns)
-      score += excerptMatch.count * weight * 2
-      excerptMatch.terms.forEach(t => matchedTerms.add(t))
-
-      const contentMatch = countMatches(cleanContent, patterns)
-      score += contentMatch.count * weight
-      contentMatch.terms.forEach(t => matchedTerms.add(t))
-
-      for (const tag of cleanTags) {
-        for (const pattern of patterns) {
-          if (pattern.test(tag)) {
-            score += weight * 5
-            matchedTerms.add(tag)
-          }
-        }
-      }
-
-      const sourceMatch = countMatches(cleanSource, patterns)
-      score += sourceMatch.count * weight * 2
-      sourceMatch.terms.forEach(t => matchedTerms.add(t))
+  for (const t of tokens) {
+    if (matchers.terms.has(t)) {
+      hits++
+      matched.add(t)
     }
+  }
+  for (const p of matchers.phrases) {
+    if (p.re.test(rawText)) {
+      hits++
+      matched.add(p.kw)
+    }
+  }
+  return { hits, matched }
+}
+
+// TF-style normalisation: a hit in a 50-word article should weigh the same
+// as the same number of hits in a 2000-word article. We cap the effective
+// document length so short pieces are not over-penalised.
+function normalize(hits: number, docWords: number): number {
+  if (hits === 0) return 0
+  const effLen = Math.max(docWords, 60)
+  const tf = hits / effLen
+  // mild diminishing returns for very high frequencies
+  return Math.log1p(tf * 100) * 10
+}
+
+// ── Core categorizer ────────────────────────────────────────────────────────
+
+export interface CategorizeOptions {
+  /** Dynamic taxonomy (e.g. loaded from the DB). Falls back to defaults. */
+  taxonomy?: CategoryDef[]
+  /** Category id to fall back to when nothing matches (default: 89 Trending). */
+  defaultCategoryId?: number
+  /** If true, allow the engine to propose a brand-new category. */
+  allowAutoCreate?: boolean
+}
+
+export function autoCategorize(
+  input: CategorizationInput,
+  options: CategorizeOptions = {}
+): CategorizationResult {
+  const {
+    taxonomy = DEFAULT_TAXONOMY,
+    defaultCategoryId = 89,
+    allowAutoCreate = false,
+  } = options
+
+  const title = (input.title || '').toLowerCase()
+  const excerpt = stripHtml(input.excerpt).toLowerCase()
+  const content = stripHtml(input.content).toLowerCase()
+  const tags = (input.tags || []).map(t => t.toLowerCase())
+  const source = (input.sourceName || input.sourceReference || '').toLowerCase()
+
+  // Document sizes (for TF normalisation).
+  const titleTokens = tokenize(title)
+  const excerptTokens = tokenize(excerpt)
+  const contentTokens = tokenize(content)
+  const totalWords = titleTokens.length + excerptTokens.length + contentTokens.length + content.split(/\s+/).length * 0
+
+  const results: {
+    def: CategoryDef
+    score: number
+    terms: Set<string>
+  }[] = []
+
+  for (const def of taxonomy) {
+    const matchers = buildMatchers(def.keywords.flatMap(k => k.keywords))
+    let score = 0
+    const terms = new Set<string>()
+
+    const t = scoreAgainst(titleTokens, title, matchers)
+    score += normalize(t.hits, Math.max(titleTokens.length, 4)) * 3 // title boost
+    t.matched.forEach(x => terms.add(x))
+
+    const e = scoreAgainst(excerptTokens, excerpt, matchers)
+    score += normalize(e.hits, Math.max(excerptTokens.length, 15)) * 2
+    e.matched.forEach(x => terms.add(x))
+
+    const c = scoreAgainst(contentTokens, content, matchers)
+    score += normalize(c.hits, Math.max(contentTokens.length, 60))
+    c.matched.forEach(x => terms.add(x))
+
+    // Tags are strong signals — weight them heavily.
+    for (const tag of tags) {
+      const m = scoreAgainst(tokenize(tag), tag, matchers)
+      if (m.hits > 0) {
+        score += 8 * m.hits
+        m.matched.forEach(x => terms.add(x))
+      }
+    }
+
+    // Source reputation (e.g. a wire service) is a weak signal.
+    const s = scoreAgainst(tokenize(source), source, matchers)
+    score += normalize(s.hits, Math.max(tokenize(source).length, 10)) * 2
+    s.matched.forEach(x => terms.add(x))
 
     if (score > 0) {
-      allScores[catId] = { score, terms: matchedTerms }
+      results.push({ def, score, terms })
     }
   }
 
-  const sorted = Object.entries(allScores)
-    .map(([id, data]) => ({
-      categoryId: Number(id),
-      score: data.score,
-      terms: Array.from(data.terms),
-    }))
-    .sort((a, b) => b.score - a.score)
+  results.sort((a, b) => b.score - a.score)
 
-  const topScore = sorted[0]?.score || 0
-  const categories: CategoryScore[] = sorted.slice(0, 3).map(s => ({
-    categoryId: s.categoryId,
-    score: s.score,
-    confidence: s.score >= 30 ? 'high' : s.score >= 15 ? 'medium' : 'low',
-    matchedTerms: s.terms,
+  const topScore = results[0]?.score ?? 0
+  const scores: CategoryScore[] = results.slice(0, 3).map(r => ({
+    categoryId: r.def.id as number,
+    name: r.def.name,
+    slug: r.def.slug,
+    score: Math.round(r.score * 100) / 100,
+    confidence: r.score >= 25 ? 'high' : r.score >= 12 ? 'medium' : 'low',
+    matchedTerms: Array.from(r.terms).slice(0, 12),
   }))
 
-  const best = categories[0]
+  const best = scores[0]
   let confidence: 'high' | 'medium' | 'low'
   let bestCategoryId: number
+  let suggested: { name: string; slug: string; keywords: string[]; sampleTerms: string[] } | undefined
 
-  if (topScore >= 30) {
+  if (topScore >= 25) {
     confidence = 'high'
-    bestCategoryId = best.categoryId
-  } else if (topScore >= 15) {
+    bestCategoryId = best.categoryId as number
+  } else if (topScore >= 12) {
     confidence = 'medium'
-    bestCategoryId = best.categoryId
-  } else if (topScore >= 5) {
+    bestCategoryId = best.categoryId as number
+  } else if (input.currentCategoryId) {
     confidence = 'low'
-    bestCategoryId = best.categoryId
-  } else if (currentCategoryId) {
-    confidence = 'low'
-    bestCategoryId = currentCategoryId
+    bestCategoryId = input.currentCategoryId
+  } else if (allowAutoCreate) {
+    // Nothing matched well — try to detect a novel theme to auto-create.
+    const novel = detectNovelTheme(input)
+    if (novel) {
+      suggested = novel
+      confidence = 'medium'
+      bestCategoryId = defaultCategoryId
+    } else {
+      confidence = 'low'
+      bestCategoryId = defaultCategoryId
+    }
   } else {
     confidence = 'low'
-    bestCategoryId = 89
+    bestCategoryId = defaultCategoryId
   }
 
   return {
     bestCategoryId,
-    scores: categories,
+    scores,
     confidence,
     matchedTerms: best?.matchedTerms || [],
+    suggestedNewCategory: suggested,
   }
+}
+
+// ── Novel-theme detection ────────────────────────────────────────────────────
+
+export function detectNovelTheme(
+  input: CategorizationInput
+): { name: string; slug: string; keywords: string[]; sampleTerms: string[] } | null {
+  const text = `${input.title || ''} ${stripHtml(input.excerpt)} ${stripHtml(input.content)}`.toLowerCase()
+  const tokens = tokenize(text)
+  if (tokens.length < 20) return null
+
+  let bestTopic: { name: string; slug: string; keywords: string[] } | null = null
+  let bestHits = 0
+  let bestTerms: string[] = []
+
+  for (const topic of NOVEL_TOPICS) {
+    const matchers = buildMatchers(topic.keywords)
+    const { hits, matched } = scoreAgainst(tokens, text, matchers)
+    if (hits > bestHits) {
+      bestHits = hits
+      bestTopic = topic
+      bestTerms = Array.from(matched)
+    }
+  }
+
+  // Require a meaningful cluster (>= 3 distinct term hits and enough density).
+  if (!bestTopic || bestHits < 3) return null
+  const density = bestHits / Math.max(tokens.length, 60)
+  if (density < 0.02) return null
+
+  return {
+    name: bestTopic.name,
+    slug: bestTopic.slug,
+    keywords: bestTopic.keywords,
+    sampleTerms: bestTerms.slice(0, 12),
+  }
+}
+
+// ── Auto-create + assign (DB-backed) ─────────────────────────────────────────
+
+/**
+ * Categorize an article and, if no existing category fits well, create a new
+ * one and assign the article to it. Returns the final category id.
+ *
+ * `createCategory` is supplied by the caller (e.g. an admin supabase client)
+ * so this module stays free of any DB dependency.
+ */
+export interface SmartCategorizationResult {
+  bestCategoryId: number | 'NEW'
+  scores: CategoryScore[]
+  confidence: 'high' | 'medium' | 'low'
+  matchedTerms: string[]
+  suggestedNewCategory?: { name: string; slug: string; keywords: string[]; sampleTerms: string[] }
+}
+
+export async function categorizeWithAutoCreate(
+  input: CategorizationInput,
+  createCategory: (name: string, slug: string) => Promise<number | null>,
+  options: CategorizeOptions = {}
+): Promise<SmartCategorizationResult> {
+  const result = autoCategorize(input, { ...options, allowAutoCreate: true })
+
+  if (result.suggestedNewCategory) {
+    const { name, slug } = result.suggestedNewCategory
+    const newId = await createCategory(name, slug)
+    if (newId) {
+      return {
+        ...result,
+        bestCategoryId: newId,
+        scores: [{ categoryId: newId, name, slug, score: 20, confidence: 'medium', matchedTerms: result.matchedTerms }],
+        confidence: 'medium',
+      }
+    }
+    // Fallback if creation failed.
+    return { ...result, bestCategoryId: options.defaultCategoryId ?? 89, confidence: 'low' }
+  }
+
+  return { ...result, bestCategoryId: result.bestCategoryId }
 }
 
 export function getCategoryName(id: number): string {
@@ -248,12 +489,12 @@ export function getCategoryName(id: number): string {
 }
 
 export function getAllCategoryIds(): number[] {
-  return Object.keys(CATEGORY_NAMES).map(Number)
+  return DEFAULT_TAXONOMY.map(c => c.id as number)
 }
 
-export { CATEGORY_NAMES }
+export { DEFAULT_TAXONOMY }
 
-// ── Auto Tag Extraction ────────────────────────────────────────────
+// ── Auto Tag Extraction ──────────────────────────────────────────────────────
 
 const TAG_KEYWORDS: Record<string, string[]> = {
   'politics':       ['politics', 'governance', 'election', 'parliament', 'democracy', 'campaign', 'ballot'],
@@ -272,7 +513,7 @@ const TAG_KEYWORDS: Record<string, string[]> = {
   'transport':      ['transport', 'infrastructure', 'roads', 'railway', 'aviation', 'airport', 'highway'],
   'banking':        ['banking', 'fintech', 'mobile money', 'mpesa', 'm-pesa', 'safaricom', 'atm'],
   'real-estate':    ['property', 'real estate', 'housing', 'mortgage', 'rent', 'construction', 'building'],
-  'manufacturing':  ['manufacturing', 'factory', 'production', 'industrial', 'factory', 'assembly'],
+  'manufacturing':  ['manufacturing', 'factory', 'production', 'industrial', 'assembly'],
   'media':          ['media', 'journalism', 'press', 'broadcasting', 'newspaper', 'television', 'radio'],
   'tourism':        ['tourism', 'travel', 'hotel', 'safari', 'tourist', 'destination', 'hospitality'],
   'fashion':        ['fashion', 'clothing', 'design', 'style', 'trend', 'apparel', 'couture'],
@@ -281,7 +522,7 @@ const TAG_KEYWORDS: Record<string, string[]> = {
 }
 
 export function autoExtractTags(title: string, content: string, existingTags: string[] = []): string[] {
-  const text = `${title} ${content.replace(/<[^>]+>/g, ' ')}`.toLowerCase()
+  const text = `${title} ${stripHtml(content)}`.toLowerCase()
   const existing = new Set(existingTags.map(t => t.toLowerCase()))
   const suggested: string[] = []
 
@@ -310,26 +551,22 @@ export function autoExtractTags(title: string, content: string, existingTags: st
   return suggested
 }
 
-// ── Content Layout Optimization ────────────────────────────────────
-
-function stripHtmlTags(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim()
-}
+// ── Content Layout Optimization ──────────────────────────────────────────────
 
 function countWordsInText(text: string): number {
-  return text.split(/\s+/).filter(w => w.length > 0).length
+  return tokenize(text).length
 }
 
 export function optimizeContentLayout(html: string): string {
   // Only optimize content longer than 400 words
-  const plain = stripHtmlTags(html)
+  const plain = stripHtml(html)
   if (countWordsInText(plain) < 400) return html
 
   let result = html
 
   // Split into paragraphs (double newline or </p> tags)
   const paragraphs = result.split(/\n\n+|<\/p>\s*<p[^>]*>/gi).filter(p => {
-    const text = stripHtmlTags(p).trim()
+    const text = stripHtml(p).trim()
     return text.length > 0
   })
 
@@ -340,7 +577,7 @@ export function optimizeContentLayout(html: string): string {
 
   for (let i = 0; i < paragraphs.length; i++) {
     const para = paragraphs[i]
-    const text = stripHtmlTags(para).trim()
+    const text = stripHtml(para).trim()
     const words = countWordsInText(text)
     wordCountSinceHeading += words
 

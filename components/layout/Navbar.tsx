@@ -9,6 +9,7 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio, Newspaper, Compass, FileText, PenLine, MessageSquare, Tv } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
+import { useUnreadMessages } from '@/lib/hooks/useUnreadMessages'
 import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
 import { MessagePopout } from '@/components/layout/MessagePopout'
 import { NAV_LINKS } from '@/lib/constants/navigation'
@@ -28,6 +29,7 @@ export function Navbar() {
   const { data: profile } = useProfile(user?.email ?? undefined)
   const signOutMutation = useSignOut()
   const { unreadCount } = useNotifications(profile?.user_id ?? 0, (profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader')
+  const { unread: unreadMessages } = useUnreadMessages()
   const [notifOpen, setNotifOpen] = useState(false)
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
@@ -120,7 +122,27 @@ export function Navbar() {
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                   }}
                 >
-                  {Icon && <Icon size={15} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : href === '/tv' ? { color: '#3b82f6', filter: 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 12px #3b82f6)' } : undefined} />}
+                  {Icon && (
+                    href === '/inbox' ? (
+                      <span style={{ position: 'relative', display: 'inline-flex' }}>
+                        <MessageSquare size={15} />
+                        {unreadMessages > 0 && (
+                          <span style={{
+                            position: 'absolute', top: -6, right: -8,
+                            minWidth: 16, height: 16, borderRadius: 8,
+                            background: 'var(--error)', color: '#fff',
+                            fontSize: '0.6rem', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: '0 4px', border: '2px solid var(--nav-bg)',
+                          }}>
+                            {unreadMessages > 99 ? '99+' : unreadMessages}
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <Icon size={15} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : href === '/tv' ? { color: '#3b82f6', filter: 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 12px #3b82f6)' } : undefined} />
+                    )
+                  )}
                   {link.label}
                 </Link>
               )
@@ -425,7 +447,27 @@ export function Navbar() {
                       background: pathname === href ? 'var(--primary-light)' : 'transparent',
                     }}
                   >
-                    {Icon && <Icon size={16} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : href === '/tv' ? { color: '#3b82f6', filter: 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 12px #3b82f6)' } : undefined} />}
+                    {Icon && (
+                      href === '/inbox' ? (
+                        <span style={{ position: 'relative', display: 'inline-flex' }}>
+                          <MessageSquare size={16} />
+                          {unreadMessages > 0 && (
+                            <span style={{
+                              position: 'absolute', top: -4, right: -8,
+                              minWidth: 16, height: 16, borderRadius: 8,
+                              background: 'var(--error)', color: '#fff',
+                              fontSize: '0.6rem', fontWeight: 700,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              padding: '0 4px', border: '2px solid var(--bg-surface)',
+                            }}>
+                              {unreadMessages > 99 ? '99+' : unreadMessages}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <Icon size={16} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : href === '/tv' ? { color: '#3b82f6', filter: 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 12px #3b82f6)' } : undefined} />
+                      )
+                    )}
                     {link.label}
                   </Link>
                 </li>

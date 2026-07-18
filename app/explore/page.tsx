@@ -3,14 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useTheme } from '@/components/providers/ThemeProvider'
-import { Logo } from '@/components/layout/Logo'
 import { formatNumber } from '@/lib/utils'
 import { autoCategorize, getCategoryName, type CategorizationResult } from '@/lib/auto-categorize'
 import {
   TrendingUp, Loader2, Eye, Clock,
-  ChevronRight, Sparkles, ArrowLeft, Tag, Search, X, Bell,
-  Moon, Sun, Flame, UserPlus, Star,
+  ChevronRight, Sparkles, ArrowLeft, Tag, Search, X,
+  Flame, UserPlus, Star,
 } from 'lucide-react'
 
 interface CategoryItem {
@@ -70,7 +68,6 @@ const RECENT_SEARCHES_KEY = 'explore_recent_searches'
 const TRENDING_TAGS = ['Elections', 'Tech', 'Markets', 'Football', 'Climate', 'Health', 'Startups', 'Politics', 'AI', 'Culture']
 
 export default function ExplorePage() {
-  const { darkMode, toggleDarkMode } = useTheme()
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [articles, setArticles] = useState<ExploreArticle[]>([])
   const [featuredArticles, setFeaturedArticles] = useState<ExploreArticle[]>([])
@@ -309,37 +306,30 @@ export default function ExplorePage() {
 
   return (
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
-      {/* Top nav: logo + theme toggle + bell */}
-      <header
-        className="sticky top-0 z-50"
-        style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border)' }}
-      >
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <Logo size="sm" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleDarkMode}
-              aria-label="Toggle theme"
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
-              style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)', cursor: 'pointer' }}
-            >
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <button
-              aria-label="Notifications"
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
-              style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)', cursor: 'pointer' }}
-            >
-              <Bell size={16} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: 'var(--error)' }} />
-            </button>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-4 pb-16">
+        {/* Explore sub-nav: category menu tags (global nav above provides logo/theme/bell) */}
+        {!activeCategory && !searchQuery && categories.length > 0 && (
+          <nav className="flex items-center gap-2 overflow-x-auto py-3" style={{ scrollbarWidth: 'none' }} aria-label="Explore categories">
+            <button
+              onClick={backToAll}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              style={{ background: 'var(--primary)', color: '#fff', border: '1px solid transparent', cursor: 'pointer' }}
+            >
+              All
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => selectCategory(cat)}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)', cursor: 'pointer' }}
+              >
+                {CATEGORY_ICONS[cat.name] || cat.icon || ICON_FALLBACK} {cat.name}
+              </button>
+            ))}
+          </nav>
+        )}
+
         {/* Search hero */}
         <section className="pt-8 pb-6">
           <h1 className="text-2xl font-extrabold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
