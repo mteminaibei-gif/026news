@@ -201,4 +201,4 @@ Use the Daraja API for STK push payments.
 
 ## License
 
-MIT
+026connect!
