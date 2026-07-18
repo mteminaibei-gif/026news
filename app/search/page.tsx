@@ -291,7 +291,7 @@ export default function SearchPage() {
                   >
                     <div className="relative h-32 overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
                       {t.featured_image ? (
-                        <Image src={t.featured_image} alt={t.title} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 260px" />
+                        <Image src={t.featured_image} alt={t.title} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 260px"  loading="lazy"/>
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'var(--primary-light)' }}>
                           <span className="text-2xl font-black tracking-widest uppercase" style={{ color: 'var(--primary)', opacity: 0.15 }}>026</span>
@@ -363,7 +363,7 @@ function ResultRow({ a }: { a: Art }) {
     >
       <div className="relative w-28 h-20 shrink-0 rounded-lg overflow-hidden flex items-center justify-center" style={{ background: 'var(--bg-inset)' }}>
         {a.featured_image ? (
-          <Image src={a.featured_image} alt={a.title} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="112px" />
+          <Image src={a.featured_image} alt={a.title} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="112px"  loading="lazy"/>
         ) : (
           <span className="text-xs font-black tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>026</span>
         )}

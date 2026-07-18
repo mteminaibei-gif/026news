@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/server-auth'
+import { sanitizePlainText } from '@/lib/sanitizeHtml'
 
 // ── rate limiter: 20 comments/IP/min ──────────────────────
 const limiter = new Map<string, { count: number; reset: number }>()
@@ -27,10 +28,7 @@ function getIp(req: NextRequest) {
 
 /** Strip HTML tags and control characters */
 function sanitize(str: string): string {
-  return str
-    .replace(/<[^>]*>/g, '')
-    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
-    .trim()
+  return sanitizePlainText(str)
 }
 
 type Profile = { user_id: number }

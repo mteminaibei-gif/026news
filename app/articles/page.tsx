@@ -36,7 +36,7 @@ function ArticleThumb({ src, alt, height }: { src: string | null; alt: string; h
   if (src) {
     return (
       <div style={{ position: 'relative', height }}>
-        <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} unoptimized />
+        <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
       </div>
     )
   }

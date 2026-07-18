@@ -229,7 +229,7 @@ export function AnalyticsDashboard({
                     <div className="flex items-center gap-2 sm:gap-3">
                       {a.featured_image && (
                         <div className="relative w-8 sm:w-10 h-6 sm:h-8 rounded-lg overflow-hidden shrink-0 hover:scale-110 transition-transform duration-300 shadow-md group-hover/row:shadow-lg">
-                          <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                          <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                         </div>
                       )}
                       <div className="min-w-0">

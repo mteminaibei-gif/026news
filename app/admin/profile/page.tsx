@@ -353,7 +353,7 @@ export default function AdminProfilePage() {
             title="Change avatar"
           >
             {profile.profile_image ? (
-              <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
+              <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
             ) : (
               <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
                 {profile.name.charAt(0)}
@@ -475,7 +475,7 @@ export default function AdminProfilePage() {
                       <div key={app.user_id} className="px-6 py-4 flex items-center gap-4">
                         {app.profile_image ? (
                           <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
-                            <Image src={app.profile_image} alt={app.name} fill className="object-cover" />
+                            <Image src={app.profile_image} alt={app.name} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                           </div>
                         ) : (
                           <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
@@ -626,7 +626,7 @@ export default function AdminProfilePage() {
                           <div key={a.article_id} className="p-4 flex items-center gap-3">
                             {a.featured_image && (
                               <div className="relative w-12 h-10 rounded-lg overflow-hidden shrink-0">
-                                <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                                <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
@@ -698,7 +698,7 @@ export default function AdminProfilePage() {
                       title="Change avatar"
                     >
                       {profile.profile_image ? (
-                        <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
+                        <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                       ) : (
                         <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700, color: '#fff' }}>
                           {profile.name.charAt(0)}
@@ -843,7 +843,7 @@ function ArticleTable({ title, icon, rows, limit }: { title: string; icon: strin
                 {/* Thumbnail */}
                 {a.featured_image ? (
                   <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{ boxShadow: '0 0 0 1px var(--border-subtle)' }}>
-                    <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                    <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                   </div>
                 ) : (
                   <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>📰</div>

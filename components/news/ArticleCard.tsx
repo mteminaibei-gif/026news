@@ -33,7 +33,7 @@ function ArticleImage({ src, alt, fill, className }: {
 }) {
   const [error, setError] = useState(false)
   if (error) return null
-  return <Image src={src} alt={alt} fill={fill} className={className} unoptimized onError={() => setError(true)} />
+  return <Image src={src} alt={alt} fill={fill} className={className} unoptimized onError={() => setError(true)}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
 }
 
 const hasValidImage = (url?: string | null) =>
@@ -72,7 +72,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
               unoptimized
               sizes="96px"
               onError={() => setImgError(true)}
-            />
+             loading="lazy"/>
           ) : <Placeholder />}
         </div>
         <div className="min-w-0 flex-1">
@@ -118,7 +118,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
               unoptimized
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               onError={() => setImgError(true)}
-            />
+             loading="lazy"/>
           ) : <Placeholder />}
         </div>
       </Link>

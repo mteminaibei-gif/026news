@@ -175,7 +175,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                   <div style={{ display: 'flex', flexDirection: 'row', minHeight: 300 }}>
                     <div style={{ width: 420, flexShrink: 0, position: 'relative', background: 'var(--bg-inset)' }}>
                       {featured.featured_image ? (
-                        <Image src={featured.featured_image} alt={featured.title} fill style={{ objectFit: 'cover' }} sizes="420px" unoptimized />
+                        <Image src={featured.featured_image} alt={featured.title} fill style={{ objectFit: 'cover' }} sizes="420px" unoptimized  loading="lazy"/>
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-light)' }}>
                           <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)', opacity: 0.15, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{categoryName}</span>
@@ -216,7 +216,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                     }}>
                       {article.featured_image ? (
                         <div style={{ position: 'relative', height: 180 }}>
-                          <Image src={article.featured_image} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width: 640px) 100vw, 33vw" unoptimized />
+                          <Image src={article.featured_image} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width: 640px) 100vw, 33vw" unoptimized  loading="lazy"/>
                         </div>
                       ) : (
                         <div style={{ height: 180, background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

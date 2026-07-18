@@ -144,7 +144,7 @@ export function MessageThread({ conversation, currentUserId, isOnline, isTyping,
         <div style={{ position: 'relative' }}>
           {other.profile_image ? (
             <div style={{ position: 'relative', width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-              <Image src={other.profile_image} alt={other.name} fill style={{ objectFit: 'cover' }} />
+              <Image src={other.profile_image} alt={other.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
             </div>
           ) : (
             <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
@@ -167,7 +167,7 @@ export function MessageThread({ conversation, currentUserId, isOnline, isTyping,
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {other.profile_image ? (
               <div style={{ position: 'relative', width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', marginBottom: 4 }}>
-                <Image src={other.profile_image} alt={other.name} fill style={{ objectFit: 'cover' }} />
+                <Image src={other.profile_image} alt={other.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
               </div>
             ) : (
               <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>

@@ -286,7 +286,7 @@ export default function JournalistProfilePage() {
         <div className="journalist-header" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px' }}>
           {profile.profile_image ? (
             <div style={{ width: 120, height: 120, borderRadius: 28, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)' }}>
-              <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
+              <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
             </div>
           ) : (
             <div style={{ width: 120, height: 120, borderRadius: 28, background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>

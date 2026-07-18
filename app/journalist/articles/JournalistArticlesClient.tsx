@@ -89,7 +89,7 @@ export function JournalistArticlesClient({ articles, userName }: Props) {
                     <div className="flex items-center gap-3">
                       {a.featured_image ? (
                         <div className="relative w-12 h-9 rounded-lg overflow-hidden shrink-0">
-                          <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized />
+                          <Image src={a.featured_image} alt={a.title} fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                         </div>
                       ) : (
                         <div className="w-12 h-9 rounded-lg shrink-0 flex items-center justify-center text-sm" style={{ background: 'var(--bg-muted)' }}>📰</div>

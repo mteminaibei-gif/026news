@@ -325,7 +325,7 @@ export default function ExplorePage() {
                     }}>
                       {a.featured_image ? (
                         <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized />
+                          <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                         </div>
                       ) : (
                         <div className="w-20 h-16 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
@@ -369,7 +369,7 @@ export default function ExplorePage() {
                     }}>
                       {a.featured_image ? (
                         <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized />
+                          <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                         </div>
                       ) : (
                         <div className="w-20 h-16 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
@@ -451,7 +451,7 @@ export default function ExplorePage() {
                   }}>
                     {a.featured_image ? (
                       <div className="relative w-24 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                        <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized sizes="96px" />
+                        <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized sizes="96px"  loading="lazy"/>
                       </div>
                     ) : (
                       <div className="w-24 h-20 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
@@ -526,7 +526,7 @@ export default function ExplorePage() {
                         <div className="flex gap-4 p-4">
                           {article.featured_image ? (
                             <div className="relative w-24 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                              <Image src={article.featured_image} alt="" fill className="object-cover" unoptimized sizes="96px" />
+                              <Image src={article.featured_image} alt="" fill className="object-cover" unoptimized sizes="96px"  loading="lazy"/>
                             </div>
                           ) : (
                             <div className="w-24 h-20 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>

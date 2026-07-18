@@ -205,7 +205,7 @@ export function EditArticleClient({ article, categories }: Props) {
                 <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageSelect} className="sr-only" />
                 {imagePreview ? (
                   <div className="relative w-full aspect-video rounded-xl overflow-hidden">
-                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized />
+                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                     <button onClick={() => { setImagePreview(null); setImageFile(null) }}
                       className="absolute top-2 right-2 text-white rounded-lg px-2 py-1 text-xs font-bold"
                       style={{ background: 'var(--error)' }}>Remove</button>

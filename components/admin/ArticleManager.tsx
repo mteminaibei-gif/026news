@@ -238,7 +238,7 @@ export function ArticleManager() {
                 <div className="flex-1 min-w-0 flex items-center gap-3">
                   {a.featured_image ? (
                     <div className="relative w-12 h-10 rounded-lg overflow-hidden shrink-0">
-                      <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                      <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                     </div>
                   ) : (
                     <div className="w-12 h-10 rounded-lg flex items-center justify-center text-sm shrink-0" style={{ background: 'var(--primary-light)' }}>📰</div>

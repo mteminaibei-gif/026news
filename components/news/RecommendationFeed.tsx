@@ -143,7 +143,7 @@ export function RecommendationFeed() {
                 style={{ objectFit: 'cover' }}
                 unoptimized
                 sizes="280px"
-              />
+               loading="lazy"/>
               {article.category?.name && (
                 <span style={{
                   position: 'absolute', top: 10, left: 10,

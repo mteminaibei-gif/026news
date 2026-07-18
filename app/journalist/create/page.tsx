@@ -318,7 +318,7 @@ export default function CreatePostPage() {
                   onChange={handleImageSelect} className="sr-only" aria-label="Upload featured image" />
                 {imagePreview ? (
                   <div className="relative w-full aspect-video rounded-xl overflow-hidden group">
-                    <Image src={imagePreview} alt="Featured" fill className="object-cover" />
+                    <Image src={imagePreview} alt="Featured" fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                     <div className="absolute inset-0 transition-all duration-300 flex items-center justify-center"
                       style={{ background: 'rgba(0,0,0,0)' }}>
                       <button type="button"

@@ -60,7 +60,7 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
               {/* Thumbnail */}
               {a.featured_image ? (
                 <div className="relative w-14 h-10 rounded-lg overflow-hidden shrink-0 hidden sm:block">
-                  <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized />
+                  <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                 </div>
               ) : (
                 <div className="w-14 h-10 rounded-lg shrink-0 hidden sm:flex items-center justify-center text-base" style={{ background: 'var(--bg-muted, #f3f4f6)' }}>📰</div>

@@ -248,7 +248,7 @@ export default function JournalistProfilePage() {
                     <div key={a.article_id} className="px-6 py-4 flex items-center gap-4 transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       {a.featured_image ? (
                         <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0">
-                          <Image src={a.featured_image} alt={a.title} fill className="object-cover" />
+                          <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                         </div>
                       ) : (
                         <div className="w-14 h-11 rounded-lg flex items-center justify-center text-xl" style={{ background: 'var(--bg-muted)' }}>📰</div>

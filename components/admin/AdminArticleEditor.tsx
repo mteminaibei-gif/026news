@@ -7,6 +7,7 @@ import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { SEOAnalyzer } from '@/components/seo/SEOAnalyzer'
+import { AIWritingAssistant } from '@/components/admin/AIWritingAssistant'
 
 const MONETIZE_OPTIONS = [
   { value: 'free',      icon: '🆓', label: 'Free',         desc: 'Public access' },
@@ -241,9 +242,20 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               {saving ? (imageUploading ? '⏫ Uploading…' : '⏳ Saving…') : '🚀 Publish'}
             </button>
             </div>
-          </div>
-          </div>
+            </div>
 
+            {/* AI Writing Assistant */}
+            <AIWritingAssistant
+              title={title}
+              content={content}
+              excerpt={excerpt}
+              wordCount={wordCount}
+              readMins={readMins}
+              onApplyContent={(c) => setContent(c)}
+              onApplyExcerpt={(e) => setExcerpt(e)}
+            />
+
+          </div>
           {/* SEO Analyzer */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
             <SEOAnalyzer
@@ -428,7 +440,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
                   >
-                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized />
+                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center gap-2">
                       <button type="button"
                         onClick={() => fileInputRef.current?.click()}

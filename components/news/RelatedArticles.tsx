@@ -61,7 +61,7 @@ export async function RelatedArticles({ currentSlug, categoryName, limit = 3 }: 
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 640px) 100vw, 33vw"
                   unoptimized
-                />
+                 loading="lazy"/>
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-orange-500/10 flex items-center justify-center">
                   <span className="text-sm font-black text-gray-400 dark:text-gray-600 select-none tracking-wider">026connet!</span>

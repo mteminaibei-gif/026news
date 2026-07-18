@@ -98,7 +98,7 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
           className="object-cover"
           unoptimized
           sizes="220px"
-        />
+         loading="lazy"/>
       </div>
     </motion.article>
   )

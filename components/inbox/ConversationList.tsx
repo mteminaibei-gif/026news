@@ -106,7 +106,7 @@ export function ConversationList({ conversations, selectedConv, onSelectConversa
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 {user.profile_image ? (
                   <div style={{ position: 'relative', width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    <Image src={user.profile_image} alt={user.name} fill style={{ objectFit: 'cover' }} />
+                    <Image src={user.profile_image} alt={user.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                   </div>
                 ) : (
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>
@@ -144,7 +144,7 @@ export function ConversationList({ conversations, selectedConv, onSelectConversa
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}>
                 {conv.other_user.profile_image ? (
                   <div style={{ position: 'relative', width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    <Image src={conv.other_user.profile_image} alt={conv.other_user.name} fill style={{ objectFit: 'cover' }} />
+                    <Image src={conv.other_user.profile_image} alt={conv.other_user.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                     <span style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: onlineUsers.has(conv.other_user.user_id) ? 'var(--success)' : 'var(--bg-inset)', border: '2px solid var(--bg-surface)' }} />
                   </div>
                 ) : (

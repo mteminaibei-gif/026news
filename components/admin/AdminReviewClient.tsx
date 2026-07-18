@@ -105,7 +105,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
                 <div className="flex items-center gap-2">
                   {article.author.profile_image ? (
                     <div className="relative w-7 h-7 rounded-full overflow-hidden shrink-0">
-                      <Image src={article.author.profile_image} alt={article.author.name} fill className="object-cover" unoptimized />
+                      <Image src={article.author.profile_image} alt={article.author.name} fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                     </div>
                   ) : (
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--border-subtle)', color: 'var(--primary)' }}>
@@ -126,7 +126,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
           {/* Featured image */}
           {article.featured_image && (
             <div className="relative w-full h-64 rounded-xl overflow-hidden mb-5" style={{ background: 'var(--primary-light)' }}>
-              <Image src={article.featured_image} alt={article.title} fill className="object-cover" unoptimized />
+              <Image src={article.featured_image} alt={article.title} fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
             </div>
           )}
 
@@ -241,7 +241,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
             <div className="flex items-center gap-3 mb-3">
               {article.author.profile_image ? (
                 <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-2" style={{ ['--tw-ring-color' as string]: 'var(--border-subtle)' }}>
-                  <Image src={article.author.profile_image} alt={article.author.name} fill className="object-cover" unoptimized />
+                  <Image src={article.author.profile_image} alt={article.author.name} fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                 </div>
               ) : (
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold" style={{ background: 'var(--border-subtle)', color: 'var(--primary)' }}>
