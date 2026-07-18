@@ -379,11 +379,10 @@ export default function AdminProfilePage() {
         </div>
       </div>
 
-      {/* Tab Navigation — clean 3-tab system */}
+      {/* Tab Navigation */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 0 }}>
         {[
           { id: 'dashboard' as const, label: 'Dashboard', icon: '📊' },
-          { id: 'articles' as const, label: 'Articles', icon: '📰' },
           { id: 'settings' as const, label: 'Settings', icon: '⚙️' },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -667,17 +666,16 @@ export default function AdminProfilePage() {
               </div>
 
               <LiveRegistrationsFeed initialUsers={recentUsers} />
-            </div>
-          )}
 
-          {activeTab === 'articles' && (
-            <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-              <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Article Management</h3>
-                <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Approve, categorize, tag, feature, or delete articles</p>
-              </div>
-              <div className="p-6">
-                <ArticleManager />
+              {/* Article Management - merged into Dashboard */}
+              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Article Management</h3>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Approve, categorize, tag, feature, or delete articles</p>
+                </div>
+                <div className="p-6">
+                  <ArticleManager />
+                </div>
               </div>
             </div>
           )}

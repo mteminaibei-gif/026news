@@ -3,14 +3,24 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const JOURNALIST_NAV = [
-  { href: '/journalist/profile', label: 'Profile', icon: '📊' },
-  { href: '/journalist/articles', label: 'My Articles', icon: '📝' },
-  { href: '/journalist/create', label: 'New Article', icon: '➕' },
-  { href: '/journalist/earnings', label: 'Earnings', icon: '💰' },
-  { href: '/journalist/analytics', label: 'Analytics', icon: '📈' },
-  { href: '/journalist/subscribers', label: 'Subscribers', icon: '👥' },
-] as const
+const JOURNALIST_NAV: { section: string; items: { href: string; label: string; icon: string }[] }[] = [
+  {
+    section: 'Studio',
+    items: [
+      { href: '/journalist/profile', label: 'Profile', icon: '📊' },
+      { href: '/journalist/articles', label: 'My Articles', icon: '📝' },
+      { href: '/journalist/create', label: 'New Article', icon: '➕' },
+    ],
+  },
+  {
+    section: 'Insights',
+    items: [
+      { href: '/journalist/analytics', label: 'Analytics', icon: '📈' },
+      { href: '/journalist/earnings', label: 'Earnings', icon: '💰' },
+      { href: '/journalist/subscribers', label: 'Subscribers', icon: '👥' },
+    ],
+  },
+]
 
 export function JournalistSidebar() {
   const pathname = usePathname()
@@ -60,30 +70,42 @@ export function JournalistSidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {JOURNALIST_NAV.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/journalist/profile' && pathname.startsWith(item.href))
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={{
-                background: isActive ? 'var(--primary)' : 'transparent',
-                color: isActive ? '#fff' : 'var(--text-secondary)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'var(--bg-muted)'
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'transparent'
-              }}
+      <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+        {JOURNALIST_NAV.map((group) => (
+          <div key={group.section}>
+            <p
+              className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider"
+              style={{ color: 'var(--text-tertiary)' }}
             >
-              <span aria-hidden="true">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          )
-        })}
+              {group.section}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/journalist/profile' && pathname.startsWith(item.href))
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                    style={{
+                      background: isActive ? 'var(--primary)' : 'transparent',
+                      color: isActive ? '#fff' : 'var(--text-secondary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.currentTarget.style.background = 'var(--bg-muted)'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <span aria-hidden="true">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="p-3 border-t" style={{ borderColor: 'var(--border)' }}>
