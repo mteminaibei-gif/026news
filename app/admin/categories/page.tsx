@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { FolderPlus, Trash2, Check, ArrowLeft } from 'lucide-react'
 
 interface Category { category_id: number; name: string; description: string | null }
@@ -15,6 +16,8 @@ export default function AdminCategoriesPage() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null)
 
   useEffect(() => {
     loadCategories()
@@ -56,7 +59,15 @@ export default function AdminCategoriesPage() {
   }
 
   async function handleDelete(id: number, name: string) {
-    if (!confirm(`Delete "${name}"? Articles using it will become uncategorized.`)) return
+    setPendingDelete({ id, name })
+    setConfirmOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return
+    setConfirmOpen(false)
+    const { id, name } = pendingDelete
+    setPendingDelete(null)
     setError('')
     setSuccess('')
     try {
@@ -152,6 +163,16 @@ export default function AdminCategoriesPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title={`Delete "${pendingDelete?.name}"?`}
+        message="Articles using this category will become uncategorized. This action cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => { setConfirmOpen(false); setPendingDelete(null) }}
+      />
     </div>
   )
 }

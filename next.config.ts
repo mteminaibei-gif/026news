@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.supabase.co' },
       { protocol: 'https', hostname: '**.supabase.in' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'i.pravatar.cc' },
       { protocol: 'https', hostname: 'yt3.googleusercontent.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'i.ytimg.com' },

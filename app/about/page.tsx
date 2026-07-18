@@ -128,7 +128,7 @@ export default async function AboutPage() {
           </Link>
         </div>
         <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>
-          <Image src="https://picsum.photos/id/1060/600/400" alt="Newsroom" fill className="object-cover" />
+          <Image src="https://picsum.photos/id/1060/600/400" alt="Newsroom" fill className="object-cover" unoptimized />
         </div>
       </section>
 

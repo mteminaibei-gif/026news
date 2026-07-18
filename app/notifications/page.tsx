@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/client'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import {
   useNotifications,
   type AppNotification,
@@ -68,6 +69,7 @@ export default function NotificationsPage() {
   const [role, setRole] = useState<'admin' | 'journalist' | 'reader'>('reader')
   const [loadingUser, setLoadingUser] = useState(true)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -133,7 +135,7 @@ export default function NotificationsPage() {
                   <CheckCheck size={14} /> Mark all read
                 </button>
                 <button
-                  onClick={() => { if (confirm('Clear all notifications?')) clearAll() }}
+                  onClick={() => setConfirmOpen(true)}
                   style={{ fontSize: '0.78rem', color: 'var(--error)', background: 'var(--error-light)', border: 'none', cursor: 'pointer', padding: '8px 14px', borderRadius: 8, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <Trash2 size={14} /> Clear all
@@ -269,6 +271,16 @@ export default function NotificationsPage() {
           </div>
         )}
       </main>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Clear all notifications?"
+        message="This will permanently delete all your notifications. This action cannot be undone."
+        confirmLabel="Clear all"
+        danger
+        onConfirm={() => { setConfirmOpen(false); clearAll() }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   )
 }

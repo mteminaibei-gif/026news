@@ -51,6 +51,7 @@ export function CommentsSection({ articleId, initialComments }: Props) {
                   width={38}
                   height={38}
                   className="rounded-full object-cover shrink-0 w-[38px] h-[38px]"
+                  unoptimized
                 />
               ) : (
                 <div className="w-[38px] h-[38px] rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 shrink-0">

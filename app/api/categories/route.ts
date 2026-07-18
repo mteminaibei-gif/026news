@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentAdmin } from '@/lib/server-auth'
+import { slugify } from '@/lib/utils'
 
 // GET /api/categories — public, returns all categories sorted by name
 export async function GET() {
@@ -8,7 +9,7 @@ export async function GET() {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('categories')
-      .select('category_id, name')
+      .select('category_id, name, slug')
       .order('name')
     if (error) throw error
     return NextResponse.json(data ?? [])
@@ -41,9 +42,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Category already exists' }, { status: 409 })
     }
 
+    const slug = slugify(trimmed)
     const { data: cat, error: insertError } = await supabase
       .from('categories')
-      .insert({ name: trimmed, description: String(description ?? '').trim() || null } as never)
+      .insert({ name: trimmed, slug, description: String(description ?? '').trim() || null } as never)
       .select()
       .single()
     if (insertError) throw insertError

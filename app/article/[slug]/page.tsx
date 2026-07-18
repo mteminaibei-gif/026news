@@ -305,7 +305,7 @@ export default async function ArticlePage({ params }: Props) {
             <div className="article-meta">
               <div className="article-author-row">
                 {article.author?.profile_image ? (
-                  <Image src={article.author.profile_image} alt={article.author.name} width={44} height={44} className="author-avatar" style={{ borderRadius: 12, objectFit: 'cover' } as any} />
+                  <Image src={article.author.profile_image} alt={article.author.name} width={44} height={44} className="author-avatar" style={{ borderRadius: 12, objectFit: 'cover' } as any} unoptimized />
                 ) : (
                   <div className="author-avatar">{authorInitials}</div>
                 )}
@@ -372,7 +372,7 @@ export default async function ArticlePage({ params }: Props) {
           {article.author && (
             <div className="author-card">
               {article.author.profile_image ? (
-                <Image src={article.author.profile_image} alt={article.author.name} width={56} height={56} className="author-card-avatar" style={{ borderRadius: 14, objectFit: 'cover' } as any} />
+                <Image src={article.author.profile_image} alt={article.author.name} width={56} height={56} className="author-card-avatar" style={{ borderRadius: 14, objectFit: 'cover' } as any} unoptimized />
               ) : (
                 <div className="author-card-avatar">{authorInitials}</div>
               )}

@@ -36,7 +36,7 @@ function ArticleThumb({ src, alt, height }: { src: string | null; alt: string; h
   if (src) {
     return (
       <div style={{ position: 'relative', height }}>
-        <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} />
+        <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} unoptimized />
       </div>
     )
   }
@@ -58,7 +58,7 @@ function ArticleThumb({ src, alt, height }: { src: string | null; alt: string; h
 
 function AuthorAvatar({ src, name }: { src: string | null; name: string }) {
   if (src) {
-    return <Image src={src} alt={name} width={28} height={28} style={{ borderRadius: '50%' }} />
+    return <Image src={src} alt={name} width={28} height={28} style={{ borderRadius: '50%' }} unoptimized />
   }
   return (
     <div
