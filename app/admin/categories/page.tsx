@@ -4,15 +4,25 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { FolderPlus, Trash2, Check, ArrowLeft } from 'lucide-react'
+import { FolderPlus, Trash2, Check, ArrowLeft, Smile, X, Loader2 } from 'lucide-react'
 
-interface Category { category_id: number; name: string; description: string | null }
+// Common emoji icons for categories
+const CATEGORY_ICONS = [
+  '🏛️', '💼', '💻', '🔬', '🎬', '⚽', '✍️', '🏥', '🎓', '🌾',
+  '🏠', '🗞️', '📺', '📻', '🎵', '🎨', '📚', '🔬', '⚖️', '🌍',
+  '🏗️', '💰', '📈', '🚀', '🤖', '🔒', '☁️', '📱', '🎮', '🎧',
+  '🚗', '✈️', '🚢', '🏛️', '⚡', '💡', '📊', '📝', '📷', '🎥',
+  '🏥', '💊', '🧬', '🧪', '🦠', '🌱', '🌳', '🌊', '🔥', '❄️',
+]
+
+interface Category { category_id: number; name: string; description: string | null; icon: string | null }
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
+  const [newIcon, setNewIcon] = useState('📁')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -57,13 +67,14 @@ export default function AdminCategoriesPage() {
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim(), description: newDesc.trim() }),
+        body: JSON.stringify({ name: newName.trim(), description: newDesc.trim(), icon: newIcon }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Failed to create'); return }
       setSuccess(`"${data.name}" created`)
       setNewName('')
       setNewDesc('')
+      setNewIcon('📁')
       loadCategories()
       setTimeout(() => setSuccess(''), 3000)
     } catch { setError('Network error') }
@@ -137,6 +148,31 @@ export default function AdminCategoriesPage() {
               maxLength={200}
             />
           </div>
+          <div className="mb-3">
+            <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'var(--text-secondary)' }}>Icon</label>
+            <div className="flex flex-wrap gap-1.5" style={{ maxHeight: '120px', overflowY: 'auto' }}>
+              {CATEGORY_ICONS.map(icon => (
+                <button
+                  key={icon}
+                  type="button"
+                  onClick={() => setNewIcon(icon)}
+                  className={`w-8 h-8 rounded-xl text-xl flex items-center justify-center transition-all ${
+                    newIcon === icon
+                      ? 'ring-2 ring-offset-2'
+                      : 'hover:bg-opacity-10'
+                  }`}
+                  style={{
+                    border: '1px solid var(--border)',
+                    background: newIcon === icon ? 'var(--primary-light)' : 'var(--bg-elevated)',
+                    color: newIcon === icon ? 'var(--primary)' : 'var(--text-primary)',
+                    boxShadow: newIcon === icon ? '0 0 0 2px var(--primary)' : undefined,
+                  }}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             type="submit"
             disabled={creating || !newName.trim()}
@@ -158,6 +194,7 @@ export default function AdminCategoriesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--bg-muted)' }}>
+                  <th className="text-left px-4 py-3 font-semibold text-xs" style={{ color: 'var(--text-secondary)' }}>Icon</th>
                   <th className="text-left px-4 py-3 font-semibold text-xs" style={{ color: 'var(--text-secondary)' }}>Name</th>
                   <th className="text-left px-4 py-3 font-semibold text-xs" style={{ color: 'var(--text-secondary)' }}>Description</th>
                   <th className="text-right px-4 py-3 font-semibold text-xs" style={{ color: 'var(--text-secondary)' }}>Actions</th>
@@ -166,6 +203,7 @@ export default function AdminCategoriesPage() {
               <tbody>
                 {categories.map(cat => (
                   <tr key={cat.category_id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                    <td className="px-4 py-3 text-center text-2xl">{cat.icon || '📁'}</td>
                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>{cat.name}</td>
                     <td className="px-4 py-3" style={{ color: 'var(--text-tertiary)' }}>{cat.description || '—'}</td>
                     <td className="px-4 py-3 text-right">
