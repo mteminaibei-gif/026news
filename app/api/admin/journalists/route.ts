@@ -73,6 +73,14 @@ export async function POST(req: NextRequest) {
 
       if (updateError) throw updateError
 
+      // Notify the applicant
+      await admin.from('notifications').insert({
+        user_id: Number(user_id),
+        type: 'journalist_application',
+        title: 'Journalist application approved',
+        message: 'Congratulations! Your application to write for 026connet! has been approved. You can now publish articles.',
+      } as never)
+
       return NextResponse.json({ success: true, action: 'approved' })
     } else {
       // Decline — keep role but mark application as declined
@@ -89,6 +97,16 @@ export async function POST(req: NextRequest) {
         .eq('user_id', Number(user_id))
 
       if (updateError) throw updateError
+
+      // Notify the applicant
+      await admin.from('notifications').insert({
+        user_id: Number(user_id),
+        type: 'journalist_application',
+        title: 'Journalist application update',
+        message: reason
+          ? `Your journalist application was not approved. Reason: ${reason}`
+          : 'Your journalist application was not approved at this time. Feel free to apply again later.',
+      } as never)
 
       return NextResponse.json({ success: true, action: 'declined' })
     }
