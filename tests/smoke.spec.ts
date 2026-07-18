@@ -9,7 +9,7 @@ test.describe('026news smoke', () => {
 
   test('login page is reachable and renders the sign-in form', async ({ page }) => {
     await page.goto('/login')
-    await expect(page.getByText('Sign In', { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible()
     await expect(page.locator('input[type="email"]')).toBeVisible()
     await expect(page.locator('input[type="password"]')).toBeVisible()
   })
