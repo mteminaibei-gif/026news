@@ -17,15 +17,15 @@
   --bg-base: #f7f9f9;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-inset: #eff3f4;
-  --bg-muted: #eff3f4;
+  --bg-inset: #eef2f3;
+  --bg-muted: #eef2f3;
   --text-inverse: #ffffff;
-  --text-primary: #0f1419;
-  --text-secondary: #536471;
-  --text-tertiary: #536471;
-  --text-muted: #8899a6;
-  --border: #eff3f4;
-  --border-subtle: #eff3f4;
+  --text-primary: #0c1116;
+  --text-secondary: #3d4a52;
+  --text-tertiary: #59636b;
+  --text-muted: #6b7780;
+  --border: #e3e9eb;
+  --border-subtle: #e9eef0;
   --primary: #1d9bf0;
   --primary-hover: #1a8cd8;
   --primary-light: #e8f5fd;
@@ -85,16 +85,16 @@
 }
 
 [data-theme="dark"], html.dark {
-  --bg-base: oklch(14% 0.015 175);
-  --bg-surface: oklch(18% 0.015 175);
-  --bg-elevated: oklch(22% 0.015 175);
-  --bg-inset: oklch(14% 0.012 175);
-  --bg-muted: oklch(20% 0.012 175);
+  --bg-base: oklch(15.5% 0.016 175);
+  --bg-surface: oklch(19.5% 0.016 175);
+  --bg-elevated: oklch(23% 0.016 175);
+  --bg-inset: oklch(15.5% 0.013 175);
+  --bg-muted: oklch(21% 0.013 175);
   --text-inverse: oklch(18% 0.012 175);
-  --text-primary: oklch(92% 0.008 175);
-  --text-secondary: oklch(70% 0.008 175);
-  --text-tertiary: oklch(55% 0.008 175);
-  --text-muted: oklch(45% 0.008 175);
+  --text-primary: oklch(95% 0.007 175);
+  --text-secondary: oklch(76% 0.008 175);
+  --text-tertiary: oklch(62% 0.008 175);
+  --text-muted: oklch(52% 0.008 175);
   --border: oklch(28% 0.015 175);
   --border-subtle: oklch(24% 0.012 175);
   --border-strong: oklch(35% 0.015 175);
@@ -545,7 +545,7 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
   from { opacity: 0; transform: scale(0.96); }
   to   { opacity: 1; transform: scale(1); }
 }
-@keyframes shimmer {
+@keyframes shimmer-x {
   0%   { background-position: -480px 0; }
   100% { background-position: 480px 0; }
 }
@@ -612,7 +612,7 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 .skeleton {
   background: linear-gradient(90deg, var(--bg-inset) 25%, var(--bg-elevated) 37%, var(--bg-inset) 63%);
   background-size: 960px 100%;
-  animation: shimmer 1.4s infinite linear;
+  animation: shimmer-x 1.4s infinite linear;
   border-radius: 10px;
 }
 .live-pulse { animation: stat-pulse 1.2s var(--ease-out-expo); }
@@ -1526,4 +1526,76 @@ html:not(.dark):not([data-theme="dark"]) .bg-gray-100 { background-color: oklch(
 @keyframes toast-slide-in {
   from { opacity: 0; transform: translateY(12px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE / TOUCH OPTIMISATIONS  (torch-friendly, thumb-navigable)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Comfortable tap targets on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  button, a, [role="button"], .nav-link, .feed-tab, .cat-pill {
+    min-height: 44px;
+  }
+  /* Hover-only glow is meaningless on touch — disable to save paint */
+  .glow-track:hover .glow-spot { opacity: 0; }
+  .hover-lift:hover { transform: none; }
+  /* Avoid sticky elements trapping the viewport */
+  .home-sidebar { position: static !important; }
+}
+
+/* Bottom tab bar (mobile only) — anchored, thumb-reachable.
+   The page content gets bottom padding so it isn't hidden behind it. */
+.mobile-tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 60;
+  display: none;
+  align-items: stretch;
+  justify-content: space-around;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-subtle);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.mobile-tabbar a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px 10px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  font-size: 0.6rem;
+  font-weight: 600;
+  transition: color 0.2s var(--ease-out-expo);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-tabbar a svg { width: 22px; height: 22px; }
+.mobile-tabbar a.active { color: var(--primary); }
+.mobile-tabbar a.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 22px; height: 3px; border-radius: 0 0 3px 3px;
+  background: var(--primary);
+}
+.mobile-tabbar a:active { transform: scale(0.94); }
+
+@media (max-width: 768px) {
+  .mobile-tabbar { display: flex; }
+  /* Keep content clear of the fixed bar + safe area */
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
+  /* Hide the desktop-style right-side action cluster redundancy on small
+     screens is handled per-component; here we just tidy nav height. */
+  .main-layout { padding-bottom: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
