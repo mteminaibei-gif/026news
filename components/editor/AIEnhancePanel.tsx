@@ -94,6 +94,7 @@ export function AIEnhancePanel({ title, content, onApplyContent }: Props) {
     setRewriting(true)
     setError(null)
     setRewrite(null)
+    setAnalysis(null)
     setShowPreview(false)
     try {
       const res = await fetch('/api/ai/enhance', {

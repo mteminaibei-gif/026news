@@ -142,7 +142,7 @@ ${plain.slice(0, 6000)}${fewShot}`
     maxTokens: 1600,
     responseFormat: 'json_object',
   })
-  return sanitizeAnalysis(raw, plain)
+  return sanitizeAnalysis(raw)
 }
 
 export async function rewriteArticle(params: {
@@ -181,7 +181,7 @@ ${content.slice(0, 12000)}${fewShot}`
   return parseRewrite(raw)
 }
 
-function sanitizeAnalysis(raw: string, fallbackPlain: string): ArticleAnalysis {
+function sanitizeAnalysis(raw: string): ArticleAnalysis {
   try {
     const json = JSON.parse(raw) as Partial<ArticleAnalysis>
     return {
@@ -207,15 +207,23 @@ function sanitizeAnalysis(raw: string, fallbackPlain: string): ArticleAnalysis {
 function parseRewrite(raw: string): RewriteResult {
   const idx = raw.indexOf('===CHANGES===')
   if (idx === -1) {
-    return { html: raw.trim(), summary: '', changes: [] }
+    return { html: stripCodeFence(raw).trim(), summary: '', changes: [] }
   }
-  const html = raw.slice(0, idx).trim().replace(/^```(?:html)?/i, '').replace(/```$/i, '').trim()
+  const html = stripCodeFence(raw.slice(0, idx)).trim()
   const changesText = raw.slice(idx + '===CHANGES==='.length)
   const changes = changesText
     .split('\n')
     .map((l) => l.replace(/^[-*]\s*/, '').trim())
     .filter(Boolean)
   return { html, summary: '', changes }
+}
+
+/** Remove markdown code fences (``` or ```html) from a block of text. */
+function stripCodeFence(text: string): string {
+  let out = text.trim()
+  out = out.replace(/^```(?:html)?\s*/i, '')
+  out = out.replace(/\s*```$/i, '')
+  return out
 }
 
 function clamp(n: number, min: number, max: number): number {
