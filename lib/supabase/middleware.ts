@@ -29,6 +29,31 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Auth pages should not be reachable once signed in. Send the user to their
+  // role-appropriate home so they can't "sign in again" until they sign out.
+  const authPages = ['/login', '/signup']
+  if (user && authPages.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+    let home = '/profile'
+    if (user) {
+      try {
+        const { data: rawProfile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('auth_id', user.id)
+          .single()
+        const role = (rawProfile as { role?: string } | null)?.role
+        if (role === 'admin') home = '/admin/profile'
+        else if (role === 'journalist') home = '/journalist/profile'
+      } catch {
+        /* fall back to /profile */
+      }
+    }
+    const url = request.nextUrl.clone()
+    url.pathname = home
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
+
   // Routes that require a logged-in user (any role). These were previously
   // only guarded client-side, allowing unauthenticated flashes / SSR data
   // exposure. Edge protection closes that gap.

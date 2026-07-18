@@ -194,19 +194,34 @@ export async function POST(req: NextRequest) {
     //    by RLS or would duplicate the trigger-created row.
     const admin = await createAdminClient()
 
+    // Journalist signups are NOT granted the role immediately. They are
+    // created as readers with a PENDING author_application that a site admin
+    // must approve (via /api/admin/journalists). This keeps "apply to write"
+    // consistent whether the person is brand new or an existing member.
+    const isJournalistApplication = role === 'journalist'
+    const effectiveRole = isJournalistApplication ? 'reader' : role
+
     const profilePayload: Record<string, any> = {
       auth_id: authData.user.id,
       name: name.trim(),
       email: email.toLowerCase(),
-      role: role,
+      role: effectiveRole,
       bio: bio.trim() || null,
       status: 'active',
       password_hash: '',
-      social_links: role === 'journalist' ? {
+      social_links: isJournalistApplication ? {
         organization: organization.trim() || null,
         portfolio: portfolio.trim() || null,
         phone: phone.trim() || null,
       } : {},
+      author_application: isJournalistApplication
+        ? {
+            status: 'pending',
+            organization: organization.trim() || null,
+            portfolio: portfolio.trim() || null,
+            submitted_at: new Date().toISOString(),
+          }
+        : null,
     }
 
     const { error: profileError } = await admin
@@ -232,15 +247,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Success response
+    const pendingJournalist = isJournalistApplication
     return NextResponse.json(
       {
         success: true,
-        message: 'Account created successfully! You can now sign in.',
+        pendingJournalist,
+        message: pendingJournalist
+          ? 'Account created! Your journalist application is pending admin review.'
+          : 'Account created successfully! You can now sign in.',
         user: {
           id: authData.user.id,
           email: authData.user.email,
           name: name.trim(),
-          role: role,
+          role: effectiveRole,
         },
       },
       { status: 201 }

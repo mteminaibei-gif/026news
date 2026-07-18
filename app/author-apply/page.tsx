@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/layout/Logo';
+import { createClient } from '@/lib/supabase/client';
 
 const steps = [
   { number: 1, label: 'About You' },
@@ -14,6 +16,7 @@ const niches = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Busine
 const experienceLevels = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years'];
 
 export default function AuthorApplyPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -25,6 +28,67 @@ export default function AuthorApplyPage() {
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [motivation, setMotivation] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [authState, setAuthState] = useState<'checking' | 'guest' | 'reader' | 'journalist' | 'pending'>('checking');
+
+  // Determine the visitor's state: signed-out guest, active reader (can
+  // apply), already a journalist, or already has a pending application.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (active) setAuthState('guest');
+        return;
+      }
+      const { data } = await supabase
+        .from('users')
+        .select('role, author_application')
+        .eq('auth_id', user.id)
+        .single();
+      if (!active) return;
+      const app = (data as any)?.author_application;
+      if (app?.status === 'pending') setAuthState('pending');
+      else if ((data as any)?.role === 'journalist') setAuthState('journalist');
+      else setAuthState('reader');
+    })();
+    return () => { active = false; };
+  }, []);
+
+  async function submitApplication() {
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/apply-journalist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization: [firstName, lastName].filter(Boolean).join(' ') || undefined,
+          portfolio: portfolioUrl || undefined,
+          title: title || undefined,
+          niche: niche || undefined,
+          bio: bio || undefined,
+          experience: experience || undefined,
+          linkedin: linkedinUrl || undefined,
+          motivation: motivation || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not submit your application.');
+        if (data.status === 'pending') setAuthState('pending');
+        setSubmitting(false);
+        return;
+      }
+      setStep(4);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -72,6 +136,79 @@ export default function AuthorApplyPage() {
     transition: 'border-color 0.2s',
   };
 
+  if (authState === 'checking') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-tertiary)' }}>Loading…</div>
+      </div>
+    );
+  }
+
+  if (authState === 'guest') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '2.5rem' }}>
+          <Logo size="lg" href="" />
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', margin: '1.5rem 0 0.5rem' }}>
+            Sign in to apply
+          </h2>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+            You need an account to become a journalist. Sign in, or create one and choose &ldquo;Journalist&rdquo; at sign-up.
+          </p>
+          <button style={btnPrimary} onClick={() => router.push('/login?redirect=/author-apply')}>
+            Sign in
+          </button>
+          <p style={{ marginTop: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            New here?{' '}
+            <span style={{ color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }} onClick={() => router.push('/signup')}>
+              Create an account
+            </span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authState === 'journalist') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '2.5rem' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✍️</div>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            You&apos;re already a journalist
+          </h2>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+            You can start writing and publishing right away.
+          </p>
+          <button style={btnPrimary} onClick={() => router.push('/journalist/profile')}>
+            Go to your dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (authState === 'pending') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '2.5rem' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', fontSize: '1.75rem' }}>
+            ⏳
+          </div>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            Application under review
+          </h2>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+            Thanks! Your journalist application is already being reviewed by our editorial team. We&apos;ll email you once a decision is made.
+          </p>
+          <button style={btnPrimary} onClick={() => router.push('/profile')}>
+            Back to profile
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem 1.5rem' }}>
       <div style={{ maxWidth: '620px', width: '100%' }}>
@@ -79,6 +216,12 @@ export default function AuthorApplyPage() {
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <Logo size="lg" href="" />
         </div>
+
+        {error && (
+          <div style={{ marginBottom: '1.5rem', padding: '12px 16px', borderRadius: '10px', fontSize: '0.85rem', background: 'var(--error-light)', color: 'var(--error)' }}>
+            {error}
+          </div>
+        )}
 
         {/* Progress Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2.5rem', gap: 0 }}>
@@ -280,7 +423,9 @@ export default function AuthorApplyPage() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <button style={btnSecondary} onClick={() => setStep(2)}>Back</button>
-                <button style={btnPrimary} onClick={() => setStep(4)}>Submit Application</button>
+                <button style={btnPrimary} onClick={submitApplication} disabled={submitting || !termsAccepted}>
+                  {submitting ? 'Submitting…' : 'Submit Application'}
+                </button>
               </div>
             </div>
           )}

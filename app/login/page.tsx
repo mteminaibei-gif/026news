@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -18,6 +18,27 @@ function LoginForm() {
   const [success, setSuccess] = useState(params.get('message') || '')
   const urlError = params.get('error')
   const [oauthLoading, setOauthLoading] = useState<string | null>(null)
+
+  // If already signed in, bounce to the role-appropriate home (middleware
+  // also enforces this, but this prevents a flash of the login form).
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      let home = '/profile'
+      try {
+        const { data: p } = await supabase
+          .from('users')
+          .select('role')
+          .eq('auth_id', user.id)
+          .single()
+        const role = (p as { role?: string } | null)?.role
+        if (role === 'admin') home = '/admin/profile'
+        else if (role === 'journalist') home = '/journalist/profile'
+      } catch { /* ignore */ }
+      router.replace(home)
+    })
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

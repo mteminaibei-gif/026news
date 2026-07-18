@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 
 type Role = 'reader' | 'journalist'
@@ -15,6 +16,27 @@ interface ApiError {
 export default function SignupPage() {
   const router = useRouter()
   const [role, setRole] = useState<Role>('reader')
+
+  // If already signed in, bounce to the role-appropriate home (middleware
+  // also enforces this, but this prevents a flash of the signup form).
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      let home = '/profile'
+      try {
+        const { data: p } = await supabase
+          .from('users')
+          .select('role')
+          .eq('auth_id', user.id)
+          .single()
+        const r = (p as { role?: string } | null)?.role
+        if (r === 'admin') home = '/admin/profile'
+        else if (r === 'journalist') home = '/journalist/profile'
+      } catch { /* ignore */ }
+      router.replace(home)
+    })
+  }, [router])
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -86,6 +108,12 @@ export default function SignupPage() {
         setLoading(false)
         return
       }
+      // Journalist applicants are pending admin approval — send them to the
+      // confirmation screen which explains the review wait.
+      if (data.pendingJournalist) {
+        router.push(`/verify-email?email=${encodeURIComponent(form.email.trim())}&journalist=pending`)
+        return
+      }
       router.push(`/verify-email?email=${encodeURIComponent(form.email.trim())}`)
     } catch {
       setGeneralError('Network error. Please try again.')
@@ -112,16 +140,22 @@ export default function SignupPage() {
             >
               Reader
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={role === 'journalist'}
-              className={role === 'journalist' ? 'active' : ''}
-              onClick={() => setRole('journalist')}
-            >
-              Journalist
-            </button>
-          </div>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={role === 'journalist'}
+                className={role === 'journalist' ? 'active' : ''}
+                onClick={() => setRole('journalist')}
+              >
+                Journalist
+              </button>
+            </div>
+
+            <p className="auth-note">
+              {role === 'journalist'
+                ? 'Applications are reviewed by our editorial team before publishing access is granted.'
+                : 'Read, follow and engage with the stories that matter to you.'}
+            </p>
 
           <form onSubmit={handleSubmit} noValidate>
             <label className="field">
@@ -249,6 +283,12 @@ export default function SignupPage() {
           color: var(--muted, #6b776f);
           font-size: 14px;
           line-height: 1.5;
+        }
+        .auth-note {
+          margin: -10px 0 22px;
+          font-size: 12.5px;
+          line-height: 1.5;
+          color: var(--muted, #6b776f);
         }
         .role-toggle {
           display: grid;
