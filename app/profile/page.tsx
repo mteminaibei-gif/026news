@@ -62,8 +62,13 @@ export default function ProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) { router.push('/login?redirect=/profile'); return }
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      // No valid session (stale/expired cookie, or none) — send the
+      // reader to login rather than rendering a broken/empty profile.
+      if (authError || !authUser?.id) {
+        if (typeof window !== 'undefined') router.push('/login?redirect=/profile')
+        return
+      }
       const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).maybeSingle()
       const p = data as any
       if (p) {
@@ -266,12 +271,17 @@ export default function ProfilePage() {
     } catch { setConversations([]) }
   }
 
-  const initials = user ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'
+  const getInitialsSafe = (name?: string | null) => {
+    const n = (name || '').trim()
+    if (!n) return 'U'
+    return n.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U'
+  }
+  const initials = getInitialsSafe(user?.name)
   const displayName = user?.name || 'Reader'
 
   const getNotificationDisplay = (n: any) => {
-    const name = n.actor_name || n.sender_name || 'Someone'
-    const inits = name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
+    const name = n?.actor_name || n?.sender_name || 'Someone'
+    const inits = getInitialsSafe(name)
     const colors = ['oklch(50% 0.14 200)', 'oklch(50% 0.14 320)', 'oklch(50% 0.14 90)', 'oklch(50% 0.14 30)', 'oklch(50% 0.14 350)']
     const color = colors[(n.notification_id || 0) % colors.length]
     const timeAgo = getTimeAgo(n.created_at)
@@ -300,7 +310,7 @@ export default function ProfilePage() {
   const getFollowingDisplay = (f: any) => {
     const u = f.users
     const name = u?.name || 'Unknown'
-    const inits = name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
+    const inits = getInitialsSafe(name)
     const colors = ['oklch(50% 0.14 200)', 'oklch(50% 0.14 30)', 'oklch(50% 0.14 350)', 'oklch(50% 0.14 140)']
     const color = colors[(f.following_id || 0) % colors.length]
     const views = u?.total_views ? `${Math.round(u.total_views / 1000)}K views` : ''
