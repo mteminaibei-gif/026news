@@ -23,6 +23,18 @@ export default function AdminCategoriesPage() {
     loadCategories()
   }, [])
 
+  // Real-time updates: refetch whenever a category is inserted/updated/deleted.
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('admin-categories')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+        loadCategories()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
   async function loadCategories() {
     setLoading(true)
     try {
@@ -87,9 +99,18 @@ export default function AdminCategoriesPage() {
         </Link>
       </div>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-xl font-bold mb-6" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
-          Manage Categories
-        </h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+            Manage Categories
+          </h1>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--success)' }} />
+            </span>
+            Live
+          </span>
+        </div>
 
         {/* Create form */}
         <form onSubmit={handleCreate} className="rounded-2xl p-5 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
