@@ -51,18 +51,15 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+      <div className="rounded-2xl shadow-2xl max-w-md w-full mx-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between p-6" style={{ borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invite {authorName}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Share the author signup link</p>
+            <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Invite {authorName}</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Share the author signup link</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-          >
+          <button onClick={onClose} className="transition-colors" style={{ color: 'var(--text-tertiary)' }}>
             <X size={24} />
           </button>
         </div>
@@ -71,24 +68,19 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
         <div className="p-6 space-y-6">
           {/* Invite Link */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
               Author Signup Link
             </label>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={inviteLink}
-                readOnly
-                className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400"
-              />
-              <button
-                onClick={handleCopyLink}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  copied
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300'
-                }`}
-              >
+              <input type="text" value={inviteLink} readOnly
+                className="flex-1 px-3 py-2 rounded-lg text-sm"
+                style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }} />
+              <button onClick={handleCopyLink}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${copied ? 'text-white' : ''}`}
+                style={{
+                  background: copied ? 'var(--success)' : 'var(--bg-muted)',
+                  color: copied ? '#fff' : 'var(--text-primary)',
+                }}>
                 {copied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
@@ -96,68 +88,61 @@ export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', auth
 
           {/* Social Media Options */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>
               Send via:
             </label>
             <div className="space-y-2">
               {/* WhatsApp */}
-              <button
-                onClick={handleWhatsApp}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                  selectedMethod === 'whatsapp'
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-green-500'
-                }`}
-              >
+              <button onClick={handleWhatsApp}
+                className="w-full flex items-center gap-3 p-3 rounded-lg transition-all"
+                style={{
+                  border: `2px solid ${selectedMethod === 'whatsapp' ? 'var(--success)' : 'var(--border)'}`,
+                  background: selectedMethod === 'whatsapp' ? 'var(--success-light)' : 'transparent',
+                }}>
                 <MessageCircle size={20} className="text-green-600" />
-                <span className="font-medium text-gray-900 dark:text-white">WhatsApp</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>WhatsApp</span>
               </button>
 
               {/* Email */}
-              <button
-                onClick={handleEmail}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                  selectedMethod === 'email'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-500'
-                }`}
-              >
+              <button onClick={handleEmail}
+                className="w-full flex items-center gap-3 p-3 rounded-lg transition-all"
+                style={{
+                  border: `2px solid ${selectedMethod === 'email' ? 'var(--primary)' : 'var(--border)'}`,
+                  background: selectedMethod === 'email' ? 'var(--primary-light)' : 'transparent',
+                }}>
                 <Mail size={20} className="text-blue-600" />
-                <span className="font-medium text-gray-900 dark:text-white">Email</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Email</span>
               </button>
 
               {/* Twitter */}
-              <button
-                onClick={handleTwitter}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                  selectedMethod === 'twitter'
-                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-sky-500'
-                }`}
-              >
+              <button onClick={handleTwitter}
+                className="w-full flex items-center gap-3 p-3 rounded-lg transition-all"
+                style={{
+                  border: `2px solid ${selectedMethod === 'twitter' ? 'var(--accent)' : 'var(--border)'}`,
+                  background: selectedMethod === 'twitter' ? 'var(--primary-light)' : 'transparent',
+                }}>
                 <span className="text-xl">𝕏</span>
-                <span className="font-medium text-gray-900 dark:text-white">Twitter / X</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Twitter / X</span>
               </button>
             </div>
           </div>
 
           {/* Message Preview */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
               Message Preview
             </label>
-            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-600 dark:text-gray-400">
+            <div className="p-3 rounded-lg text-sm" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>
               {inviteMessage}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
-          >
+        <div className="p-6" style={{ borderTop: '1px solid var(--border)' }}>
+          <button onClick={onClose}
+            className="w-full px-4 py-2 font-medium rounded-lg transition-all"
+            style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)' }}>
             Close
           </button>
         </div>

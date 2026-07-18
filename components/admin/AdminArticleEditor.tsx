@@ -197,20 +197,22 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
   }, [handleSave])
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, var(--primary-light), var(--bg-surface), var(--warning-light))' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(to bottom right, var(--primary-light), var(--bg-surface), var(--warning-light))' }}>
 
-      {/* ── Sticky action bar ── */}
+      {/* ── CMS Header Navigation Strip ── */}
       <div className="sticky top-0 z-20 backdrop-blur-md shadow-sm" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Back link */}
             <a href={backHref}
               className="text-sm transition-colors shrink-0 hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>
               ←
             </a>
             <div className="w-2 h-6 rounded-full shrink-0" style={{ background: 'linear-gradient(to bottom, var(--primary), var(--success))' }} />
+            <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              {isEdit ? 'Editing' : 'Draft'}
+            </span>
             <h1 className="text-sm font-black truncate" style={{ color: 'var(--primary)' }}>
-              {isEdit ? 'Edit Article' : 'Write New Article'}
+              {isEdit ? 'Edit Article' : 'Writing Studio'}
             </h1>
             {title && (
               <span className="text-xs truncate hidden md:block" style={{ color: 'var(--text-tertiary)' }}>— {title}</span>
@@ -241,131 +243,49 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               className="text-xs font-bold text-white px-4 py-1.5 rounded-lg transition-all hover:shadow-md disabled:opacity-40" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
               {saving ? (imageUploading ? '⏫ Uploading…' : '⏳ Saving…') : '🚀 Publish'}
             </button>
-            </div>
-            </div>
-
-            {/* AI Writing Assistant */}
-            <AIWritingAssistant
-              title={title}
-              content={content}
-              excerpt={excerpt}
-              wordCount={wordCount}
-              readMins={readMins}
-              onApplyContent={(c) => setContent(c)}
-              onApplyExcerpt={(e) => setExcerpt(e)}
-            />
-
           </div>
-          {/* SEO Analyzer */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
-            <SEOAnalyzer
-              title={title}
-              content={content}
-              excerpt={excerpt}
-              slug={slug}
-              featuredImage={imagePreview ?? undefined}
-              tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
-              category={categories.find(c => c.category_id === categoryId)?.name}
-              authorName={adminName}
-              onApplyTitle={(t) => setTitle(t)}
-              onApplyExcerpt={(e) => setExcerpt(e)}
-              onApplyContent={(c) => setContent(c)}
-              onApplySlug={(s) => { setSlug(s); setSlugEdited(true) }}
-              onApplyTags={(t) => setTags(t.join(', '))}
-            />
-          </div>
+        </div>
+      </div>
 
-      {/* ── Body ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {saveError && (
-          <div role="alert" className="mb-5 text-sm px-4 py-3 rounded-xl flex items-center gap-2" style={{ background: 'var(--error-light)', border: '1px solid rgba(200, 16, 46, 0.2)', color: 'var(--error)' }}>
+      {saveError && (
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-4">
+          <div role="alert" className="text-sm px-4 py-3 rounded-xl flex items-center gap-2" style={{ background: 'var(--error-light)', border: '1px solid rgba(200, 16, 46, 0.2)', color: 'var(--error)' }}>
             ⚠️ {saveError}
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="grid xl:grid-cols-[1fr_320px] gap-6 items-start">
+      {/* ── Split Screen Studio Grid ── */}
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
+        <div className="flex gap-6 items-start">
 
-          {/* ════════ LEFT — main editor ════════ */}
-          <div className="space-y-5">
+          {/* ════ LEFT: Writing Deck (flexible) ════ */}
+          <div className="flex-1 min-w-0 space-y-5">
 
             {/* Headline */}
-            <div className="rounded-2xl shadow-sm p-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
-              <label className={labelCls} htmlFor="ed-title" style={{ color: 'var(--text-tertiary)' }}>📰 Headline</label>
-              <textarea
-                id="ed-title"
-                rows={2}
-                value={title}
+            <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <label className={labelCls} htmlFor="ed-title" style={{ color: 'var(--text-tertiary)' }}>Article Core Headline</label>
+              <textarea id="ed-title" rows={2} value={title}
                 onChange={e => { setTitle(e.target.value); if (!slugEdited) setSlug(slugify(e.target.value)) }}
-                placeholder="Write your headline here…"
+                placeholder="Write your headline here..."
                 className="w-full text-2xl md:text-3xl font-black bg-transparent outline-none resize-none leading-tight"
-                style={{ color: 'var(--text-primary)', fontFamily: 'Georgia, "Times New Roman", serif' }}
-              />
-              {title && (
-                <p className="text-xs mt-2 pt-2" style={{ color: 'var(--text-tertiary)', borderTop: '1px solid var(--border)' }}>
-                  {title.length} characters
-                </p>
-              )}
+                style={{ color: 'var(--text-primary)', fontFamily: 'Georgia, "Times New Roman", serif' }} />
+              {title && <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>{title.length} characters</p>}
             </div>
 
-            {/* Meta row: category + source + tags */}
+            {/* Excerpt (Subhead) */}
             <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div>
-                  <label className={labelCls} htmlFor="ed-category" style={{ color: 'var(--text-tertiary)' }}>🗂 Category</label>
-                  <select id="ed-category" value={categoryId}
-                    onChange={e => setCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
-                    className={fieldCls + ' bg-white'} style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)', ['--tw-ring-color' as string]: 'var(--success)' }}>
-                    <option value="">Choose a category…</option>
-                    {categories.map(c => (
-                      <option key={c.category_id} value={c.category_id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls} htmlFor="ed-tags">
-                    🏷 Tags
-                    <span className="font-normal normal-case tracking-normal ml-1" style={{ color: 'var(--text-tertiary)' }}>comma-separated</span>
-                  </label>
-                  <input id="ed-tags" type="text" value={tags}
-                    onChange={e => setTags(e.target.value)}
-                    placeholder="Kenya, Politics, Breaking…"
-                    className={fieldCls} style={fieldStyle} />
-                </div>
-                <div>
-                  <label className={labelCls} htmlFor="ed-source">🔗 Source URL</label>
-                  <input id="ed-source" type="url" value={sourceRef}
-                    onChange={e => setSourceRef(e.target.value)}
-                    placeholder="https://original-source.com"
-                    className={fieldCls} style={fieldStyle} />
-                </div>
-                <div>
-                  <label className={labelCls} htmlFor="ed-slug">🔗 Slug</label>
-                  <input id="ed-slug" type="text" value={slug}
-                    onChange={e => { setSlug(e.target.value); setSlugEdited(true) }}
-                    placeholder="article-url-slug"
-                    className={fieldCls} style={fieldStyle} />
-                </div>
-              </div>
-            </div>
-
-            {/* Excerpt */}
-            <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
-              <label className={labelCls} htmlFor="ed-excerpt" style={{ color: 'var(--text-tertiary)' }}>
-                📝 Excerpt
-                <span className="font-normal normal-case tracking-normal ml-2" style={{ color: 'var(--text-tertiary)' }}>
-                  (shown on article cards — auto-generated if blank)
-                </span>
-              </label>
+              <label className={labelCls} htmlFor="ed-excerpt" style={{ color: 'var(--text-tertiary)' }}>Article Short Deck Subhead</label>
               <textarea id="ed-excerpt" rows={2} value={excerpt}
                 onChange={e => setExcerpt(e.target.value)}
-                placeholder="Brief summary that draws readers in…"
+                placeholder="Brief summary that draws readers in..."
                 className={fieldCls + ' resize-none'} style={fieldStyle} />
             </div>
 
-            {/* Content editor */}
+            {/* Content WYSIWYG */}
             <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
-                <label className={labelCls + ' mb-0'} style={{ color: 'var(--text-tertiary)' }}>Content</label>
+                <label className={labelCls + ' mb-0'} style={{ color: 'var(--text-tertiary)' }}>Content Canvas</label>
                 <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{wordCount} words · ~{readMins} min read</span>
               </div>
               <RichTextEditor
@@ -376,152 +296,151 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               />
             </div>
 
-            {/* Monetization */}
-            <div className="rounded-2xl shadow-sm p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
-              <label className={labelCls} style={{ color: 'var(--text-tertiary)' }}>💰 Monetization</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {MONETIZE_OPTIONS.map(opt => (
-                  <label key={opt.value} className="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer text-center transition-all duration-200"
-                    style={{
-                      borderColor: monetization === opt.value ? 'var(--primary)' : 'var(--border)',
-                      background: monetization === opt.value ? 'var(--primary-light)' : 'transparent',
-                      boxShadow: monetization === opt.value ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                    }}>
-                    <input type="radio" name="monetization" value={opt.value}
-                      checked={monetization === opt.value}
-                      onChange={() => setMonetization(opt.value)} className="sr-only" />
-                    <span className="text-2xl">{opt.icon}</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{opt.label}</span>
-                    <span className="text-[10px] leading-tight" style={{ color: 'var(--text-tertiary)' }}>{opt.desc}</span>
-                  </label>
-                ))}
+          </div>
+
+          {/* ════ RIGHT: Article Configuration Dock (fixed 20rem) ════ */}
+          <div className="w-[20rem] shrink-0 space-y-4 xl:sticky xl:top-16">
+
+            {/* Global Production Attributes */}
+            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>🗂 Taxonomy</h4>
+              </div>
+              <div className="p-4 space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Regional Desk</label>
+                  <select id="ed-category" value={categoryId}
+                    onChange={e => setCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
+                    className={fieldCls} style={fieldStyle}>
+                    <option value="">Select category…</option>
+                    {categories.map(c => (
+                      <option key={c.category_id} value={c.category_id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Tags</label>
+                  <input id="ed-tags" type="text" value={tags}
+                    onChange={e => setTags(e.target.value)}
+                    placeholder="Kenya, Politics, Breaking..."
+                    className={fieldCls + ' text-xs'} style={fieldStyle} />
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--text-tertiary)' }}>Comma-separated keywords</p>
+                </div>
               </div>
             </div>
 
-          </div>
-
-          {/* ════════ RIGHT — sidebar panel ════════ */}
-          <div className="space-y-4 xl:sticky xl:top-16">
-
-            {/* Featured image — drag/drop, click, or URL */}
+            {/* Featured Image */}
             <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
                 <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>🖼 Featured Image</h4>
                 <button type="button" onClick={() => setShowUrlInput(v => !v)}
                   className="text-[10px] font-bold hover:underline" style={{ color: 'var(--primary)' }}>
-                  {showUrlInput ? 'Upload file' : 'Paste URL'}
+                  {showUrlInput ? 'Upload' : 'Paste URL'}
                 </button>
               </div>
               <div className="p-4">
                 <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
                   onChange={handleImageSelect} className="sr-only" aria-label="Upload featured image" />
-
                 {showUrlInput ? (
                   <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={imageUrlInput}
+                    <input type="url" value={imageUrlInput}
                       onChange={e => setImageUrlInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handlePasteUrl()}
                       placeholder="https://example.com/image.jpg"
-                      className={fieldCls + ' text-xs'} style={fieldStyle}
-                      autoFocus
-                    />
+                      className={fieldCls + ' text-xs'} style={fieldStyle} autoFocus />
                     <button type="button" onClick={handlePasteUrl}
-                      className="shrink-0 text-white text-xs font-bold px-3 rounded-xl transition-all" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
+                      className="shrink-0 text-white text-xs font-bold px-3 rounded-xl transition-all" style={{ background: 'var(--primary)' }}>
                       Use
                     </button>
                   </div>
                 ) : imagePreview ? (
-                  <div
-                    ref={dropZoneRef}
-                    className="relative w-full aspect-video rounded-xl overflow-hidden group"
+                  <div ref={dropZoneRef} className="relative w-full aspect-video rounded-xl overflow-hidden group"
                     onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                  >
-                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center gap-2">
-                      <button type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="opacity-0 group-hover:opacity-100 bg-white text-gray-800 rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-300">
-                        Replace
-                      </button>
-                      <button type="button"
-                        onClick={() => { setImagePreview(null); setImageFile(null) }}
-                        className="opacity-0 group-hover:opacity-100 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-300" style={{ background: 'var(--error)' }}>
-                        Remove
-                      </button>
+                    onDragLeave={() => setIsDragging(false)} onDrop={handleDrop}>
+                    <Image src={imagePreview} alt="Featured" fill className="object-cover" unoptimized sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2">
+                      <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className="opacity-0 group-hover:opacity-100 bg-white text-gray-800 rounded-lg px-3 py-1.5 text-xs font-bold">Replace</button>
+                      <button type="button" onClick={() => { setImagePreview(null); setImageFile(null) }}
+                        className="opacity-0 group-hover:opacity-100 text-white rounded-lg px-3 py-1.5 text-xs font-bold" style={{ background: 'var(--error)' }}>Remove</button>
                     </div>
                   </div>
                 ) : (
-                  <div
-                    ref={dropZoneRef}
+                  <div ref={dropZoneRef}
                     onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
+                    onDragLeave={() => setIsDragging(false)} onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`w-full border-2 border-dashed rounded-xl py-10 flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 ${
-                      isDragging
-                        ? 'scale-[1.01]'
-                        : ''
-                    }`}
-                    style={{
-                      borderColor: isDragging ? 'var(--primary)' : 'var(--border)',
-                      background: isDragging ? 'var(--border-subtle)' : 'transparent',
-                    }}
-                  >
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-300"
-                      style={{ background: isDragging ? 'var(--border-subtle)' : 'var(--primary-light)' }}>
+                    className={`w-full border-2 border-dashed rounded-xl py-8 flex flex-col items-center gap-2 cursor-pointer transition-all`}
+                    style={{ borderColor: isDragging ? 'var(--primary)' : 'var(--border)', background: isDragging ? 'var(--border-subtle)' : 'transparent' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'var(--primary-light)' }}>
                       {isDragging ? '⬇️' : '📷'}
                     </div>
-                    <p className="text-sm font-semibold transition-colors" style={{ color: isDragging ? 'var(--primary)' : 'var(--text-tertiary)' }}>
-                      {isDragging ? 'Drop image here' : 'Click or drag image here'}
+                    <p className="text-xs font-semibold" style={{ color: isDragging ? 'var(--primary)' : 'var(--text-tertiary)' }}>
+                      Click or drag image
                     </p>
-                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>PNG, JPG, WebP</p>
                   </div>
                 )}
-
-                {imageError && (
-                  <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'var(--error)' }}>⚠️ {imageError}</p>
-                )}
-                {!imagePreview && !showUrlInput && (
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="w-full mt-3 text-xs font-bold py-2.5 rounded-xl transition-all duration-300" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                    Choose File
-                  </button>
-                )}
+                {imageError && <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'var(--error)' }}>⚠️ {imageError}</p>}
               </div>
             </div>
 
-            {/* Publication status */}
+            {/* SEO & Metadata */}
             <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>📋 Status</h4>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>🔍 SEO</h4>
               </div>
-              <div className="p-3 space-y-1.5">
-                {STATUS_OPTIONS.map(opt => (
-                  <label key={opt.value} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200"
-                    style={{
-                      background: status === opt.value ? 'var(--primary-light)' : 'transparent',
-                    }}>
-                    <input type="radio" name="pub-status" value={opt.value}
-                      checked={status === opt.value} onChange={() => setStatus(opt.value)}
-                      style={{ accentColor: 'var(--primary)' }} />
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold`} style={{ color: status === opt.value ? (opt.colorVar || 'var(--text-primary)') : 'var(--text-tertiary)' }}>
-                        {opt.icon} {opt.label}
-                      </p>
-                      <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{opt.desc}</p>
-                    </div>
-                  </label>
-                ))}
+              <div className="p-4 space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Slug</label>
+                  <input type="text" value={slug}
+                    onChange={e => { setSlug(e.target.value); setSlugEdited(true) }}
+                    className={fieldCls + ' text-xs'} style={fieldStyle} />
+                </div>
+                <SEOAnalyzer
+                  title={title}
+                  content={content}
+                  excerpt={excerpt}
+                  slug={slug}
+                  featuredImage={imagePreview ?? undefined}
+                  tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
+                  category={categories.find(c => c.category_id === categoryId)?.name}
+                  authorName={adminName}
+                  onApplyTitle={(t) => setTitle(t)}
+                  onApplyExcerpt={(e) => setExcerpt(e)}
+                  onApplyContent={(c) => setContent(c)}
+                  onApplySlug={(s) => { setSlug(s); setSlugEdited(true) }}
+                  onApplyTags={(t) => setTags(t.join(', '))}
+                />
               </div>
-              <div className="p-3 pt-0">
-                <button onClick={() => handleSave()} disabled={saving || !title.trim() || !content.trim()}
-                  className="w-full text-white font-bold py-3 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
-                  {saving ? '⏳ Saving…' : isEdit ? '💾 Save Changes' : '✨ Create Article'}
-                </button>
+            </div>
+
+            {/* AI Writing Assistant */}
+            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <AIWritingAssistant
+                title={title}
+                content={content}
+                excerpt={excerpt}
+                wordCount={wordCount}
+                readMins={readMins}
+                onApplyContent={(c) => setContent(c)}
+                onApplyExcerpt={(e) => setExcerpt(e)}
+              />
+            </div>
+
+            {/* Editorial Flags */}
+            <div className="rounded-2xl shadow-sm p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>🚩 Editorial Flags</h4>
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all hover:bg-muted">
+                  <input type="checkbox" className="rounded accent-purple-500" />
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>⭐ Hero Carousel Feature</span>
+                </label>
+                <label className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all hover:bg-muted">
+                  <input type="checkbox" className="rounded accent-red-500" />
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>🔔 Push Alert Broadcast</span>
+                </label>
               </div>
             </div>
 
@@ -529,38 +448,32 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
             <div className="rounded-2xl shadow-sm p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-[11px] font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>✅ Completeness</h4>
-                <span className={`text-sm font-black`} style={{ color: completeness === 100 ? 'var(--primary)' : 'var(--text-tertiary)' }}>
-                  {completeness}%
-                </span>
+                <span className="text-sm font-black" style={{ color: completeness === 100 ? 'var(--primary)' : 'var(--text-tertiary)' }}>{completeness}%</span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: 'var(--border)' }}>
+              <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: 'var(--border)' }}>
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${completeness}%`,
-                    background: completeness === 100
-                      ? 'linear-gradient(to right, var(--primary), var(--success))'
-                      : 'linear-gradient(to right, var(--warning), var(--success))',
-                  }} />
+                  style={{ width: `${completeness}%`, background: completeness === 100 ? 'linear-gradient(to right, var(--primary), var(--success))' : 'linear-gradient(to right, var(--warning), var(--success))' }} />
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { label: 'Headline',  done: !!title },
-                  { label: 'Category',  done: categoryId !== '' },
-                  { label: 'Content',   done: content.length > 50 },
-                  { label: 'Image',     done: !!imagePreview },
+                  { label: 'Headline', done: !!title },
+                  { label: 'Category', done: categoryId !== '' },
+                  { label: 'Content', done: content.length > 50 },
+                  { label: 'Image', done: !!imagePreview },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-1.5 text-xs rounded-lg px-2 py-1.5"
-                    style={{
-                      background: item.done ? 'var(--primary-light)' : 'var(--border)',
-                      color: item.done ? 'var(--primary)' : 'var(--text-tertiary)',
-                      fontWeight: item.done ? 600 : 400,
-                    }}>
-                    <span className="text-base">{item.done ? '✅' : '○'}</span>
-                    {item.label}
+                    style={{ background: item.done ? 'var(--primary-light)' : 'var(--border)', color: item.done ? 'var(--primary)' : 'var(--text-tertiary)', fontWeight: item.done ? 600 : 400 }}>
+                    <span>{item.done ? '✅' : '○'}</span>{item.label}
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Publish button at bottom */}
+            <button onClick={() => handleSave()} disabled={saving || !title.trim() || !content.trim()}
+              className="w-full text-white font-bold py-3 rounded-xl text-sm transition-all duration-300 hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
+              {saving ? '⏳ Saving…' : isEdit ? '💾 Save Changes' : '✨ Create Article'}
+            </button>
 
           </div>
         </div>

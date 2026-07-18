@@ -18,7 +18,7 @@ type Profile = {
   social_links: { organization?: string; portfolio?: string; phone?: string; twitter?: string; linkedin?: string } | null
 }
 type BadgeRow = { badge_type: string; badge_name: string }
-type ArticleRow = { article_id: number; title: string; slug: string; status: string; featured_image: string | null; views: number; earnings: number; created_at: string }
+type ArticleRow = { article_id: number; title: string; slug: string; status: string; featured_image: string | null; views: number; earnings: number; created_at: string; content?: string }
 type EarningsRow = { amount: number; payout_status: string; created_at: string; source: string }
 type PayoutRow = { amount: number; journalist_cut: number; status: string; period_start: string; period_end: string; payment_method: string }
 
@@ -77,7 +77,7 @@ export default function JournalistProfilePage() {
         setBadges((bdg ?? []) as BadgeRow[])
 
         // Load dashboard data
-        const { data: arts } = await supabase.from('articles').select('article_id, title, slug, status, featured_image, views, earnings, created_at').eq('author_id', p.user_id).order('created_at', { ascending: false }).limit(20) as any
+        const { data: arts } = await supabase.from('articles').select('article_id, title, slug, status, featured_image, views, earnings, created_at, content').eq('author_id', p.user_id).order('created_at', { ascending: false }).limit(20) as any
         setArticles((arts ?? []) as ArticleRow[])
 
         const { data: earns } = await supabase.from('earnings').select('amount, payout_status, created_at, source').eq('user_id', p.user_id).order('created_at', { ascending: false }).limit(50) as any
@@ -148,7 +148,7 @@ export default function JournalistProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--primary)' }} />
           <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading profile…</span>
@@ -159,7 +159,7 @@ export default function JournalistProfilePage() {
 
   if (!profile) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <div className="text-center p-8 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
           <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Account not found</h2>
           <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Your account is not set up yet. Please contact an admin.</p>
@@ -188,297 +188,132 @@ export default function JournalistProfilePage() {
     chartData.push(earnings.filter(e => e.created_at.startsWith(ym)).reduce((s, e) => s + Number(e.amount), 0))
   }
 
+  const totalReadTime = articles.reduce((s, a) => s + Math.max(0, Math.round((a.content?.length ?? 0) / 1800)), 0)
+
   return (
-    <div>
-      {/* Tab Navigation */}
-      <div className="profile-tabs" style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <button onClick={() => setActiveTab('dashboard')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'dashboard' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'dashboard' ? 'var(--primary)' : 'transparent' }}>
-          Dashboard
-        </button>
-        <button onClick={() => setActiveTab('profile')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'profile' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'profile' ? 'var(--primary)' : 'transparent' }}>
-          Profile
-        </button>
+    <div className="space-y-6">
+      {/* ── Header Action Strip ── */}
+      <div className="flex items-center justify-between p-4 rounded-2xl shadow-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg" style={{ background: 'var(--primary)', color: '#fff' }}>
+            {profile.name.charAt(0)}
+          </div>
+          <div>
+            <h1 className="font-extrabold text-lg" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+              {profile.name}
+            </h1>
+            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              <span className="font-semibold" style={{ color: 'var(--primary)' }}>Verified Author</span>
+              <span className="mx-2">·</span>
+              {organization || 'Independent Journalist'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {badges.length > 0 && badges.slice(0, 3).map(b => (
+            <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />
+          ))}
+          <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
+            Active
+          </span>
+        </div>
       </div>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-5">
-        {activeTab === 'dashboard' && (
-          <>
-            {/* Badges */}
-            {badges.length > 0 && (
-              <div className="flex items-center gap-3 p-4 rounded-2xl shadow-sm overflow-x-auto" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                <span className="font-bold whitespace-nowrap" style={{ color: 'var(--primary)' }}>🏅 Badges</span>
-                {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />)}
-              </div>
-            )}
+      {/* ── Performance Metric Grid: 4 Columns ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Published" value={published.length} sub="Total articles published" accent="kenya" icon="📰" />
+        <StatCard label="Monthly Views" value={formatNumber(totalViews)} sub="All-time cumulative" accent="kenya" icon="👁" />
+        <StatCard label="Read Duration" value={`${totalReadTime} min`} sub="Total estimated read time" accent="kenya" icon="⏱" />
+        <StatCard label="In Review" value={underReview.length} sub="Awaiting approval" accent="kenya" icon="⏳" />
+      </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Total Views" value={formatNumber(totalViews)} sub="All time" accent="kenya" icon="👁" />
-              <StatCard label="Total Earnings" value={formatCurrency(totalEarnings)} sub={`This month: ${formatCurrency(monthEarnings)}`} accent="kenya" icon="💰" />
-              <StatCard label="Articles" value={published.length} sub={`${drafts.length} drafts · ${underReview.length} in review`} accent="kenya" icon="📰" />
-              <StatCard label="Ranking" value={`#${rank}`} sub={`of ${totalJournalists}`} accent="kenya" icon="🏆" />
+      {/* ── Identity Form Card ── */}
+      <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+        <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} />
+            <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>Public Media Card Settings</h3>
+          </div>
+        </div>
+
+        <form onSubmit={handleSave} className="p-6 space-y-6">
+          {error && (
+            <div role="alert" className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
+              {error}
             </div>
-
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Recent Articles */}
-              <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <div>
-                    <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📰 Your Articles</h3>
-                    <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Manage your content</p>
-                  </div>
-                  <Link href="/journalist/create" className="px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
-                    ➕ New
-                  </Link>
-                </div>
-                <div className="max-h-[320px] overflow-y-auto" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  {articles.length === 0 ? (
-                    <div className="p-8 text-center" style={{ color: 'var(--text-tertiary)' }}>
-                      <p className="mb-3">No articles yet</p>
-                      <Link href="/journalist/create" className="inline-block px-4 py-2 font-semibold rounded-lg transition-colors" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
-                        Create your first article
-                      </Link>
-                    </div>
-                  ) : articles.slice(0, 6).map(a => (
-                    <div key={a.article_id} className="px-6 py-4 flex items-center gap-4 transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      {a.featured_image ? (
-                        <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0">
-                          <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
-                        </div>
-                      ) : (
-                        <div className="w-14 h-11 rounded-lg flex items-center justify-center text-xl" style={{ background: 'var(--bg-muted)' }}>📰</div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
-                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{formatDate(a.created_at)} · 👁 {formatNumber(a.views)}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge status={a.status} />
-                        <p className="text-sm font-bold mt-1" style={{ color: 'var(--primary)' }}>{formatCurrency(a.earnings)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Earnings Chart */}
-              <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>💰 Earnings Overview</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Last 6 months performance</p>
-                </div>
-                <div className="p-6">
-                  <BarChart data={chartData} labels={chartLabels} height={100} />
-                  <div className="grid grid-cols-3 gap-4 mt-6 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                    <div className="text-center">
-                      <p className="text-lg font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(totalEarnings)}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold" style={{ color: 'var(--warning)' }}>{formatCurrency(monthEarnings)}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>This Month</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(pendingAmount)}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Pending</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          )}
+          {saved && (
+            <div role="status" className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--primary)' }}>
+              ✅ Profile saved successfully.
             </div>
+          )}
 
-            {/* Payout History */}
-            {payouts.length > 0 && (
-              <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>💸 Payout History</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Your payment records</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead style={{ background: 'var(--bg-muted)' }}>
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Period</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Your Cut (50%)</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Method</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payouts.map((p, i) => (
-                        <tr key={i} className="transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                          <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{p.period_start} → {p.period_end}</td>
-                          <td className="px-6 py-4 font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(Number(p.journalist_cut))}</td>
-                          <td className="px-6 py-4 text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>{p.payment_method}</td>
-                          <td className="px-6 py-4"><Badge status={p.status} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* CTA Banner */}
-            <div className="rounded-2xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}>
-              <div>
-                <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--text-inverse)' }}>Ready to publish your next story?</h3>
-                <p className="text-sm" style={{ color: 'var(--text-inverse)', opacity: 0.7 }}>Create, submit, and start earning from your writing today.</p>
-              </div>
-              <div className="flex gap-3">
-                <Link href="/journalist/create" className="px-5 py-2.5 font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5" style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}>
-                  ✏️ New Article
-                </Link>
-                <Link href="/leaderboard" className="px-5 py-2.5 font-semibold rounded-xl transition-all hover:bg-white/10" style={{ border: '2px solid rgba(255,255,255,0.4)', color: 'var(--text-inverse)' }}>
-                  🏆 Leaderboard
-                </Link>
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'profile' && (
-          <>
-            {/* Profile hero card */}
-            <div className="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <div className="h-28" style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover), var(--accent))' }} />
-              <div className="px-6 pb-6">
-                <div className="flex items-end gap-4 -mt-10 mb-4">
-                  <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                  <div
-                    onClick={() => avatarInputRef.current?.click()}
-                    className="relative shrink-0 cursor-pointer group"
-                    title="Change avatar"
-                  >
-                    {profile.profile_image ? (
-                      <Image
-                        src={profile.profile_image} alt={profile.name}
-                        width={80} height={80}
-                        className="rounded-full ring-4 ring-white object-cover shadow-md"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full ring-4 ring-white flex items-center justify-center text-2xl font-black shadow-md"
-                        style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                        {profile.name.charAt(0)}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.4)' }}>
-                      {uploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
-                    </div>
-                  </div>
-                  <div className="pb-1">
-                    <h2 className="text-lg font-extrabold" style={{ color: 'var(--text-primary)' }}>{profile.name}</h2>
-                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{profile.email}</p>
-                  </div>
-                </div>
-
-                {badges.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {badges.map(b => <BadgePill key={b.badge_type} type={b.badge_type} label={b.badge_name} />)}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-bold" style={{ color: 'var(--warning)' }}>🏆 Rank Score: {Math.round(profile.rank_score ?? 0).toLocaleString()}</span>
-                  {profile.badge_level && (
-                    <BadgePill type={profile.badge_level} label={`Level: ${profile.badge_level}`} />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Edit form */}
-            <form onSubmit={handleSave} className="rounded-2xl shadow-sm p-6 space-y-4 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} />
-                <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>Edit Profile</h3>
-              </div>
-
-              {error && (
-                <div role="alert" className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--error-light)', border: '1px solid var(--error)', color: 'var(--error)' }}>
-                  {error}
+          {/* Block A: Avatar + Upload */}
+          <div className="flex items-center gap-6">
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+            <div onClick={() => avatarInputRef.current?.click()} className="relative shrink-0 cursor-pointer group" title="Change avatar">
+              {profile.profile_image ? (
+                <Image src={profile.profile_image} alt={profile.name} width={80} height={80}
+                  className="rounded-full ring-4 ring-white object-cover shadow-md" style={{ width: 80, height: 80 }} />
+              ) : (
+                <div className="w-20 h-20 rounded-full ring-4 ring-white flex items-center justify-center text-2xl font-black shadow-md"
+                  style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                  {profile.name.charAt(0)}
                 </div>
               )}
-              {saved && (
-                <div role="status" className="text-sm px-4 py-3 rounded-xl" style={{ background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--primary)' }}>
-                  ✅ Profile saved successfully.
-                </div>
-              )}
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Full Name</label>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} required
-                    className={inputCls}
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Organization</label>
-                  <input type="text" value={organization} onChange={e => setOrganization(e.target.value)}
-                    placeholder="Your news outlet"
-                    className={inputCls}
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                </div>
+              <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.4)' }}>
+                {uploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
               </div>
+            </div>
+            <div>
+              <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                {uploadingAvatar ? 'Uploading...' : 'Change Avatar'}
+              </button>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>JPG, PNG. Max 5MB.</p>
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Bio</label>
-                <textarea rows={3} value={bio} onChange={e => setBio(e.target.value)}
-                  placeholder="Tell readers about yourself and what you cover…"
-                  className={inputCls + ' resize-none'}
-                  style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-              </div>
+          {/* Block B: Core Information */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Display Byline Name</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} required
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Primary Reporting Beat</label>
+              <input type="text" value={organization} onChange={e => setOrganization(e.target.value)}
+                placeholder="e.g. Politics, Technology, Sports"
+                className={inputCls}
+                style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+            </div>
+          </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Portfolio / Website</label>
-                  <input type="url" value={portfolio} onChange={e => setPortfolio(e.target.value)}
-                    placeholder="https://yoursite.com"
-                    className={inputCls}
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Phone / M-Pesa</label>
-                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                    placeholder="+254..."
-                    className={inputCls}
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>X / Twitter</label>
-                  <input type="text" value={twitter} onChange={e => setTwitter(e.target.value)}
-                    placeholder="@handle"
-                    className={inputCls}
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>LinkedIn</label>
-                  <input type="url" value={linkedin} onChange={e => setLinkedin(e.target.value)}
-                    placeholder="https://linkedin.com/in/..."
-                    className={inputCls}
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                </div>
-              </div>
+          {/* Block C: Bio */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>Professional Bio</label>
+            <textarea rows={4} value={bio} onChange={e => setBio(e.target.value)}
+              placeholder="Tell readers about yourself and what you cover..."
+              className={inputCls + ' resize-none'}
+              style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+          </div>
 
-              <div className="flex items-center gap-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                <button type="submit" disabled={saving}
-                  className="font-bold px-6 py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50"
-                  style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </button>
-                {saved && (
-                  <span className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>✓ Saved!</span>
-                )}
-              </div>
-            </form>
-          </>
-        )}
-      </main>
+          {/* Block D: Save */}
+          <div className="flex items-center gap-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
+            <button type="submit" disabled={saving}
+              className="font-bold px-8 py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md disabled:opacity-50"
+              style={{ background: 'var(--primary)', color: '#fff' }}>
+              {saving ? 'Saving...' : 'Save Byline Update'}
+            </button>
+            {saved && (
+              <span className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>✓ Saved!</span>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
