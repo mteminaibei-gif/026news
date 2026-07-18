@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { AIEnhancePanel } from '@/components/editor/AIEnhancePanel'
 
 interface Article {
   article_id: number; title: string; slug: string; content: string;
@@ -196,6 +197,13 @@ export function EditArticleClient({ article, categories }: Props) {
 
           {/* Sidebar */}
           <div className="space-y-4 xl:sticky xl:top-16">
+            {/* AI Enhance */}
+            <AIEnhancePanel
+              title={title}
+              content={content}
+              onApplyContent={(c) => setContent(c)}
+            />
+
             {/* Featured image */}
             <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
               <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>

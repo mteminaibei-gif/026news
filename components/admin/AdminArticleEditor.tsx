@@ -8,6 +8,7 @@ import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { SEOAnalyzer } from '@/components/seo/SEOAnalyzer'
 import { AIWritingAssistant } from '@/components/admin/AIWritingAssistant'
+import { AIEnhancePanel } from '@/components/editor/AIEnhancePanel'
 
 const MONETIZE_OPTIONS = [
   { value: 'free',      icon: '🆓', label: 'Free',         desc: 'Public access' },
@@ -426,6 +427,13 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
                 onApplyExcerpt={(e) => setExcerpt(e)}
               />
             </div>
+
+            {/* AI Enhance (OpenAI grammar/style/cohesion + rewrite) */}
+            <AIEnhancePanel
+              title={title}
+              content={content}
+              onApplyContent={(c) => setContent(c)}
+            />
 
             {/* Editorial Flags */}
             <div className="rounded-2xl shadow-sm p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>

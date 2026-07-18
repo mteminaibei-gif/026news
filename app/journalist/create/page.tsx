@@ -8,6 +8,7 @@ import { uploadFeaturedImage } from '@/lib/storage'
 import { slugify } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { SEOAnalyzer } from '@/components/seo/SEOAnalyzer'
+import { AIEnhancePanel } from '@/components/editor/AIEnhancePanel'
 import { createClient } from '@/lib/supabase/client'
 
 const MONETIZE_OPTIONS = [
@@ -431,6 +432,13 @@ export default function CreatePostPage() {
               category={category}
               onApplyTitle={(t) => setTitle(t)}
               onApplyExcerpt={(e) => setExcerpt(e)}
+              onApplyContent={(c) => setContent(c)}
+            />
+
+            {/* AI Enhance */}
+            <AIEnhancePanel
+              title={title}
+              content={content}
               onApplyContent={(c) => setContent(c)}
             />
 
