@@ -48,6 +48,7 @@ export default async function JournalistFollowersPage() {
   return (
     <div className="flex-1 flex flex-col min-h-screen">
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
+
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <div className="rounded-2xl shadow-sm p-5 transition-all duration-300 hover:shadow-md backdrop-blur-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
@@ -99,6 +100,7 @@ export default async function JournalistFollowersPage() {
             </table>
           </div>
         </div>
+
       </main>
     </div>
   )
