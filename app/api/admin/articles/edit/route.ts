@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getCurrentAdmin } from '@/lib/server-auth'
 import { slugify } from '@/lib/utils'
+import { autoCategorize, autoExtractTags, optimizeContentLayout } from '@/lib/auto-categorize'
 
 // POST /api/admin/articles/edit — admin creates a new article
 export async function POST(req: NextRequest) {
@@ -18,14 +19,31 @@ export async function POST(req: NextRequest) {
     }
 
     const slug = slugify(title)
-    const tagsArray = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
+    let tagsArray = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
+
+    // Auto-categorize if no category provided
+    let finalCategoryId = category_id ?? null
+    if (!finalCategoryId) {
+      const catResult = autoCategorize({ title, content: content.trim(), excerpt: excerpt?.trim(), tags: tagsArray ?? [] })
+      if (catResult.confidence !== 'low') {
+        finalCategoryId = catResult.bestCategoryId
+      }
+    }
+
+    // Auto-tag if no tags provided
+    if (!tagsArray || tagsArray.length === 0) {
+      tagsArray = autoExtractTags(title, content.trim())
+    }
+
+    // Auto-optimize content layout (add subheadings, break long paragraphs)
+    const optimizedContent = optimizeContentLayout(content.trim())
 
     const insertPayload = {
       title:             title.trim(),
       slug,
-      content:           content.trim(),
+      content:           optimizedContent,
       excerpt:           excerpt?.trim() || content.trim().substring(0, 200),
-      category_id:       category_id ?? null,
+      category_id:       finalCategoryId,
       author_id:         author_id ?? admin.userId,
       featured_image:    featured_image ?? null,
       monetization_type: monetization_type ?? 'free',
@@ -95,13 +113,21 @@ export async function PUT(req: NextRequest) {
       updatePayload.title = title.trim()
       updatePayload.slug = slugify(title)
     }
-    if (content?.trim()) updatePayload.content = content.trim()
+    if (content?.trim()) {
+      // Auto-optimize content layout
+      updatePayload.content = optimizeContentLayout(content.trim())
+    }
     if (excerpt?.trim()) updatePayload.excerpt = excerpt.trim()
     if (category_id !== undefined) updatePayload.category_id = category_id
     if (featured_image !== undefined) updatePayload.featured_image = featured_image
     if (monetization_type) updatePayload.monetization_type = monetization_type
     if (tags !== undefined) {
-      updatePayload.tags = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
+      let tagsArray = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
+      // Auto-tag if empty tags
+      if ((!tagsArray || tagsArray.length === 0) && title?.trim()) {
+        tagsArray = autoExtractTags(title, content?.trim() || '')
+      }
+      updatePayload.tags = tagsArray
     }
     if (source_reference !== undefined) updatePayload.source_reference = source_reference?.trim() || null
     if (status) {

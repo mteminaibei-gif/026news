@@ -177,7 +177,7 @@ function ContentSummaryCard({ summary }: { summary: EnhancedSEOAnalysis['content
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {summary.seoKeywords.map((k, i) => (
               <span key={i} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', fontWeight: 600 }}>
-                {k.keyword} · {Math.round(k.density * 100)}%
+                {k.keyword} · {k.density.toFixed(1)}%
               </span>
             ))}
           </div>

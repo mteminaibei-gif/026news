@@ -252,3 +252,119 @@ export function getAllCategoryIds(): number[] {
 }
 
 export { CATEGORY_NAMES }
+
+// ── Auto Tag Extraction ────────────────────────────────────────────
+
+const TAG_KEYWORDS: Record<string, string[]> = {
+  'politics':       ['politics', 'governance', 'election', 'parliament', 'democracy', 'campaign', 'ballot'],
+  'economy':        ['economy', 'business', 'finance', 'markets', 'trade', 'investment', 'gdp', 'inflation'],
+  'technology':     ['technology', 'digital', 'innovation', 'ai', 'startups', 'software', 'internet', 'cyber'],
+  'health':         ['health', 'healthcare', 'medicine', 'wellness', 'hospital', 'vaccine', 'disease'],
+  'sports':         ['sports', 'football', 'athletics', 'rugby', 'cricket', 'tennis', 'basketball', 'f1'],
+  'climate':        ['climate', 'environment', 'sustainability', 'renewable', 'energy', 'emissions', 'solar'],
+  'education':      ['education', 'school', 'university', 'research', 'student', 'learning', 'exam'],
+  'crime':          ['crime', 'security', 'police', 'arrest', 'murder', 'theft', 'corruption', 'fraud'],
+  'court':          ['court', 'judiciary', 'legal', 'judge', 'ruling', 'trial', 'conviction', 'appeal'],
+  'kenya':          ['kenya', 'nairobi', 'mombasa', 'kisumu', 'kakamega', 'eldoret', 'thika'],
+  'africa':         ['africa', 'african', 'african union', 'ecowas', 'sadc', 'east africa', 'west africa'],
+  'energy':         ['energy', 'oil', 'gas', 'petroleum', 'power', 'electricity', 'geothermal'],
+  'agriculture':    ['agriculture', 'farming', 'food security', 'livestock', 'crop', 'harvest', 'irrigation'],
+  'transport':      ['transport', 'infrastructure', 'roads', 'railway', 'aviation', 'airport', 'highway'],
+  'banking':        ['banking', 'fintech', 'mobile money', 'mpesa', 'm-pesa', 'safaricom', 'atm'],
+  'real-estate':    ['property', 'real estate', 'housing', 'mortgage', 'rent', 'construction', 'building'],
+  'manufacturing':  ['manufacturing', 'factory', 'production', 'industrial', 'factory', 'assembly'],
+  'media':          ['media', 'journalism', 'press', 'broadcasting', 'newspaper', 'television', 'radio'],
+  'tourism':        ['tourism', 'travel', 'hotel', 'safari', 'tourist', 'destination', 'hospitality'],
+  'fashion':        ['fashion', 'clothing', 'design', 'style', 'trend', 'apparel', 'couture'],
+  'food':           ['food', 'cuisine', 'recipe', 'restaurant', 'chef', 'cooking', 'dining'],
+  'religion':       ['religion', 'church', 'mosque', 'faith', 'spiritual', 'worship', 'bible', 'quran'],
+}
+
+export function autoExtractTags(title: string, content: string, existingTags: string[] = []): string[] {
+  const text = `${title} ${content.replace(/<[^>]+>/g, ' ')}`.toLowerCase()
+  const existing = new Set(existingTags.map(t => t.toLowerCase()))
+  const suggested: string[] = []
+
+  const scored: { tag: string; score: number }[] = []
+
+  for (const [keyword, tags] of Object.entries(TAG_KEYWORDS)) {
+    if (text.includes(keyword)) {
+      for (const tag of tags) {
+        if (!existing.has(tag) && !suggested.includes(tag)) {
+          // Score: title match = 10, content match = 3
+          const inTitle = title.toLowerCase().includes(tag)
+          const count = (text.match(new RegExp(`\\b${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')) || []).length
+          const score = (inTitle ? 10 : 0) + Math.min(count, 10) * 3
+          scored.push({ tag, score })
+        }
+      }
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score)
+  for (const s of scored) {
+    if (suggested.length >= 8) break
+    suggested.push(s.tag)
+  }
+
+  return suggested
+}
+
+// ── Content Layout Optimization ────────────────────────────────────
+
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim()
+}
+
+function countWordsInText(text: string): number {
+  return text.split(/\s+/).filter(w => w.length > 0).length
+}
+
+export function optimizeContentLayout(html: string): string {
+  // Only optimize content longer than 400 words
+  const plain = stripHtmlTags(html)
+  if (countWordsInText(plain) < 400) return html
+
+  let result = html
+
+  // Split into paragraphs (double newline or </p> tags)
+  const paragraphs = result.split(/\n\n+|<\/p>\s*<p[^>]*>/gi).filter(p => {
+    const text = stripHtmlTags(p).trim()
+    return text.length > 0
+  })
+
+  if (paragraphs.length < 4) return html
+
+  const optimized: string[] = []
+  let wordCountSinceHeading = 0
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const para = paragraphs[i]
+    const text = stripHtmlTags(para).trim()
+    const words = countWordsInText(text)
+    wordCountSinceHeading += words
+
+    // Add subheading every ~300 words (and at least 3 paragraphs since last heading)
+    if (wordCountSinceHeading >= 300 && i > 0 && i < paragraphs.length - 1) {
+      const headingWords = text.split(/\s+/).slice(0, 5).join(' ')
+      const heading = headingWords.charAt(0).toUpperCase() + headingWords.slice(1).replace(/[.,!?;:]+$/, '')
+      optimized.push(`\n<h2>${heading}</h2>\n`)
+      wordCountSinceHeading = 0
+    }
+
+    // Break very long paragraphs (>200 words) into two
+    if (words > 200) {
+      const sentences = text.split(/(?<=[.!?])\s+/)
+      const mid = Math.floor(sentences.length / 2)
+      const firstHalf = sentences.slice(0, mid).join(' ')
+      const secondHalf = sentences.slice(mid).join(' ')
+      optimized.push(`<p>${firstHalf}</p>\n\n<p>${secondHalf}</p>`)
+    } else {
+      // Wrap bare text in <p> if it isn't already
+      const wrapped = para.trim().startsWith('<') ? para : `<p>${para}</p>`
+      optimized.push(wrapped)
+    }
+  }
+
+  return optimized.join('\n\n')
+}

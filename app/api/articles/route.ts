@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/server-auth'
 import { slugify } from '@/lib/utils'
 import { APP_URL } from '@/lib/constants/app'
 import { sanitizeArticleHtml } from '@/lib/sanitizeHtml'
+import { autoCategorize, autoExtractTags, optimizeContentLayout } from '@/lib/auto-categorize'
 
 // ── simple in-process rate limiter ──────────────────────────
 const postLimiter = new Map<string, { count: number; reset: number }>()
@@ -174,6 +175,24 @@ export async function POST(req: NextRequest) {
       .from('categories').select('category_id').eq('name', category || 'Kenya').single()
     const cat = rawCat as unknown as { category_id: number } | null
 
+    // Auto-categorize if no category provided or looked up
+    let finalCategoryId = cat?.category_id ?? null
+    if (!finalCategoryId) {
+      const catResult = autoCategorize({ title, content, excerpt: String(body.excerpt ?? '').trim(), tags })
+      if (catResult.confidence !== 'low') {
+        finalCategoryId = catResult.bestCategoryId
+      }
+    }
+
+    // Auto-tag if no tags provided
+    let finalTags: string[] | null = tags.length > 0 ? tags : null
+    if (!finalTags || finalTags.length === 0) {
+      finalTags = autoExtractTags(title, content)
+    }
+
+    // Auto-optimize content layout (add subheadings, break long paragraphs)
+    const optimizedContent = optimizeContentLayout(content)
+
     const slug   = slugify(title)
     const status = action === 'submit' ? 'under_review' : 'draft'
     const excerpt = String(body.excerpt ?? '').trim().substring(0, 500) || content.replace(/<[^>]*>/g, '').substring(0, 200).trim()
@@ -184,15 +203,16 @@ export async function POST(req: NextRequest) {
     const { data: article, error } = await adminDb
       .from('articles')
       .insert({
-        title, slug, content,
+        title, slug,
+        content: optimizedContent,
         excerpt,
-        category_id:       cat?.category_id ?? null,
+        category_id:       finalCategoryId,
         author_id:         currentUser.userId,
         source_reference:  source_reference || null,
         status,
         monetization_type,
         featured_image,
-        tags: tags.length > 0 ? tags : null,
+        tags: finalTags,
       } as never)
       .select()
       .single()

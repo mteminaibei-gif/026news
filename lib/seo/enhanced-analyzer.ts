@@ -136,11 +136,11 @@ function stripHtml(html: string): string {
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .replace(/&ldquo;/g, '"')
     .replace(/&rdquo;/g, '"')
     .replace(/&lsquo;/g, "'")
@@ -227,7 +227,7 @@ function countLinks(content: string): { total: number; internal: number; externa
     const relMatch = link.match(/rel\s*=\s*["']([^"']*)["']/i)
     if (!hrefMatch) continue
     const href = hrefMatch[1]
-    if (href.startsWith('/') || href.startsWith('#') || href.includes('026connet!') || href.includes('026connet!')) {
+    if (href.startsWith('/') || href.startsWith('#') || href.includes('026connet!')) {
       internal++
     } else if (href.startsWith('http')) {
       external++
@@ -346,7 +346,7 @@ function calculateEeatScore(title: string, content: string, category: string | n
 
   // Trustworthiness signals
   if (/\b(source|sources|cited|reference|according to)\b/i.test(plain)) score += 8
-  if (/\b(“|”|"|')/.test(plain) && plain.match(/["']/g)!.length >= 4) score += 10 // quotes
+  if (/\b(“|”|"|')/.test(plain) && (plain.match(/['"]+/g)?.length ?? 0) >= 4) score += 10 // quotes
 
   // Experience signals
   if (/\b(first.hand|witnessed|observed|on the ground|reporting from)\b/i.test(plain)) score += 8
@@ -477,7 +477,7 @@ function generateImageRecommendations(
         altText: `Illustration for section about ${query}`,
         caption: `Related to: ${query}`,
         suggestedQuery: `${query} Kenya Africa`,
-        relevanceScore: 0.7 + Math.random() * 0.2,
+        relevanceScore: 0.75,
         placementType: 'inline',
         context: paragraphs[i].substring(0, 100)
       })
@@ -945,7 +945,7 @@ export function enhancedAnalyzeSEO(params: {
       topicalAuthority,
     },
     improvedTitle: generateImprovedTitle(title, keywords),
-    improvedExcerpt: excerpt && excerptLength < 20 ? generateImprovedExcerpt(content) : undefined,
+    improvedExcerpt: (!excerpt || excerptLength < 20) ? generateImprovedExcerpt(content) : undefined,
     improvedSlug: slugifyText(generateImprovedTitle(title, keywords) || title),
     suggestedTags: suggestTags(title, content, tags ?? []),
     contentSummary,
