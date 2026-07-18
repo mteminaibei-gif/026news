@@ -1,7 +1,7 @@
 'use client'
 // @ts-nocheck
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -39,6 +39,29 @@ function catColor(name: string) {
   return CAT_COLORS[name] ?? 'oklch(50% 0.12 175)'
 }
 
+// Animated count-up for the stat cards — eases from previous to next value.
+function useCountUp(target: number, duration = 700) {
+  const [value, setValue] = useState(target)
+  const fromRef = useRef(target)
+  const rafRef = useRef<number | null>(null)
+  useEffect(() => {
+    const from = fromRef.current
+    const to = target
+    if (from === to) return
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setValue(Math.round(from + (to - from) * eased))
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+      else fromRef.current = to
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [target, duration])
+  return value
+}
+
 export default function ReaderStatsPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -62,6 +85,13 @@ export default function ReaderStatsPage() {
     { name: 'New Topics', current: 0, target: 3 },
   ])
   const [weeklyChange, setWeeklyChange] = useState({ reads: 0, comments: 0, likes: 0, minutes: 0 })
+  const [pulseKey, setPulseKey] = useState(0)
+
+  // Animated (count-up) stat values
+  const animReads = useCountUp(stats.reads)
+  const animMinutes = useCountUp(stats.timeMinutes)
+  const animComments = useCountUp(stats.comments)
+  const animLikes = useCountUp(stats.likes)
 
   // resolve user id
   useEffect(() => {
@@ -204,7 +234,10 @@ export default function ReaderStatsPage() {
 
   // Live refresh when a new activity lands for this user
   useEffect(() => {
-    if (userId && latestActivity) loadAll(userId)
+    if (userId && latestActivity) {
+      setPulseKey((k) => k + 1)
+      loadAll(userId)
+    }
   }, [latestActivity, userId, loadAll])
 
   // Recompute weekly minutes on weekly reads change
@@ -298,11 +331,11 @@ export default function ReaderStatsPage() {
           </div>
 
           {/* Stats grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
-            <StatCard icon={<BookOpen size={22} />} value={formatNumber(stats.reads)} label="Articles Read" change={`+${weeklyChange.reads} this week`} />
-            <StatCard icon={<Clock size={22} />} value={fmtHours(stats.timeMinutes)} label="Time Reading" change={`+${Math.round(stats.timeMinutes / 60)}h total`} />
-            <StatCard icon={<MessageSquare size={22} />} value={formatNumber(stats.comments)} label="Comments Posted" change={`+${weeklyChange.comments} this week`} />
-            <StatCard icon={<Heart size={22} />} value={formatNumber(stats.likes)} label="Articles Liked" change={`+${weeklyChange.likes} this week`} />
+          <div key={pulseKey} className="live-pulse" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
+            <StatCard icon={<BookOpen size={22} />} value={formatNumber(animReads)} label="Articles Read" change={`+${weeklyChange.reads} this week`} />
+            <StatCard icon={<Clock size={22} />} value={fmtHours(animMinutes)} label="Time Reading" change={`+${Math.round(stats.timeMinutes / 60)}h total`} />
+            <StatCard icon={<MessageSquare size={22} />} value={formatNumber(animComments)} label="Comments Posted" change={`+${weeklyChange.comments} this week`} />
+            <StatCard icon={<Heart size={22} />} value={formatNumber(animLikes)} label="Articles Liked" change={`+${weeklyChange.likes} this week`} />
           </div>
 
           {/* Heatmap */}

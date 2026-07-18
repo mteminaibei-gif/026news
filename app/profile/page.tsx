@@ -321,8 +321,12 @@ export default function ProfilePage() {
       {/* Profile Header */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0' }}>
         <div className="profile-header" style={{ marginBottom: 32 }}>
-          <div style={{ width: 96, height: 96, borderRadius: 24, background: 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
-            {initials}
+          <div style={{ width: 96, height: 96, borderRadius: 24, background: user?.profile_image ? 'transparent' : 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0, overflow: 'hidden' }}>
+            {user?.profile_image ? (
+              <img src={user.profile_image} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              initials
+            )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>{displayName}</h1>
@@ -359,8 +363,8 @@ export default function ProfilePage() {
             { id: 'history', label: 'History', icon: null, count: null },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className="profile-tab-btn"
-              style={{ fontWeight: activeTab === tab.id ? 600 : 500, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === tab.id ? 'var(--primary)' : 'transparent' }}>
+              className={`profile-tab-btn${activeTab === tab.id ? ' active' : ''}`}
+              style={{ fontWeight: activeTab === tab.id ? 600 : 500, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)' }}>
               {tab.icon && <tab.icon size={15} />}
               {tab.label}
               {tab.count != null && (
@@ -381,7 +385,7 @@ export default function ProfilePage() {
         <main>
           {/* Saved Tab */}
           {activeTab === 'saved' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {savedArticles.length === 0 && (
                 <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
                   <Bookmark size={40} style={{ color: 'var(--text-tertiary)', marginBottom: 12, opacity: 0.5 }} />
@@ -451,7 +455,7 @@ export default function ProfilePage() {
 
           {/* Liked Tab */}
           {activeTab === 'liked' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {likedArticles.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No liked articles yet.</p>}
               {likedArticles.map((a: any, i) => {
                 const article = a.articles || a
@@ -486,7 +490,7 @@ export default function ProfilePage() {
 
           {/* Comments Tab */}
           {activeTab === 'comments' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {comments.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No comments yet.</p>}
               {comments.map((c: any) => (
                 <div key={c.comment_id} style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
@@ -504,7 +508,7 @@ export default function ProfilePage() {
 
           {/* History Tab */}
           {activeTab === 'history' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {likedArticles.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No reading history yet.</p>}
               {likedArticles.slice(0, 5).map((a: any, i: number) => {
                 const article = a.articles || a
