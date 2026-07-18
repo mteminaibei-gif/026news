@@ -90,8 +90,13 @@ export default function ProfilePage() {
           .maybeSingle()
         if (created) setUserId((created as any).user_id)
       } catch {}
-    } catch {}
-    setLoading(false)
+    } catch {
+      // Ensure we still render something instead of an endless spinner.
+      setUser({ name: 'Reader', role: 'reader' })
+      setUserId(null)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const loadStats = async () => {
