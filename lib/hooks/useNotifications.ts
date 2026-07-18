@@ -128,19 +128,26 @@ export function useNotifications(userId: number, _role?: string) {
     realtime.markAllNotificationsRead()
   }, [userId, realtime])
 
-  const deleteNotification = useCallback((id: string) => {
+  const deleteNotification = useCallback(async (id: string) => {
+    const prev = notifications
     setNotifications(prev => prev.filter(n => n.id !== id))
     const supabase = createClient()
-    supabase.from('notifications').delete().eq('notification_id', Number(id))
-  }, [])
+    const { error } = await supabase.from('notifications').delete().eq('notification_id', Number(id))
+    if (error) setNotifications(prev)
+  }, [notifications])
 
-  const clearAll = useCallback(() => {
+  const clearAll = useCallback(async () => {
+    const prev = notifications
     setNotifications([])
     if (!userId) return
     const supabase = createClient()
-    supabase.from('notifications').delete().eq('user_id', userId)
+    const { error } = await supabase.from('notifications').delete().eq('user_id', userId)
+    if (error) {
+      setNotifications(prev)
+      return
+    }
     realtime.markAllNotificationsRead()
-  }, [userId, realtime])
+  }, [userId, realtime, notifications])
 
   return {
     notifications,

@@ -158,8 +158,14 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
           setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
         }
       })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
-        setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
+        // Decrement unread count only if the deleted notification was unread.
+        // The payload on DELETE may contain the old row depending on Supabase version;
+        // clamp to 0 so the badge never goes negative after bulk clears.
+        const deleted = payload.old as LiveNotification | undefined
+        if (deleted && deleted.read === false) {
+          setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
+        }
       })
       .subscribe()
     channels.push(notifCh)
