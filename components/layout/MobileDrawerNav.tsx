@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { X, LogOut } from 'lucide-react'
+import { useSignOut } from '@/lib/hooks/useAuth'
 
 interface MobileNavItem {
   href: string
@@ -22,6 +23,7 @@ interface MobileDrawerNavProps {
 export function MobileDrawerNav({ title, groups, baseHref, logoutHref }: MobileDrawerNavProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const signOutMutation = useSignOut()
 
   useEffect(() => { setOpen(false) }, [pathname])
 
@@ -113,14 +115,15 @@ export function MobileDrawerNav({ title, groups, baseHref, logoutHref }: MobileD
         </div>
 
         <div className="p-3 border-t" style={{ borderColor: 'var(--border)' }}>
-          <Link
-            href={logoutHref}
+          <button
+            type="button"
+            onClick={() => signOutMutation.mutate()}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-center w-full transition-all"
-            style={{ color: 'var(--error)', background: 'var(--error-light)' }}
+            style={{ color: 'var(--error)', background: 'var(--error-light)', border: 'none', cursor: 'pointer' }}
           >
             <span aria-hidden="true">🚪</span>
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </nav>
     </>

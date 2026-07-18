@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/server'
+import { CategoryCloud } from '@/components/layout/CategoryCloud'
 import { stripHtml } from '@/lib/utils'
 import type { PostgrestResponse } from '@supabase/supabase-js'
 
@@ -19,8 +20,6 @@ type ArticleRow = {
   author: { name: string; profile_image: string | null } | null
   category: { name: string } | null
 }
-
-type CategoryRow = { category_id: number; name: string; slug: string | null }
 
 const FILTER_TABS = ['All Time', 'This Month', 'This Week', 'Today'] as const
 
@@ -96,12 +95,6 @@ export default async function ArticlesPage() {
     if (res.error) throw res.error
     return res.data ?? []
   }, [] as ArticleRow[])
-
-  const categories = await safeQuery(async () => {
-    const res = await supabase.from('categories').select('category_id, name, slug').order('name') as PostgrestResponse<CategoryRow>
-    if (res.error) throw res.error
-    return res.data ?? []
-  }, [] as CategoryRow[])
 
   const featured = articles[0]
   const rest = articles.slice(1)
@@ -411,48 +404,8 @@ export default async function ArticlesPage() {
                 </div>
               </div>
 
-              {/* Categories */}
-              <div
-                style={{
-                  background: 'var(--bg-surface)',
-                  borderRadius: '16px',
-                  padding: 'var(--space-lg)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--card-shadow)',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    color: 'var(--text-primary)',
-                    marginBottom: 'var(--space-md)',
-                    fontFamily: "'Newsreader', Georgia, serif",
-                  }}
-                >
-                  Categories
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat.category_id}
-                      href={`/category/${cat.slug ?? cat.name.toLowerCase().replace(/\s+/g, '-')}`}
-                      style={{
-                        padding: '6px 16px',
-                        borderRadius: '9999px',
-                        background: 'var(--primary-light)',
-                        color: 'var(--primary)',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              {/* Categories (real-time) */}
+              <CategoryCloud />
 
               {/* Newsletter */}
               <div

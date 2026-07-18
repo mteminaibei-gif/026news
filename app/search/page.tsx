@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { formatNumber, formatDate, stripHtml } from '@/lib/utils'
+import { useCategories } from '@/lib/hooks/useCategories'
 import { Search as SearchIcon, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Art = {
@@ -26,7 +27,7 @@ export default function SearchPage() {
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [showRecent, setShowRecent] = useState(true)
 
-  const [categories, setCategories] = useState<{ category_id: number; name: string }[]>([])
+  const { categories } = useCategories()
   const [articles, setArticles] = useState<Art[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<string>('all')
@@ -41,15 +42,10 @@ export default function SearchPage() {
 
   useEffect(() => {
     let active = true
-    Promise.all([
-      fetch('/api/categories').then(r => (r.ok ? r.json() : [])),
-      fetch('/api/articles?status=published&limit=200&sort=recent').then(r =>
-        r.ok ? r.json() : { articles: [] },
-      ),
-    ])
-      .then(([cats, arts]) => {
+    fetch('/api/articles?status=published&limit=200&sort=recent')
+      .then(r => (r.ok ? r.json() : { articles: [] }))
+      .then(arts => {
         if (!active) return
-        setCategories(Array.isArray(cats) ? cats : [])
         setArticles(arts?.articles ?? [])
         setLoading(false)
       })

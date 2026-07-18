@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
+import { useCategories } from '@/lib/hooks/useCategories'
 import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw, ChevronDown } from 'lucide-react'
 
 const REGION_FILTERS = ['All Regions', 'Kenya', 'East Africa', 'Africa', 'World'] as const
@@ -25,8 +26,6 @@ type NewsArticle = {
   author: { name: string; profile_image: string | null } | null
   category: { name: string } | null
 }
-
-type CategoryRow = { category_id: number; name: string }
 
 const CATEGORY_COLORS: Record<string, string> = {
   'World Updates': '#475569',
@@ -81,7 +80,7 @@ export default function NewsPage() {
   const [sortBy, setSortBy] = useState<typeof SORT_OPTIONS[number]>('Most Recent')
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
   const [newCount, setNewCount] = useState(0)
-  const [categories, setCategories] = useState<CategoryRow[]>([])
+  const { categories } = useCategories()
   const [showFilters, setShowFilters] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -93,14 +92,6 @@ export default function NewsPage() {
   const latestTimestampRef = useRef<string>('')
 
   const supabase = createClient()
-
-  // Load categories from DB
-  useEffect(() => {
-    fetch('/api/categories')
-      .then(r => r.json())
-      .then((data: CategoryRow[]) => setCategories(data))
-      .catch(() => {})
-  }, [])
 
   // Fetch initial articles
   const fetchArticles = useCallback(async (reset = false) => {

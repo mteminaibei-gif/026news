@@ -104,6 +104,23 @@ export default function ExplorePage() {
     }
   }, [])
 
+  // Real-time category updates (categories table is in the realtime publication)
+  useEffect(() => {
+    let active = true
+    import('@/lib/supabase/client').then(({ createClient }) => {
+      if (!active) return
+      const supabase = createClient()
+      const channel = supabase
+        .channel('explore-categories')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+          loadExploreData()
+        })
+        .subscribe()
+      return () => { supabase.removeChannel(channel) }
+    })
+    return () => { active = false }
+  }, [loadExploreData])
+
   const loadCategoryArticles = useCallback(async (catId: number, pageNum: number) => {
     setLoading(true)
     try {

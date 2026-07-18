@@ -17,7 +17,9 @@ export function LayoutNav({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Navbar />
+      <div style={{ position: 'sticky', top: 0, zIndex: 50, alignSelf: 'flex-start', width: '100%' }}>
+        <Navbar />
+      </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {children}
       </div>

@@ -8,6 +8,7 @@ import { BreakingNewsBanner } from '@/components/news/BreakingNewsBanner'
 import { BannerAd } from '@/components/ads/AdSense'
 import { LiveActivityFeed } from '@/components/news/LiveActivityFeed'
 import { HomeMediaStrip } from '@/components/news/HomeMediaStrip'
+import { CategoryCloud } from '@/components/layout/CategoryCloud'
 import { formatNumber } from '@/lib/utils'
 import { TrendingUp, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -19,8 +20,6 @@ export const metadata: Metadata = {
   title: '026connet! — Breaking News, Analysis & Freelance Journalism',
   description: 'Kenya\'s leading digital news platform. Breaking news, in-depth analysis, and freelance journalism from across Africa.',
 }
-
-type CategoryRow = { category_id: number; name: string }
 
 interface Props {
   searchParams: Promise<{ category?: string; sort?: string }>
@@ -69,12 +68,6 @@ export default async function HomePage({ searchParams }: Props) {
     if (ai !== bi) return ai - bi
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
-
-  const categories: CategoryRow[] = await safeQuery(async () => {
-    const response = await supabase.from('categories').select('category_id, name') as PostgrestResponse<CategoryRow>
-    if (response.error) throw response.error
-    return (response.data?.length ? response.data : []) as CategoryRow[]
-  }, [])
 
   const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
 
@@ -252,17 +245,8 @@ export default async function HomePage({ searchParams }: Props) {
           {/* Live Activity */}
           <LiveActivityFeed />
 
-          {/* Categories */}
-          <div className="home-widget">
-            <h3 className="widget-title">Categories</h3>
-            <div className="categories-grid">
-              {categories.map(cat => (
-                <Link key={cat.category_id} href={`/?category=${encodeURIComponent(cat.name)}`} className="cat-pill">
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-          </div>
+          {/* Categories (real-time) */}
+          <CategoryCloud variant="query" />
 
           {/* Daily Digest */}
           <div className="digest-box">

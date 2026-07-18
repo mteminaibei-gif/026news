@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, LogOut } from 'lucide-react'
 import { MobileDrawerNav } from '@/components/layout/MobileDrawerNav'
 import { NavbarNotificationDropdown } from '@/components/layout/NavbarNotificationDropdown'
+import { useSignOut } from '@/lib/hooks/useAuth'
 
 type TopbarUser = { name: string | null; profile_image: string | null; role?: string }
 
@@ -28,6 +29,7 @@ export function Topbar({ title, user, mobileNav, notifications }: {
 }) {
   const [open, setOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const signOutMutation = useSignOut()
 
   return (
     <header
@@ -117,6 +119,26 @@ export function Topbar({ title, user, mobileNav, notifications }: {
           >
             Home
           </Link>
+
+          <button
+            onClick={() => signOutMutation.mutate()}
+            aria-label="Sign out"
+            className="flex items-center gap-1"
+            style={{
+              fontSize: 12,
+              color: 'var(--error)',
+              textDecoration: 'none',
+              padding: '4px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+          >
+            <LogOut size={13} />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
 
           <div style={{ position: 'relative' }}>
             <button
