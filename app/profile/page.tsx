@@ -64,12 +64,32 @@ export default function ProfilePage() {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser?.id) { router.push('/login?redirect=/profile'); return }
-      const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).single()
+      const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).maybeSingle()
       const p = data as any
       if (p) {
         setUser(p as UserProfile)
         setUserId(p.user_id)
+        return
       }
+      // New reader account with no users row yet: fall back to the auth
+      // user so the page renders, then lazily create the profile row.
+      const fallback: UserProfile = {
+        name: (authUser.user_metadata?.name as string) || (authUser.email ? authUser.email.split('@')[0] : 'Reader'),
+        role: (authUser.user_metadata?.role as string) || 'reader',
+        email: authUser.email ?? undefined,
+        profile_image: (authUser.user_metadata?.avatar_url as string) || null,
+        created_at: authUser.created_at,
+      }
+      setUser(fallback)
+      setUserId(null)
+      try {
+        const { data: created } = await supabase
+          .from('users')
+          .upsert({ auth_id: authUser.id, name: fallback.name, email: (authUser.email || '').toLowerCase(), role: fallback.role, status: 'active' } as never, { onConflict: 'auth_id' })
+          .select('user_id')
+          .maybeSingle()
+        if (created) setUserId((created as any).user_id)
+      } catch {}
     } catch {}
     setLoading(false)
   }
