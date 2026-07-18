@@ -20,7 +20,7 @@ const JOURNALIST_MOBILE_NAV = [
     items: [
       { href: '/journalist/analytics', label: 'Analytics', icon: '📈' },
       { href: '/journalist/earnings', label: 'Earnings', icon: '💰' },
-      { href: '/journalist/subscribers', label: 'Subscribers', icon: '👥' },
+      { href: '/journalist/followers', label: 'Followers', icon: '👥' },
     ],
   },
 ]

@@ -17,7 +17,7 @@ const JOURNALIST_NAV: { section: string; items: { href: string; label: string; i
     items: [
       { href: '/journalist/analytics', label: 'Analytics', icon: '📈' },
       { href: '/journalist/earnings', label: 'Earnings', icon: '💰' },
-      { href: '/journalist/subscribers', label: 'Subscribers', icon: '👥' },
+      { href: '/journalist/followers', label: 'Followers', icon: '👥' },
     ],
   },
 ]

@@ -563,8 +563,8 @@ export default function ProfilePage() {
               <Bell size={16} style={{ color: 'var(--accent)' }} /> Notifications
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {notifications.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No notifications.</p>}
-              {notifications.map((n: any) => {
+              {notifs.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No notifications.</p>}
+              {notifs.map((n: any) => {
                 const display = getNotificationDisplay(n)
                 return (
                   <div key={display.id} style={{ display: 'flex', gap: 10, padding: 10, borderRadius: 9, background: display.unread ? 'var(--bg-inset)' : 'transparent', cursor: 'pointer', position: 'relative', paddingLeft: display.unread ? 16 : 10 }}>
