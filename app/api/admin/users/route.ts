@@ -25,6 +25,19 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = await createAdminClient()
 
+    // Verify admin client has service role (bypasses RLS)
+    const { data: testData, error: testError } = await supabase
+      .from('users')
+      .select('user_id')
+      .limit(1)
+    if (testError) {
+      console.error('[GET /api/admin/users] Admin client test failed:', testError)
+      return NextResponse.json(
+        { error: 'Admin database access misconfigured (service role key missing?)' },
+        { status: 500 }
+      )
+    }
+
     // Unfiltered stats query (for the stats strip)
     const { data: allUsers } = await supabase
       .from('users')
@@ -112,6 +125,21 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const supabase = await createAdminClient()
+
+    // Verify admin client has service role (bypasses RLS)
+    const { error: testError } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('user_id', user_id)
+      .limit(1)
+    if (testError) {
+      console.error('[PATCH /api/admin/users] Admin client test failed:', testError)
+      return NextResponse.json(
+        { error: 'Admin database access misconfigured (service role key missing?)' },
+        { status: 500 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('users')
       .update(update as never)
@@ -141,6 +169,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ user: data })
   } catch (err) {
     console.error('[PATCH /api/admin/users]', err)
-    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
+    const message = err instanceof Error ? err.message : 'Failed to update user'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
