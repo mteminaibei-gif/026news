@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { uploadProfileImage } from '@/lib/storage'
-import { Loader2, Camera, UserCheck, UserX, Eye, FileText, Users, DollarSign, Clock, Plus } from 'lucide-react'
+import { Loader2, Camera, UserCheck, UserX, Plus } from 'lucide-react'
 import { formatNumber, formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
@@ -33,10 +33,6 @@ interface Article {
 interface Notification {
   notification_id: number; type: string; title: string; message: string
   read: boolean; created_at: string
-}
-interface Conversation {
-  other_user: { user_id: number; name: string; profile_image: string | null }
-  last_message: string; last_message_at: string; unread: number
 }
 type JournalistRow = {
   user_id: number; name: string; email: string

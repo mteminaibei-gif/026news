@@ -3,8 +3,38 @@ import { redirect } from 'next/navigation'
 import { Topbar } from '@/components/layout/Topbar'
 import { ChatWidget } from '@/components/layout/ChatWidget'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
+import { MobileDrawerNav } from '@/components/layout/MobileDrawerNav'
 
 type UserProfile = { name: string; profile_image: string | null; role: string }
+
+const ADMIN_MOBILE_NAV = [
+  {
+    section: 'Manage',
+    items: [
+      { href: '/admin/profile', label: 'Overview', icon: '🎨' },
+      { href: '/admin/articles', label: 'Articles', icon: '📝' },
+      { href: '/admin/journalists', label: 'Authors', icon: '👥' },
+      { href: '/admin/users', label: 'Users', icon: '👤' },
+      { href: '/admin/categories', label: 'Categories', icon: '🏷️' },
+      { href: '/admin/sources', label: 'Sources', icon: '🔗' },
+    ],
+  },
+  {
+    section: 'Insights',
+    items: [
+      { href: '/admin/analytics', label: 'Analytics', icon: '📊' },
+      { href: '/admin/earnings', label: 'Earnings', icon: '💰' },
+      { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
+      { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
+    ],
+  },
+  {
+    section: 'System',
+    items: [
+      { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
+    ],
+  },
+]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   try {
@@ -25,18 +55,27 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       redirect('/login?error=unauthorized')
     }
 
-    return (
-      <div className="min-h-screen flex" style={{ background: 'var(--bg-base)' }}>
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
-          <Topbar title="Admin" user={{ name: profile.name, profile_image: profile.profile_image }} />
-          <main className="flex-1 p-4 md:p-6 lg:p-8">
-            {children}
-          </main>
-        </div>
-        <ChatWidget />
+  return (
+    <div className="min-h-screen flex" style={{ background: 'var(--bg-base)' }}>
+      <AdminSidebar />
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
+        <Topbar
+          title="Admin"
+          user={{ name: profile.name, profile_image: profile.profile_image }}
+          mobileNav={{
+            title: 'Admin',
+            groups: ADMIN_MOBILE_NAV,
+            baseHref: '/admin/profile',
+            logoutHref: '/admin/profile?logout=true',
+          }}
+        />
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
       </div>
-    )
+      <ChatWidget />
+    </div>
+  )
   } catch {
     redirect('/login?error=login_required&redirect=/admin/profile')
   }

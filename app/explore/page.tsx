@@ -563,7 +563,7 @@ export default function ExplorePage() {
                 </h2>
                 <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
                   {authors.map(author => (
-                    <Link key={author.user_id} href={`/author/${author.user_id}`} className="flex-shrink-0 w-44 p-4 rounded-2xl flex flex-col items-center text-center transition-all" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', textDecoration: 'none', color: 'inherit' }}>
+                    <Link key={author.user_id} href={`/journalists/${author.user_id}`} className="flex-shrink-0 w-44 p-4 rounded-2xl flex flex-col items-center text-center transition-all" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', textDecoration: 'none', color: 'inherit' }}>
                       {author.profile_image ? (
                         <Image src={author.profile_image} alt={author.name} width={56} height={56} className="rounded-full object-cover mb-2" style={{ boxShadow: '0 0 0 2px var(--border-subtle)' }} />
                       ) : (

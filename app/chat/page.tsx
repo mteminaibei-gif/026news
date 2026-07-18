@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Send, Plus, Users } from 'lucide-react'
+import { Send, Plus, Users, ArrowLeft } from 'lucide-react'
 
 type Tab = 'news' | 'my'
 
@@ -222,7 +222,7 @@ export default function ChatPage() {
       <main className="flex-1 flex" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Sidebar */}
         <aside
-          className="flex flex-col"
+          className={`${activeRoom ? 'hidden lg:flex' : 'flex'} flex-col`}
           style={{
             width: '300px',
             minWidth: '300px',
@@ -355,7 +355,7 @@ export default function ChatPage() {
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`${activeRoom ? 'flex' : 'hidden lg:flex'} flex-1 flex flex-col min-w-0`}>
           {/* Header */}
           <div
             className="flex items-center justify-between"
@@ -365,13 +365,23 @@ export default function ChatPage() {
               background: 'var(--bg-surface)',
             }}
           >
-            <div>
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                onClick={() => setActiveRoom(null)}
+                aria-label="Back to rooms"
+                className="lg:hidden flex items-center justify-center flex-shrink-0"
+                style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-inset)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              >
+                <ArrowLeft size={18} />
+              </button>
+              <div className="min-w-0">
               <h2 className="font-semibold" style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                 {activeRoomData?.name ?? 'Select a room'}
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '1px' }}>
                 {activeRoomData ? `${activeRoomData.member_count} participant${activeRoomData.member_count === 1 ? '' : 's'}` : 'Newsroom group chat'}
               </p>
+              </div>
             </div>
             {activeRoomData && !activeRoomData.is_public && (
               <button

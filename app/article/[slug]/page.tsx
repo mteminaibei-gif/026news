@@ -8,6 +8,7 @@ import { ArticleEngagement } from '@/components/news/ArticleEngagement'
 import { ArticleComments } from '@/components/news/ArticleComments'
 import { BannerAd, InArticleAd } from '@/components/ads/AdSense'
 import { stripHtml } from '@/lib/utils'
+import { sanitizeArticleHtml } from '@/lib/sanitizeHtml'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, readingTime, formatNumber } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -341,7 +342,7 @@ export default async function ArticlePage({ params }: Props) {
           {/* Body */}
           <div
             className="article-body rich-editor-content"
-            dangerouslySetInnerHTML={{ __html: article.content || '' }}
+            dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content || '') }}
           />
 
           {/* Ad after article */}

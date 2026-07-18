@@ -131,7 +131,6 @@ export default function InboxPage() {
           <ConversationList
             conversations={conversations}
             selectedConv={selectedConv}
-            currentUserId={currentUserId}
             onlineUsers={onlineUsers}
             onSelectConversation={selectConversation}
             onStartConversation={handleStartConversation}

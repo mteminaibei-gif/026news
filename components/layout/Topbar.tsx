@@ -2,10 +2,18 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { MobileDrawerNav } from '@/components/layout/MobileDrawerNav'
 
 type TopbarUser = { name: string | null; profile_image: string | null; role?: string }
 
-export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
+interface MobileNavConfig {
+  title: string
+  groups: { section: string; items: { href: string; label: string; icon: string }[] }[]
+  baseHref: string
+  logoutHref: string
+}
+
+export function Topbar({ title, user, mobileNav }: { title: string; user: TopbarUser; mobileNav?: MobileNavConfig }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -28,17 +36,31 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 16px',
+          gap: 8,
         }}
       >
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-          }}
-        >
-          {title}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          {mobileNav && (
+            <MobileDrawerNav
+              title={mobileNav.title}
+              groups={mobileNav.groups}
+              baseHref={mobileNav.baseHref}
+              logoutHref={mobileNav.logoutHref}
+            />
+          )}
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {title}
+          </span>
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link

@@ -20,7 +20,7 @@ type ArticleRow = {
   category: { name: string } | null
 }
 
-type CategoryRow = { category_id: number; name: string }
+type CategoryRow = { category_id: number; name: string; slug: string | null }
 
 const FILTER_TABS = ['All Time', 'This Month', 'This Week', 'Today'] as const
 
@@ -98,7 +98,7 @@ export default async function ArticlesPage() {
   }, [] as ArticleRow[])
 
   const categories = await safeQuery(async () => {
-    const res = await supabase.from('categories').select('category_id, name').order('name') as PostgrestResponse<CategoryRow>
+    const res = await supabase.from('categories').select('category_id, name, slug').order('name') as PostgrestResponse<CategoryRow>
     if (res.error) throw res.error
     return res.data ?? []
   }, [] as CategoryRow[])
@@ -436,7 +436,7 @@ export default async function ArticlesPage() {
                   {categories.map((cat) => (
                     <Link
                       key={cat.category_id}
-                      href={`/category/${cat.name.toLowerCase()}`}
+                      href={`/category/${cat.slug ?? cat.name.toLowerCase().replace(/\s+/g, '-')}`}
                       style={{
                         padding: '6px 16px',
                         borderRadius: '9999px',

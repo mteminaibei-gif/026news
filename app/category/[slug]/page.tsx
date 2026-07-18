@@ -48,9 +48,18 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   const [trending, setTrending] = useState<CategoryArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
+  const [isMobile, setIsMobile] = useState(false)
 
   const supabase = createClient()
   const categoryName = slug.charAt(0).toUpperCase() + slug.slice(1)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   useEffect(() => {
     fetchArticles()
@@ -163,7 +172,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             <span style={{ color: 'var(--text-tertiary)' }}>Loading articles...</span>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: isMobile ? 24 : 40 }}>
             <main>
               {/* Featured Article */}
               {featured && (
@@ -172,8 +181,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                   background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
                   marginBottom: 32, textDecoration: 'none', color: 'inherit',
                 }}>
-                  <div style={{ display: 'flex', flexDirection: 'row', minHeight: 300 }}>
-                    <div style={{ width: 420, flexShrink: 0, position: 'relative', background: 'var(--bg-inset)' }}>
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: isMobile ? 220 : 300 }}>
+                    <div style={{ width: isMobile ? '100%' : 420, height: isMobile ? 200 : 'auto', flexShrink: 0, position: 'relative', background: 'var(--bg-inset)' }}>
                       {featured.featured_image ? (
                         <Image src={featured.featured_image} alt={featured.title} fill style={{ objectFit: 'cover' }} sizes="420px" unoptimized  loading="lazy"/>
                       ) : (

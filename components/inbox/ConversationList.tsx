@@ -33,7 +33,6 @@ function getInitials(name: string): string {
 interface Props {
   conversations: Conversation[]
   selectedConv: Conversation | null
-  currentUserId: number | null
   onlineUsers: Set<number>
   onSelectConversation: (conv: Conversation) => void
   onStartConversation: (user: SearchResult) => void
