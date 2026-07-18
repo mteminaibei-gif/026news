@@ -15,7 +15,7 @@ interface Notification {
   type: string
   title: string
   message: string
-  is_read: boolean
+  read: boolean
   created_at: string
 }
 
@@ -125,7 +125,7 @@ export function RealtimeNotifications() {
 
   async function markAsRead(id: number) {
     setNotifications(prev =>
-      prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n)
+      prev.map(n => n.notification_id === id ? { ...n, read: true } : n)
     )
     try {
       await fetch('/api/admin/notifications', {
@@ -135,12 +135,12 @@ export function RealtimeNotifications() {
       })
     } catch {
       setNotifications(prev =>
-        prev.map(n => n.notification_id === id ? { ...n, is_read: false } : n)
+        prev.map(n => n.notification_id === id ? { ...n, read: false } : n)
       )
     }
   }
 
-  const unreadCount = notifications.filter(n => !n.is_read).length
+  const unreadCount = notifications.filter(n => !n.read).length
 
   return (
     <div ref={dropdownRef} className="relative">
@@ -179,7 +179,7 @@ export function RealtimeNotifications() {
               <button
                 onClick={() => {
                   notifications.forEach(n => {
-                    if (!n.is_read) markAsRead(n.notification_id)
+                    if (!n.read) markAsRead(n.notification_id)
                   })
                 }}
                 className="text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors"
@@ -201,19 +201,19 @@ export function RealtimeNotifications() {
               notifications.map(notif => {
                 const style = getNotificationStyle(notif.type)
                 return (
-                  <button
-                    key={notif.notification_id}
-                    onClick={() => {
-                      if (!notif.is_read) markAsRead(notif.notification_id)
-                    }}
-                    className="w-full px-4 py-3 flex items-start gap-3 text-left transition-all duration-200"
-                    style={{
-                      background: notif.is_read ? 'transparent' : 'var(--primary-light)',
-                      borderBottom: '1px solid var(--border-subtle)',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = notif.is_read ? 'transparent' : 'var(--primary-light)')}
-                  >
+                    <button
+                      key={notif.notification_id}
+                      onClick={() => {
+                        if (!notif.read) markAsRead(notif.notification_id)
+                      }}
+                      className="w-full px-4 py-3 flex items-start gap-3 text-left transition-all duration-200"
+                      style={{
+                        background: notif.read ? 'transparent' : 'var(--primary-light)',
+                        borderBottom: '1px solid var(--border-subtle)',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = notif.read ? 'transparent' : 'var(--primary-light)')}
+                    >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: style.bg, color: style.fg }}>
                       {getNotificationIcon(notif.type)}
                     </div>
@@ -222,7 +222,7 @@ export function RealtimeNotifications() {
                         <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
                           {notif.title}
                         </p>
-                        {!notif.is_read && (
+                        {!notif.read && (
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--primary)' }} />
                         )}
                       </div>

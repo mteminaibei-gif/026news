@@ -71,7 +71,7 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
                 fontFamily: 'var(--font-display)',
               }}
             >
-              026<span style={{ color: 'var(--primary)' }}>NEWS</span>
+              026<span style={{ color: 'var(--primary)' }}>connet!</span>
             </span>
           </Link>
           {title && (

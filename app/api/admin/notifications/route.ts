@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest) {
     const supabase = await createAdminClient()
     const { error } = await supabase
       .from('notifications')
-      .update({ is_read: true } as never)
+      .update({ read: true } as never)
       .eq('notification_id', Number(notification_id))
 
     if (error) {

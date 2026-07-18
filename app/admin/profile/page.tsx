@@ -37,7 +37,7 @@ interface Article {
 }
 interface Notification {
   notification_id: number; type: string; title: string; message: string
-  is_read: boolean; created_at: string
+  read: boolean; created_at: string
 }
 interface Conversation {
   other_user: { user_id: number; name: string; profile_image: string | null }
@@ -416,8 +416,8 @@ export default function AdminProfilePage() {
   }
 
   async function markNotifRead(id: number) {
-    await supabase.from('notifications').update({ is_read: true } as never).eq('notification_id', id)
-    setNotifs(prev => prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n))
+    await supabase.from('notifications').update({ read: true } as never).eq('notification_id', id)
+    setNotifs(prev => prev.map(n => n.notification_id === id ? { ...n, read: true } : n))
   }
 
   if (loading) {
@@ -437,7 +437,7 @@ export default function AdminProfilePage() {
     )
   }
 
-  const unreadNotifs = notifications.filter(n => !n.is_read)
+  const unreadNotifs = notifications.filter(n => !n.read)
   const totalUnread = conversations.reduce((s, c) => s + c.unread, 0)
   const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
