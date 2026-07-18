@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Topbar } from '@/components/layout/Topbar'
+import { ChatWidget } from '@/components/layout/ChatWidget'
 
 type UserProfile = { name: string; profile_image: string | null; role: string }
 
@@ -29,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex-1">
           {children}
         </div>
+        <ChatWidget />
       </div>
     )
   } catch {

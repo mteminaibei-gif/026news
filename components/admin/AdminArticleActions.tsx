@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
+import { Check, X, Trash2 } from 'lucide-react'
 
 interface Props {
   articleId: number
-  /** Used to conditionally show approve/reject buttons */
   currentStatus?: string
 }
 
@@ -16,103 +16,69 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
   const [loading, setLoading] = useState<'approve' | 'reject' | 'delete' | null>(null)
 
   async function handleApprove() {
-    if (!confirm('Approve and publish this article?')) return
     setLoading('approve')
     try {
       const res = await fetch('/api/articles/review', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ id: articleId, action: 'approve', notes: '' }),
+        body: JSON.stringify({ id: articleId, action: 'approve', notes: '' }),
       })
-      if (!res.ok) {
-        const d = await res.json()
-        toast(d.error ?? 'Approve failed.', 'error')
-        return
-      }
-      toast('Article approved!', 'success')
-      router.refresh()
-    } catch {
-      toast('Network error. Please try again.', 'error')
-    } finally {
-      setLoading(null)
-    }
+      if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Failed', 'error'); return }
+      toast('Published!', 'success'); router.refresh()
+    } catch { toast('Network error', 'error') } finally { setLoading(null) }
   }
 
   async function handleReject() {
-    if (!confirm('Reject this article? The author will be notified.')) return
     setLoading('reject')
     try {
       const res = await fetch('/api/articles/review', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ id: articleId, action: 'reject', notes: '' }),
+        body: JSON.stringify({ id: articleId, action: 'reject', notes: '' }),
       })
-      if (!res.ok) {
-        const d = await res.json()
-        toast(d.error ?? 'Reject failed.', 'error')
-        return
-      }
-      toast('Article rejected.', 'info')
-      router.refresh()
-    } catch {
-      toast('Network error. Please try again.', 'error')
-    } finally {
-      setLoading(null)
-    }
+      if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Failed', 'error'); return }
+      toast('Rejected', 'info'); router.refresh()
+    } catch { toast('Network error', 'error') } finally { setLoading(null) }
   }
 
   async function handleDelete() {
-    if (!confirm('Permanently delete this article? This cannot be undone.')) return
     setLoading('delete')
     try {
       const res = await fetch(`/api/admin/articles?id=${articleId}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const d = await res.json()
-        toast(d.error ?? 'Delete failed.', 'error')
-        return
-      }
-      toast('Article deleted.', 'success')
-      router.refresh()
-    } catch {
-      toast('Network error. Please try again.', 'error')
-    } finally {
-      setLoading(null)
-    }
+      if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Failed', 'error'); return }
+      toast('Deleted', 'success'); router.refresh()
+    } catch { toast('Network error', 'error') } finally { setLoading(null) }
+  }
+
+  const itemStyle = {
+    display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '6px 12px',
+    border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
+    color: 'var(--text-primary)', textAlign: 'left' as const, transition: 'background 0.1s',
   }
 
   return (
     <>
-      {/* Approve — show for under_review and draft */}
       {(currentStatus === 'under_review' || currentStatus === 'draft') && (
-        <button
-          onClick={handleApprove}
-          disabled={loading !== null}
-          className="text-xs font-bold text-white px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
-          style={{ background: 'linear-gradient(to right, var(--primary), var(--primary-hover))' }}
+        <button onClick={handleApprove} disabled={loading !== null} style={itemStyle}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          {loading === 'approve' ? '…' : 'Approve'}
+          <Check size={13} style={{ color: '#16a34a' }} /> {loading === 'approve' ? '...' : 'Publish'}
         </button>
       )}
-
-      {/* Reject — only for articles under review or draft */}
       {(currentStatus === 'under_review' || currentStatus === 'draft') && (
-        <button
-          onClick={handleReject}
-          disabled={loading !== null}
-          className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
-          style={{ background: 'var(--warning)', color: 'var(--text-primary)' }}
+        <button onClick={handleReject} disabled={loading !== null} style={itemStyle}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          {loading === 'reject' ? '…' : 'Reject'}
+          <X size={13} style={{ color: '#d97706' }} /> {loading === 'reject' ? '...' : 'Reject'}
         </button>
       )}
-
-      <button
-        onClick={handleDelete}
-        disabled={loading !== null}
-          className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-300 disabled:opacity-50"
-          style={{ background: 'var(--error-light)', color: 'var(--error)' }}
+      <button onClick={handleDelete} disabled={loading !== null} style={itemStyle}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'none'}
       >
-        {loading === 'delete' ? '…' : 'Delete'}
+        <Trash2 size={13} style={{ color: '#dc2626' }} /> {loading === 'delete' ? '...' : 'Delete'}
       </button>
     </>
   )

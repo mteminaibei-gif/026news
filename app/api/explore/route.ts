@@ -76,7 +76,6 @@ export async function GET(req: NextRequest) {
     }
 
     const categories = catRows
-      .filter(c => (countMap[c.category_id] || 0) > 0)
       .map(c => ({
         id: c.category_id,
         name: c.name,
