@@ -112,12 +112,13 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '4px 8px',
+                padding: 2,
                 border: 'none',
-                borderRadius: 8,
+                borderRadius: '50%',
                 background: 'transparent',
                 cursor: 'pointer',
                 transition: 'background 0.15s',
+                overflow: 'hidden',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -128,7 +129,7 @@ export function Topbar({ title, user }: { title: string; user: TopbarUser }) {
                   alt={user.name || ''}
                   width={32}
                   height={32}
-                  style={{ borderRadius: '50%', objectFit: 'cover' }}
+                  style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }}
                 />
               ) : (
                 <div

@@ -17,8 +17,8 @@ const MONETIZE_OPTIONS = [
 ]
 
 const FALLBACK_CATEGORIES = [
-  'Politics', 'Business', 'Tech', 'Science',
-  'Entertainment', 'Sports', 'Kenya', 'Africa', 'Health',
+  'World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy',
+  'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena',
 ]
 
 const fieldCls = 'w-full rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all'

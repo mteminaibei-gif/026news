@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-const CATEGORIES = ['Politics', 'Business', 'Technology', 'Sports', 'Entertainment', 'Health', 'Science', 'World']
+const CATEGORIES = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena', 'Opinion & Analysis', 'Trending Now', 'Features & Profiles', 'Environment & Climate']
 const PRIORITIES = ['Low', 'Normal', 'High', 'Urgent']
 
 export default function EditorialWritePage() {

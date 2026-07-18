@@ -582,16 +582,18 @@ export default function AdminProfilePage() {
               </div>
 
               {/* Real-time Notifications */}
-              <div className="flex items-center justify-between animate-fade-in-up">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>🔔 Notifications</h3>
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
-                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--primary)' }} />
-                  </span>
-                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Live</span>
+              <div className="animate-fade-in-up" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)' }}>
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>🔔 Notifications</h3>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--primary)' }} />
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Live</span>
+                  </div>
+                  <RealtimeNotifications />
                 </div>
-                <RealtimeNotifications />
               </div>
 
               {/* Pending Journalist Applications */}

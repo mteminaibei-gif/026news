@@ -77,7 +77,7 @@ export function BreakingNewsTicker({ initialHeadlines = [] }: Props) {
 
   if (headlines.length === 0) return null
 
-  const KENYA_CATS = ['Kenya', 'Africa', 'Politics', 'Business']
+  const KENYA_CATS = ['Kenya Focus', 'Politics & Governance', 'Business & Economy', 'World Updates']
 
   return (
     <div

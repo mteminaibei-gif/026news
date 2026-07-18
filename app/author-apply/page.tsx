@@ -10,7 +10,7 @@ const steps = [
   { number: 4, label: 'Submitted' },
 ];
 
-const niches = ['Technology', 'Business', 'Health', 'Sports', 'Entertainment', 'Science', 'Politics', 'Lifestyle'];
+const niches = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena'];
 const experienceLevels = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years'];
 
 export default function AuthorApplyPage() {

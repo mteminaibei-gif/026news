@@ -27,14 +27,18 @@ type CategoryArticle = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Politics: '#e23b3b',
-  Business: '#d4a853',
-  Tech: '#1a73e8',
-  Sports: '#34a853',
-  Science: '#fbbc04',
-  Health: '#34a853',
-  Kenya: '#006600',
-  Africa: '#d4a853',
+  'World Updates': '#475569',
+  'Kenya Focus': '#006600',
+  'Politics & Governance': '#e23b3b',
+  'Business & Economy': '#d4a853',
+  'Tech & Innovation': '#1a73e8',
+  'Health & Wellness': '#059669',
+  'Arts & Culture': '#db2777',
+  'Sports Arena': '#34a853',
+  'Opinion & Analysis': '#a21caf',
+  'Trending Now': '#f59e0b',
+  'Features & Profiles': '#6366f1',
+  'Environment & Climate': '#0d9488',
 }
 
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {

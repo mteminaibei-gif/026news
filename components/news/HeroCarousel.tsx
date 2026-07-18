@@ -41,7 +41,7 @@ export function HeroCarousel({ articles }: Props) {
   const slide = slides[current]
 
   const isKenyan = (cat?: string | null) =>
-    cat && ['Kenya', 'Africa', 'Politics', 'Business'].includes(cat)
+    cat && ['Kenya Focus', 'Politics & Governance', 'Business & Economy', 'World Updates'].includes(cat)
 
   const hasValidImage = (url?: string | null) =>
     !!url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))

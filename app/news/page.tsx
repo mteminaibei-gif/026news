@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw } from 'lucide-react'
 
-const CATEGORY_FILTERS = ['All', 'Kenya', 'Politics', 'Business', 'Tech', 'Sports', 'Health', 'Africa']
+const CATEGORY_FILTERS = ['All', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Sports Arena', 'Health & Wellness', 'World Updates']
 const REGION_FILTERS = ['All Regions', 'Kenya', 'East Africa', 'Africa', 'World'] as const
 const SORT_OPTIONS = ['Most Recent', 'Most Popular'] as const
 
@@ -28,14 +28,18 @@ type NewsArticle = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Politics: 'var(--kenya-red, #e23b3b)',
-  Business: 'var(--accent, #d4a853)',
-  Tech: 'var(--primary, #1a73e8)',
-  Sports: 'var(--success, #34a853)',
-  Science: 'var(--warning, #fbbc04)',
-  Health: 'var(--success, #34a853)',
-  Kenya: 'var(--kenya-green, #006600)',
-  Africa: 'var(--accent, #d4a853)',
+  'World Updates': '#475569',
+  'Kenya Focus': '#006600',
+  'Politics & Governance': '#e23b3b',
+  'Business & Economy': '#d4a853',
+  'Tech & Innovation': '#1a73e8',
+  'Health & Wellness': '#059669',
+  'Arts & Culture': '#db2777',
+  'Sports Arena': '#34a853',
+  'Opinion & Analysis': '#a21caf',
+  'Trending Now': '#f59e0b',
+  'Features & Profiles': '#6366f1',
+  'Environment & Climate': '#0d9488',
 }
 
 const REGION_PRIORITY: Record<string, number> = {

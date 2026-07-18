@@ -10,18 +10,18 @@ import { createClient } from '@/lib/supabase/client'
 type Step = 0 | 1 | 2 | 3 | 4 | 5
 
 const INTERESTS = [
-  { id: 'technology', label: 'Technology', icon: '💻' },
-  { id: 'business', label: 'Business', icon: '📈' },
-  { id: 'science', label: 'Science', icon: '🧬' },
-  { id: 'culture', label: 'Culture', icon: '🎨' },
-  { id: 'health', label: 'Health', icon: '🏥' },
-  { id: 'ai-ml', label: 'AI & ML', icon: '🤖' },
-  { id: 'sports', label: 'Sports', icon: '⚽' },
-  { id: 'politics', label: 'Politics', icon: '🌍' },
-  { id: 'fintech', label: 'Fintech', icon: '💰' },
-  { id: 'startups', label: 'Startups', icon: '🚀' },
-  { id: 'music', label: 'Music', icon: '🎵' },
-  { id: 'education', label: 'Education', icon: '📚' },
+  { id: 'tech-innovation', label: 'Tech & Innovation', icon: '💻' },
+  { id: 'business-economy', label: 'Business & Economy', icon: '📈' },
+  { id: 'arts-culture', label: 'Arts & Culture', icon: '🎭' },
+  { id: 'health-wellness', label: 'Health & Wellness', icon: '🏥' },
+  { id: 'sports-arena', label: 'Sports Arena', icon: '⚽' },
+  { id: 'politics-governance', label: 'Politics & Governance', icon: '🏛️' },
+  { id: 'kenya-focus', label: 'Kenya Focus', icon: '🇰🇪' },
+  { id: 'world-updates', label: 'World Updates', icon: '🌐' },
+  { id: 'opinion-analysis', label: 'Opinion & Analysis', icon: '💭' },
+  { id: 'trending-now', label: 'Trending Now', icon: '🔥' },
+  { id: 'features-profiles', label: 'Features & Profiles', icon: '📰' },
+  { id: 'environment-climate', label: 'Environment & Climate', icon: '🌿' },
 ]
 
 type AuthorItem = { id: string; name: string; topic: string; initials: string; grad: string; profile_image?: string | null }
@@ -33,7 +33,7 @@ const NOTIFS = [
   { id: 'weekly_recap', name: 'Weekly Recap', desc: 'Your reading stats every Sunday' },
 ]
 
-const NICHES = ['Technology', 'Business', 'Health', 'Sports', 'Entertainment', 'Science', 'Politics', 'Lifestyle']
+const NICHES = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena']
 const EXPERIENCE = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years']
 
 const inputStyle: CSSProperties = {

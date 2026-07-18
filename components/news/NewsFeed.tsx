@@ -16,14 +16,18 @@ interface Props {
 const PAGE = 12
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Politics: 'var(--kenya-red)',
-  Business: 'var(--accent)',
-  Tech: 'var(--primary)',
-  Sports: 'var(--success)',
-  Science: 'var(--warning)',
-  Health: 'var(--success)',
-  Kenya: 'var(--kenya-green)',
-  Africa: 'var(--accent)',
+  'World Updates': '#475569',
+  'Kenya Focus': '#006600',
+  'Politics & Governance': '#e23b3b',
+  'Business & Economy': '#d4a853',
+  'Tech & Innovation': '#1a73e8',
+  'Health & Wellness': '#059669',
+  'Arts & Culture': '#db2777',
+  'Sports Arena': '#34a853',
+  'Opinion & Analysis': '#a21caf',
+  'Trending Now': '#f59e0b',
+  'Features & Profiles': '#6366f1',
+  'Environment & Climate': '#0d9488',
 }
 
 function timeAgo(date: string) {

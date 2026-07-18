@@ -448,7 +448,7 @@ export default function ProfilePage() {
                     <Image src={article.featured_image || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || 'Science'}</span>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || 'Features & Profiles'}</span>
                         <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -78,19 +78,19 @@ export default async function HomePage({ searchParams }: Props) {
 
   const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
 
-  const entertainmentArticles = articles.filter(a => a.category?.name === 'Entertainment').slice(0, 4)
+  const entertainmentArticles = articles.filter(a => a.category?.name === 'Arts & Culture').slice(0, 4)
 
   const kenyaArticles = articles.filter(a =>
-    ['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? '') ||
+    ['Kenya Focus', 'Politics & Governance', 'Business & Economy'].includes(a.category?.name ?? '') ||
     a.source_name?.toLowerCase().includes('kenya')
   )
   const africaArticles = articles.filter(a =>
-    a.category?.name === 'Africa' ||
+    a.category?.name === 'World Updates' ||
     (a.source_name?.toLowerCase().includes('africa') &&
-     !['Kenya', 'Politics', 'Business'].includes(a.category?.name ?? ''))
+     !['Kenya Focus', 'Politics & Governance', 'Business & Economy'].includes(a.category?.name ?? ''))
   )
   const otherArticles = articles.filter(a =>
-    !['Kenya', 'Africa', 'Politics', 'Business'].includes(a.category?.name ?? '') &&
+    !['Kenya Focus', 'Politics & Governance', 'Business & Economy', 'World Updates'].includes(a.category?.name ?? '') &&
     !a.source_name?.toLowerCase().includes('africa')
   )
 

@@ -39,20 +39,17 @@ interface ExploreArticle {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Politics: '#e23b3b', Business: '#d4a853', Tech: '#1a73e8',
-  Sports: '#34a853', Science: '#fbbc04', Health: '#059669',
-  Kenya: '#006600', Africa: '#d4a853', World: '#475569',
-  Education: '#7c3aed', Agriculture: '#65a30d', Environment: '#0d9488',
-  'Crime & Justice': '#dc2626', Opinion: '#a21caf', 'Real Estate': '#b45309',
-  Lifestyle: '#ec4899', Entertainment: '#db2777',
+  'World Updates': '#475569', 'Kenya Focus': '#006600', 'Politics & Governance': '#e23b3b',
+  'Business & Economy': '#d4a853', 'Tech & Innovation': '#1a73e8', 'Health & Wellness': '#059669',
+  'Arts & Culture': '#db2777', 'Sports Arena': '#34a853', 'Opinion & Analysis': '#a21caf',
+  'Trending Now': '#f59e0b', 'Features & Profiles': '#6366f1', 'Environment & Climate': '#0d9488',
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  Kenya: '🇰🇪', Africa: '🌍', Politics: '🏛️', Business: '💼',
-  Tech: '💻', Science: '🔬', Sports: '⚽', Entertainment: '🎬',
-  Health: '🏥', World: '🌐', Education: '📚', Agriculture: '🌾',
-  Environment: '🌿', 'Crime & Justice': '⚖️', Opinion: '💭',
-  'Real Estate': '🏠', Lifestyle: '✨',
+  'World Updates': '🌐', 'Kenya Focus': '🇰🇪', 'Politics & Governance': '🏛️',
+  'Business & Economy': '💼', 'Tech & Innovation': '💻', 'Health & Wellness': '🏥',
+  'Arts & Culture': '🎭', 'Sports Arena': '⚽', 'Opinion & Analysis': '💭',
+  'Trending Now': '🔥', 'Features & Profiles': '📰', 'Environment & Climate': '🌿',
 }
 
 const ICON_FALLBACK = '📂'
