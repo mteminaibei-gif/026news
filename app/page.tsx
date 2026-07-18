@@ -56,18 +56,24 @@ export default async function HomePage({ searchParams }: Props) {
   }, null)
   const limits = (limitsRes?.value ?? { inhouse: 0, sourced: 0 }) as { inhouse: number; sourced: number }
 
+  // Admin manual ordering: pinned first, then by priority desc, then newest.
+  const sortByPinnedPriority = (arr: ArticleWithAuthor[]) =>
+    [...arr].sort((a, b) => {
+      const ap = (a as any).pinned ? 1 : 0
+      const bp = (b as any).pinned ? 1 : 0
+      if (ap !== bp) return bp - ap
+      const priA = (a as any).priority ?? 0
+      const priB = (b as any).priority ?? 0
+      if (priA !== priB) return priB - priA
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+
   // Always show ALL in-house articles (no cap). Only cap sourced/RSS if limit set.
   const inhouseList = rawArticles.filter(a => !(a as any).is_aggregated)
   const sourcedList = rawArticles.filter(a => (a as any).is_aggregated)
   const inhouse = inhouseList
   const sourced = limits.sourced > 0 ? sourcedList.slice(0, limits.sourced) : sourcedList
-  const articles: ArticleWithAuthor[] = [...inhouse, ...sourced].sort((a, b) => {
-    // In-house (original) posts are surfaced before aggregated/RSS content.
-    const ai = (a as any).is_aggregated ? 1 : 0
-    const bi = (b as any).is_aggregated ? 1 : 0
-    if (ai !== bi) return ai - bi
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  })
+  const articles: ArticleWithAuthor[] = sortByPinnedPriority([...inhouse, ...sourced])
 
   const trending = [...articles].sort((a, b) => b.views - a.views).slice(0, 5)
 
@@ -119,11 +125,11 @@ export default async function HomePage({ searchParams }: Props) {
     ...sortByPriorityThenViews(otherArticles).filter(a => !featured.find(f => f.article_id === a.article_id)),
   ].slice(0, 7)
 
-  const baseArticles = prioritizeInhouse(
+  const baseArticles = sortByPinnedPriority(
     categoryParam
       ? articles.filter(a => a.category?.name === categoryParam)
       : [...sortByPriorityThenViews(kenyaArticles), ...sortByPriorityThenViews(africaArticles), ...sortByPriorityThenViews(otherArticles)]
-  ).filter((a, i, self) => i === self.findIndex(b => b.article_id === a.article_id))
+  ).filter((a, i, self) => i === self.findIndex((b) => b.article_id === a.article_id))
 
   const feedArticles =
     sortParam === 'recent'

@@ -211,7 +211,7 @@ export function NavbarNotificationDropdown({ userId, role, onClose }: Props) {
       {/* Footer */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
         <Link
-          href="/notifications"
+          href={role === 'admin' ? '/admin/notifications' : '/notifications'}
           onClick={onClose}
           style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}
         >

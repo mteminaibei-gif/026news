@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useCategories } from '@/lib/hooks/useCategories'
 import { Tag, X } from 'lucide-react'
-
-interface Category { id: number; name: string }
 
 interface Props {
   articleId: number
@@ -14,22 +13,22 @@ interface Props {
 
 export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId }: Props) {
   const [open, setOpen] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
+  const { categories } = useCategories()
   const [tags, setTags] = useState<string[]>(currentTags)
   const [categoryId, setCategoryId] = useState<number | null>(currentCategoryId)
   const [newTag, setNewTag] = useState('')
+  const [newCategory, setNewCategory] = useState('')
+  const [creatingCat, setCreatingCat] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!open) return
-    createClient()
-      .from('categories')
-      .select('id, name')
-      .order('name')
-      .then(({ data }) => { if (data) setCategories(data as Category[]) })
-  }, [open])
+    if (open) {
+      setTags(currentTags)
+      setCategoryId(currentCategoryId)
+    }
+  }, [open, currentTags, currentCategoryId])
 
   async function handleSave() {
     setSaving(true)
@@ -60,6 +59,28 @@ export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId
 
   function removeTag(tag: string) {
     setTags(tags.filter(t => t !== tag))
+  }
+
+  async function createCategory() {
+    const name = newCategory.trim()
+    if (!name || creatingCat) return
+    setCreatingCat(true)
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      if (res.ok) {
+        const cat = await res.json() as { category_id: number; name: string }
+        setCategoryId(cat.category_id)
+        setNewCategory('')
+      }
+    } catch {
+      /* no-op */
+    } finally {
+      setCreatingCat(false)
+    }
   }
 
   if (!open) {
@@ -107,9 +128,32 @@ export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId
           >
             <option value="">No category</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.category_id} value={c.category_id}>{c.name}</option>
             ))}
           </select>
+          {/* Create a new category on the fly (appears instantly via realtime) */}
+          <div className="flex gap-2 mt-2">
+            <input
+              type="text"
+              value={newCategory}
+              onChange={e => setNewCategory(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); createCategory() } }}
+              placeholder="New category name..."
+              className="flex-1 rounded-lg px-3 py-1.5 text-xs"
+              style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+            />
+            <button
+              onClick={createCategory}
+              disabled={creatingCat}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}
+            >
+              + Add
+            </button>
+          </div>
+          {categories.length === 0 && (
+            <p className="text-[11px] mt-1" style={{ color: 'var(--text-tertiary)' }}>No categories yet — create one above.</p>
+          )}
         </div>
 
         {/* Tags */}

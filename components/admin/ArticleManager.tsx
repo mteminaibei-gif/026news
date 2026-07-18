@@ -13,6 +13,7 @@ type Article = {
   category_id: number | null; tags: string[] | null
   excerpt: string | null; like_count: number; share_count: number
   save_count: number; featured: boolean
+  priority: number; pinned: boolean
   author: { user_id: number; name: string; profile_image: string | null } | null
   category: { name: string; slug: string | null } | null
 }
@@ -36,6 +37,7 @@ export function ArticleManager() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [sortBy, setSortBy] = useState<'manual' | 'recent' | 'top'>('manual')
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [bulkLoading, setBulkLoading] = useState(false)
@@ -126,6 +128,15 @@ export function ArticleManager() {
     updateArticle(article.article_id, { action: article.featured ? 'unfeature' : 'feature' })
   }
 
+  const togglePinned = (article: Article) => {
+    updateArticle(article.article_id, { pinned: !article.pinned })
+  }
+
+  const setPriority = (article: Article, delta: number) => {
+    const next = Math.max(0, (article.priority || 0) + delta)
+    updateArticle(article.article_id, { priority: next })
+  }
+
   return (
     <div className="space-y-4">
       {message && (
@@ -172,6 +183,18 @@ export function ArticleManager() {
           <option value="inhouse">In-House</option>
           <option value="sourced">RSS / Sourced</option>
         </select>
+        <button
+          onClick={() => setSortBy(s => s === 'manual' ? 'recent' : s === 'recent' ? 'top' : 'manual')}
+          className="px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 shrink-0"
+          style={{
+            background: sortBy === 'manual' ? 'var(--primary-light)' : sortBy === 'top' ? 'var(--warning-light)' : 'var(--bg-muted)',
+            border: `1px solid ${sortBy === 'manual' ? 'var(--primary)' : sortBy === 'top' ? 'var(--warning)' : 'var(--border)'}`,
+            color: sortBy === 'manual' ? 'var(--primary)' : sortBy === 'top' ? 'var(--warning)' : 'var(--text-secondary)',
+          }}
+          title="Cycle: Pinned first → Newest → Most viewed"
+        >
+          {sortBy === 'manual' ? '📌 Pinned' : sortBy === 'top' ? '🔥 Top views' : '🕒 Newest'}
+        </button>
       </div>
 
       {/* Bulk actions */}
@@ -215,7 +238,12 @@ export function ArticleManager() {
 
           {/* Rows */}
           <div className="max-h-[700px] overflow-y-auto">
-            {articles.map((a, idx) => (
+            {(sortBy === 'recent'
+              ? [...articles].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              : sortBy === 'top'
+              ? [...articles].sort((a, b) => (b.views || 0) - (a.views || 0))
+              : articles
+            ).map((a, idx) => (
               <div
                 key={a.article_id}
                 className="px-4 py-3 flex items-center gap-3 transition-colors"
@@ -255,6 +283,12 @@ export function ArticleManager() {
                       {a.featured && (
                         <span className="text-[10px]" style={{ color: 'var(--warning)' }}>⭐</span>
                       )}
+                      {a.pinned && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ background: 'var(--error-light)', color: 'var(--error)' }}>📌 Pinned</span>
+                      )}
+                      {!a.pinned && (a.priority || 0) > 0 && (
+                        <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>⚑ {a.priority}</span>
+                      )}
                       {a.tags?.slice(0, 3).map(tag => (
                         <span key={tag} className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}>{tag}</span>
                       ))}
@@ -286,8 +320,8 @@ export function ArticleManager() {
                   </span>
                 </div>
 
-                {/* Actions */}
-                <div className="w-24 shrink-0 flex items-center justify-end gap-1">
+                 {/* Actions */}
+                <div className="w-28 shrink-0 flex items-center justify-end gap-1">
                   {a.status === 'under_review' && (
                     <>
                       <button
@@ -304,6 +338,25 @@ export function ArticleManager() {
                       >✗</button>
                     </>
                   )}
+                  <button
+                    onClick={() => togglePinned(a)}
+                    className="px-2 py-1 rounded text-[10px] font-bold"
+                    style={{ background: a.pinned ? 'var(--error-light)' : 'var(--bg-muted)', color: a.pinned ? 'var(--error)' : 'var(--text-tertiary)' }}
+                    title={a.pinned ? 'Unpin (remove from top)' : 'Pin to top of feeds'}
+                  >📌</button>
+                  <div className="flex items-center gap-0.5" title="Priority (higher shows first within pinned group)">
+                    <button
+                      onClick={() => setPriority(a, -1)}
+                      className="px-1.5 py-1 rounded text-[10px] font-bold"
+                      style={{ background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}
+                    >−</button>
+                    <span className="text-[10px] font-bold w-4 text-center" style={{ color: 'var(--text-secondary)' }}>{a.priority || 0}</span>
+                    <button
+                      onClick={() => setPriority(a, 1)}
+                      className="px-1.5 py-1 rounded text-[10px] font-bold"
+                      style={{ background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}
+                    >+</button>
+                  </div>
                   <button
                     onClick={() => toggleFeatured(a)}
                     className="px-2 py-1 rounded text-[10px] font-bold"

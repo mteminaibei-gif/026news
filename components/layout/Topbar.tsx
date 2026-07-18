@@ -108,14 +108,19 @@ export function Topbar({ title, user, mobileNav, notifications }: {
 
           <Link
             href="/"
+            className="flex items-center"
             style={{
               fontSize: 12,
               color: 'var(--text-secondary)',
               textDecoration: 'none',
-              padding: '4px 10px',
-              borderRadius: 6,
+              padding: '6px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'transparent',
               transition: 'background 0.15s',
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             Home
           </Link>
@@ -128,13 +133,15 @@ export function Topbar({ title, user, mobileNav, notifications }: {
               fontSize: 12,
               color: 'var(--error)',
               textDecoration: 'none',
-              padding: '4px 10px',
-              borderRadius: 6,
+              padding: '6px 12px',
+              borderRadius: 8,
               border: '1px solid var(--border)',
               background: 'transparent',
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--error-light)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             <LogOut size={13} />
             <span className="hidden sm:inline">Sign out</span>

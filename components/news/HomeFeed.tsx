@@ -13,11 +13,19 @@ interface Props {
 const PAGE = 12
 
 // In-house (non-aggregated) posts surface before aggregated/RSS content,
-// then newest-first.
+// pinned articles first, then by manual priority, then newest-first.
 function sortInhouseFirst(list: ArticleWithAuthor[]): ArticleWithAuthor[] {
   return [...list].sort((a, b) => {
-    const ai = (a as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
-    const bi = (b as unknown as Record<string, unknown>).is_aggregated === true ? 1 : 0
+    const aAny = a as unknown as Record<string, unknown>
+    const bAny = b as unknown as Record<string, unknown>
+    const ap = aAny.pinned ? 1 : 0
+    const bp = bAny.pinned ? 1 : 0
+    if (ap !== bp) return bp - ap
+    const priA = (aAny.priority as number) ?? 0
+    const priB = (bAny.priority as number) ?? 0
+    if (priA !== priB) return priB - priA
+    const ai = aAny.is_aggregated === true ? 1 : 0
+    const bi = bAny.is_aggregated === true ? 1 : 0
     if (ai !== bi) return ai - bi
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })

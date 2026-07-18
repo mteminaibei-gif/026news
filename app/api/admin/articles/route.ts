@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     let query = adminDb
       .from('articles')
-      .select('article_id, title, slug, status, featured_image, views, earnings, created_at, published_at, is_aggregated, source_name, category_id, author_id, tags, excerpt, like_count, share_count, save_count, featured, author:users(user_id, name, profile_image), category:categories(name, slug)', { count: 'exact' })
+      .select('article_id, title, slug, status, featured_image, views, earnings, created_at, published_at, is_aggregated, source_name, category_id, author_id, tags, excerpt, like_count, share_count, save_count, featured, priority, pinned, author:users(user_id, name, profile_image), category:categories(name, slug)', { count: 'exact' })
 
     if (status === 'expired') {
       query = query.lt('published_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).eq('status', 'published')
@@ -43,7 +43,11 @@ export async function GET(req: NextRequest) {
       query = query.contains('tags', [tag])
     }
 
-    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+    query = query
+      .order('pinned', { ascending: false })
+      .order('priority', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     const { data, error, count } = await query
     if (error) throw error
@@ -68,13 +72,15 @@ export async function PATCH(req: NextRequest) {
     if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()
-    const { ids, action, status, category_id, tags, featured } = body as {
+    const { ids, action, status, category_id, tags, featured, priority, pinned } = body as {
       ids: number[]
       action?: string
       status?: string
       category_id?: number | null
       tags?: string[]
       featured?: boolean
+      priority?: number
+      pinned?: boolean
     }
 
     if (!ids?.length) {
@@ -101,6 +107,8 @@ export async function PATCH(req: NextRequest) {
 
     if (category_id !== undefined) update.category_id = category_id
     if (tags !== undefined) update.tags = tags
+    if (priority !== undefined) update.priority = Number(priority) || 0
+    if (pinned !== undefined) update.pinned = Boolean(pinned)
 
     // Batch update articles
     let updated = 0
@@ -131,6 +139,8 @@ export async function PATCH(req: NextRequest) {
       if (category_id !== undefined) singleUpdate.category_id = category_id
       if (tags !== undefined) singleUpdate.tags = tags
       if (featured !== undefined) singleUpdate.featured = featured
+      if (priority !== undefined) singleUpdate.priority = Number(priority) || 0
+      if (pinned !== undefined) singleUpdate.pinned = Boolean(pinned)
       const { error } = await adminDb
         .from('articles')
         .update(singleUpdate as never)

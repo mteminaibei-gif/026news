@@ -21,10 +21,10 @@ type ArticleRow = {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; fg: string; label: string }> = {
-  published:    { bg: '#dcfce7', fg: '#16a34a', label: 'Live' },
-  under_review: { bg: '#fef3c7', fg: '#d97706', label: 'Review' },
-  draft:        { bg: '#f3f4f6', fg: '#6b7280', label: 'Draft' },
-  rejected:     { bg: '#fee2e2', fg: '#dc2626', label: 'Rejected' },
+  published:    { bg: 'var(--success-light)', fg: 'var(--success)', label: 'Live' },
+  under_review: { bg: 'var(--warning-light)', fg: 'var(--warning)', label: 'Review' },
+  draft:        { bg: 'var(--bg-muted)', fg: 'var(--text-tertiary)', label: 'Draft' },
+  rejected:     { bg: 'var(--error-light)', fg: 'var(--error)', label: 'Rejected' },
 }
 
 export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
@@ -70,7 +70,7 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
-                  {a.is_aggregated && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 hidden sm:inline">RSS</span>}
+                  {a.is_aggregated && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded hidden sm:inline" style={{ background: 'var(--info)', color: 'var(--text-inverse)' }}>RSS</span>}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-[11px] px-1.5 py-0.5 rounded font-semibold" style={{ background: st.bg, color: st.fg }}>{st.label}</span>
@@ -85,8 +85,8 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
 
               {/* Quick actions */}
               <div className="flex items-center gap-1 shrink-0">
-                {a.status === 'under_review' && (
-                  <Link href={`/admin/review/${a.article_id}`} className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: '#fef3c7', color: '#d97706' }}>Review</Link>
+                 {a.status === 'under_review' && (
+                  <Link href={`/admin/review/${a.article_id}`} className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>Review</Link>
                 )}
                 <button
                   onClick={() => setSeoFor({ article_id: a.article_id, title: a.title, slug: a.slug, status: a.status })}
@@ -107,8 +107,8 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
                   <button onClick={() => toggle(a.article_id)} className="p-1.5 rounded-lg transition-colors" style={{ background: openMenu === a.article_id ? 'var(--bg-muted)' : 'transparent', color: 'var(--text-tertiary)' }}>
                     <MoreHorizontal size={14} />
                   </button>
-                  {openMenu === a.article_id && (
-                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl py-1 z-50" style={{ background: 'var(--bg-surface, #fff)', border: '1px solid var(--border, #e5e7eb)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                   {openMenu === a.article_id && (
+                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl py-1 z-50" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                       <AdminArticleActions articleId={a.article_id} currentStatus={a.status} />
                       {a.is_aggregated && (
                         <div className="px-3 py-1.5">

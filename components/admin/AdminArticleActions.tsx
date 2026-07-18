@@ -63,7 +63,7 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
           onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          <Check size={13} style={{ color: '#16a34a' }} /> {loading === 'approve' ? '...' : 'Publish'}
+          <Check size={13} style={{ color: 'var(--success)' }} /> {loading === 'approve' ? '...' : 'Publish'}
         </button>
       )}
       {(currentStatus === 'under_review' || currentStatus === 'draft') && (
@@ -71,14 +71,14 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
           onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          <X size={13} style={{ color: '#d97706' }} /> {loading === 'reject' ? '...' : 'Reject'}
+          <X size={13} style={{ color: 'var(--warning)' }} /> {loading === 'reject' ? '...' : 'Reject'}
         </button>
       )}
       <button onClick={handleDelete} disabled={loading !== null} style={itemStyle}
         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
         onMouseLeave={e => e.currentTarget.style.background = 'none'}
       >
-        <Trash2 size={13} style={{ color: '#dc2626' }} /> {loading === 'delete' ? '...' : 'Delete'}
+          <Trash2 size={13} style={{ color: 'var(--error)' }} /> {loading === 'delete' ? '...' : 'Delete'}
       </button>
     </>
   )
