@@ -390,6 +390,12 @@ export default function ProfilePage() {
               <span>Your journalist application is under review by our editorial team. We&apos;ll notify you once a decision is made.</span>
             </div>
           )}
+          {user && (user as any).author_application?.status === 'approved' && (
+            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--success-light)', color: 'var(--success)', border: '1px solid var(--success-light)' }}>
+              <span style={{ fontSize: '1.1rem' }}>✅</span>
+              <span>Your journalist application was approved! You can now publish articles. <Link href="/journalist/create" style={{ color: 'var(--success)', fontWeight: 600, textDecoration: 'underline' }}>Create your first article</Link></span>
+            </div>
+          )}
           {user && (user as any).author_application?.status === 'declined' && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--error-light)', color: 'var(--error)', border: '1px solid var(--error-light)' }}>
               <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
