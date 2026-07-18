@@ -1,24 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { uploadProfileImage } from '@/lib/storage'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Loader2, Users, BarChart3, DollarSign, AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp, Users as UsersIcon, DollarSign as DollarSignIcon, Award, FileText, Settings as SettingsIcon, Plus, Eye, Edit, Trash2, Flag, Star, Share2, MoreHorizontal, Camera, UserCheck, UserX } from 'lucide-react'
-import { formatNumber, formatCurrency, stripHtml, timeAgo } from '@/lib/utils'
-import { ChatWidget } from '@/components/ui/ChatWidget'
-import { StatCard } from '@/components/ui/StatCard'
+import { Loader2, Camera, UserCheck, UserX, Eye, FileText, Users, DollarSign, Clock, Plus } from 'lucide-react'
+import { formatNumber, formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
-import { BadgePill } from '@/components/ui/BadgePill'
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
-import { AdminJournalistActions } from '@/components/admin/AdminJournalistActions'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
 import { RealtimeNotifications } from '@/components/admin/RealtimeNotifications'
-import { AdminControlPanel } from '@/components/admin/AdminControlPanel'
 import { ArticleManager } from '@/components/admin/ArticleManager'
 import { AccountCreationDialog } from '@/components/admin/AccountCreationDialog'
 
@@ -57,7 +52,7 @@ export default function AdminProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'articles' | 'control-panel' | 'about' | 'profile'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'articles' | 'settings'>('dashboard')
   const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null)
   const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false)
 
@@ -76,7 +71,6 @@ export default function AdminProfilePage() {
   // Dashboard state
   const [inhouseArticles, setInhouseArticles] = useState<Article[]>([])
   const [sourcedArticles, setSourcedArticles] = useState<Article[]>([])
-  const [journalists, setJournalists] = useState<JournalistRow[]>([])
   const [totalArticlesCount, setTotalArticlesCount] = useState(0)
   const [publishLimits, setPublishLimits] = useState<{ inhouse: number; sourced: number }>({ inhouse: 0, sourced: 0 })
   const [savingLimits, setSavingLimits] = useState(false)
@@ -86,24 +80,11 @@ export default function AdminProfilePage() {
   const [pendingPayout, setPendingPayout] = useState(0)
   const [recentUsers, setRecentUsers] = useState<any[]>([])
   const [admin, setAdmin] = useState<{ name: string; profile_image: string | null }>({ name: 'Admin', profile_image: null })
-
-  // Profile tab state
-  const [articles, setArticles] = useState<Article[]>([])
-  const [savedArticles, setSaved] = useState<any[]>([])
-  const [likedArticles, setLiked] = useState<any[]>([])
-  const [comments, setComments] = useState<any[]>([])
-  const [notifications, setNotifs] = useState<Notification[]>([])
-  const [following, setFollowing] = useState<any[]>([])
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [journalists, setJournalists] = useState<JournalistRow[]>([])
 
   useEffect(() => {
     resolveAndLoad()
   }, [])
-
-  useEffect(() => {
-    if (currentUserId === null) return
-    loadProfileData()
-  }, [currentUserId])
 
   async function resolveAndLoad() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -293,133 +274,6 @@ export default function AdminProfilePage() {
     }
   }, [fetchDashboardData, supabase])
 
-  const loadProfileData = async () => {
-    if (!currentUserId) return
-    const { data } = await supabase
-      .from('articles')
-      .select('*, category:categories(name)')
-      .eq('author_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    setArticles((data as Article[]) || [])
-
-    const { data: saved } = await supabase
-      .from('saved_articles')
-      .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, reading_time_minutes, created_at, author:users(name), category:categories(name))')
-      .eq('user_id', currentUserId)
-      .order('saved_at', { ascending: false })
-      .limit(10)
-    setSaved((saved as any[]) || [])
-
-    const { data: liked } = await supabase
-      .from('article_likes')
-      .select('created_at, articles!inner(article_id, title, slug, featured_image, reading_time_minutes, created_at, author:users(name), category:categories(name))')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setLiked((liked as any[]) || [])
-
-    const { data: commentsData } = await supabase
-      .from('comments')
-      .select('*, articles!inner(article_id, title, slug, featured_image)')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setComments((commentsData as any[]) || [])
-
-    const { data: notifs } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setNotifs((notifs as Notification[]) || [])
-
-    const { data: followingData } = await supabase
-      .from('user_follows')
-      .select('*, following:users!user_follows_following_id_fkey(user_id, name, profile_image, role)')
-      .eq('follower_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    setFollowing((followingData as any[]) || [])
-
-    try {
-      const { data: msgs } = await supabase
-        .from('messages')
-        .select('sender_id, receiver_id, content, created_at')
-        .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (!msgs?.length) { setConversations([]); return }
-
-      const convMap = new Map<number, Conversation>()
-      for (const msg of msgs as { sender_id: number; receiver_id: number; content: string; created_at: string; is_read: boolean }[]) {
-        const otherId: number = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id
-        if (otherId === currentUserId) continue
-        if (!convMap.has(otherId)) {
-          const { data: u } = await supabase.from('users').select('user_id, name, profile_image').eq('user_id', otherId).single()
-          const fallback = { user_id: otherId, name: 'Unknown', profile_image: null }
-          convMap.set(otherId, {
-            other_user: u ? (u as { user_id: number; name: string; profile_image: string | null }) : fallback,
-            last_message: msg.content,
-            last_message_at: msg.created_at,
-            unread: 0,
-          })
-        }
-      }
-      setConversations(Array.from(convMap.values()).slice(0, 5))
-    } catch { setConversations([]) }
-  }
-
-  const pending = [...inhouseArticles, ...sourcedArticles].filter(a => a.status === 'under_review')
-  const published = [...inhouseArticles, ...sourcedArticles].filter(a => a.status === 'published')
-
-  const saveLimits = async () => {
-    setSavingLimits(true)
-    const { error } = await (supabase.from('site_settings') as any)
-      .upsert({ key: 'publish_limits', value: publishLimits, updated_at: new Date().toISOString() })
-    if (error) {
-      console.error('Failed to save publish limits:', error)
-      setNotification({ type: 'info', message: 'Could not save publish limits.' })
-    } else {
-      setNotification({ type: 'success', message: 'Publish limits updated.' })
-      setTimeout(() => setNotification(null), 4000)
-    }
-    setSavingLimits(false)
-  }
-
-  async function toggleSave(articleId: number) {
-    if (!currentUserId) return
-    const exists = savedArticles.some(s => s.article_id === articleId)
-    if (exists) {
-      await supabase.from('saved_articles').delete().eq('user_id', currentUserId).eq('article_id', articleId)
-      setSaved(prev => prev.filter(s => s.article_id !== articleId))
-    } else {
-      await supabase.from('saved_articles').insert({ user_id: currentUserId, article_id: articleId } as never)
-      setSaved(prev => [...prev, { article_id: articleId, saved_at: new Date().toISOString() }])
-    }
-  }
-
-  async function toggleLike(articleId: number) {
-    if (!currentUserId) return
-    const exists = likedArticles.some(l => l.articles?.article_id === articleId)
-    if (exists) {
-      await supabase.from('article_likes').delete().eq('user_id', currentUserId).eq('article_id', articleId)
-      setLiked(prev => prev.filter(l => l.articles?.article_id !== articleId))
-      setArticles(prev => prev.map(a => a.article_id === articleId ? { ...a, likes: Math.max((a.likes || 1) - 1, 0) } : a))
-    } else {
-      await supabase.from('article_likes').insert({ user_id: currentUserId, article_id: articleId } as never)
-      setLiked(prev => [...prev, { articles: articles.find(a => a.article_id === articleId), liked_at: new Date().toISOString() }])
-      setArticles(prev => prev.map(a => a.article_id === articleId ? { ...a, likes: (a.likes || 0) + 1 } : a))
-    }
-  }
-
-  async function markNotifRead(id: number) {
-    await supabase.from('notifications').update({ read: true } as never).eq('notification_id', id)
-    setNotifs(prev => prev.map(n => n.notification_id === id ? { ...n, read: true } : n))
-  }
-
   if (loading) {
     return (
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -437,10 +291,25 @@ export default function AdminProfilePage() {
     )
   }
 
-  const unreadNotifs = notifications.filter(n => !n.read)
-  const totalUnread = conversations.reduce((s, c) => s + c.unread, 0)
-  const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 
+  const pending = [...inhouseArticles, ...sourcedArticles].filter(a => a.status === 'under_review')
+  const published = [...inhouseArticles, ...sourcedArticles].filter(a => a.status === 'published')
+
+  const saveLimits = async () => {
+    setSavingLimits(true)
+    const { error } = await (supabase.from('site_settings') as any)
+      .upsert({ key: 'publish_limits', value: publishLimits, updated_at: new Date().toISOString() })
+    if (error) {
+      setNotification({ type: 'info', message: 'Could not save publish limits.' })
+    } else {
+      setNotification({ type: 'success', message: 'Publish limits updated.' })
+      setTimeout(() => setNotification(null), 4000)
+    }
+    setSavingLimits(false)
+  }
+
+  const allArticles = [...inhouseArticles, ...sourcedArticles]
   const chartData: number[] = []
   const chartLabels: string[] = []
   for (let i = 5; i >= 0; i--) {
@@ -448,10 +317,9 @@ export default function AdminProfilePage() {
     d.setMonth(d.getMonth() - i)
     const ym = d.toISOString().slice(0, 7)
     chartLabels.push(d.toLocaleString('default', { month: 'short' }))
-    chartData.push(articles.filter(a => a.created_at.startsWith(ym)).length)
+    chartData.push(allArticles.filter((a: Article) => a.created_at.startsWith(ym)).length)
   }
 
-  const allArticles = [...inhouseArticles, ...sourcedArticles]
   const trafficChartData: number[] = []
   const trafficChartLabels: string[] = []
   for (let i = 11; i >= 0; i--) {
@@ -475,18 +343,19 @@ export default function AdminProfilePage() {
         </div>
       )}
 
+      {/* Compact Header */}
       <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div className="admin-header" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 40px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
           <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           <div
             onClick={() => avatarInputRef.current?.click()}
-            style={{ width: 120, height: 120, borderRadius: 28, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)', cursor: 'pointer' }}
+            style={{ width: 48, height: 48, borderRadius: 14, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)', cursor: 'pointer' }}
             title="Change avatar"
           >
             {profile.profile_image ? (
               <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)' }}>
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
                 {profile.name.charAt(0)}
               </div>
             )}
@@ -494,47 +363,40 @@ export default function AdminProfilePage() {
               onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
             >
-              {uploadingAvatar ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-6 h-6 text-white" />}
+              {uploadingAvatar ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Camera className="w-4 h-4 text-white" />}
             </div>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="admin-header-title">
-              <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'Newsreader', Georgia, serif" }}>{profile.name}</h1>
-              <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: 6 }}>Admin</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 700, letterSpacing: '-0.01em', fontFamily: "'Newsreader', Georgia, serif", color: 'var(--text-primary)' }}>{profile.name}</h1>
+              <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 4 }}>Admin</span>
             </div>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
-            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.6, marginBottom: 16 }}>{profile.bio ?? 'No bio available.'}</p>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
           </div>
+          <Link href="/admin/write" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', color: '#fff', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none', boxShadow: '0 2px 8px rgba(99,102,241,0.25)' }}>
+            <Plus size={14} /> New Article
+          </Link>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="profile-tabs" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <button onClick={() => setActiveTab('dashboard')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'dashboard' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'dashboard' ? 'var(--primary)' : 'transparent' }}>
-          Dashboard
-        </button>
-        <button onClick={() => setActiveTab('articles')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'articles' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'articles' ? 'var(--primary)' : 'transparent' }}>
-          Articles ({articles.length})
-        </button>
-        <button onClick={() => setActiveTab('control-panel')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'control-panel' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'control-panel' ? 'var(--primary)' : 'transparent' }}>
-          Control Panel
-        </button>
-        <button onClick={() => setActiveTab('about')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'about' ? 'var(--primary)' : 'transparent' }}>
-          About
-        </button>
-        <button onClick={() => setActiveTab('profile')}
-          className="profile-tab-btn"
-          style={{ fontWeight: 500, color: activeTab === 'profile' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'profile' ? 'var(--primary)' : 'transparent' }}>
-          Profile
-        </button>
+      {/* Tab Navigation — clean 3-tab system */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 0 }}>
+        {[
+          { id: 'dashboard' as const, label: 'Dashboard', icon: '📊' },
+          { id: 'articles' as const, label: 'Articles', icon: '📰' },
+          { id: 'settings' as const, label: 'Settings', icon: '⚙️' },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+              color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)',
+              borderBottom: `2px solid ${activeTab === tab.id ? 'var(--primary)' : 'transparent'}`,
+              transition: 'all 0.2s',
+            }}>
+            <span>{tab.icon}</span> {tab.label}
+          </button>
+        ))}
       </div>
 
 {/* Content */}
@@ -808,56 +670,27 @@ export default function AdminProfilePage() {
             </div>
           )}
 
-          {activeTab === 'control-panel' && <AdminControlPanel />}
-
           {activeTab === 'articles' && (
-            <div className="p-6">
-              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>📋 Article Management</h3>
-                  <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Manage all articles — approve, categorize, tag, feature, expire, or delete</p>
-                </div>
-                <div className="p-6">
-                  <ArticleManager />
-                </div>
+            <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+              <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Article Management</h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Approve, categorize, tag, feature, or delete articles</p>
+              </div>
+              <div className="p-6">
+                <ArticleManager />
               </div>
             </div>
           )}
 
-          {activeTab === 'about' && (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 32 }}>
-              <h2 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 16 }}>About {profile.name}</h2>
-              <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24 }}>{profile.bio ?? 'No bio available.'}</p>
-              <div className="about-info-grid">
-                <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Role</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, textTransform: 'capitalize' }}>{profile.role}</div>
-                </div>
-                <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Joined</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{joinDate}</div>
-                </div>
-              </div>
-              <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10, marginBottom: 16 }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Articles Published</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{articles.filter(a => a.status === 'published').length}</div>
-              </div>
-              <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Total Views</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{formatNumber(articles.reduce((s, a) => s + (a.views ?? 0), 0))}</div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'profile' && (
-            <div className="p-6 max-w-2xl mx-auto">
-              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          {activeTab === 'settings' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Profile Settings */}
+              <div className="lg:col-span-2" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
                 <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Edit Profile</h3>
+                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Profile Settings</h3>
                   <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Update your name and bio</p>
                 </div>
                 <div className="p-6 space-y-5">
-                  {/* Avatar */}
                   <div className="flex items-center gap-4">
                     <div
                       onClick={() => avatarInputRef.current?.click()}
@@ -867,61 +700,70 @@ export default function AdminProfilePage() {
                       {profile.profile_image ? (
                         <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(50% 0.14 220), oklch(42% 0.12 200))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700, color: 'oklch(98% 0.005 175)' }}>
+                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700, color: '#fff' }}>
                           {profile.name.charAt(0)}
                         </div>
                       )}
                     </div>
                     <div>
-                      <button
-                        onClick={() => avatarInputRef.current?.click()}
-                        disabled={uploadingAvatar}
+                      <button onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar}
                         className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-                        style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-                      >
+                        style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
                         {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
                       </button>
                       <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>JPG, PNG. Max 5MB.</p>
                     </div>
                   </div>
-
-                  {/* Name */}
                   <div>
                     <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Name</label>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
+                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl text-sm"
-                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                    />
+                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
                   </div>
-
-                  {/* Bio */}
                   <div>
                     <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Bio</label>
-                    <textarea
-                      value={editBio}
-                      onChange={(e) => setEditBio(e.target.value)}
-                      rows={4}
+                    <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} rows={4}
                       className="w-full px-4 py-2.5 rounded-xl text-sm resize-none"
                       style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                      placeholder="Tell us about yourself..."
-                    />
+                      placeholder="Tell us about yourself..." />
                   </div>
-
-                  {/* Save button */}
                   <div className="flex items-center gap-3 pt-2">
-                    <button
-                      onClick={handleSaveProfile}
-                      disabled={savingProfile || !editName.trim()}
+                    <button onClick={handleSaveProfile} disabled={savingProfile || !editName.trim()}
                       className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
-                      style={{ background: 'var(--primary)', color: 'var(--bg-elevated)' }}
-                    >
+                      style={{ background: 'var(--primary)', color: '#fff' }}>
                       {savingProfile ? 'Saving...' : profileSaved ? 'Saved!' : 'Save Changes'}
                     </button>
-                    {profileSaved && <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>Profile saved successfully.</span>}
+                    {profileSaved && <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>Profile saved.</span>}
                   </div>
+                </div>
+              </div>
+
+              {/* Publish Limits */}
+              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', alignSelf: 'start' }}>
+                <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Publish Limits</h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Max articles per source (0 = unlimited)</p>
+                </div>
+                <div className="p-5 space-y-4">
+                  <label className="block">
+                    <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>In-House</span>
+                    <input type="number" min={0} max={500} value={publishLimits.inhouse}
+                      onChange={(e) => setPublishLimits({ ...publishLimits, inhouse: Math.max(0, Number(e.target.value) || 0) })}
+                      className="mt-1.5 w-full px-3 py-2 rounded-lg text-sm"
+                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Sourced / RSS</span>
+                    <input type="number" min={0} max={500} value={publishLimits.sourced}
+                      onChange={(e) => setPublishLimits({ ...publishLimits, sourced: Math.max(0, Number(e.target.value) || 0) })}
+                      className="mt-1.5 w-full px-3 py-2 rounded-lg text-sm"
+                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                  </label>
+                  <button onClick={saveLimits} disabled={savingLimits}
+                    className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
+                    style={{ background: 'var(--primary)', color: '#fff' }}>
+                    {savingLimits ? 'Saving...' : 'Save Limits'}
+                  </button>
                 </div>
               </div>
             </div>

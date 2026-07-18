@@ -193,12 +193,14 @@ export function SEOAnalyzer({
 }: Props) {
   const [data, setData] = useState<EnhancedSEOAnalysis | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'seo' | 'style' | 'content' | 'images' | 'layout' | 'social'>('seo')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const runAnalysis = useCallback(async () => {
     if (!title || !content) return
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch('/api/seo/analyze-enhanced', {
         method: 'POST',
@@ -208,10 +210,14 @@ export function SEOAnalyzer({
       if (res.ok) {
         setData(await res.json())
       } else {
+        const errBody = await res.json().catch(() => ({}))
+        setError(errBody.error || `Analysis failed (${res.status})`)
         setData(null)
       }
     } catch (err) {
       console.error('Enhanced analysis failed:', err)
+      setError('Network error — could not reach analysis server')
+      setData(null)
     } finally {
       setLoading(false)
     }
@@ -220,9 +226,9 @@ export function SEOAnalyzer({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (!title || !content) return
-    debounceRef.current = setTimeout(() => { runAnalysis() }, 1500)
+    debounceRef.current = setTimeout(() => { runAnalysis() }, 800)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [title, content, excerpt, runAnalysis])
+  }, [title, content, runAnalysis])
 
   const errors = data?.issues.filter(i => i.type === 'error') ?? []
   const warnings = data?.issues.filter(i => i.type === 'warning') ?? []
@@ -532,13 +538,34 @@ export function SEOAnalyzer({
 
       {!data && !loading && (
         <div style={{ padding: 40, textAlign: 'center' }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 14, margin: '0 auto 14px',
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
-          }}>⚡</div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Enter a title and content</p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>The engine auto-analyses as you type — SEO, readability, AI content summary, image &amp; layout suggestions, and social tags.</p>
+          {error ? (
+            <>
+              <div style={{
+                width: 56, height: 56, borderRadius: 14, margin: '0 auto 14px',
+                background: 'rgba(239,68,68,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+              }}>⚠️</div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#ef4444', marginBottom: 4 }}>Analysis failed</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 12 }}>{error}</p>
+              <button
+                onClick={runAnalysis}
+                disabled={!title || !content}
+                style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600 }}
+              >
+                Retry Analysis
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{
+                width: 56, height: 56, borderRadius: 14, margin: '0 auto 14px',
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+              }}>⚡</div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Enter a title and content</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>The engine auto-analyses as you type — SEO, readability, AI content summary, image &amp; layout suggestions, and social tags.</p>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -361,15 +361,28 @@ function calculateEeatScore(title: string, content: string, category: string | n
 function calculateTopicalAuthority(content: string, category: string | null): number {
   const plain = stripHtml(content).toLowerCase()
   const categoryKeywords: Record<string, string[]> = {
-    politics: ['parliament', 'election', 'government', 'policy', 'legislation', 'mp', 'senator', 'cabinet'],
-    economy: ['gdp', 'inflation', 'investment', 'trade', 'budget', 'fiscal', 'monetary', 'central bank'],
-    technology: ['ai', 'artificial intelligence', 'digital', 'innovation', 'startup', 'tech', 'software', 'platform'],
-    health: ['hospital', 'clinic', 'patient', 'treatment', 'vaccine', 'disease', 'ministry of health', 'who'],
-    sports: ['match', 'tournament', 'championship', 'league', 'team', 'player', 'coach', 'victory'],
-    climate: ['carbon', 'emissions', 'renewable', 'solar', 'wind', 'climate change', 'cop', 'paris agreement'],
+    'politics': ['parliament', 'election', 'government', 'policy', 'legislation', 'mp', 'senator', 'cabinet', 'governor', 'president', 'opposition', 'coalition', 'nasa', 'jubilee', 'UDA', 'ODM', 'IEBC', 'county'],
+    'economy': ['gdp', 'inflation', 'investment', 'trade', 'budget', 'fiscal', 'monetary', 'central bank', 'stock', 'market', 'shilling', 'nse', 'nairobi securities', 'imf', 'world bank', 'growth'],
+    'technology': ['ai', 'artificial intelligence', 'digital', 'innovation', 'startup', 'tech', 'software', 'platform', 'app', 'mobile', 'fintech', 'm-pesa', 'safaricom', 'internet', 'cyber', 'data', 'coding'],
+    'health': ['hospital', 'clinic', 'patient', 'treatment', 'vaccine', 'disease', 'ministry of health', 'who', 'covid', 'malaria', 'cancer', 'maternal', 'mental health', 'pharmaceutical', 'drug'],
+    'sports': ['match', 'tournament', 'championship', 'league', 'team', 'player', 'coach', 'victory', 'premier league', 'football', 'soccer', 'athletics', 'marathon', 'olympics', 'kpl', 'harambee'],
+    'climate': ['carbon', 'emissions', 'renewable', 'solar', 'wind', 'climate change', 'cop', 'paris agreement', 'deforestation', 'drought', 'flood', 'environment', 'conservation', 'wildlife'],
+    'world': ['united nations', 'nato', 'g7', 'g20', 'sanctions', 'diplomacy', 'treaty', 'summit', 'geopolitics', 'foreign policy', 'embassy', 'refugee', 'humanitarian', 'conflict', 'peace'],
+    'business': ['revenue', 'profit', 'company', 'corporate', 'merger', 'acquisition', 'stock', 'shareholder', 'ceo', 'startup', 'entrepreneur', 'manufacturing', 'supply chain', 'logistics'],
+    'arts': ['culture', 'music', 'film', 'art', 'gallery', 'museum', 'literature', 'theatre', 'dance', 'fashion', 'design', 'photography', 'heritage', 'tradition', 'festival', 'creative'],
+    'opinion': ['opinion', 'editorial', 'commentary', 'analysis', 'perspective', 'debate', 'column', 'viewpoint', 'argument', 'stance', 'critique', 'reflection', 'editor', 'columnist'],
+    'features': ['profile', 'interview', 'feature', 'documentary', 'investigation', 'deep dive', 'longread', 'special report', 'series', 'in-depth', 'human interest', 'portrait'],
+    'environment': ['pollution', 'waste', 'recycling', 'sustainability', 'green', 'eco', 'biodiversity', 'ecosystem', 'ocean', 'forest', 'agriculture', 'farming', 'food security', 'water'],
   }
 
-  const keywords = categoryKeywords[category?.toLowerCase() || ''] || NEWS_KEYWORDS
+  const normalizedCategory = (category?.toLowerCase() || '').replace(/[^a-z]/g, '')
+  let keywords = NEWS_KEYWORDS
+  for (const [key, words] of Object.entries(categoryKeywords)) {
+    if (normalizedCategory.includes(key) || key.includes(normalizedCategory)) {
+      keywords = words
+      break
+    }
+  }
   let matches = 0
   for (const kw of keywords) {
     if (plain.includes(kw.toLowerCase())) matches++

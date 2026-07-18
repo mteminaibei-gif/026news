@@ -62,6 +62,7 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
+              "media-src 'self' https: blob:",
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline'",

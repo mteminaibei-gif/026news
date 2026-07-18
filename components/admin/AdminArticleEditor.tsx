@@ -254,6 +254,7 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
               featuredImage={imagePreview ?? undefined}
               tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
               category={categories.find(c => c.category_id === categoryId)?.name}
+              authorName={adminName}
               onApplyTitle={(t) => setTitle(t)}
               onApplyExcerpt={(e) => setExcerpt(e)}
               onApplyContent={(c) => setContent(c)}
