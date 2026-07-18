@@ -2,16 +2,13 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
-    // Restrict the image optimizer to known hosts to prevent SSRF via user-stored URLs.
+    // Aggregated/sourced articles pull hero images from arbitrary external
+    // news CDNs (standardmedia.co.ke, nation.africa, etc.). Allow any https
+    // host so those thumbnails render. SVG stays disabled — user-controlled
+    // SVG can carry script.
     remotePatterns: [
-      { protocol: 'https', hostname: '**.supabase.co' },
-      { protocol: 'https', hostname: '**.supabase.in' },
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'picsum.photos' },
-      { protocol: 'https', hostname: 'i.pravatar.cc' },
-      { protocol: 'https', hostname: 'yt3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' },
     ],
     // Disabled: user-controlled SVG can carry script. Serve avatars from Supabase
     // storage (already sanitized on upload) instead of arbitrary SVG URLs.
