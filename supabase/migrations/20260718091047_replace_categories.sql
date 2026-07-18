@@ -4,6 +4,9 @@
 --  uncategorized and can be re-categorised via auto-categorize or manually.
 -- ============================================================================
 
+-- Ensure icon column exists (added in reconcile migration but may not be live)
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS icon TEXT;
+
 BEGIN;
 
 DELETE FROM public.categories;
