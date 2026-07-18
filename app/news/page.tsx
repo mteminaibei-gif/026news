@@ -5,9 +5,8 @@ import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
-import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw } from 'lucide-react'
+import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw, ChevronDown } from 'lucide-react'
 
-const CATEGORY_FILTERS = ['All', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Sports Arena', 'Health & Wellness', 'World Updates']
 const REGION_FILTERS = ['All Regions', 'Kenya', 'East Africa', 'Africa', 'World'] as const
 const SORT_OPTIONS = ['Most Recent', 'Most Popular'] as const
 
@@ -27,6 +26,8 @@ type NewsArticle = {
   category: { name: string } | null
 }
 
+type CategoryRow = { category_id: number; name: string }
+
 const CATEGORY_COLORS: Record<string, string> = {
   'World Updates': '#475569',
   'Kenya Focus': '#006600',
@@ -42,13 +43,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Environment & Climate': '#0d9488',
 }
 
-const REGION_PRIORITY: Record<string, number> = {
-  Kenya: 0,
-  'East Africa': 1,
-  Africa: 2,
-  World: 3,
-}
-
 const BREAKING = [
   'Parliament passes new digital economy bill after heated debate',
   'Nairobi Stock Exchange hits all-time high amid foreign investment surge',
@@ -62,7 +56,7 @@ function getRegionPriority(article: NewsArticle): number {
   const catName = article.category?.name ?? ''
   const source = (article.source_name ?? '').toLowerCase()
 
-  if (catName === 'Kenya' || source.includes('kenya') || source.includes('nation') || source.includes('standard') || source.includes('citizen') || source.includes('kbc') || source.includes('capital') || source.includes('star')) return 0
+  if (catName === 'Kenya Focus' || source.includes('kenya') || source.includes('nation') || source.includes('standard') || source.includes('citizen') || source.includes('kbc') || source.includes('capital') || source.includes('star')) return 0
   if (catName === 'East Africa' || source.includes('east africa') || source.includes('tanzania') || source.includes('uganda') || source.includes('rwanda')) return 1
   if (catName === 'Africa' || source.includes('africa')) return 2
   return 3
@@ -87,6 +81,8 @@ export default function NewsPage() {
   const [sortBy, setSortBy] = useState<typeof SORT_OPTIONS[number]>('Most Recent')
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set())
   const [newCount, setNewCount] = useState(0)
+  const [categories, setCategories] = useState<CategoryRow[]>([])
+  const [showFilters, setShowFilters] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
@@ -97,6 +93,14 @@ export default function NewsPage() {
   const latestTimestampRef = useRef<string>('')
 
   const supabase = createClient()
+
+  // Load categories from DB
+  useEffect(() => {
+    fetch('/api/categories')
+      .then(r => r.json())
+      .then((data: CategoryRow[]) => setCategories(data))
+      .catch(() => {})
+  }, [])
 
   // Fetch initial articles
   const fetchArticles = useCallback(async (reset = false) => {
@@ -324,9 +328,23 @@ export default function NewsPage() {
               <Radio size={24} style={{ color: 'var(--primary)' }} /> News
             </h1>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 2 }}>
-              Breaking stories and latest updates · Kenya &gt; East Africa &gt; Africa &gt; World
+              Breaking stories and latest updates
             </p>
           </div>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+              borderRadius: 10, border: '1px solid var(--border)', cursor: 'pointer',
+              background: showFilters ? 'var(--primary-light)' : 'var(--bg-surface)',
+              color: showFilters ? 'var(--primary)' : 'var(--text-secondary)',
+              fontSize: '0.78rem', fontWeight: 600, transition: 'all 0.2s',
+            }}
+          >
+            <Filter size={14} />
+            Filters
+            <ChevronDown size={12} style={{ transform: showFilters ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+          </button>
         </div>
 
         {/* New posts notification */}
@@ -346,65 +364,79 @@ export default function NewsPage() {
           </button>
         )}
 
-        {/* Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {CATEGORY_FILTERS.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className="font-semibold"
-                style={{
-                  fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '9999px',
-                  border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
-                  borderColor: activeCategory === cat ? 'var(--primary)' : 'var(--border)',
-                  background: activeCategory === cat ? 'var(--primary)' : 'var(--bg-surface)',
-                  color: activeCategory === cat ? 'var(--bg-elevated)' : 'var(--text-secondary)',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Collapsible Filters */}
+        {showFilters && (
+          <div style={{
+            marginBottom: 'var(--space-lg)', padding: 16,
+            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+            borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 14,
+          }}>
+            {/* Category filters */}
+            <div>
+              <p style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>Category</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setActiveCategory('All')}
+                  className="font-semibold"
+                  style={{
+                    fontSize: '0.72rem', padding: '5px 12px', borderRadius: 9999,
+                    border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
+                    borderColor: activeCategory === 'All' ? 'var(--primary)' : 'var(--border)',
+                    background: activeCategory === 'All' ? 'var(--primary)' : 'var(--bg-surface)',
+                    color: activeCategory === 'All' ? '#fff' : 'var(--text-secondary)',
+                  }}
+                >All</button>
+                {categories.map(cat => (
+                  <button
+                    key={cat.category_id}
+                    onClick={() => setActiveCategory(cat.name)}
+                    className="font-semibold"
+                    style={{
+                      fontSize: '0.72rem', padding: '5px 12px', borderRadius: 9999,
+                      border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
+                      borderColor: activeCategory === cat.name ? (CATEGORY_COLORS[cat.name] || 'var(--primary)') : 'var(--border)',
+                      background: activeCategory === cat.name ? (CATEGORY_COLORS[cat.name] || 'var(--primary)') : 'var(--bg-surface)',
+                      color: activeCategory === cat.name ? '#fff' : 'var(--text-secondary)',
+                    }}
+                  >{cat.name}</button>
+                ))}
+              </div>
+            </div>
 
-        {/* Region + Sort */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {REGION_FILTERS.map((region) => (
-              <button
-                key={region}
-                onClick={() => setActiveRegion(region)}
-                style={{
-                  fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6,
-                  border: '1px solid', cursor: 'pointer', fontWeight: 600,
-                  borderColor: activeRegion === region ? 'var(--accent)' : 'var(--border-subtle)',
-                  background: activeRegion === region ? 'var(--accent-light)' : 'transparent',
-                  color: activeRegion === region ? 'var(--accent)' : 'var(--text-tertiary)',
-                }}
-              >
-                {region}
-              </button>
-            ))}
+            {/* Region + Sort row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {REGION_FILTERS.map((region) => (
+                  <button
+                    key={region}
+                    onClick={() => setActiveRegion(region)}
+                    style={{
+                      fontSize: '0.72rem', padding: '5px 12px', borderRadius: 8,
+                      border: '1px solid', cursor: 'pointer', fontWeight: 600,
+                      borderColor: activeRegion === region ? 'var(--accent)' : 'var(--border-subtle)',
+                      background: activeRegion === region ? 'var(--accent-light)' : 'transparent',
+                      color: activeRegion === region ? 'var(--accent)' : 'var(--text-tertiary)',
+                    }}
+                  >{region}</button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSortBy(opt)}
+                    style={{
+                      fontSize: '0.72rem', padding: '5px 12px', borderRadius: 8,
+                      border: 'none', cursor: 'pointer', fontWeight: 600,
+                      background: sortBy === opt ? 'var(--primary-light)' : 'transparent',
+                      color: sortBy === opt ? 'var(--primary)' : 'var(--text-tertiary)',
+                    }}
+                  >{opt}</button>
+                ))}
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Filter size={14} style={{ color: 'var(--text-tertiary)' }} />
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt}
-                onClick={() => setSortBy(opt)}
-                style={{
-                  fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6,
-                  border: 'none', cursor: 'pointer', fontWeight: 600,
-                  background: sortBy === opt ? 'var(--primary-light)' : 'transparent',
-                  color: sortBy === opt ? 'var(--primary)' : 'var(--text-tertiary)',
-                }}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         {loading ? (
           <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading news...</div>
@@ -440,15 +472,6 @@ export default function NewsPage() {
                       {topStory.category?.name ?? 'Breaking'}
                     </span>
                     <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Top Story</span>
-                    {topStory.tags && topStory.tags.length > 0 && (
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {topStory.tags.slice(0, 3).map((tag: string) => (
-                          <span key={tag} style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: 4, background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}>
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   <h2 style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', fontWeight: 600, lineHeight: 1.25, marginBottom: 12, textWrap: 'balance' as const }}>
                     {topStory.title}
@@ -491,15 +514,6 @@ export default function NewsPage() {
                         <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.3, marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
                           {a.title}
                         </h3>
-                        {a.tags && a.tags.length > 0 && (
-                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
-                            {a.tags.slice(0, 3).map((tag: string) => (
-                              <span key={tag} style={{ fontSize: '0.55rem', padding: '1px 5px', borderRadius: 3, background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}>
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
                         <span>{a.author?.name ?? 'Staff'}</span>
@@ -546,15 +560,6 @@ export default function NewsPage() {
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {stripHtml(a.excerpt)}
                         </p>
-                      )}
-                      {a.tags && a.tags.length > 0 && (
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                          {a.tags.slice(0, 4).map((tag: string) => (
-                            <span key={tag} style={{ fontSize: '0.58rem', padding: '2px 6px', borderRadius: 3, background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}>
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>

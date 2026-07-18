@@ -31,7 +31,7 @@ export default function AdminError({ error, reset }: Props) {
           Try again
         </button>
         <Link
-          href="/admin/dashboard"
+          href="/admin/articles"
           className="border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
           Back to Dashboard

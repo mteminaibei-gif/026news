@@ -53,6 +53,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 }
 
 const ICON_FALLBACK = '📂'
+const COLOR_FALLBACK = '#6366f1'
 
 export default function ExplorePage() {
   const [categories, setCategories] = useState<CategoryItem[]>([])
@@ -91,12 +92,45 @@ export default function ExplorePage() {
     try {
       const res = await fetch(`/api/explore?category_id=${catId}&page=${pageNum}&limit=20`)
       const data = await res.json()
-      if (pageNum === 1) {
-        setArticles(data.articles ?? [])
-      } else {
-        setArticles(prev => [...prev, ...(data.articles ?? [])])
+      const fetchedArticles = (data.articles ?? []) as ExploreArticle[]
+
+      // Auto-categorize any uncategorized articles
+      const autoSuggestions: Record<number, CategorizationResult> = {}
+      for (const article of fetchedArticles) {
+        if (!article.category_id) {
+          const result = autoCategorize({
+            title: article.title,
+            content: article.content,
+            excerpt: article.excerpt,
+            tags: article.tags,
+            sourceName: article.source_name,
+            sourceReference: article.source_reference,
+          })
+          autoSuggestions[article.article_id] = result
+          // Auto-apply high-confidence suggestions
+          if (result.confidence === 'high') {
+            try {
+              await fetch('/api/articles/categorize', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ article_id: article.article_id, category_id: result.bestCategoryId }),
+              })
+              article.category_id = result.bestCategoryId
+              article.category = { name: getCategoryName(result.bestCategoryId) }
+              delete autoSuggestions[article.article_id]
+            } catch { /* ignore - will show as suggestion */ }
+          }
+        }
       }
-      setHasMore((data.articles ?? []).length === 20)
+
+      if (pageNum === 1) {
+        setArticles(fetchedArticles)
+        setSuggestions(prev => ({ ...prev, ...autoSuggestions }))
+      } else {
+        setArticles(prev => [...prev, ...fetchedArticles])
+        setSuggestions(prev => ({ ...prev, ...autoSuggestions }))
+      }
+      setHasMore(fetchedArticles.length === 20)
       setTotalArticles(data.total ?? 0)
     } catch (err) {
       console.error('Failed to load category articles:', err)
@@ -300,7 +334,7 @@ export default function ExplorePage() {
                       )}
                       <div className="flex-1 min-w-0">
                         {a.category?.name && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category.name] || 'var(--primary)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category.name] || COLOR_FALLBACK }}>
                             {a.category.name}
                           </span>
                         )}
@@ -344,7 +378,7 @@ export default function ExplorePage() {
                       )}
                       <div className="flex-1 min-w-0">
                         {a.category?.name && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category.name] || 'var(--text-tertiary)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category.name] || COLOR_FALLBACK }}>
                             {a.category.name}
                           </span>
                         )}
@@ -376,7 +410,7 @@ export default function ExplorePage() {
                       borderColor: 'var(--border-subtle)',
                     }}
                   >
-                    <span style={{ fontSize: '2rem' }}>{CATEGORY_ICONS[cat.name] || ICON_FALLBACK}</span>
+                    <span style={{ fontSize: '2rem' }}>{CATEGORY_ICONS[cat.name] || cat.icon || ICON_FALLBACK}</span>
                     <span className="text-sm font-bold text-center" style={{ color: 'var(--text-primary)' }}>{cat.name}</span>
                     <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
                       {cat.articleCount} article{cat.articleCount !== 1 ? 's' : ''}
@@ -426,7 +460,7 @@ export default function ExplorePage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category?.name || ''] || 'var(--text-tertiary)' }}>
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[a.category?.name || ''] || COLOR_FALLBACK }}>
                           {a.category?.name || 'Uncategorized'}
                         </span>
                         {a.is_aggregated && (
@@ -501,7 +535,7 @@ export default function ExplorePage() {
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[article.category?.name || ''] || 'var(--text-tertiary)' }}>
+                              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: CATEGORY_COLORS[article.category?.name || ''] || COLOR_FALLBACK }}>
                                 {article.category?.name || 'Uncategorized'}
                               </span>
                               {article.is_aggregated && (

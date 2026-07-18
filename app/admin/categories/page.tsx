@@ -82,8 +82,8 @@ export default function AdminCategoriesPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <div className="px-4 py-4" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
-        <Link href="/admin/dashboard" className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-          <ArrowLeft size={14} /> Back to Dashboard
+        <Link href="/admin/articles" className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+          <ArrowLeft size={14} /> Back to Articles
         </Link>
       </div>
       <div className="max-w-3xl mx-auto px-4 py-8">
