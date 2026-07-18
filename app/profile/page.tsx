@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [savedArticles, setSaved] = useState([])
   const [likedArticles, setLiked] = useState([])
   const [conversations, setConversations] = useState([])
+  const [notifs, setNotifs] = useState([])
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
   const [messageDraft, setMessageDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
