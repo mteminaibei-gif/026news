@@ -468,62 +468,48 @@ export default function ProfilePage() {
                 </>
               )}
 
-              {user && (user.role === 'journalist' || user.role === 'admin') && (
+              {user && user.role === 'journalist' && (
+                <JournalistDashboard
+                  myArticles={myArticles}
+                  myEarnings={myEarnings}
+                  myRank={myRank}
+                  totalJournalists={totalJournalists}
+                />
+              )}
+
+              {user && user.role === 'admin' && (
                 <>
-                  {(() => {
-                    const published = myArticles.filter(a => a.status === 'published').length
-                    const drafts = myArticles.filter(a => a.status === 'draft').length
-                    const inReview = myArticles.filter(a => a.status === 'under_review').length
-                    const totalViews = myArticles.reduce((s: number, a: any) => s + (a.views ?? 0), 0)
-                    const totalEarn = myEarnings.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-                    const thisMonth = new Date().toISOString().slice(0, 7)
-                    const monthEarn = myEarnings.filter((e: any) => (e.created_at || '').startsWith(thisMonth)).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-                    return (
-                      <>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                          <DashCard label="Published" value={published} icon={<CheckCircle size={18} />} color="var(--success)" />
-                          <DashCard label="In Review" value={inReview} icon={<Clock size={18} />} color="var(--warning)" />
-                          <DashCard label="Total Views" value={totalViews.toLocaleString()} icon={<Eye size={18} />} color="var(--primary)" />
-                          <DashCard label="Earnings" value={`Ksh ${totalEarn.toLocaleString()}`} icon={<DollarSign size={18} />} color="var(--accent)" />
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-                            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <PenTool size={16} style={{ color: 'var(--accent)' }} /> Recent Articles
-                            </h3>
-                            {myArticles.length === 0 ? (
-                              <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>No articles yet.</p>
-                            ) : (
-                              <div className="space-y-2">
-                                {myArticles.slice(0, 5).map((a: any) => (
-                                  <Link key={a.article_id} href={`/article/${a.slug || a.article_id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-inset)', textDecoration: 'none', color: 'inherit' }}>
-                                    <span style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</span>
-                                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', marginLeft: 8, flexShrink: 0 }}>{a.status}</span>
-                                  </Link>
-                                ))}
-                                <Link href="/journalist/articles" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>View all articles</Link>
-                              </div>
-                            )}
-                          </div>
-                          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-                            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <DollarSign size={16} style={{ color: 'var(--accent)' }} /> Earnings
-                            </h3>
-                            <div className="space-y-2">
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>This month</span><strong>Ksh {monthEarn.toLocaleString()}</strong></div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>All time</span><strong>Ksh {totalEarn.toLocaleString()}</strong></div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>Author rank</span><strong>#{myRank} of {totalJournalists}</strong></div>
-                            </div>
-                            <Link href="/journalist/earnings" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View earnings</Link>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                          <Link href="/journalist/create" style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--primary)', color: '#fff', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>+ New Article</Link>
-                          <Link href="/journalist/analytics" style={{ padding: '10px 18px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>Analytics</Link>
-                        </div>
-                      </>
-                    )
-                  })()}
+                  {/* Admin: full management quick-access, coherent with the
+                      dedicated /admin dashboard, surfaced directly in profile. */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <DashCard label="Total Users" value={totalJournalists} icon={<Users size={18} />} color="var(--primary)" />
+                    <DashCard label="Articles" value={myArticles.length} icon={<FileText size={18} />} color="var(--accent)" />
+                    <DashCard label="In Review" value={myArticles.filter(a => a.status === 'under_review').length} icon={<Clock size={18} />} color="var(--warning)" />
+                    <DashCard label="Published" value={myArticles.filter(a => a.status === 'published').length} icon={<CheckCircle size={18} />} color="var(--success)" />
+                  </div>
+                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+                    <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <LayoutDashboard size={16} style={{ color: 'var(--accent)' }} /> Administration
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <AdminQuickLink href="/admin/articles" label="Articles" icon={<FileText size={15} />} />
+                      <AdminQuickLink href="/admin/reviews" label="Reviews" icon={<BarChart3 size={15} />} />
+                      <AdminQuickLink href="/admin/journalists" label="Authors" icon={<Users size={15} />} />
+                      <AdminQuickLink href="/admin/users" label="Users" icon={<Users size={15} />} />
+                      <AdminQuickLink href="/admin/analytics" label="Analytics" icon={<TrendingUp size={15} />} />
+                      <AdminQuickLink href="/admin/earnings" label="Earnings" icon={<DollarSign size={15} />} />
+                      <AdminQuickLink href="/admin/categories" label="Categories" icon={<FileText size={15} />} />
+                      <AdminQuickLink href="/admin/sources" label="Sources" icon={<FileText size={15} />} />
+                      <AdminQuickLink href="/admin/settings" label="Settings" icon={<Settings size={15} />} />
+                    </div>
+                  </div>
+                  {/* Admins who also write keep their author dashboard */}
+                  <JournalistDashboard
+                    myArticles={myArticles}
+                    myEarnings={myEarnings}
+                    myRank={myRank}
+                    totalJournalists={totalJournalists}
+                  />
                 </>
               )}
             </div>
@@ -894,6 +880,76 @@ function ReadingChart({ data }: { data: number[] }) {
         <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
       </div>
     </div>
+  )
+}
+
+function JournalistDashboard({ myArticles, myEarnings, myRank, totalJournalists }: {
+  myArticles: any[]
+  myEarnings: any[]
+  myRank: number
+  totalJournalists: number
+}) {
+  const published = myArticles.filter(a => a.status === 'published').length
+  const inReview = myArticles.filter(a => a.status === 'under_review').length
+  const totalViews = myArticles.reduce((s: number, a: any) => s + (a.views ?? 0), 0)
+  const totalEarn = myEarnings.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+  const thisMonth = new Date().toISOString().slice(0, 7)
+  const monthEarn = myEarnings.filter((e: any) => (e.created_at || '').startsWith(thisMonth)).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+  return (
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <DashCard label="Published" value={published} icon={<CheckCircle size={18} />} color="var(--success)" />
+        <DashCard label="In Review" value={inReview} icon={<Clock size={18} />} color="var(--warning)" />
+        <DashCard label="Total Views" value={totalViews.toLocaleString()} icon={<Eye size={18} />} color="var(--primary)" />
+        <DashCard label="Earnings" value={`Ksh ${totalEarn.toLocaleString()}`} icon={<DollarSign size={18} />} color="var(--accent)" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <PenTool size={16} style={{ color: 'var(--accent)' }} /> Recent Articles
+          </h3>
+          {myArticles.length === 0 ? (
+            <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>No articles yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {myArticles.slice(0, 5).map((a: any) => (
+                <Link key={a.article_id} href={`/article/${a.slug || a.article_id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-inset)', textDecoration: 'none', color: 'inherit' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', marginLeft: 8, flexShrink: 0 }}>{a.status}</span>
+                </Link>
+              ))}
+              <Link href="/journalist/articles" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>View all articles</Link>
+            </div>
+          )}
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <DollarSign size={16} style={{ color: 'var(--accent)' }} /> Earnings
+          </h3>
+          <div className="space-y-2">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>This month</span><strong>Ksh {monthEarn.toLocaleString()}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>All time</span><strong>Ksh {totalEarn.toLocaleString()}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>Author rank</span><strong>#{myRank} of {totalJournalists}</strong></div>
+          </div>
+          <Link href="/journalist/earnings" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View earnings</Link>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Link href="/journalist/create" style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--primary)', color: '#fff', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>+ New Article</Link>
+        <Link href="/journalist/analytics" style={{ padding: '10px 18px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>Analytics</Link>
+      </div>
+    </>
+  )
+}
+
+function AdminQuickLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
+  return (
+    <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, background: 'var(--bg-inset)', textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, transition: 'background 0.15s' }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--primary-light)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-inset)' }}>
+      <span style={{ color: 'var(--primary)' }}>{icon}</span>
+      {label}
+    </Link>
   )
 }
 

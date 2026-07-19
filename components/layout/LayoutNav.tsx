@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { ChatWidget } from '@/components/layout/ChatWidget'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
 
 const HIDE_NAV_ROUTES = ['/admin', '/journalist']
@@ -25,7 +24,6 @@ export function LayoutNav({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <Footer />
-      <ChatWidget />
       <MobileTabBar />
     </>
   )
