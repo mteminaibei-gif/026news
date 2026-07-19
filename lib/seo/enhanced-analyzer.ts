@@ -1,8 +1,13 @@
 /**
- * Enhanced SEO Analyzer v2 for 026connet!
- * Advanced AI-powered content analysis, optimization, and enhancement
- * Includes: content summarization, image placement, layout optimization, readability scoring
+ * Enhanced SEO Analyzer v2 for 026news — Groq-powered.
+ *
+ * Produces a full AI-driven analysis (score, issues, content summary, suggested
+ * title/excerpt/slug/tags, optimized content, image & layout recommendations,
+ * social + schema markup). Falls back to the local heuristic engine when Groq
+ * is not configured so the panel always renders something.
  */
+
+import { groqChatJSON, groqConfigured } from '@/lib/ai/groq-client'
 
 export interface SEOIssue {
   type: 'error' | 'warning' | 'info' | 'success'
@@ -684,7 +689,144 @@ function generateSocialOptimization(
   }
 }
 
-export function enhancedAnalyzeSEO(params: {
+export async function enhancedAnalyzeSEO(params: {
+  title: string
+  content: string
+  excerpt?: string | null
+  slug?: string | null
+  featured_image?: string | null
+  tags?: string[] | null
+  category?: string | null
+  authorName?: string
+}): Promise<EnhancedSEOAnalysis> {
+  const { title, content, excerpt, slug, featured_image, tags, category, authorName } = params
+
+  // When Groq is available, delegate the heavy analysis to the model.
+  if (groqConfigured()) {
+    try {
+      return await enhancedAnalyzeSEOWithGroq(params)
+    } catch (err) {
+      console.error('[enhancedAnalyzeSEO] Groq analysis failed, using heuristic fallback:', err)
+    }
+  }
+
+  return heuristicAnalyzeSEO(params)
+}
+
+// ── Groq-powered analysis ────────────────────────────────────────────────
+async function enhancedAnalyzeSEOWithGroq(params: {
+  title: string
+  content: string
+  excerpt?: string | null
+  slug?: string | null
+  featured_image?: string | null
+  tags?: string[] | null
+  category?: string | null
+  authorName?: string
+}): Promise<EnhancedSEOAnalysis> {
+  const { title, content, excerpt, slug, featured_image, tags, category, authorName } = params
+
+  const prompt = `You are the SEO and editorial AI for 026news, a Kenyan digital news platform.
+Analyze the article below and return ONLY valid JSON matching this exact schema:
+
+{
+  "score": number (0-100 overall SEO/editorial score),
+  "issues": [
+    { "type": "error|warning|info|success", "category": "title|content|structure|keywords|readability|meta|images|links|performance|accessibility", "message": "string", "suggestion": "string", "priority": "critical|high|medium|low", "autoFixable": boolean }
+  ],
+  "improvedTitle": "string (better SEO title) or null",
+  "improvedExcerpt": "string (120-160 char meta description) or null",
+  "improvedSlug": "string (url-safe slug) or null",
+  "suggestedTags": ["string", "..."],
+  "contentSummary": {
+    "executiveSummary": "string (2-4 sentence SEO-rich summary)",
+    "keyTakeaways": ["string"],
+    "seoKeywords": [{ "keyword": "string", "density": number, "positions": [number] }],
+    "metaDescription": "string (150-160 chars)",
+    "socialSnippet": "string (<=280 chars)",
+    "estimatedReadingTime": number,
+    "contentGrade": "A+|A|B+|B|C|D"
+  },
+  "imageRecommendations": [
+    { "position": number, "altText": "string", "caption": "string", "suggestedQuery": "string", "relevanceScore": number, "placementType": "inline|featured|gallery|breakout", "context": "string" }
+  ],
+  "layoutRecommendations": [
+    { "type": "paragraph-break|subheading|bullet-list|blockquote|callout|table|faq", "position": number, "originalText": "string", "recommendedHtml": "string", "reason": "string", "impact": "high|medium|low" }
+  ],
+  "optimizedContent": "string (full improved HTML content preserving facts)",
+  "schemaMarkup": "string (JSON-LD NewsArticle, no markdown fences)",
+  "socialOptimization": {
+    "ogTitle": "string", "ogDescription": "string", "ogImage": "string",
+    "twitterCard": "summary|summary_large_image", "twitterTitle": "string", "twitterDescription": "string"
+  },
+  "performanceHints": { "lazyLoadImages": boolean, "preloadFeatured": boolean, "deferNonCritical": boolean, "estimatedLoadTime": number }
+}
+
+Rules:
+- Preserve ALL facts, names, figures, quotes and the original meaning.
+- Improve headings, flow, clarity and SEO naturally.
+- Suggested tags should be 3-6 relevant topics.
+- Language: Kenyan/pan-African news context.
+
+Article:
+TITLE: ${title}
+EXCERPT: ${excerpt || 'N/A'}
+SLUG: ${slug || 'N/A'}
+CATEGORY: ${category || 'N/A'}
+TAGS: ${tags?.join(', ') || 'N/A'}
+AUTHOR: ${authorName || 'N/A'}
+FEATURED IMAGE: ${featured_image || 'none'}
+
+CONTENT:
+${content.slice(0, 12000)}`
+
+  const data = await groqChatJSON<Record<string, any>>(
+    [
+      { role: 'system', content: 'You are the SEO and editorial AI for 026news. Respond with valid JSON only.' },
+      { role: 'user', content: prompt },
+    ],
+    { model: 'balanced', temperature: 0.2, maxTokens: 6000, responseFormat: 'json_object' },
+  )
+
+  // Merge with a quick local metrics pass so the UI always has full metrics.
+  const plainContent = stripHtml(content)
+  const wordCount = countWords(plainContent)
+  const localMetrics = buildMetrics(params, plainContent, wordCount)
+
+  const issues: SEOIssue[] = Array.isArray(data.issues)
+    ? data.issues.slice(0, 30).map(normalizeIssue)
+    : []
+
+  const contentSummary: SEOContentSummary = normalizeContentSummary(data.contentSummary, plainContent, wordCount)
+
+  const imageRecommendations: ImageRecommendation[] = Array.isArray(data.imageRecommendations)
+    ? data.imageRecommendations.slice(0, 8).map(normalizeImageRec)
+    : []
+
+  const layoutRecommendations: LayoutRecommendation[] = Array.isArray(data.layoutRecommendations)
+    ? data.layoutRecommendations.slice(0, 6).map(normalizeLayoutRec)
+    : []
+
+  return {
+    score: clampNum(Number(data.score), 0, 100),
+    issues: issues.sort(sortByPriority),
+    metrics: localMetrics,
+    improvedTitle: typeof data.improvedTitle === 'string' ? data.improvedTitle : undefined,
+    improvedExcerpt: typeof data.improvedExcerpt === 'string' ? data.improvedExcerpt : undefined,
+    improvedSlug: typeof data.improvedSlug === 'string' ? data.improvedSlug : undefined,
+    suggestedTags: Array.isArray(data.suggestedTags) ? data.suggestedTags.slice(0, 8).map(String) : undefined,
+    contentSummary,
+    imageRecommendations,
+    layoutRecommendations,
+    optimizedContent: typeof data.optimizedContent === 'string' ? data.optimizedContent : content,
+    schemaMarkup: typeof data.schemaMarkup === 'string' ? data.schemaMarkup : '',
+    socialOptimization: normalizeSocial(data.socialOptimization, title, excerpt, featured_image),
+    performanceHints: normalizePerformance(data.performanceHints, featured_image),
+  }
+}
+
+// ── Local heuristic engine (fallback when Groq is unavailable) ────────────
+function heuristicAnalyzeSEO(params: {
   title: string
   content: string
   excerpt?: string | null
@@ -961,4 +1103,154 @@ export function enhancedAnalyzeSEO(params: {
       estimatedLoadTime: Math.round(500 + wordCount * 0.3 + images.total * 150),
     },
   }
+}
+
+// ── Helpers: local metrics + Groq response normalizers ───────────────────
+
+function buildMetrics(
+  params: { title: string; content: string; excerpt?: string | null | undefined; slug?: string | null | undefined; featured_image?: string | null | undefined; tags?: string[] | null | undefined; category?: string | null | undefined },
+  plainContent: string,
+  wordCount: number,
+): SEOMetrics {
+  const { title, content, excerpt, slug, featured_image, tags, category } = params
+  const charCount = plainContent.length
+  const headings = analyzeHeadings(content)
+  const images = countImages(content)
+  const links = countLinks(content)
+  const paragraphs = analyzeParagraphs(plainContent)
+  const sentences = countSentences(plainContent)
+  const avgSentenceLength = Math.round(wordCount / Math.max(sentences, 1))
+  const readability = fleschReadingEase(plainContent)
+  const keywords = extractKeywords(plainContent)
+  const semanticKeywords = detectSemanticKeywords(plainContent)
+  const readingTime = Math.max(1, Math.round(wordCount / 200))
+  const slugOptimal = !slug || (slug.length >= 10 && slug.length <= 75 && !slug.includes('_') && /^[a-z0-9-]+$/.test(slug))
+  const excerptLength = excerpt ? countWords(excerpt) : 0
+  const eeatScore = calculateEeatScore(title, content, category ?? null)
+  const topicalAuthority = calculateTopicalAuthority(content, category ?? null)
+
+  return {
+    titleLength: title.length,
+    contentWordCount: wordCount,
+    contentCharCount: charCount,
+    headingCount: headings,
+    imageCount: images.total,
+    imagesWithAlt: images.withAlt,
+    linkCount: links.total,
+    internalLinks: links.internal,
+    externalLinks: links.external,
+    paragraphCount: paragraphs.count,
+    avgSentenceLength,
+    avgParagraphLength: paragraphs.avgLength,
+    readingTimeMinutes: readingTime,
+    fleschReadingEase: readability,
+    keywordDensity: Object.fromEntries(
+      Object.entries(keywords).slice(0, 10).map(([k, v]) => [k, Number(((v / Math.max(wordCount, 1)) * 100).toFixed(2))])
+    ),
+    slugOptimal,
+    excerptLength,
+    hasFeaturedImage: !!featured_image,
+    tagsCount: tags?.length ?? 0,
+    semanticKeywords,
+    contentFreshness: 100,
+    eeatScore,
+    topicalAuthority,
+  }
+}
+
+function normalizeIssue(i: any): SEOIssue {
+  const type = ['error', 'warning', 'info', 'success'].includes(i?.type) ? i.type : 'info'
+  const priority = ['critical', 'high', 'medium', 'low'].includes(i?.priority) ? i.priority : 'medium'
+  return {
+    type,
+    category: i?.category ?? 'content',
+    message: String(i?.message ?? 'Suggestion'),
+    suggestion: String(i?.suggestion ?? ''),
+    priority,
+    autoFixable: !!i?.autoFixable,
+  }
+}
+
+function normalizeContentSummary(cs: any, plainContent: string, wordCount: number): SEOContentSummary {
+  if (!cs || typeof cs !== 'object') {
+    return {
+      executiveSummary: stripHtml(plainContent).slice(0, 300) + '…',
+      keyTakeaways: [],
+      seoKeywords: [],
+      metaDescription: generateImprovedExcerpt(plainContent, 155),
+      socialSnippet: '',
+      estimatedReadingTime: Math.max(1, Math.round(wordCount / 200)),
+      contentGrade: 'C',
+    }
+  }
+  const keywords = Array.isArray(cs.seoKeywords)
+    ? cs.seoKeywords.slice(0, 10).map((k: any) => ({
+        keyword: String(k?.keyword ?? ''),
+        density: Number(k?.density) || 0,
+        positions: Array.isArray(k?.positions) ? k.positions.map(Number) : [],
+      }))
+    : []
+  return {
+    executiveSummary: String(cs.executiveSummary ?? ''),
+    keyTakeaways: Array.isArray(cs.keyTakeaways) ? cs.keyTakeaways.map(String) : [],
+    seoKeywords: keywords,
+    metaDescription: String(cs.metaDescription ?? generateImprovedExcerpt(plainContent, 155)),
+    socialSnippet: String(cs.socialSnippet ?? ''),
+    estimatedReadingTime: Number(cs.estimatedReadingTime) || Math.max(1, Math.round(wordCount / 200)),
+    contentGrade: ['A+', 'A', 'B+', 'B', 'C', 'D'].includes(cs.contentGrade) ? cs.contentGrade : 'C',
+  }
+}
+
+function normalizeImageRec(r: any): ImageRecommendation {
+  return {
+    position: Number(r?.position) || 0,
+    altText: String(r?.altText ?? ''),
+    caption: r?.caption ? String(r.caption) : undefined,
+    suggestedQuery: String(r?.suggestedQuery ?? ''),
+    relevanceScore: Number(r?.relevanceScore) || 0.5,
+    placementType: ['inline', 'featured', 'gallery', 'breakout'].includes(r?.placementType) ? r.placementType : 'inline',
+    context: String(r?.context ?? ''),
+  }
+}
+
+function normalizeLayoutRec(r: any): LayoutRecommendation {
+  return {
+    type: ['paragraph-break', 'subheading', 'bullet-list', 'blockquote', 'callout', 'table', 'faq'].includes(r?.type) ? r.type : 'subheading',
+    position: Number(r?.position) || 0,
+    originalText: String(r?.originalText ?? ''),
+    recommendedHtml: String(r?.recommendedHtml ?? ''),
+    reason: String(r?.reason ?? ''),
+    impact: ['high', 'medium', 'low'].includes(r?.impact) ? r.impact : 'medium',
+  }
+}
+
+function normalizeSocial(s: any, title: string, excerpt: string | null | undefined, featured_image: string | null | undefined) {
+  const fallback = generateSocialOptimization(title, '', featured_image ?? null, null)
+  return {
+    ogTitle: String(s?.ogTitle ?? fallback.ogTitle),
+    ogDescription: String(s?.ogDescription ?? fallback.ogDescription),
+    ogImage: String(s?.ogImage ?? featured_image ?? fallback.ogImage),
+    twitterCard: s?.twitterCard === 'summary' ? 'summary' : 'summary_large_image',
+    twitterTitle: String(s?.twitterTitle ?? fallback.twitterTitle),
+    twitterDescription: String(s?.twitterDescription ?? fallback.twitterDescription),
+  }
+}
+
+function normalizePerformance(p: any, featured_image: string | null | undefined) {
+  return {
+    lazyLoadImages: p?.lazyLoadImages ?? false,
+    preloadFeatured: p?.preloadFeatured ?? !!featured_image,
+    deferNonCritical: p?.deferNonCritical ?? true,
+    estimatedLoadTime: Number(p?.estimatedLoadTime) || 1000,
+  }
+}
+
+function sortByPriority(a: SEOIssue, b: SEOIssue): number {
+  const order = { critical: 0, high: 1, medium: 2, low: 3 }
+  return order[a.priority] - order[b.priority]
+}
+
+function clampNum(n: number, min: number, max: number): number {
+  if (Number.isNaN(n)) return min
+  return Math.max(min, Math.min(max, n))
 }

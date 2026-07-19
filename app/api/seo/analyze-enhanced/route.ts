@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'title and content are required' }, { status: 400 })
     }
 
-    const analysis = enhancedAnalyzeSEO({
+    const analysis = await enhancedAnalyzeSEO({
       title,
       content,
       excerpt,

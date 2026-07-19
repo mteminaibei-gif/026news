@@ -5,9 +5,14 @@
 
 import Groq from 'groq-sdk'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-})
+let groqClient: Groq | null = null
+
+function getGroq(): Groq {
+  if (!groqClient) {
+    groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  }
+  return groqClient
+}
 
 export const GROQ_MODELS = {
   fast: 'llama-3.1-8b-instant',           // Ultra-fast, good for simple tasks
@@ -40,7 +45,7 @@ export async function groqChat(
     ? [{ role: 'system' as const, content: options.systemPrompt }, ...messages]
     : messages
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: GROQ_MODELS[model],
     messages: fullMessages,
     temperature,

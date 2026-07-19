@@ -177,8 +177,8 @@ export function AIEnhancePanel({ title, content, onApplyContent }: Props) {
           <div className="text-xs p-3 rounded-xl flex items-start gap-2" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
             <AlertTriangle size={14} className="shrink-0 mt-px" />
             <span>
-              AI features are temporarily unavailable (API key missing or out of quota).
-              Add a valid <code>GROQ_API_KEY</code> with billing to enable analysis & rewriting.
+              AI features are temporarily unavailable (Groq API key missing or out of quota).
+              Add a valid <code>GROQ_API_KEY</code> in your server environment to enable analysis & rewriting.
             </span>
           </div>
         )}
