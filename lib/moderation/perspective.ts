@@ -49,7 +49,7 @@ export async function analyzeText(
   const requestedAttributes = Object.keys(config.thresholds).reduce((acc, key) => {
     acc[key] = {}
     return acc
-  }, {} as Record<string, {}>)
+  }, {} as Record<string, unknown>)
 
   const response = await fetch(`${PERSPECTIVE_API_URL}?key=${config.apiKey}`, {
     method: 'POST',
