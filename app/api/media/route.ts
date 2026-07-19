@@ -113,15 +113,24 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient()
+    // Attribute the play to the logged-in user when available; otherwise it
+    // lands as an anonymous row in the shared public feed. RLS now requires the
+    // inserting user to be authenticated for owned rows.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const userId = user?.id ?? null
+
     // `recently_played` is a valid table (see supabase/migrations); the generated
     // Database type occasionally resolves its Insert as `never`, so we narrow here.
     const { error } = await (supabase.from('recently_played') as unknown as {
-      insert: (values: { title: string; station: string; source?: string; cover_color?: string }) => Promise<{ error: { message: string } | null }>
+      insert: (values: { title: string; station: string; source?: string; cover_color?: string; user_id?: string | null }) => Promise<{ error: { message: string } | null }>
     }).insert({
       title,
       station,
       source,
       cover_color: coverColor ?? '#2563eb',
+      user_id: userId,
     })
 
     if (error) {
