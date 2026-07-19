@@ -90,7 +90,11 @@ export default function JournalistProfilePage() {
       .select('user_id, name, role, bio, profile_image, created_at')
       .eq('user_id', targetUserId)
       .single()
-    if (data) setProfile(data as Profile)
+    if (data) {
+      const p = data as Profile
+      if (p.role === 'admin') return
+      setProfile(p)
+    }
   }
 
   async function loadArticles() {

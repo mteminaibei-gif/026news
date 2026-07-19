@@ -527,7 +527,7 @@ export interface Database {
 // ─── Convenience joined types (what queries return with joins) ───────────────
 
 export type ArticleWithAuthor = Database['public']['Tables']['articles']['Row'] & {
-  author: Pick<Database['public']['Tables']['users']['Row'], 'user_id' | 'name' | 'profile_image' | 'bio'> | null
+  author: Pick<Database['public']['Tables']['users']['Row'], 'user_id' | 'name' | 'profile_image' | 'bio' | 'role'> | null
   category: Pick<Database['public']['Tables']['categories']['Row'], 'name' | 'regions'> | null
   analytics: Pick<Database['public']['Tables']['analytics']['Row'], 'views' | 'likes' | 'shares' | 'comments_count'> | null
   regions: Database['public']['Tables']['regions']['Row'][] | null

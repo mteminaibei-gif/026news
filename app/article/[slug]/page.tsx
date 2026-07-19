@@ -193,7 +193,7 @@ export default async function ArticlePage({ params }: Props) {
   try {
     const result = await supabase
       .from('articles')
-      .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
+      .select('*, author:users(user_id,name,profile_image,bio,role), category:categories(name)')
       .eq('slug', slug)
       .eq('status', 'published' as never)
       .single()
@@ -385,7 +385,7 @@ export default async function ArticlePage({ params }: Props) {
                   <span><strong>{authorArticleCount}</strong> articles</span>
                 </div>
               </div>
-              {article.author.user_id && (
+              {article.author.user_id && article.author.role !== 'admin' && (
                 <Link href={`/journalists/${article.author.user_id}`} className="author-card-btn" style={{ textDecoration: 'none' }}>
                   View Profile
                 </Link>

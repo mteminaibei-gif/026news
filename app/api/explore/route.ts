@@ -123,7 +123,7 @@ export async function GET(req: NextRequest) {
     const { data: authorRows } = await supabaseAdmin
       .from('users')
       .select('user_id, name, profile_image, bio, follower_count')
-      .in('role', ['journalist', 'admin'])
+      .eq('role', 'journalist')
       .order('follower_count', { ascending: false })
       .limit(12) as unknown as { data: Array<{ user_id: number; name: string; profile_image: string | null; bio: string | null; follower_count: number }> | null }
 
