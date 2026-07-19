@@ -16,8 +16,8 @@ function getGroq(): Groq {
 
 export const GROQ_MODELS = {
   fast: 'llama-3.1-8b-instant',           // Ultra-fast, good for simple tasks
-  balanced: 'llama-3.1-70b-versatile',    // Best balance of speed/quality
-  best: 'llama-3.3-70b-versatile',        // Best quality, slightly slower
+  balanced: 'llama-3.3-70b-versatile',    // Best balance of speed/quality (currently supported)
+  best: 'llama-4-scout-17b-16e-instruct', // Best quality, latest
 } as const
 
 export type GroqModel = keyof typeof GROQ_MODELS

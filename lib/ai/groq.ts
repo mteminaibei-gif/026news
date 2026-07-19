@@ -19,8 +19,8 @@ export interface GroqOptions {
 
 const MODEL_MAP = {
   fast: 'llama-3.1-8b-instant',
-  balanced: 'llama-3.1-70b-versatile',
-  premium: 'mixtral-8x7b-32768',
+  balanced: 'llama-3.3-70b-versatile',
+  premium: 'llama-4-scout-17b-16e-instruct',
 } as const
 
 export function groqConfigured(): boolean {
