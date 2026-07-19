@@ -48,3 +48,21 @@ next-env.d.ts
 # generated logs
 supabase-migration.log
 
+# build / report artifacts (auto-generated, not source)
+*.log
+build*.txt
+BUILD_STATUS.txt
+QUICK_REFERENCE.txt
+*-SUMMARY.md
+*_SUMMARY.md
+*_COMPLETED.md
+*_GUIDE.md
+*_CHECKLIST.md
+README_BUILD_COMPLETE.md
+PRODUCTION_READINESS_RECOMMENDATIONS.md
+VISUAL_GUIDE.md
+STYLING_ENHANCHANCEMENTS.md
+IMPLEMENTATION_GUIDE.md
+DEVELOPER_GUIDE.md
+GIT_PUSH_SUMMARY.md
+

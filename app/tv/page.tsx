@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -8,9 +8,10 @@ import { TVGlobalProvider, useTVGlobal } from '@/components/tv/TVGlobalProvider'
 import { KENYAN_TV_STATIONS, AFRICAN_TV_STATIONS, GLOBAL_TV_STATIONS, ALL_TV_STATIONS, type TVStation } from '@/lib/tv/stations'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
-import { Tv, Eye, Clock, Play, Pause, Globe, RefreshCw, Shuffle } from 'lucide-react'
+import { Tv, Eye, Clock, Play, Pause, Globe, RefreshCw, Shuffle, Signal, Zap, Users } from 'lucide-react'
 import { initHlsPlaybackWithRetry } from '@/lib/tv/hls-player'
 import { useMediaHealth } from '@/lib/hooks/useMediaHealth'
+import { useRealtimeTV, useAllTVStatus } from '@/lib/hooks/useRealtimeTV'
 
 type TVArticle = {
   article_id: number
@@ -29,8 +30,16 @@ type TVArticle = {
 function TVPageContent() {
   const { currentStation, isPlaying, playStation, stop, status, error, setStatus, setError } = useTVGlobal()
   const { tvStatus } = useMediaHealth()
+  const { statuses: allStatuses } = useAllTVStatus(45000) // Update every 45s
+  const realtimeData = currentStation ? useRealtimeTV({
+    stationId: currentStation.id,
+    pollInterval: 30000,
+  }) : null
+  
   const [articles, setArticles] = useState<TVArticle[]>([])
   const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'africa' | 'global'>('live')
+  const [metrics, setMetrics] = useState<{ bitrate: number; quality: string; buffered: number } | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -54,10 +63,13 @@ function TVPageContent() {
   const renderStationCard = (station: TVStation) => {
     const active = currentStation?.id === station.id && isPlaying
     const live = tvStatus(station.id)
+    const stationStatus = allStatuses.find(s => s.stationId === station.id)
+    const isHealthy = stationStatus?.healthScore !== undefined && stationStatus.healthScore > 50
+    
     return (
       <div
         key={station.id}
-        className="hover-lift cursor-pointer transition-all duration-200"
+        className="hover-lift cursor-pointer transition-all duration-200 relative"
         style={{
           background: active ? `${station.color}15` : 'var(--bg-surface)',
           borderRadius: 16,
@@ -93,9 +105,17 @@ function TVPageContent() {
             </div>
           )}
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: live === false ? 'var(--text-tertiary)' : '#ef4444', animation: live === false ? 'none' : 'pulse 1.5s ease-in-out infinite' }} />
-            <span className="text-white text-[9px] font-bold uppercase">{live === false ? 'OFFLINE' : 'LIVE'}</span>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: live === false || !isHealthy ? '#ef4444' : '#22c55e', animation: live === false || !isHealthy ? 'none' : 'pulse 1.5s ease-in-out infinite' }} />
+            <span className="text-white text-[9px] font-bold uppercase">{live === false || !isHealthy ? 'OFFLINE' : 'LIVE'}</span>
           </div>
+          
+          {/* Real-time viewers badge */}
+          {stationStatus && stationStatus.viewers > 0 && (
+            <div className="absolute top-2 left-2 flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 py-0.5">
+              <Users size={10} className="text-white" />
+              <span className="text-white text-[9px] font-bold">{formatNumber(stationStatus.viewers)}</span>
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -112,6 +132,22 @@ function TVPageContent() {
             </button>
           </div>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{station.genre}</p>
+          
+          {/* Real-time metrics */}
+          {stationStatus && (
+            <div className="flex items-center gap-2 mt-1.5 text-[10px]">
+              {stationStatus.quality !== 'auto' && (
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ background: `${station.color}20` }}>
+                  <Zap size={9} /> {stationStatus.quality}
+                </span>
+              )}
+              {stationStatus.healthScore !== undefined && (
+                <span className="flex items-center gap-0.5" style={{ color: stationStatus.healthScore > 70 ? '#22c55e' : stationStatus.healthScore > 50 ? '#eab308' : '#ef4444' }}>
+                  <Signal size={9} /> {Math.round(stationStatus.healthScore)}%
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -186,11 +222,20 @@ function TVPageContent() {
               {currentStation.embedType === 'hls' ? (
                 <video
                   key={currentStation.id}
+                  ref={videoRef}
                   className="absolute inset-0 w-full h-full object-contain"
                   playsInline
                   muted
                   autoPlay
                   controls
+                  onTimeUpdate={(e) => {
+                    if (realtimeData) {
+                      realtimeData.recordMetrics({
+                        currentTime: (e.target as HTMLVideoElement).currentTime,
+                        duration: (e.target as HTMLVideoElement).duration,
+                      })
+                    }
+                  }}
                   ref={(el) => {
                     if (!el || el.dataset.hlsInit) return
                     el.dataset.hlsInit = '1'
@@ -207,6 +252,7 @@ function TVPageContent() {
                       onPlaying: () => { if (status !== 'playing') setStatus('playing') },
                       onError: (msg) => { if (!currentStation.fallbackUrl) setError(msg) },
                       onFatal: () => { if (currentStation.fallbackUrl) doFallback(); else setError('Stream ended') },
+                      onMetrics: (m) => setMetrics(m),
                     })
                   }}
                 />
@@ -224,7 +270,36 @@ function TVPageContent() {
             </div>
             {/* Station info footer */}
             <div className="px-4 py-2" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}>
-              <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{currentStation.name} — {currentStation.genre}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{currentStation.name} — {currentStation.genre}</p>
+                {realtimeData?.viewers !== undefined && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: currentStation.color }}>
+                    <Users size={10} /> {formatNumber(realtimeData.viewers)}
+                  </span>
+                )}
+              </div>
+              
+              {/* Real-time metrics display */}
+              {(metrics || realtimeData) && (
+                <div className="flex items-center gap-3 mt-2 text-[10px]">
+                  {metrics?.quality && metrics.quality !== 'auto' && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded" style={{ background: `${currentStation.color}15` }}>
+                      <Zap size={10} /> {metrics.quality}
+                    </span>
+                  )}
+                  {realtimeData?.healthScore !== undefined && (
+                    <span className="flex items-center gap-1" style={{ color: realtimeData.healthScore > 70 ? '#22c55e' : realtimeData.healthScore > 50 ? '#eab308' : '#ef4444' }}>
+                      <Signal size={10} /> Health: {Math.round(realtimeData.healthScore)}%
+                    </span>
+                  )}
+                  {metrics?.buffered !== undefined && (
+                    <span className="flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+                      <Clock size={10} /> Buffer: {Math.round(metrics.buffered)}s
+                    </span>
+                  )}
+                </div>
+              )}
+              
               {status === 'loading' && (
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex items-center gap-1 text-xs text-yellow-400">
