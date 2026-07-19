@@ -86,10 +86,15 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
 
   // Listen for new messages globally for pop-out notifications — subscribe
   // once per user; read receiverId via ref to avoid re-subscribing on switch.
+  // Remove any pre-existing channel of the same topic first so we never call
+  // .on() on an already-subscribed channel (Strict Mode double-invoke).
   useEffect(() => {
     if (!currentUserId) return
+    const topic = `global-messages:${currentUserId}`
+    const existing = supabase.getChannels().find(c => c.topic === topic)
+    if (existing) supabase.removeChannel(existing)
     const channel = supabase
-      .channel(`global-messages:${currentUserId}`)
+      .channel(topic)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',

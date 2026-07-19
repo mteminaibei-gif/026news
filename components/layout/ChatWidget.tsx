@@ -120,13 +120,19 @@ export function ChatWidget() {
   }, [fetchConversations, myId])
 
   // Realtime for new messages — subscribe exactly once per user.
-  // Using a stable dependency list + refs avoids re-calling .on() on an
-  // already-subscribed channel (which throws
-  // "cannot add postgres_changes callbacks ... after subscribe()").
+  // In dev Strict Mode (and on fast remounts) the effect can run twice before
+  // the previous channel is fully removed; calling .channel() with a name that
+  // already exists returns an already-subscribed channel, and .on() then throws
+  // "cannot add postgres_changes callbacks ... after subscribe()". We remove any
+  // pre-existing channel of the same topic first so we always create a fresh,
+  // unsubscribed channel to attach the handler to.
   useEffect(() => {
     if (!myId) return
+    const topic = `chat-widget-messages-${myId}`
+    const existing = supabase.getChannels().find(c => c.topic === topic)
+    if (existing) supabase.removeChannel(existing)
     const channel = supabase
-      .channel(`chat-widget-messages-${myId}`)
+      .channel(topic)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${myId}` }, (payload) => {
         const msg = payload.new as Message
         const active = activeConvoRef.current
