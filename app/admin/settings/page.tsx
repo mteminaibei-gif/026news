@@ -20,6 +20,13 @@ type Monetization = {
   mpesa_passkey: string
   mpesa_callback_url: string
 }
+type Groq = {
+  api_key: string
+  enabled: boolean
+  model: 'fast' | 'balanced' | 'premium'
+  temperature: number
+  max_tokens: number
+}
 type AdminNotifs = Record<string, boolean>
 type Security = Record<string, boolean>
 type Publishing = { rss_auto_publish: boolean; rss_max_per_fetch: number; inhouse_publish_limit: number }
@@ -27,9 +34,10 @@ type Publishing = { rss_auto_publish: boolean; rss_max_per_fetch: number; inhous
 const DEFAULTS = {
   general: { site_name: '026connet!', tagline: "Kenya's Premier Digital News Platform", contact_email: 'hello@026connet!.com', app_url: 'https://026connet!.vercel.app' } as General,
   monetization: { revenue_share: 70, min_payout: 25, adsense_publisher_id: '', stripe_publishable_key: '', mpesa_consumer_key: '', mpesa_consumer_secret: '', mpesa_shortcode: '', mpesa_passkey: '', mpesa_callback_url: '' } as Monetization,
-  admin_notifications: { new_submission: true, article_decision: true, new_user: true, flagged_comment: true, payout_request: false, revenue_milestone: false } as AdminNotifs,
-  security: { email_verification: true, two_factor: false, rate_limiting: true, block_vpn: false, rls_enabled: true } as Security,
-  publishing_config: { rss_auto_publish: true, rss_max_per_fetch: 20, inhouse_publish_limit: 30 } as Publishing,
+  groq: { api_key: '', enabled: false, model: 'balanced' as const, temperature: 0.2, max_tokens: 4096 } as Groq,
+  admin_notifications: { new_submission: true, article_decision: true, new_user: true, flagged_comment: true, payout_request: true } as AdminNotifs,
+  security: { two_factor: false, session_timeout: true, ip_whitelist: false, audit_log: true } as Security,
+  publishing: { rss_auto_publish: false, rss_max_per_fetch: 10, inhouse_publish_limit: 5 } as Publishing,
 }
 
 const ADMIN_NOTIF_ITEMS = [
@@ -58,9 +66,10 @@ export default function AdminSettingsPage() {
 
   const [general, setGeneral] = useState<General>(DEFAULTS.general)
   const [monetization, setMonetization] = useState<Monetization>(DEFAULTS.monetization)
+  const [groq, setGroq] = useState<Groq>(DEFAULTS.groq)
   const [adminNotifs, setAdminNotifs] = useState<AdminNotifs>(DEFAULTS.admin_notifications)
   const [security, setSecurity] = useState<Security>(DEFAULTS.security)
-  const [publishing, setPublishing] = useState<Publishing>(DEFAULTS.publishing_config)
+  const [publishing, setPublishing] = useState<Publishing>(DEFAULTS.publishing)
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -85,9 +94,10 @@ export default function AdminSettingsPage() {
       data.forEach((r: { key: string; value: any }) => (map[r.key] = r.value))
       if (map.general) setGeneral({ ...DEFAULTS.general, ...map.general })
       if (map.monetization) setMonetization({ ...DEFAULTS.monetization, ...map.monetization })
+      if (map.groq) setGroq({ ...DEFAULTS.groq, ...map.groq })
       if (map.admin_notifications) setAdminNotifs({ ...DEFAULTS.admin_notifications, ...map.admin_notifications })
       if (map.security) setSecurity({ ...DEFAULTS.security, ...map.security })
-      if (map.publishing_config) setPublishing({ ...DEFAULTS.publishing_config, ...map.publishing_config })
+      if (map.publishing) setPublishing({ ...DEFAULTS.publishing, ...map.publishing })
     }
     setLoading(false)
   }, [])
@@ -126,7 +136,7 @@ export default function AdminSettingsPage() {
   )
   const SaveBtn = ({ tab }: { tab: string }) => (
     <div className="flex items-center gap-3 pt-2">
-      <button type="button" onClick={() => save(tab, tab === 'general' ? general : tab === 'monetization' ? monetization : tab === 'admin_notifications' ? adminNotifs : tab === 'security' ? security : publishing)} className="font-bold px-6 py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>Save Changes</button>
+      <button type="button" onClick={() => save(tab, tab === 'general' ? general : tab === 'monetization' ? monetization : tab === 'groq' ? groq : tab === 'admin_notifications' ? adminNotifs : tab === 'security' ? security : publishing)} className="font-bold px-6 py-2.5 rounded-xl text-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>Save Changes</button>
       {savedTab === tab && <span className="text-sm font-semibold px-3 py-1.5 rounded-lg animate-fade-in" style={{ color: 'var(--primary)', background: 'var(--primary-light)' }}>✓ Saved!</span>}
     </div>
   )
@@ -228,28 +238,60 @@ export default function AdminSettingsPage() {
           {activeTab === 'Integrations' && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 mb-4"><span className="w-1 h-5 rounded-full" style={{ background: 'var(--primary)' }} /><h2 className="text-lg font-extrabold" style={{ color: 'var(--primary)' }}>Third-Party Integrations</h2></div>
-              {[
-                { name: 'Supabase', desc: 'Database, Auth & Realtime', status: 'connected', icon: '🔷' },
-                { name: 'Vercel', desc: 'Deployment & Edge Functions', status: 'connected', icon: '▲' },
-                { name: 'Google Analytics', desc: 'Traffic & conversion tracking', status: 'not configured', icon: '📊' },
-                { name: 'Sentry', desc: 'Error monitoring & alerting', status: 'not configured', icon: '🛡️' },
-                { name: 'Logflare', desc: 'Log management (Supabase native)', status: 'not configured', icon: '📋' },
-                { name: 'Perspective API', desc: 'AI comment moderation', status: 'not configured', icon: '🤖' },
-              ].map((integration) => (
-                <div key={integration.name} className="flex items-center justify-between p-4 rounded-2xl transition-all duration-300" style={{ border: '1px solid var(--border-subtle)' }} onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{integration.icon}</span>
-                    <div>
-                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{integration.name}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{integration.desc}</p>
+              <div className="space-y-4">
+                {[
+                  { name: 'Supabase', desc: 'Database, Auth & Realtime', status: 'connected', icon: '🔷' },
+                  { name: 'Vercel', desc: 'Deployment & Edge Functions', status: 'connected', icon: '▲' },
+                  { name: 'Google Analytics', desc: 'Traffic & conversion tracking', status: 'not configured', icon: '📊' },
+                  { name: 'Sentry', desc: 'Error monitoring & alerting', status: 'not configured', icon: '🛡️' },
+                  { name: 'Logflare', desc: 'Log management (Supabase native)', status: 'not configured', icon: '📋' },
+                ].map((integration) => (
+                  <div key={integration.name} className="flex items-center justify-between p-4 rounded-2xl transition-all duration-300" style={{ border: '1px solid var(--border-subtle)' }} onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{integration.icon}</span>
+                      <div>
+                        <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{integration.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{integration.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
                     <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, ...(integration.status === 'connected' ? { background: 'var(--success-light)', color: 'var(--success)' } : { background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }) }}>{integration.status}</span>
-                    <button className="text-xs font-semibold transition-colors duration-300" style={{ color: 'var(--primary)' }}>{integration.status === 'connected' ? 'Configure' : 'Connect'}</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Groq AI Configuration */}
+              <div className="space-y-4 p-4 rounded-2xl" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <span style={{ fontSize: '24px' }}>🤖</span>
+                  <div>
+                    <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Groq AI</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Fast, free-tier AI for SEO, content enhancement, grammar check & moderation</p>
                   </div>
                 </div>
-              ))}
+                <form onSubmit={(e) => { e.preventDefault(); save('groq', groq) }} className="space-y-4">
+                  <ToggleRow label="Enable Groq AI features" checked={groq.enabled} onToggle={() => setGroq((s) => ({ ...s, enabled: !s.enabled }))} />
+                  {field('groq-key', 'Groq API Key', groq.api_key, (v) => setGroq((s) => ({ ...s, api_key: v })))}
+                  <div className="grid sm:grid-cols-3 gap-4 pt-2">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-primary)' }}>Model</label>
+                      <select value={groq.model} onChange={(e) => setGroq((s) => ({ ...s, model: e.target.value as 'fast' | 'balanced' | 'premium' }))} className={inputCls} style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                        <option value="fast">Fast (llama-3.1-8b-instant)</option>
+                        <option value="balanced">Balanced (llama-3.1-70b-versatile)</option>
+                        <option value="premium">Premium (mixtral-8x7b-32768)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-primary)' }}>Temperature</label>
+                      <input type="number" min={0} max={1} step={0.1} value={groq.temperature} onChange={(e) => setGroq((s) => ({ ...s, temperature: Number(e.target.value) || 0.2 }))} className={inputCls} style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-primary)' }}>Max Tokens</label>
+                      <input type="number" min={512} max={8192} step={512} value={groq.max_tokens} onChange={(e) => setGroq((s) => ({ ...s, max_tokens: Number(e.target.value) || 4096 }))} className={inputCls} style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }} />
+                    </div>
+                  </div>
+                  <SaveBtn tab="groq" />
+                </form>
+              </div>
             </div>
           )}
         </div>
