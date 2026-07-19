@@ -35,6 +35,8 @@ export default async function ProfileLayout({ children }: { children: React.Reac
 
   if (!profile) redirect('/login')
 
+  if (profile.role === 'admin') redirect('/admin')
+
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--bg-base)' }}>
       <ProfileSidebar role={profile.role} />

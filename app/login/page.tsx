@@ -33,7 +33,7 @@ function LoginForm() {
           .eq('auth_id', user.id)
           .single()
         const role = (p as { role?: string } | null)?.role
-        if (role === 'admin') home = '/profile'
+        if (role === 'admin') home = '/admin'
         else if (role === 'journalist') home = '/profile'
       } catch { /* ignore */ }
       router.replace(home)

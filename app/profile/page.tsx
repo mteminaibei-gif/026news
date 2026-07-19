@@ -78,7 +78,7 @@ export default function ProfilePage() {
     if (!userId) return
     try {
       const role = (user as any)?.role
-      if (role === 'journalist' || role === 'admin') {
+      if (role === 'journalist') {
         const [{ data: arts }, { data: earns }, { count: totJ }, { count: abvJ }] = await Promise.all([
           supabase.from('articles').select('article_id, title, slug, status, featured_image, views, earnings, created_at').eq('author_id', userId).order('created_at', { ascending: false }).limit(10),
           supabase.from('earnings').select('amount, payout_status, created_at, source').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
@@ -464,42 +464,6 @@ export default function ProfilePage() {
                   myRank={myRank}
                   totalJournalists={totalJournalists}
                 />
-              )}
-
-              {user && user.role === 'admin' && (
-                <>
-                  {/* Admin: full management quick-access, coherent with the
-                      dedicated /admin dashboard, surfaced directly in profile. */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <DashCard label="Total Users" value={totalJournalists} icon={<Users size={18} />} color="var(--primary)" />
-                    <DashCard label="Articles" value={myArticles.length} icon={<FileText size={18} />} color="var(--accent)" />
-                    <DashCard label="In Review" value={myArticles.filter(a => a.status === 'under_review').length} icon={<Clock size={18} />} color="var(--warning)" />
-                    <DashCard label="Published" value={myArticles.filter(a => a.status === 'published').length} icon={<CheckCircle size={18} />} color="var(--success)" />
-                  </div>
-                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-                    <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <LayoutDashboard size={16} style={{ color: 'var(--accent)' }} /> Administration
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <AdminQuickLink href="/admin/articles" label="Articles" icon={<FileText size={15} />} />
-                      <AdminQuickLink href="/admin/reviews" label="Reviews" icon={<BarChart3 size={15} />} />
-                      <AdminQuickLink href="/admin/journalists" label="Authors" icon={<Users size={15} />} />
-                      <AdminQuickLink href="/admin/users" label="Users" icon={<Users size={15} />} />
-                      <AdminQuickLink href="/admin/analytics" label="Analytics" icon={<TrendingUp size={15} />} />
-                      <AdminQuickLink href="/admin/earnings" label="Earnings" icon={<DollarSign size={15} />} />
-                      <AdminQuickLink href="/admin/categories" label="Categories" icon={<FileText size={15} />} />
-                      <AdminQuickLink href="/admin/sources" label="Sources" icon={<FileText size={15} />} />
-                      <AdminQuickLink href="/admin/settings" label="Settings" icon={<Settings size={15} />} />
-                    </div>
-                  </div>
-                  {/* Admins who also write keep their author dashboard */}
-                  <JournalistDashboard
-                    myArticles={myArticles}
-                    myEarnings={myEarnings}
-                    myRank={myRank}
-                    totalJournalists={totalJournalists}
-                  />
-                </>
               )}
             </div>
           )}

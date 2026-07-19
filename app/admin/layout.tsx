@@ -11,7 +11,7 @@ const ADMIN_MOBILE_NAV = [
   {
     section: 'Manage',
     items: [
-      { href: '/admin/profile', label: 'Overview', icon: '🎨' },
+      { href: '/admin', label: 'Overview', icon: '🎨' },
       { href: '/admin/articles', label: 'Articles', icon: '📝' },
       { href: '/admin/journalists', label: 'Authors', icon: '👥' },
       { href: '/admin/users', label: 'Users', icon: '👤' },
@@ -41,7 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) redirect('/login?error=login_required&redirect=/admin/profile')
+    if (!user) redirect('/login?error=login_required&redirect=/admin')
 
     const { data: rawProfile } = await supabase
       .from('users')
@@ -66,8 +66,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           mobileNav={{
             title: 'Admin',
             groups: ADMIN_MOBILE_NAV,
-            baseHref: '/admin/profile',
-            logoutHref: '/admin/profile?logout=true',
+            baseHref: '/admin',
+            logoutHref: '/admin?logout=true',
           }}
         />
         <main className="flex-1 p-4 md:p-6 lg:p-8">
@@ -78,6 +78,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     </div>
   )
   } catch {
-    redirect('/login?error=login_required&redirect=/admin/profile')
+    redirect('/login?error=login_required&redirect=/admin')
   }
 }

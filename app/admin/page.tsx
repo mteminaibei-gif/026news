@@ -82,7 +82,7 @@ export default function AdminProfilePage() {
 
   async function resolveAndLoad() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    if (!authUser?.id) { router.push('/login?redirect=/admin/profile'); setLoading(false); return }
+    if (!authUser?.id) { router.push('/login?redirect=/admin'); setLoading(false); return }
 
     const { data } = await supabase.from('users').select('user_id, name, role, bio, profile_image, created_at').eq('auth_id', authUser.id).single()
     if (data) {
@@ -280,7 +280,7 @@ export default function AdminProfilePage() {
     return (
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
         <p style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Please log in</p>
-        <button onClick={() => router.push('/login?redirect=/admin/profile')} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Go to Login</button>
+        <button onClick={() => router.push('/login?redirect=/admin')} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Go to Login</button>
       </div>
     )
   }

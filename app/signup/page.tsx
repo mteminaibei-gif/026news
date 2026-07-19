@@ -31,7 +31,7 @@ export default function SignupPage() {
           .eq('auth_id', user.id)
           .single()
         const r = (p as { role?: string } | null)?.role
-        if (r === 'admin') home = '/profile'
+        if (r === 'admin') home = '/admin'
         else if (r === 'journalist') home = '/profile'
       } catch { /* ignore */ }
       router.replace(home)
