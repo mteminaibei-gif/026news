@@ -186,7 +186,7 @@ export function EditArticleClient({ article, categories }: Props) {
             </div>
 
             {/* Content editor */}
-            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="rounded-2xl shadow-sm overflow-hidden xl:sticky xl:top-16" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
               <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <label className={labelCls + ' mb-0'} style={{ color: 'var(--text-tertiary)' }}>Content</label>
                 <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{wordCount} words · ~{readMins} min read</span>
