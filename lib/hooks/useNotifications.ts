@@ -85,9 +85,9 @@ export function useNotifications(userId: number, _role?: string) {
     return () => { active = false }
   }, [userId])
 
-  // Single source of truth for the unread count is the RealtimeProvider,
-  // so the navbar badge and the dropdown never desync.
-  const unreadCount = realtime.unreadCount
+  // Single source of truth for the unread count is the local list, so the
+  // navbar badge, the dropdown, and the full page never desync.
+  const unreadCount = notifications.filter(n => !n.read).length
 
   // Prepend new notifications from RealtimeProvider
   useEffect(() => {
@@ -111,8 +111,7 @@ export function useNotifications(userId: number, _role?: string) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
     const supabase = createClient()
     supabase.from('notifications').update({ read: true } as never).eq('notification_id', Number(id))
-    realtime.markNotificationRead(Number(id))
-  }, [realtime])
+  }, [])
 
   const markUnread = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: false } : n))
@@ -125,8 +124,7 @@ export function useNotifications(userId: number, _role?: string) {
     if (!userId) return
     const supabase = createClient()
     supabase.from('notifications').update({ read: true } as never).eq('user_id', userId).eq('read', false)
-    realtime.markAllNotificationsRead()
-  }, [userId, realtime])
+  }, [userId])
 
   const deleteNotification = useCallback(async (id: string) => {
     const prev = notifications
@@ -146,8 +144,7 @@ export function useNotifications(userId: number, _role?: string) {
       setNotifications(prev)
       return
     }
-    realtime.markAllNotificationsRead()
-  }, [userId, realtime, notifications])
+  }, [userId, notifications])
 
   return {
     notifications,

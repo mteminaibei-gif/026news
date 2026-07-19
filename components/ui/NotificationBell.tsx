@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useNotifications, type AppNotification, type NotificationType } from '@/lib/hooks/useNotifications'
@@ -33,11 +33,6 @@ export function NotificationBell({ userId, role }: NotificationBellProps) {
   const [menuId, setMenuId] = useState<string | null>(null)
   const router = useRouter()
   const { notifications, unreadCount, markAllRead, markRead, markUnread, deleteNotification } = useNotifications(userId, role)
-
-  // Auto-mark all read when dropdown opens
-  useEffect(() => {
-    if (open && unreadCount > 0) markAllRead()
-  }, [open, unreadCount, markAllRead])
 
   function openNotification(n: AppNotification) {
     markRead(n.id)
