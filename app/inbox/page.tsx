@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, MessageSquare } from 'lucide-react'
+import { Loader2, MessageSquare, Search, Plus, MoreVertical, Bell, X } from 'lucide-react'
 import { ConversationList } from '@/components/inbox/ConversationList'
 import { MessageThread } from '@/components/inbox/MessageThread'
 
@@ -24,8 +24,15 @@ export default function InboxPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null)
   const [showMobileThread, setShowMobileThread] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searching, setSearching] = useState(false)
   const [typingUserId, setTypingUserId] = useState<number | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set())
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNewChat, setShowNewChat] = useState(false)
+  const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null)
 
   const selectedConvRef = useRef<Conversation | null>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -51,6 +58,12 @@ export default function InboxPage() {
   }, [currentUserId])
 
   useEffect(() => { if (currentUserId) loadConversations() }, [currentUserId, loadConversations])
+
+  // Update unread count
+  useEffect(() => {
+    const total = conversations.reduce((sum, c) => sum + (c.unread || 0), 0)
+    setUnreadCount(total)
+  }, [conversations])
 
   // Real-time subscription + presence + typing
   useEffect(() => {
@@ -99,6 +112,20 @@ export default function InboxPage() {
     return () => { supabase.removeChannel(channel) }
   }, [currentUserId, supabase, loadConversations])
 
+  // Search users
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return }
+    const timer = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const res = await fetch(`/api/messages/search?query=${encodeURIComponent(searchQuery.trim())}`)
+        if (res.ok) setSearchResults((await res.json()).users ?? [])
+      } catch { setSearchResults([]) }
+      finally { setSearching(false) }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   function selectConversation(conv: Conversation) {
     setSelectedConv(conv)
     selectedConvRef.current = conv
@@ -113,6 +140,28 @@ export default function InboxPage() {
     setSelectedConv(conv)
     selectedConvRef.current = conv
     setShowMobileThread(true)
+    setShowNewChat(false)
+    setSearchQuery('')
+    setSearchResults([])
+  }
+
+  function handleSearchUserSelect(user: any) {
+    handleStartConversation(user)
+    setShowSearch(false)
+  }
+
+  function handleBack() {
+    setSelectedConv(null)
+    selectedConvRef.current = null
+    setShowMobileThread(false)
+  }
+
+  function handleTyping(isTyping: boolean) {
+    supabase.channel('inbox-realtime').send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { userId: currentUserId, isTyping },
+    })
   }
 
   if (loading) {
@@ -125,9 +174,9 @@ export default function InboxPage() {
 
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 1100, height: 'calc(100vh - 60px)', display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-        {/* Left sidebar — hidden on mobile when thread is open */}
-        <div style={{ display: showMobileThread ? 'none' : 'flex', ...mobileSidebarStyle }}>
+      <div style={{ width: '100%', maxWidth: 1200, height: 'calc(100vh - 60px)', display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+        {/* Left Sidebar */}
+        <div style={{ display: showMobileThread ? 'none' : 'flex', width: 360, minWidth: 360, borderRight: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexDirection: 'column', height: '100%' }}>
           <ConversationList
             conversations={conversations}
             selectedConv={selectedConv}
@@ -137,26 +186,20 @@ export default function InboxPage() {
           />
         </div>
 
-        {/* Right panel */}
+        {/* Right Panel */}
         {selectedConv && currentUserId ? (
-          <div style={{ display: showMobileThread ? 'flex' : 'none', ...mobileThreadStyle }}>
+          <div style={{ display: showMobileThread ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', background: 'var(--bg-surface)' }}>
             <MessageThread
               conversation={selectedConv}
               currentUserId={currentUserId}
               isOnline={onlineUsers.has(selectedConv.other_user.user_id)}
               isTyping={typingUserId === selectedConv.other_user.user_id}
-              onBack={() => { setSelectedConv(null); selectedConvRef.current = null; setShowMobileThread(false) }}
-              onTyping={(isTyping) => {
-                supabase.channel('inbox-realtime').send({
-                  type: 'broadcast',
-                  event: 'typing',
-                  payload: { userId: currentUserId, isTyping },
-                })
-              }}
+              onBack={handleBack}
+              onTyping={handleTyping}
             />
           </div>
         ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'var(--bg-base)' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'var(--bg-base)', borderLeft: '1px solid var(--border-subtle)' }}>
             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MessageSquare size={36} style={{ color: 'var(--primary)' }} />
             </div>
@@ -166,14 +209,14 @@ export default function InboxPage() {
             </p>
           </div>
         )}
-      </div>
 
-      <style>{`
-        @media (max-width: 768px) { .inbox-back-btn { display: flex !important; } }
-      `}</style>
+        {/* Mobile back button overlay */}
+        {showMobileThread && (
+          <button onClick={handleBack} className="inbox-back-btn fixed bottom-4 left-4 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center" style={{ background: 'var(--primary)', color: '#fff' }} aria-label="Back to conversations">
+            <X size={24} />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
-
-const mobileSidebarStyle: React.CSSProperties = { width: '100%', maxWidth: 360 }
-const mobileThreadStyle: React.CSSProperties = { width: '100%', flex: 1 }

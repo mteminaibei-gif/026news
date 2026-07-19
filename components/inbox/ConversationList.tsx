@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { Search, ArrowLeft, MessageSquare, Loader2, X } from 'lucide-react'
+import { Search, ArrowLeft, MessageSquare, Loader2, X, Plus } from 'lucide-react'
 import { timeAgo } from '@/lib/utils'
 
 interface UserProfile {
@@ -40,6 +40,7 @@ interface Props {
 
 export function ConversationList({ conversations, selectedConv, onSelectConversation, onStartConversation, onlineUsers }: Props) {
   const [showSearch, setShowSearch] = useState(false)
+  const [showNewChat, setShowNewChat] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -67,9 +68,18 @@ export function ConversationList({ conversations, selectedConv, onSelectConversa
       {/* Header */}
       <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 60 }}>
         <h1 style={{ fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>Chats</h1>
-        <button onClick={() => setShowSearch(true)} style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-inset)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }} title="Search users" aria-label="Search users">
-          <Search size={18} />
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button 
+            onClick={() => setShowNewChat(true)} 
+            style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', transition: 'background 0.2s' }} 
+            title="New chat" aria-label="New chat"
+          >
+            <Plus size={18} />
+          </button>
+          <button onClick={() => setShowSearch(true)} style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-inset)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }} title="Search users" aria-label="Search users">
+            <Search size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Search overlay */}
