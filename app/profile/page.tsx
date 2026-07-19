@@ -751,6 +751,59 @@ export default function ProfilePage() {
 
         {/* Sidebar */}
         <aside className="lg:col-span-1 space-y-6">
+          {/* Following — live online presence */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users size={16} style={{ color: 'var(--accent)' }} /> Following
+              <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 600, color: 'var(--success)' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', display: 'inline-block', animation: 'live-pulse 1.6s infinite' }} />
+                LIVE
+              </span>
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {following.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>Not following anyone yet.</p>}
+              {following.map((f: any, i: number) => {
+                const u = f.users
+                const online = u?.user_id && onlineIds.has(u.user_id)
+                return (
+                  <div key={i} onClick={() => u?.user_id && openChat({ user_id: u.user_id, name: u.name, profile_image: u.profile_image })} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: u?.user_id ? 'pointer' : 'default' }}>
+                    <div style={{ position: 'relative', width: 32, height: 32, borderRadius: 8, background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0, overflow: 'hidden' }}>
+                      {u?.profile_image
+                        ? <img src={u.profile_image} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : (u?.name?.charAt(0) || '?').toUpperCase()}
+                      {online && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{u?.name}</div>
+                      <div style={{ fontSize: '0.68rem', color: online ? 'var(--success)' : 'var(--text-tertiary)' }}>{online ? 'Online' : (u?.role || 'Offline')}</div>
+                    </div>
+                    <button style={{ padding: '5px 12px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 600, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>Following</button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Reading This Week */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TrendingUp size={16} style={{ color: 'var(--accent)' }} /> Reading This Week
+            </h3>
+            <ReadingChart data={readingData} />
+          </div>
+
+          {/* Your Interests */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Star size={16} style={{ color: 'var(--accent)' }} /> Your Interests
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {interests.map((interest, i) => (
+                <span key={i} style={{ padding: '5px 12px', background: 'var(--bg-inset)', borderRadius: 16, fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', cursor: 'pointer' }}>{interest}</span>
+              ))}
+            </div>
+          </div>
+
           {/* Notifications */}
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
             <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -896,49 +949,6 @@ export default function ProfilePage() {
                 </div>
               </>
             )}
-          </div>
-
-          {/* Following */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Users size={16} style={{ color: 'var(--accent)' }} /> Following
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {following.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>Not following anyone yet.</p>}
-              {following.map((f: any, i) => {
-                const display = getFollowingDisplay(f)
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: display.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>{display.initials}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{display.name}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>{display.role}</div>
-                    </div>
-                    <button style={{ padding: '5px 12px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 600, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>Following</button>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Reading Activity */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <TrendingUp size={16} style={{ color: 'var(--accent)' }} /> Reading This Week
-            </h3>
-            <ReadingChart data={readingData} />
-          </div>
-
-          {/* Interests */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Star size={16} style={{ color: 'var(--accent)' }} /> Your Interests
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {interests.map((interest, i) => (
-                <span key={i} style={{ padding: '5px 12px', background: 'var(--bg-inset)', borderRadius: 16, fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', cursor: 'pointer' }}>{interest}</span>
-              ))}
-            </div>
           </div>
         </aside>
       </div>
