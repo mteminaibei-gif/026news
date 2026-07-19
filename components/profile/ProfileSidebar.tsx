@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, Bookmark, BarChart3, MessageSquare, Settings, LayoutDashboard, PenTool, FileText, Users } from 'lucide-react'
+import { BarChart3, MessageSquare, Settings, PenTool, FileText, Users } from 'lucide-react'
 
 interface ProfileSidebarProps {
   role: string
@@ -16,8 +16,6 @@ export function ProfileSidebar({ role }: ProfileSidebarProps) {
       {
         section: 'My Account',
         items: [
-          { href: '/profile', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-          { href: '/saved', label: 'Saved Articles', icon: <Bookmark size={18} /> },
           { href: '/stats', label: 'Reading Stats', icon: <BarChart3 size={18} /> },
         ]
       },

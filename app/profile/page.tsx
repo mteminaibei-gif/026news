@@ -362,7 +362,7 @@ export default function ProfilePage() {
       {/* Profile Header */}
       <div className="bg-surface border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden backdrop-blur-xl">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
-        <div className="profile-header" style={{ marginBottom: 32 }}>
+        <div className="profile-header" style={{ marginBottom: 0 }}>
           <div style={{ width: 96, height: 96, borderRadius: 24, background: user?.profile_image ? 'transparent' : 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0, overflow: 'hidden' }}>
             {user?.profile_image ? (
               <img src={user.profile_image} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -384,8 +384,9 @@ export default function ProfilePage() {
             </div>
            </div>
         </div>
+      </div>
 
-        {/* Tabs */}
+        {/* Tabs — rendered below the user profile details */}
         <div className="profile-tabs" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
           {[
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, count: null },
@@ -407,7 +408,6 @@ export default function ProfilePage() {
             </button>
           ))}
         </div>
-      </div>
 
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
