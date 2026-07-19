@@ -118,10 +118,10 @@ export function AIEnhancePanel({ title, content, onApplyContent }: Props) {
   const scoreColor =
     analysis && analysis.score >= 80 ? 'var(--success)' : analysis && analysis.score >= 50 ? 'var(--warning)' : 'var(--error)'
 
-  // Classify environment/config problems (missing key, quota) so authors see
+// Classify environment/config problems (missing key, quota) so authors see
   // a clear, non-alarming banner instead of a generic failure.
   const configError = error
-    ? /not configured|OPENAI_API_KEY|quota|429|exceeded your current/i.test(error)
+    ? /not configured|GROQ_API_KEY|quota|429|exceeded your current/i.test(error)
     : false
 
   return (
@@ -173,12 +173,12 @@ export function AIEnhancePanel({ title, content, onApplyContent }: Props) {
           </button>
         </div>
 
-        {error && configError && (
+{error && configError && (
           <div className="text-xs p-3 rounded-xl flex items-start gap-2" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
             <AlertTriangle size={14} className="shrink-0 mt-px" />
             <span>
               AI features are temporarily unavailable (API key missing or out of quota).
-              Add a valid <code>OPENAI_API_KEY</code> with billing to enable analysis &amp; rewriting.
+              Add a valid <code>GROQ_API_KEY</code> with billing to enable analysis & rewriting.
             </span>
           </div>
         )}
