@@ -64,6 +64,13 @@ export function ChatWidget() {
     }
   }, [myId])
 
+  // Refs so the realtime subscription (created exactly once per user) can read
+  // the latest conversation state without re-subscribing when it changes.
+  const activeConvoRef = useRef<Conversation | null>(null)
+  const fetchConversationsRef = useRef<() => void>(() => {})
+  useEffect(() => { activeConvoRef.current = activeConvo }, [activeConvo])
+  useEffect(() => { fetchConversationsRef.current = fetchConversations }, [fetchConversations])
+
   // Send message
   const sendMessage = useCallback(async () => {
     if (!activeConvo || !newMsg.trim() || sending) return
@@ -112,23 +119,27 @@ export function ChatWidget() {
     return () => clearInterval(interval)
   }, [fetchConversations, myId])
 
-  // Realtime for new messages
+  // Realtime for new messages — subscribe exactly once per user.
+  // Using a stable dependency list + refs avoids re-calling .on() on an
+  // already-subscribed channel (which throws
+  // "cannot add postgres_changes callbacks ... after subscribe()").
   useEffect(() => {
     if (!myId) return
     const channel = supabase
-      .channel('chat-widget-messages')
+      .channel(`chat-widget-messages-${myId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${myId}` }, (payload) => {
         const msg = payload.new as Message
+        const active = activeConvoRef.current
         // If viewing this conversation, add message
-        if (activeConvo && msg.sender_id === activeConvo.other_user.user_id) {
+        if (active && msg.sender_id === active.other_user.user_id) {
           setMessages(prev => [...prev, msg])
         }
         // Refresh conversations
-        fetchConversations()
+        fetchConversationsRef.current()
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [myId, activeConvo, fetchConversations, supabase])
+  }, [myId, supabase])
 
   // Scroll to bottom
   useEffect(() => {

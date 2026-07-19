@@ -94,7 +94,7 @@ const newsreader = Newsreader({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" className={`h-full antialiased ${spaceGrotesk.variable} ${newsreader.variable}`}>
+    <html lang="en" data-theme="light" data-scroll-behavior="smooth" className={`h-full antialiased ${spaceGrotesk.variable} ${newsreader.variable}`}>
       <body className="min-h-full flex flex-col font-sans" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
         <ThemeProvider>
           <ToastProvider>

@@ -38,6 +38,11 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
   const [sending, setSending] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
+
+  // Keep latest receiverId in a ref so the realtime channel can be subscribed
+  // exactly once per user (changing receiverId must not re-subscribe).
+  const receiverIdRef = useRef(receiverId)
+  useEffect(() => { receiverIdRef.current = receiverId }, [receiverId])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -79,7 +84,8 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Listen for new messages globally for pop-out notifications
+  // Listen for new messages globally for pop-out notifications — subscribe
+  // once per user; read receiverId via ref to avoid re-subscribing on switch.
   useEffect(() => {
     if (!currentUserId) return
     const channel = supabase
@@ -91,7 +97,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
         filter: `receiver_id=eq.${currentUserId}`,
       }, async (payload) => {
         const msg = payload.new as Message
-        if (msg.sender_id === receiverId) {
+        if (msg.sender_id === receiverIdRef.current) {
           setMessages(prev => {
             if (prev.some(m => m.message_id === msg.message_id)) return prev
             return [...prev, msg]
@@ -125,7 +131,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [currentUserId, receiverId])
+  }, [currentUserId, supabase])
 
   async function handleSendMessage() {
     if (!newMessage.trim() || !currentUserId) return
