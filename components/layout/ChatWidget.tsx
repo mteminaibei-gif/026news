@@ -119,32 +119,32 @@ export function ChatWidget() {
     return () => clearInterval(interval)
   }, [fetchConversations, myId])
 
-  // Realtime for new messages — subscribe exactly once per user.
-  // In dev Strict Mode (and on fast remounts) the effect can run twice before
-  // the previous channel is fully removed; calling .channel() with a name that
-  // already exists returns an already-subscribed channel, and .on() then throws
-  // "cannot add postgres_changes callbacks ... after subscribe()". We remove any
-  // pre-existing channel of the same topic first so we always create a fresh,
-  // unsubscribed channel to attach the handler to.
+  // Realtime for new messages
+  // Robust against React Strict Mode double-invocation: if a channel for this
+  // topic already exists (from the immediate previous mount whose async cleanup
+  // hasn't completed), we REUSE it instead of creating a new one. Creating a
+  // fresh channel and calling .on() on an already-subscribed channel throws
+  // "cannot add postgres_changes callbacks ... after subscribe()".
   useEffect(() => {
     if (!myId) return
     const topic = `chat-widget-messages-${myId}`
     const existing = supabase.getChannels().find(c => c.topic === topic)
-    if (existing) supabase.removeChannel(existing)
-    const channel = supabase
+    const channel = existing ?? supabase
       .channel(topic)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${myId}` }, (payload) => {
         const msg = payload.new as Message
         const active = activeConvoRef.current
-        // If viewing this conversation, add message
         if (active && msg.sender_id === active.other_user.user_id) {
           setMessages(prev => [...prev, msg])
         }
-        // Refresh conversations
         fetchConversationsRef.current()
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      // Only remove the channel we created; if we reused an existing one (the
+      // other Strict Mode mount owns it), leave it for that mount to clean up.
+      if (!existing) supabase.removeChannel(channel)
+    }
   }, [myId, supabase])
 
   // Scroll to bottom

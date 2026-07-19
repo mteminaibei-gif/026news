@@ -61,7 +61,7 @@ export default function ProfilePage() {
   }, [])
 
   useEffect(() => {
-    if (userId === null) return
+    if (userId === null || !user) return
     loadSaved()
     loadLiked()
     loadComments()
@@ -72,7 +72,7 @@ export default function ProfilePage() {
     loadInterests()
     loadReadingActivity()
     loadDashboard()
-  }, [userId])
+  }, [userId, user])
 
   const loadDashboard = async () => {
     if (!userId) return

@@ -36,6 +36,7 @@ export default function JournalistProfilePage() {
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+  const [currentUserRole, setCurrentUserRole] = useState<'reader' | 'journalist' | 'admin'>('reader')
   const [activeTab, setActiveTab] = useState<'articles' | 'about'>('articles')
 
   const [articles, setArticles] = useState<Article[]>([])
@@ -72,8 +73,13 @@ export default function JournalistProfilePage() {
   async function resolveCurrentUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (authUser?.id) {
-      const { data } = await supabase.from('users').select('user_id').eq('auth_id', authUser.id).single()
-      if (data) setCurrentUserId((data as { user_id: number }).user_id)
+      const { data } = await supabase.from('users').select('user_id, role').eq('auth_id', authUser.id).single()
+      if (data) {
+        setCurrentUserId((data as { user_id: number }).user_id)
+        const r = (data as { role: string }).role
+        if (r === 'admin' || r === 'journalist') setCurrentUserRole(r)
+        else setCurrentUserRole('reader')
+      }
     }
     setProfileLoading(false)
   }
@@ -337,7 +343,7 @@ export default function JournalistProfilePage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }} className="journalist-layout">
         {/* Profile Nav */}
         <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
-          <ProfileNav role="journalist" userId={targetUserId} />
+          <ProfileNav role={currentUserRole} userId={currentUserId ?? undefined} />
         </aside>
         {/* Main */}
         <main>
