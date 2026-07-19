@@ -6,8 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, ThumbsUp, Reply, Star, BarChart3 } from 'lucide-react'
-import { ProfileNav } from '@/components/layout/ProfileNav'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, ThumbsUp, Reply, Star, BarChart3, TrendingUp, Users } from 'lucide-react'
 
 interface UserProfile {
   name: string; role: string; email?: string; created_at?: string
@@ -317,9 +316,10 @@ export default function ProfilePage() {
   )
 
   return (
-    <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
+    <div className="w-full max-w-6xl mx-auto space-y-8">
       {/* Profile Header */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0' }}>
+      <div className="bg-surface border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden backdrop-blur-xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
         <div className="profile-header" style={{ marginBottom: 32 }}>
           <div style={{ width: 96, height: 96, borderRadius: 24, background: user?.profile_image ? 'transparent' : 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0, overflow: 'hidden' }}>
             {user?.profile_image ? (
@@ -376,13 +376,8 @@ export default function ProfilePage() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }} className="profile-layout">
-        {/* Profile Nav */}
-        <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
-          <ProfileNav role="reader" />
-        </aside>
-
-        <main>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <main className="lg:col-span-2 space-y-6">
           {/* Journalist application status */}
           {user && (user as any).author_application?.status === 'pending' && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--warning-light)', color: 'var(--warning)', border: '1px solid var(--warning-light)' }}>
@@ -555,7 +550,7 @@ export default function ProfilePage() {
         </main>
 
         {/* Sidebar */}
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <aside className="lg:col-span-1 space-y-6">
           {/* Notifications */}
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
             <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -670,5 +665,4 @@ function ReadingChart({ data }: { data: number[] }) {
   )
 }
 
-function TrendingUp(props: any) { return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> }
-function Users(props: any) { return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> }
+
