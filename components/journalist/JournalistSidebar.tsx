@@ -7,7 +7,7 @@ const JOURNALIST_NAV: { section: string; items: { href: string; label: string; i
   {
     section: 'Studio',
     items: [
-      { href: '/journalist/profile', label: 'Profile', icon: '📊' },
+      { href: '/profile', label: 'Dashboard', icon: '📊' },
       { href: '/journalist/articles', label: 'My Articles', icon: '📝' },
       { href: '/journalist/create', label: 'New Article', icon: '➕' },
     ],
@@ -81,7 +81,7 @@ export function JournalistSidebar() {
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/journalist/profile' && pathname.startsWith(item.href))
+                const isActive = pathname === item.href || (item.href !== '/profile' && pathname.startsWith(item.href))
                 return (
                   <Link
                     key={item.href}
@@ -110,7 +110,7 @@ export function JournalistSidebar() {
 
       <div className="p-3 border-t" style={{ borderColor: 'var(--border)' }}>
         <Link
-          href="/journalist/profile?logout=true"
+          href="/profile?logout=true"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-center w-full transition-all"
           style={{ color: 'var(--error)', background: 'var(--error-light)' }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}

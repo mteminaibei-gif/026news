@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, ThumbsUp, Reply, Star, BarChart3, TrendingUp, Users } from 'lucide-react'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, ThumbsUp, Reply, Star, BarChart3, TrendingUp, Users, LayoutDashboard, PenTool, FileText, Eye, DollarSign, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
 
 interface UserProfile {
   name: string; role: string; email?: string; created_at?: string
@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [userId, setUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('saved')
+  const [activeTab, setActiveTab] = useState('dashboard')
 
   const [savedArticles, setSaved] = useState([])
   const [likedArticles, setLiked] = useState([])
@@ -32,7 +32,29 @@ export default function ProfilePage() {
   const [isSending, setIsSending] = useState(false)
   const [readingData, setReadingData] = useState([0, 0, 0, 0, 0, 0, 0])
   const [interests, setInterests] = useState<string[]>([])
+  // Journalist dashboard data
+  const [myArticles, setMyArticles] = useState<any[]>([])
+  const [myEarnings, setMyEarnings] = useState<any[]>([])
+  const [totalJournalists, setTotalJournalists] = useState(0)
+  const [myRank, setMyRank] = useState(1)
   const [stats, setStats] = useState({ articles: 0, saved: 0, following: 0, comments: 0 })
+  // Journalist application state
+  const [applyStep, setApplyStep] = useState(1)
+  const [applyFirstName, setApplyFirstName] = useState('')
+  const [applyLastName, setApplyLastName] = useState('')
+  const [applyTitle, setApplyTitle] = useState('')
+  const [applyNiche, setApplyNiche] = useState('')
+  const [applyBio, setApplyBio] = useState('')
+  const [applyExperience, setApplyExperience] = useState('')
+  const [applyPortfolio, setApplyPortfolio] = useState('')
+  const [applyLinkedin, setApplyLinkedin] = useState('')
+  const [applyMotivation, setApplyMotivation] = useState('')
+  const [applyTerms, setApplyTerms] = useState(false)
+  const [applySubmitting, setApplySubmitting] = useState(false)
+  const [applyError, setApplyError] = useState('')
+  const [applySuccess, setApplySuccess] = useState(false)
+  const APPLY_NICHES = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena']
+  const APPLY_EXP = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years']
 
   useEffect(() => {
     loadProfile()
@@ -49,7 +71,27 @@ export default function ProfilePage() {
     loadStats()
     loadInterests()
     loadReadingActivity()
+    loadDashboard()
   }, [userId])
+
+  const loadDashboard = async () => {
+    if (!userId) return
+    try {
+      const role = (user as any)?.role
+      if (role === 'journalist' || role === 'admin') {
+        const [{ data: arts }, { data: earns }, { count: totJ }, { count: abvJ }] = await Promise.all([
+          supabase.from('articles').select('article_id, title, slug, status, featured_image, views, earnings, created_at').eq('author_id', userId).order('created_at', { ascending: false }).limit(10),
+          supabase.from('earnings').select('amount, payout_status, created_at, source').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
+          supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never),
+          supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never).gt('rank_score', (user as any)?.rank_score ?? 0),
+        ])
+        setMyArticles((arts as any[]) || [])
+        setMyEarnings((earns as any[]) || [])
+        setTotalJournalists(totJ ?? 0)
+        setMyRank((abvJ ?? 0) + 1)
+      }
+    } catch {}
+  }
 
   const loadProfile = async () => {
     try {
@@ -357,10 +399,13 @@ export default function ProfilePage() {
         {/* Tabs */}
         <div className="profile-tabs" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
           {[
+            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, count: null },
             { id: 'saved', label: 'Saved', icon: Bookmark, count: stats.saved },
             { id: 'liked', label: 'Liked', icon: Heart, count: likedArticles.length },
             { id: 'comments', label: 'Comments', icon: MessageSquare, count: stats.comments },
             { id: 'history', label: 'History', icon: null, count: null },
+            // Only show apply tab to readers who haven't applied yet
+            ...(user && user.role === 'reader' && !(user as any).author_application ? [{ id: 'become-journalist', label: '✍️ Write for Us', icon: null, count: null }] : []),
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`profile-tab-btn${activeTab === tab.id ? ' active' : ''}`}
@@ -388,13 +433,188 @@ export default function ProfilePage() {
           {user && (user as any).author_application?.status === 'approved' && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--success-light)', color: 'var(--success)', border: '1px solid var(--success-light)' }}>
               <span style={{ fontSize: '1.1rem' }}>✅</span>
-              <span>Your journalist application was approved! You can now publish articles. <Link href="/journalist/create" style={{ color: 'var(--success)', fontWeight: 600, textDecoration: 'underline' }}>Create your first article</Link></span>
+               <span>Your journalist application was approved! You can now publish articles. <Link href="/journalist/create" style={{ color: 'var(--success)', fontWeight: 600, textDecoration: 'underline' }}>Create your first article</Link></span>
             </div>
           )}
           {user && (user as any).author_application?.status === 'declined' && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--error-light)', color: 'var(--error)', border: '1px solid var(--error-light)' }}>
               <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
               <span>Your journalist application was not approved{(user as any).author_application?.reason ? `: ${(user as any).author_application.reason}` : ''}. You can apply again anytime.</span>
+            </div>
+          )}
+
+          {/* Dashboard Tab — role-based, renders in the same page */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              {user && user.role === 'reader' && (
+                <>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <DashCard label="Articles Read" value={stats.articles} icon={<Eye size={18} />} color="var(--primary)" />
+                    <DashCard label="Saved" value={stats.saved} icon={<Bookmark size={18} />} color="var(--accent)" />
+                    <DashCard label="Following" value={stats.following} icon={<Users size={18} />} color="var(--success)" />
+                    <DashCard label="Comments" value={stats.comments} icon={<MessageSquare size={18} />} color="var(--warning)" />
+                  </div>
+                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+                    <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <TrendingUp size={16} style={{ color: 'var(--accent)' }} /> Reading This Week
+                    </h3>
+                    <ReadingChart data={readingData} />
+                  </div>
+                  {!(user as any).author_application && (
+                    <button onClick={() => setActiveTab('become-journalist')} style={{ width: '100%', padding: '14px', borderRadius: 12, border: '1px solid var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      ✍️ Want to write for us? Become a journalist
+                    </button>
+                  )}
+                </>
+              )}
+
+              {user && (user.role === 'journalist' || user.role === 'admin') && (
+                <>
+                  {(() => {
+                    const published = myArticles.filter(a => a.status === 'published').length
+                    const drafts = myArticles.filter(a => a.status === 'draft').length
+                    const inReview = myArticles.filter(a => a.status === 'under_review').length
+                    const totalViews = myArticles.reduce((s: number, a: any) => s + (a.views ?? 0), 0)
+                    const totalEarn = myEarnings.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+                    const thisMonth = new Date().toISOString().slice(0, 7)
+                    const monthEarn = myEarnings.filter((e: any) => (e.created_at || '').startsWith(thisMonth)).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+                    return (
+                      <>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                          <DashCard label="Published" value={published} icon={<CheckCircle size={18} />} color="var(--success)" />
+                          <DashCard label="In Review" value={inReview} icon={<Clock size={18} />} color="var(--warning)" />
+                          <DashCard label="Total Views" value={totalViews.toLocaleString()} icon={<Eye size={18} />} color="var(--primary)" />
+                          <DashCard label="Earnings" value={`Ksh ${totalEarn.toLocaleString()}`} icon={<DollarSign size={18} />} color="var(--accent)" />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+                            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <PenTool size={16} style={{ color: 'var(--accent)' }} /> Recent Articles
+                            </h3>
+                            {myArticles.length === 0 ? (
+                              <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>No articles yet.</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {myArticles.slice(0, 5).map((a: any) => (
+                                  <Link key={a.article_id} href={`/article/${a.slug || a.article_id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-inset)', textDecoration: 'none', color: 'inherit' }}>
+                                    <span style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</span>
+                                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', marginLeft: 8, flexShrink: 0 }}>{a.status}</span>
+                                  </Link>
+                                ))}
+                                <Link href="/journalist/articles" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>View all articles</Link>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
+                            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <DollarSign size={16} style={{ color: 'var(--accent)' }} /> Earnings
+                            </h3>
+                            <div className="space-y-2">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>This month</span><strong>Ksh {monthEarn.toLocaleString()}</strong></div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>All time</span><strong>Ksh {totalEarn.toLocaleString()}</strong></div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>Author rank</span><strong>#{myRank} of {totalJournalists}</strong></div>
+                            </div>
+                            <Link href="/journalist/earnings" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View earnings</Link>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          <Link href="/journalist/create" style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--primary)', color: '#fff', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>+ New Article</Link>
+                          <Link href="/journalist/analytics" style={{ padding: '10px 18px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>Analytics</Link>
+                        </div>
+                      </>
+                    )
+                  })()}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Journalist Application Tab — only for readers without an existing application */}
+          {activeTab === 'become-journalist' && user && user.role === 'reader' && !(user as any).author_application && (
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
+              {applySuccess ? (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '1.75rem' }}>✓</div>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Application Submitted!</h2>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', maxWidth: 360, margin: '0 auto' }}>Our editorial team will review your application and get back to you within 48 hours.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Progress steps */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, gap: 0 }}>
+                    {[{n:1,l:'About You'},{n:2,l:'Portfolio'},{n:3,l:'Submit'}].map((s, i) => (
+                      <div key={s.n} style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700, background: applyStep >= s.n ? 'var(--primary)' : 'var(--bg-inset)', color: applyStep >= s.n ? '#fff' : 'var(--text-muted)', border: applyStep >= s.n ? 'none' : '1px solid var(--border)', transition: 'all 0.3s' }}>{applyStep > s.n ? '✓' : s.n}</div>
+                          <span style={{ fontSize: '0.65rem', marginTop: 3, color: applyStep >= s.n ? 'var(--primary)' : 'var(--text-muted)', fontWeight: applyStep >= s.n ? 600 : 400 }}>{s.l}</span>
+                        </div>
+                        {i < 2 && <div style={{ width: 48, height: 2, margin: '0 6px', marginBottom: 14, background: applyStep > s.n ? 'var(--primary)' : 'var(--border)', transition: 'background 0.3s' }} />}
+                      </div>
+                    ))}
+                  </div>
+                  {applyError && <div style={{ padding: '10px 14px', borderRadius: 10, fontSize: '0.82rem', background: 'var(--error-light)', color: 'var(--error)', marginBottom: 16 }}>{applyError}</div>}
+                  {/* Step 1: About You */}
+                  {applyStep === 1 && (
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>About You</h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>Tell us about yourself and your writing background.</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                        <label style={{ display: 'block' }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>First Name</span><input value={applyFirstName} onChange={e => setApplyFirstName(e.target.value)} placeholder="John" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
+                        <label style={{ display: 'block' }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Last Name</span><input value={applyLastName} onChange={e => setApplyLastName(e.target.value)} placeholder="Doe" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
+                      </div>
+                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Professional Title</span><input value={applyTitle} onChange={e => setApplyTitle(e.target.value)} placeholder="e.g. Tech Reporter" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
+                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Writing Niche</span><select value={applyNiche} onChange={e => setApplyNiche(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}><option value="">Select a niche</option>{APPLY_NICHES.map(n => <option key={n} value={n}>{n}</option>)}</select></label>
+                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Bio</span><textarea value={applyBio} onChange={e => setApplyBio(e.target.value)} placeholder="Share your writing experience..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', minHeight: 80, resize: 'vertical' }} /></label>
+                      <label style={{ display: 'block', marginBottom: 20 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Experience</span><select value={applyExperience} onChange={e => setApplyExperience(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}><option value="">Select experience level</option>{APPLY_EXP.map(l => <option key={l} value={l}>{l}</option>)}</select></label>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setApplyStep(2)} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Continue →</button></div>
+                    </div>
+                  )}
+                  {/* Step 2: Portfolio */}
+                  {applyStep === 2 && (
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Your Portfolio</h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>Share links to your work.</p>
+                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Portfolio URL</span><input value={applyPortfolio} onChange={e => setApplyPortfolio(e.target.value)} placeholder="https://yourportfolio.com" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
+                      <label style={{ display: 'block', marginBottom: 20 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>LinkedIn Profile</span><input value={applyLinkedin} onChange={e => setApplyLinkedin(e.target.value)} placeholder="https://linkedin.com/in/yourprofile" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <button onClick={() => setApplyStep(1)} style={{ padding: '9px 22px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>← Back</button>
+                        <button onClick={() => setApplyStep(3)} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Continue →</button>
+                      </div>
+                    </div>
+                  )}
+                  {/* Step 3: Review & Submit */}
+                  {applyStep === 3 && (
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Review & Submit</h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>You're almost there! Tell us why you want to write for us.</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                        {[{ icon: '💰', title: '70% Revenue Share', desc: 'Keep the majority of your earnings' }, { icon: '📊', title: 'Analytics Dashboard', desc: 'Track your article performance' }, { icon: '💳', title: 'M-Pesa Withdrawals', desc: 'Get paid directly to your M-Pesa' }, { icon: '✍️', title: 'Rich Editor', desc: 'Powerful writing & editing tools' }].map(p => (
+                          <div key={p.title} style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--primary-muted)', border: '1px solid var(--border-subtle)' }}><span style={{ fontSize: '1.1rem' }}>{p.icon}</span><p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', margin: '4px 0 2px' }}>{p.title}</p><p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>{p.desc}</p></div>
+                        ))}
+                      </div>
+                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Why do you want to write for 026connet!?</span><textarea value={applyMotivation} onChange={e => setApplyMotivation(e.target.value)} placeholder="Share your motivation..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', minHeight: 80, resize: 'vertical' }} /></label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
+                        <input type="checkbox" checked={applyTerms} onChange={e => setApplyTerms(e.target.checked)} style={{ accentColor: 'var(--primary)', width: 15, height: 15 }} />
+                        I agree to the terms and conditions
+                      </label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <button onClick={() => setApplyStep(2)} style={{ padding: '9px 22px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>← Back</button>
+                        <button disabled={applySubmitting || !applyTerms} onClick={async () => {
+                          setApplySubmitting(true); setApplyError('')
+                          try {
+                            const res = await fetch('/api/auth/apply-journalist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ organization: [applyFirstName, applyLastName].filter(Boolean).join(' ') || undefined, portfolio: applyPortfolio || undefined, title: applyTitle || undefined, niche: applyNiche || undefined, bio: applyBio || undefined, experience: applyExperience || undefined, linkedin: applyLinkedin || undefined, motivation: applyMotivation || undefined }) })
+                            const data = await res.json()
+                            if (!res.ok) { setApplyError(data.error || 'Could not submit your application.'); setApplySubmitting(false); return }
+                            setApplySuccess(true)
+                          } catch { setApplyError('Network error. Please try again.') } finally { setApplySubmitting(false) }
+                        }} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: applyTerms ? 'pointer' : 'not-allowed', opacity: applyTerms ? 1 : 0.6 }}>
+                          {applySubmitting ? 'Submitting…' : 'Submit Application'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -645,6 +865,18 @@ export default function ProfilePage() {
           </div>
         </aside>
       </div>
+    </div>
+  )
+}
+
+function DashCard({ label, value, icon, color }: { label: string; value: number | string; icon: React.ReactNode; color: string }) {
+  return (
+    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>{label}</span>
+        <span style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-inset)', color }}>{icon}</span>
+      </div>
+      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
     </div>
   )
 }

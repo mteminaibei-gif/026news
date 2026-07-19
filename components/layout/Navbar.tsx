@@ -286,7 +286,7 @@ export function Navbar() {
                   <>
                   <div className="flex items-center gap-2">
                     <Link
-                      href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
+                      href={profile?.role === 'admin' ? '/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
                       style={{
                         width: 44, height: 44, borderRadius: '50%',
                         background: profile?.profile_image ? 'transparent' : 'var(--primary)',
@@ -508,7 +508,7 @@ export function Navbar() {
           {user ? (
             <>
               <Link
-                href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
+                href={profile?.role === 'admin' ? '/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
                 onClick={closeMobile}
                 className="flex items-center gap-3 p-3 rounded-xl"
                 style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}

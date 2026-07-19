@@ -33,8 +33,8 @@ function LoginForm() {
           .eq('auth_id', user.id)
           .single()
         const role = (p as { role?: string } | null)?.role
-        if (role === 'admin') home = '/admin/profile'
-        else if (role === 'journalist') home = '/journalist/profile'
+        if (role === 'admin') home = '/profile'
+        else if (role === 'journalist') home = '/profile'
       } catch { /* ignore */ }
       router.replace(home)
     })
@@ -68,9 +68,9 @@ function LoginForm() {
 
       const role = data.user?.role?.toLowerCase()
       if (role === 'admin') {
-        window.location.href = '/admin/profile'
+        window.location.href = '/profile'
       } else if (role === 'journalist') {
-        window.location.href = '/journalist/profile'
+        window.location.href = '/profile'
       } else {
         window.location.href = '/profile'
       }

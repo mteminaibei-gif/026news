@@ -18,7 +18,7 @@ interface MobileNavConfig {
 
 interface TopbarNotifications {
   userId: number
-  role: 'admin' | 'journalist'
+  role: 'admin' | 'journalist' | 'reader' | string
 }
 
 export function Topbar({ title, user, mobileNav, notifications }: {
@@ -97,7 +97,7 @@ export function Topbar({ title, user, mobileNav, notifications }: {
                   <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, zIndex: 60 }}>
                     <NavbarNotificationDropdown
                       userId={notifications.userId}
-                      role={notifications.role}
+                      role={(notifications.role as 'admin' | 'journalist')}
                       onClose={() => setNotifOpen(false)}
                     />
                   </div>

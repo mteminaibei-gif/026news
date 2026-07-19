@@ -7,7 +7,7 @@ const ADMIN_NAV: { section: string; items: { href: string; label: string; icon: 
   {
     section: 'Manage',
     items: [
-      { href: '/admin/profile', label: 'Overview', icon: '🎨' },
+      { href: '/profile', label: 'Overview', icon: '🎨' },
       { href: '/admin/articles', label: 'Articles', icon: '📝' },
       { href: '/admin/journalists', label: 'Authors', icon: '👥' },
       { href: '/admin/users', label: 'Users', icon: '👤' },
@@ -91,7 +91,7 @@ export function AdminSidebar() {
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/admin/profile' && pathname.startsWith(item.href))
+                const isActive = pathname === item.href || (item.href !== '/profile' && pathname.startsWith(item.href))
                 return (
                   <Link
                     key={item.href}
@@ -120,7 +120,7 @@ export function AdminSidebar() {
 
       <div className="p-3 border-t" style={{ borderColor: 'var(--border)' }}>
         <Link
-          href="/admin/profile?logout=true"
+          href="/profile?logout=true"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-center w-full transition-all"
           style={{ color: 'var(--error)', background: 'var(--error-light)' }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}

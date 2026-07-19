@@ -31,8 +31,8 @@ export default function SignupPage() {
           .eq('auth_id', user.id)
           .single()
         const r = (p as { role?: string } | null)?.role
-        if (r === 'admin') home = '/admin/profile'
-        else if (r === 'journalist') home = '/journalist/profile'
+        if (r === 'admin') home = '/profile'
+        else if (r === 'journalist') home = '/profile'
       } catch { /* ignore */ }
       router.replace(home)
     })
@@ -130,32 +130,40 @@ export default function SignupPage() {
             <p>Join 026connet! to read, follow and publish. It takes less than a minute.</p>
           </div>
 
-          <div className="role-toggle" role="tablist" aria-label="Account type">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
             <button
               type="button"
-              role="tab"
-              aria-selected={role === 'reader'}
-              className={role === 'reader' ? 'active' : ''}
               onClick={() => setRole('reader')}
+              style={{
+                padding: '16px', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
+                border: role === 'reader' ? '2px solid var(--primary)' : '2px solid var(--border)',
+                background: role === 'reader' ? 'var(--primary-light)' : 'var(--bg-surface)',
+                transition: 'all 0.2s'
+              }}
             >
-              Reader
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: role === 'reader' ? 'var(--primary)' : 'var(--text-primary)', margin: '0 0 4px' }}>Join as Reader</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', lineHeight: 1.4, margin: 0 }}>Read, follow and engage with stories.</p>
             </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={role === 'journalist'}
-                className={role === 'journalist' ? 'active' : ''}
-                onClick={() => setRole('journalist')}
-              >
-                Journalist
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setRole('journalist')}
+              style={{
+                padding: '16px', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
+                border: role === 'journalist' ? '2px solid var(--primary)' : '2px solid var(--border)',
+                background: role === 'journalist' ? 'var(--primary-light)' : 'var(--bg-surface)',
+                transition: 'all 0.2s'
+              }}
+            >
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: role === 'journalist' ? 'var(--primary)' : 'var(--text-primary)', margin: '0 0 4px' }}>Apply as Journalist</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', lineHeight: 1.4, margin: 0 }}>Publish articles and monetize your work.</p>
+            </button>
+          </div>
 
-            <p className="auth-note">
-              {role === 'journalist'
-                ? 'Applications are reviewed by our editorial team before publishing access is granted.'
-                : 'Read, follow and engage with the stories that matter to you.'}
-            </p>
+          <p className="auth-note" style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.85rem' }}>
+            {role === 'journalist'
+              ? '✨ Journalist applications are reviewed by our editorial team.'
+              : '✨ Welcome to 026connet! Let\'s set up your account.'}
+          </p>
 
           <form onSubmit={handleSubmit} noValidate>
             <label className="field">

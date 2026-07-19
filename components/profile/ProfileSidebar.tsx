@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, Bookmark, BarChart3, MessageSquare, Settings, Shield, PenTool } from 'lucide-react'
+import { User, Bookmark, BarChart3, MessageSquare, Settings, LayoutDashboard, PenTool, FileText, Users } from 'lucide-react'
 
 interface ProfileSidebarProps {
   role: string
@@ -16,7 +16,7 @@ export function ProfileSidebar({ role }: ProfileSidebarProps) {
       {
         section: 'My Account',
         items: [
-          { href: '/profile', label: 'My Profile', icon: <User size={18} /> },
+          { href: '/profile', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
           { href: '/saved', label: 'Saved Articles', icon: <Bookmark size={18} /> },
           { href: '/stats', label: 'Reading Stats', icon: <BarChart3 size={18} /> },
         ]
@@ -34,7 +34,10 @@ export function ProfileSidebar({ role }: ProfileSidebarProps) {
       groups.push({
         section: 'Studio',
         items: [
-          { href: '/journalist/profile', label: 'Journalist Dashboard', icon: <PenTool size={18} /> },
+          { href: '/journalist/create', label: 'Write Article', icon: <PenTool size={18} /> },
+          { href: '/journalist/articles', label: 'My Articles', icon: <FileText size={18} /> },
+          { href: '/journalist/analytics', label: 'Analytics', icon: <BarChart3 size={18} /> },
+          { href: '/journalist/earnings', label: 'Earnings', icon: <BarChart3 size={18} /> },
         ]
       })
     }
@@ -43,7 +46,11 @@ export function ProfileSidebar({ role }: ProfileSidebarProps) {
       groups.push({
         section: 'Administration',
         items: [
-          { href: '/admin/profile', label: 'Admin Dashboard', icon: <Shield size={18} /> },
+          { href: '/admin/articles', label: 'Articles', icon: <FileText size={18} /> },
+          { href: '/admin/write', label: 'Write', icon: <PenTool size={18} /> },
+          { href: '/admin/reviews', label: 'Reviews', icon: <BarChart3 size={18} /> },
+          { href: '/admin/journalists', label: 'Authors', icon: <Users size={18} /> },
+          { href: '/admin/settings', label: 'Settings', icon: <Settings size={18} /> },
         ]
       })
     }

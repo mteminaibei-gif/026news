@@ -15,7 +15,7 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
   const getNavItems = () => {
     if (role === 'admin') {
       return [
-        { href: '/admin/profile', label: 'My Profile', icon: User },
+        { href: '/profile', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/articles', label: 'Articles', icon: FileText },
         { href: '/admin/write', label: 'Write', icon: PenLine },
         { href: '/admin/reviews', label: 'Reviews', icon: BarChart3 },
@@ -26,6 +26,7 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
     }
     if (role === 'journalist') {
       return [
+        { href: '/profile', label: 'Dashboard', icon: LayoutDashboard },
         { href: `/journalists/${userId}`, label: 'Public Profile', icon: User },
         { href: '/journalist/create', label: 'Write Article', icon: PenLine },
         { href: '/journalist/articles', label: 'My Articles', icon: FileText },
@@ -38,7 +39,7 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
     }
     // reader
       return [
-        { href: '/profile', label: 'My Profile', icon: User },
+        { href: '/profile', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/stats', label: 'Reading Stats', icon: BarChart3 },
         { href: '/activity', label: 'My Activity', icon: BarChart3 },
         { href: '/saved', label: 'Saved Articles', icon: Bookmark },
@@ -49,7 +50,7 @@ export function ProfileNav({ role, userId }: ProfileNavProps) {
   }
 
   const items = getNavItems()
-  const homeHref = role === 'admin' ? '/admin/profile' : role === 'journalist' ? '/journalist/profile' : '/'
+  const homeHref = role === 'admin' ? '/profile' : role === 'journalist' ? '/profile' : '/'
 
   return (
     <nav style={{
