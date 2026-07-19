@@ -203,7 +203,7 @@ ${JSON.stringify(SEO_ANALYSIS_SCHEMA, null, 2)}`
   const result = await groqChatJSON<SEOAnalysis>([
     { role: 'system', content: SYSTEM_PROMPTS.seo },
     { role: 'user', content: prompt },
-  ], { temperature: 0.1, maxTokens: 4096 })
+  ], { model: 'fast', temperature: 0.1, maxTokens: 4096 })
 
   // Ensure all required fields exist with defaults
   return {
@@ -281,7 +281,7 @@ Preserve all facts, quotes, names, and statistics exactly. Maintain the article'
   const result = await groqChatJSON<ContentEnhancement>([
     { role: 'system', content: SYSTEM_PROMPTS.contentEnhancement },
     { role: 'user', content: prompt },
-  ], { temperature: 0.3, maxTokens: 6000 })
+  ], { model: 'fast', temperature: 0.3, maxTokens: 4096 })
 
   return result
 }

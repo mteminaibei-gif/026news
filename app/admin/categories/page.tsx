@@ -28,6 +28,11 @@ export default function AdminCategoriesPage() {
   const [success, setSuccess] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null)
+  const [editing, setEditing] = useState<Category | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editIcon, setEditIcon] = useState('📁')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -100,6 +105,36 @@ export default function AdminCategoriesPage() {
       loadCategories()
       setTimeout(() => setSuccess(''), 3000)
     } catch { setError('Network error') }
+  }
+
+  function openEdit(cat: Category) {
+    setEditing(cat)
+    setEditName(cat.name)
+    setEditDesc(cat.description ?? '')
+    setEditIcon(cat.icon || '📁')
+    setError('')
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editing) return
+    setError('')
+    if (!editName.trim()) { setError('Name is required'); return }
+    setSavingEdit(true)
+    try {
+      const res = await fetch(`/api/categories?id=${editing.category_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName.trim(), description: editDesc.trim(), icon: editIcon }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Failed to update'); return }
+      setSuccess(`"${data.name}" updated`)
+      setEditing(null)
+      loadCategories()
+      setTimeout(() => setSuccess(''), 3000)
+    } catch { setError('Network error') }
+    setSavingEdit(false)
   }
 
   return (
@@ -207,13 +242,22 @@ export default function AdminCategoriesPage() {
                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>{cat.name}</td>
                     <td className="px-4 py-3" style={{ color: 'var(--text-tertiary)' }}>{cat.description || '—'}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(cat.category_id, cat.name)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
-                        style={{ background: 'var(--error-light)', color: 'var(--error)', cursor: 'pointer', border: 'none' }}
-                      >
-                        <Trash2 size={12} /> Delete
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(cat)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
+                          style={{ background: 'var(--primary-light)', color: 'var(--primary)', cursor: 'pointer', border: 'none' }}
+                        >
+                          <Check size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(cat.category_id, cat.name)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
+                          style={{ background: 'var(--error-light)', color: 'var(--error)', cursor: 'pointer', border: 'none' }}
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -222,6 +266,77 @@ export default function AdminCategoriesPage() {
           )}
         </div>
       </div>
+
+      {editing && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setEditing(null)}
+        >
+          <form
+            onSubmit={handleEdit}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl p-5"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Edit Category</h2>
+              <button type="button" onClick={() => setEditing(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}><X size={18} /></button>
+            </div>
+            {error && <div className="mb-3 px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: 'var(--error-light)', color: 'var(--error)' }}>{error}</div>}
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                placeholder="Category name"
+                className="rounded-xl px-4 py-2.5 text-sm"
+                style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+                maxLength={50}
+              />
+              <input
+                type="text"
+                value={editDesc}
+                onChange={e => setEditDesc(e.target.value)}
+                placeholder="Description (optional)"
+                className="rounded-xl px-4 py-2.5 text-sm"
+                style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+                maxLength={200}
+              />
+              <div>
+                <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'var(--text-secondary)' }}>Icon</label>
+                <div className="flex flex-wrap gap-1.5" style={{ maxHeight: '120px', overflowY: 'auto' }}>
+                  {CATEGORY_ICONS.map(icon => (
+                    <button
+                      key={icon}
+                      type="button"
+                      onClick={() => setEditIcon(icon)}
+                      className="w-8 h-8 rounded-xl text-xl flex items-center justify-center transition-all"
+                      style={{
+                        border: '1px solid var(--border)',
+                        background: editIcon === icon ? 'var(--primary-light)' : 'var(--bg-elevated)',
+                        color: editIcon === icon ? 'var(--primary)' : 'var(--text-primary)',
+                        boxShadow: editIcon === icon ? '0 0 0 2px var(--primary)' : undefined,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={savingEdit || !editName.trim()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                style={{ background: 'var(--primary)', color: '#fff', cursor: 'pointer', border: 'none' }}
+              >
+                {savingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <ConfirmModal
         open={confirmOpen}

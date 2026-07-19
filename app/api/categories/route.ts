@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createAdminClient()
 
-    const { name, description } = await req.json()
+    const { name, description, icon } = await req.json()
     const trimmed = String(name ?? '').trim()
     if (!trimmed || trimmed.length < 2) {
       return NextResponse.json({ error: 'Category name is required (min 2 chars)' }, { status: 400 })
@@ -46,7 +46,12 @@ export async function POST(req: NextRequest) {
 
     const { data: cat, error: insertError } = await supabase
       .from('categories')
-      .insert({ name: trimmed, slug, description: String(description ?? '').trim() || null } as never)
+      .insert({
+        name: trimmed,
+        slug,
+        description: String(description ?? '').trim() || null,
+        icon: String(icon ?? '').trim() || null,
+      } as never)
       .select()
       .single()
     if (insertError) {
@@ -58,6 +63,56 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[POST /api/categories]', err)
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 })
+  }
+}
+
+// PATCH /api/categories?id=X — admin only, update name/description/icon.
+// Renames keep the existing slug so article category_id FKs stay valid.
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = await createAdminClient()
+
+    const id = Number(new URL(req.url).searchParams.get('id'))
+    if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+
+    const body = await req.json().catch(() => ({}))
+    const updates: Record<string, unknown> = {}
+
+    if (typeof body.name === 'string') {
+      const trimmed = body.name.trim()
+      if (trimmed.length < 2) return NextResponse.json({ error: 'Category name too short (min 2 chars)' }, { status: 400 })
+      if (trimmed.length > 50) return NextResponse.json({ error: 'Category name too long (max 50 chars)' }, { status: 400 })
+      const { data: existing } = await supabase
+        .from('categories').select('category_id').eq('name', trimmed).neq('category_id', id).maybeSingle()
+      if (existing) return NextResponse.json({ error: 'Category already exists' }, { status: 409 })
+      updates.name = trimmed
+    }
+    if (body.description !== undefined) {
+      updates.description = String(body.description ?? '').trim() || null
+    }
+    if (body.icon !== undefined) {
+      updates.icon = String(body.icon ?? '').trim() || null
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
+    }
+
+    const { data: cat, error: updateError } = await supabase
+      .from('categories')
+      .update(updates as never)
+      .eq('category_id', id)
+      .select()
+      .single()
+    if (updateError) {
+      console.error('[PATCH /api/categories] update error:', updateError)
+      return NextResponse.json({ error: updateError.message || 'Failed to update category' }, { status: 500 })
+    }
+
+    return NextResponse.json(cat)
+  } catch (err) {
+    console.error('[PATCH /api/categories]', err)
+    return NextResponse.json({ error: 'Failed to update category' }, { status: 500 })
   }
 }
 

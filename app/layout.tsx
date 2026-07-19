@@ -78,18 +78,24 @@ export const viewport: Viewport = {
   colorScheme: 'light dark',
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
+  interactiveWidget: 'resizes-visual',
 }
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const newsreader = Newsreader({
   subsets: ['latin'],
   variable: '--font-newsreader',
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

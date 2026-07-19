@@ -2,6 +2,8 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
+    // Serve modern formats first — big mobile bandwidth win (AVIF < WebP < JPEG).
+    formats: ['image/avif', 'image/webp'],
     // Aggregated/sourced articles pull hero images from arbitrary external
     // news CDNs (standardmedia.co.ke, nation.africa, etc.). Allow any https
     // host so those thumbnails render. SVG stays disabled — user-controlled
@@ -13,6 +15,9 @@ const nextConfig: NextConfig = {
     // Disabled: user-controlled SVG can carry script. Serve avatars from Supabase
     // storage (already sanitized on upload) instead of arbitrary SVG URLs.
     dangerouslyAllowSVG: false,
+    // Keep device-pixel-ratio based responsive sizes bounded for phones.
+    deviceSizes: [360, 414, 640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   // Force @swc/helpers into the proxy/middleware bundle on Vercel
   // Fixes: MIDDLEWARE_INVOCATION_FAILED — Cannot find module @swc/helpers
@@ -24,7 +29,20 @@ const nextConfig: NextConfig = {
     'http://127.0.0.1:3000',
     process.env.NEXT_PUBLIC_ALLOWED_DEV_ORIGIN ?? '',
   ].filter(Boolean),
-  experimental: {},
+  experimental: {
+    // Trim client bundles by tree-shaking heavy named-export packages.
+    // lucide-react is optimized by default; add the others used app-wide.
+    optimizePackageImports: [
+      'framer-motion',
+      '@tiptap/react',
+      '@tiptap/starter-kit',
+      '@tiptap/pm',
+      '@supabase/supabase-js',
+      '@supabase/ssr',
+      'date-fns',
+      'sanitize-html',
+    ],
+  },
   // CDN / data-transfer optimization.
   // Long-lived immutable caching for hashed build assets shrinks origin egress
   // (pair with Vercel "Fast Origin Transfer" + "Private Data Transfer" in dashboard).

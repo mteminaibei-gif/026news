@@ -49,9 +49,16 @@ export async function POST(req: NextRequest) {
       optimizedContent: analysis.optimizedContent?.content,
     }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
-    if (err instanceof Error && err.message.includes('Groq API not configured')) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    if (message.includes('Groq API not configured') || message.includes('GROQ_API_KEY not configured')) {
       return NextResponse.json(
         { error: 'AI is not configured. Set GROQ_API_KEY in the server environment.' },
+        { status: 503 },
+      )
+    }
+    if (/429|quota|rate.?limit|exceeded your current/i.test(message)) {
+      return NextResponse.json(
+        { error: 'Groq API quota exceeded (429). The AI service is temporarily rate-limited. Try again shortly or switch to a lighter model.' },
         { status: 503 },
       )
     }

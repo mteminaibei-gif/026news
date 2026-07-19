@@ -785,7 +785,7 @@ ${content.slice(0, 12000)}`
       { role: 'system', content: 'You are the SEO and editorial AI for 026news. Respond with valid JSON only.' },
       { role: 'user', content: prompt },
     ],
-    { model: 'balanced', temperature: 0.2, maxTokens: 6000, responseFormat: 'json_object' },
+    { model: 'fast', temperature: 0.2, maxTokens: 4096, responseFormat: 'json_object' },
   )
 
   // Merge with a quick local metrics pass so the UI always has full metrics.
