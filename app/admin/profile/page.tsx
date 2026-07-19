@@ -10,11 +10,9 @@ import { Loader2, Camera, UserCheck, UserX, Plus } from 'lucide-react'
 import { formatNumber, formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
-import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
 import { RealtimeNotifications } from '@/components/admin/RealtimeNotifications'
-import { ArticleManager } from '@/components/admin/ArticleManager'
 import { AccountCreationDialog } from '@/components/admin/AccountCreationDialog'
 
 interface Profile {
@@ -524,87 +522,68 @@ export default function AdminProfilePage() {
                   </div>
                 </div>
 
-                {/* Active Authors */}
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <div>
-                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⭐ Active Authors</h3>
-                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Top performers this month</p>
+                {/* Revenue Card */}
+                <div className="rounded-2xl p-6 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}>
+                  <h3 className="font-bold text-lg mb-4">💰 Revenue Summary</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ opacity: 0.8 }}>Total Revenue</span>
+                      <span className="font-bold text-lg">{formatCurrency(totalRevenue)}</span>
                     </div>
-                    <Link href="/admin/journalists" className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>View All</Link>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ opacity: 0.8 }}>Pending Payout</span>
+                      <span className="font-semibold" style={{ color: 'var(--warning)' }}>{formatCurrency(pendingPayout)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ opacity: 0.8 }}>Active Authors</span>
+                      <span className="font-bold">{journalistsCount}</span>
+                    </div>
                   </div>
-                  <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                    {journalists.slice(0, 4).map(j => (
-                      <div key={j.user_id} className="px-6 py-4 flex items-center gap-4 transition-colors" onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-muted)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                        {j.profile_image ? (
-                          <Image src={j.profile_image} alt={j.name} width={44} height={44} className="rounded-full object-cover" style={{ boxShadow: '0 0 0 2px var(--border-subtle)' }} />
-                        ) : (
-                          <div className="rounded-full flex items-center justify-center font-bold" style={{ width: 44, height: 44, background: 'var(--primary)', color: 'var(--text-inverse)' }}>{j.name.charAt(0)}</div>
-                        )}
-                        <div className="flex-1">
-                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{j.name}</p>
-                          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{j.email}</p>
-                        </div>
-                        <Badge status={j.status} />
-                      </div>
-                    ))}
-                  </div>
+                  <Link href="/admin/earnings" className="mt-5 block w-full py-3 text-center rounded-xl font-semibold text-sm transition-colors" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                    View Payment Report →
+                  </Link>
                 </div>
               </div>
 
               {/* Main Content Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                {/* Publish Limits + Article Library */}
-                <div className="lg:col-span-2 space-y-5">
-                  {/* Publish Limits control */}
-                  <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                    <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <div>
-                        <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⚙️ Publish Limits</h3>
-                        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Max published articles surfaced per source type (0 = unlimited)</p>
-                      </div>
-                      <button
-                        onClick={saveLimits}
-                        disabled={savingLimits}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
-                        style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
-                      >
-                        {savingLimits ? 'Saving…' : 'Save Limits'}
-                      </button>
+                {/* Publish Limits */}
+                <div className="lg:col-span-2" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div>
+                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⚙️ Publish Limits</h3>
+                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Max published articles surfaced per source type (0 = unlimited)</p>
                     </div>
-                    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <label className="block">
-                        <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>🏠 In-House (max published)</span>
-                        <input
-                          type="number" min={0} max={500}
-                          value={publishLimits.inhouse}
-                          onChange={(e) => setPublishLimits({ ...publishLimits, inhouse: Math.max(0, Number(e.target.value) || 0) })}
-                          className="mt-2 w-full px-3 py-2 rounded-lg text-sm"
-                          style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>📡 Sourced / RSS (max published)</span>
-                        <input
-                          type="number" min={0} max={500}
-                          value={publishLimits.sourced}
-                          onChange={(e) => setPublishLimits({ ...publishLimits, sourced: Math.max(0, Number(e.target.value) || 0) })}
-                          className="mt-2 w-full px-3 py-2 rounded-lg text-sm"
-                          style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                        />
-                      </label>
-                    </div>
+                    <button
+                      onClick={saveLimits}
+                      disabled={savingLimits}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
+                      style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
+                    >
+                      {savingLimits ? 'Saving…' : 'Save Limits'}
+                    </button>
                   </div>
-
-                  {/* Article Library */}
-                  <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                    <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📋 Content Library</h3>
-                      <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>In-house vs sourced publications</p>
-                    </div>
-                    <ArticleTable title="In-House Publications" icon="🏠" rows={inhouseArticles} limit={publishLimits.inhouse} />
-                    <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
-                    <ArticleTable title="Sourced (RSS) Articles" icon="📡" rows={sourcedArticles} limit={publishLimits.sourced} />
+                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>🏠 In-House (max published)</span>
+                      <input
+                        type="number" min={0} max={500}
+                        value={publishLimits.inhouse}
+                        onChange={(e) => setPublishLimits({ ...publishLimits, inhouse: Math.max(0, Number(e.target.value) || 0) })}
+                        className="mt-2 w-full px-3 py-2 rounded-lg text-sm"
+                        style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>📡 Sourced / RSS (max published)</span>
+                      <input
+                        type="number" min={0} max={500}
+                        value={publishLimits.sourced}
+                        onChange={(e) => setPublishLimits({ ...publishLimits, sourced: Math.max(0, Number(e.target.value) || 0) })}
+                        className="mt-2 w-full px-3 py-2 rounded-lg text-sm"
+                        style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      />
+                    </label>
                   </div>
                 </div>
 
@@ -637,42 +616,13 @@ export default function AdminProfilePage() {
                     </div>
                   )}
 
-                  {/* Revenue Card */}
-                  <div className="rounded-2xl p-6 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}>
-                    <h3 className="font-bold text-lg mb-4">💰 Revenue Summary</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm" style={{ opacity: 0.8 }}>Total Revenue</span>
-                        <span className="font-bold text-lg">{formatCurrency(totalRevenue)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm" style={{ opacity: 0.8 }}>Pending Payout</span>
-                        <span className="font-semibold" style={{ color: 'var(--warning)' }}>{formatCurrency(pendingPayout)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm" style={{ opacity: 0.8 }}>Active Authors</span>
-                        <span className="font-bold">{journalistsCount}</span>
-                      </div>
-                    </div>
-                    <Link href="/admin/earnings" className="mt-5 block w-full py-3 text-center rounded-xl font-semibold text-sm transition-colors" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                      View Payment Report →
-                    </Link>
-                  </div>
+                  <Link href="/admin/articles" className="block w-full py-3 text-center rounded-xl font-semibold text-sm transition-colors" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--primary)' }}>
+                    Manage all articles →
+                  </Link>
                 </div>
               </div>
 
               <LiveRegistrationsFeed initialUsers={recentUsers} />
-
-              {/* Article Management - merged into Dashboard */}
-              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Article Management</h3>
-                  <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Approve, categorize, tag, feature, or delete articles</p>
-                </div>
-                <div className="p-6">
-                  <ArticleManager />
-                </div>
-              </div>
             </div>
           )}
 
@@ -782,100 +732,6 @@ export default function AdminProfilePage() {
           animation: fade-in-up 0.5s ease-out forwards;
         }
       `}</style>
-    </div>
-  )
-}
-
-function ArticleTable({ title, icon, rows, limit }: { title: string; icon: string; rows: Article[]; limit: number }) {
-  const published = rows.filter((r) => r.status === 'published')
-  const unlimited = !limit || limit <= 0
-  const shown = unlimited ? published : published.slice(0, limit)
-  const extra = Math.max(0, published.length - shown.length)
-  return (
-    <div>
-      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>{icon}</div>
-          <div>
-            <h4 className="font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{title}</h4>
-            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              {published.length} published · {unlimited ? 'showing all' : `showing ${shown.length}`}
-              {!unlimited && extra > 0 ? <span style={{ color: 'var(--warning)' }}> ({extra} beyond limit)</span> : ''}
-            </p>
-          </div>
-        </div>
-        <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>{shown.length}</span>
-      </div>
-
-      {shown.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <div className="text-4xl mb-3 opacity-40">🗞️</div>
-          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>No published articles yet.</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Published {title.toLowerCase()} will appear here.</p>
-        </div>
-      ) : (
-        <div className="max-h-[600px] overflow-y-auto">
-          <ul className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-          {shown.map((a) => {
-            const name = a.author?.name ?? a.source_name ?? '—'
-            const initials = name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '—'
-            const isSourced = !a.author?.name && !!a.source_name
-            return (
-              <li
-                key={a.article_id}
-                className="group flex items-center gap-4 px-6 py-4 transition-all"
-                style={{ borderLeft: '3px solid transparent' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-muted)'
-                  e.currentTarget.style.borderLeftColor = 'var(--primary)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.borderLeftColor = 'transparent'
-                }}
-              >
-                {/* Thumbnail */}
-                {a.featured_image ? (
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{ boxShadow: '0 0 0 1px var(--border-subtle)' }}>
-                    <Image src={a.featured_image} alt={a.title} fill className="object-cover"  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
-                  </div>
-                ) : (
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>📰</div>
-                )}
-
-                {/* Title + meta */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    {a.category?.name && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>{a.category.name}</span>
-                    )}
-                    <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{timeAgo(a.created_at)}</span>
-                  </div>
-                </div>
-
-                {/* Author / source */}
-                <div className="hidden md:flex items-center gap-2 w-44 shrink-0">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: isSourced ? 'var(--info)' : 'var(--primary)', color: 'var(--text-inverse)' }}>{initials}</div>
-                  <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{isSourced ? `📡 ${a.source_name}` : a.author?.name}</span>
-                </div>
-
-                {/* Views */}
-                <div className="hidden lg:block shrink-0">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>👁 {formatNumber(a.views)}</span>
-                </div>
-
-                {/* Status */}
-                <div className="shrink-0"><Badge status={a.status} /></div>
-
-                {/* Actions */}
-                <div className="shrink-0"><AdminArticleActions articleId={a.article_id} currentStatus={a.status} /></div>
-              </li>
-            )
-          })}
-        </ul>
-        </div>
-      )}
     </div>
   )
 }

@@ -7,7 +7,7 @@ const ADMIN_NAV: { section: string; items: { href: string; label: string; icon: 
   {
     section: 'Manage',
     items: [
-      { href: '/profile', label: 'Overview', icon: '🎨' },
+      { href: '/admin/profile', label: 'Overview', icon: '🎨' },
       { href: '/admin/articles', label: 'Articles', icon: '📝' },
       { href: '/admin/journalists', label: 'Authors', icon: '👥' },
       { href: '/admin/users', label: 'Users', icon: '👤' },

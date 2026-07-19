@@ -382,18 +382,7 @@ export default function ProfilePage() {
               <span><strong style={{ fontWeight: 700 }}>{stats.following}</strong> <span style={{ color: 'var(--text-tertiary)' }}>following</span></span>
               <span><strong style={{ fontWeight: 700 }}>{stats.comments}</strong> <span style={{ color: 'var(--text-tertiary)' }}>comments</span></span>
             </div>
-          </div>
-          <div className="profile-header-actions">
-            <Link href="/settings" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              <Settings size={15} /> Settings
-            </Link>
-            <Link href="/stats" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              <BarChart3 size={15} /> Stats
-            </Link>
-            <Link href="/settings" style={{ padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, border: 'none', color: 'oklch(98% 0.005 175)', background: 'var(--primary)', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              Edit Profile
-            </Link>
-          </div>
+           </div>
         </div>
 
         {/* Tabs */}
