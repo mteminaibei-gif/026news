@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const JOURNALIST_NAV: { section: string; items: { href: string; label: string; icon: string; openChat?: boolean }[] }[] = [
+const JOURNALIST_NAV: { section: string; items: { href: string; label: string; icon: string }[] }[] = [
   {
     section: 'Studio',
     items: [
@@ -18,12 +18,6 @@ const JOURNALIST_NAV: { section: string; items: { href: string; label: string; i
       { href: '/journalist/analytics', label: 'Analytics', icon: '📈' },
       { href: '/journalist/earnings', label: 'Earnings', icon: '💰' },
       { href: '/journalist/followers', label: 'Followers', icon: '👥' },
-    ],
-  },
-  {
-    section: 'Communication',
-    items: [
-      { href: '/inbox', label: 'Messages', icon: '💬', openChat: true },
     ],
   },
 ]
@@ -87,23 +81,7 @@ export function JournalistSidebar() {
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const isActive = !item.openChat && (pathname === item.href || (item.href !== '/profile' && pathname.startsWith(item.href)))
-                if (item.openChat) {
-                  return (
-                    <button
-                      key={item.href}
-                      type="button"
-                      onClick={() => window.dispatchEvent(new Event('open-messages'))}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full text-left"
-                      style={{ background: 'transparent', color: 'var(--text-secondary)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-muted)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                    >
-                      <span aria-hidden="true">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </button>
-                  )
-                }
+                const isActive = pathname === item.href || (item.href !== '/profile' && pathname.startsWith(item.href))
                 return (
                   <Link
                     key={item.href}

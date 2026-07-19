@@ -6,7 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, ThumbsUp, Reply, Star, BarChart3, TrendingUp, Users, LayoutDashboard, PenTool, FileText, Eye, DollarSign, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
+import { useRealtime } from '@/components/providers/RealtimeProvider'
+import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, X, Search, ThumbsUp, Reply, Star, BarChart3, TrendingUp, Users, LayoutDashboard, PenTool, FileText, Eye, DollarSign, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
 
 interface UserProfile {
   name: string; role: string; email?: string; created_at?: string
@@ -27,6 +28,14 @@ export default function ProfilePage() {
   const [following, setFollowing] = useState([])
   const [conversations, setConversations] = useState([])
   const [notifs, setNotifs] = useState([])
+  // Inline messaging (wired directly into the profile sidebar)
+  const [activeChat, setActiveChat] = useState<any>(null)
+  const [chatMessages, setChatMessages] = useState<any[]>([])
+  const [chatDraft, setChatDraft] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const [msgUnread, setMsgUnread] = useState<Record<number, number>>({})
+  const { onlineUsers } = useRealtime()
+  const onlineIds = new Set((onlineUsers ?? []).map((o: any) => o.user_id))
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
   const [messageDraft, setMessageDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -302,6 +311,38 @@ export default function ProfilePage() {
       }
       setConversations(Array.from(convMap.values()).slice(0, 5) as any)
     } catch { setConversations([]) }
+  }
+
+  const openChat = async (other: any) => {
+    if (!userId) return
+    setActiveChat(other)
+    setChatLoading(true)
+    try {
+      const res = await fetch(`/api/messages/${other.user_id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setChatMessages(data.messages ?? [])
+      }
+      await fetch(`/api/messages/${other.user_id}`, { method: 'PATCH' })
+      setMsgUnread(prev => ({ ...prev, [other.user_id]: 0 }))
+    } catch { /* ignore */ } finally {
+      setChatLoading(false)
+    }
+  }
+
+  const sendChatMessage = async () => {
+    if (!chatDraft.trim() || !activeChat || !userId) return
+    const content = chatDraft.trim()
+    setChatDraft('')
+    const temp = { message_id: -Date.now(), sender_id: userId, receiver_id: activeChat.user_id, content, is_read: true, created_at: new Date().toISOString() }
+    setChatMessages(prev => [...prev, temp])
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receiverId: activeChat.user_id, content }),
+      })
+    } catch { /* ignore */ }
   }
 
   const getInitialsSafe = (name?: string | null) => {
@@ -740,24 +781,121 @@ export default function ProfilePage() {
             <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
               <MessageSquare size={16} style={{ color: 'var(--accent)' }} /> Messages
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {conversations.length === 0 ? (
-                <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No messages yet.</p>
-              ) : (conversations as any[]).slice(0, 3).map((c: any, i: number) => (
-                <div key={i} onClick={() => window.location.href = '/inbox'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 9, cursor: 'pointer', background: c.unread > 0 ? 'var(--bg-inset)' : 'transparent', transition: 'background 0.2s' }}>
-                  {c.other_user?.profile_image ? (
-                    <img src={c.other_user.profile_image} alt={c.other_user.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0 }}>{c.other_user?.name?.charAt(0) || '?'}</div>
-                  )}
+
+            {!activeChat ? (
+              <>
+                {/* Online followers strip */}
+                {following.some((f: any) => onlineIds.has(f.users?.user_id)) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', width: '100%', marginBottom: 2 }}>Online now</span>
+                    {following.filter((f: any) => onlineIds.has(f.users?.user_id)).slice(0, 8).map((f: any) => {
+                      const u = f.users
+                      return (
+                        <button key={u.user_id} onClick={() => openChat({ user_id: u.user_id, name: u.name, profile_image: u.profile_image })}
+                          title={`${u.name} · online`} style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--success)', cursor: 'pointer', background: 'var(--bg-inset)', padding: 0 }}>
+                          {u.profile_image
+                            ? <img src={u.profile_image} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontWeight: 700, fontSize: '0.7rem', color: 'var(--text-primary)' }}>{u.name?.charAt(0).toUpperCase()}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {conversations.length === 0 ? (
+                    <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No messages yet.</p>
+                  ) : (conversations as any[]).map((c: any, i: number) => {
+                    const oid = c.other_user?.user_id
+                    const online = oid && onlineIds.has(oid)
+                    const unread = msgUnread[oid] ?? c.unread ?? 0
+                    return (
+                      <div key={i} onClick={() => openChat(c.other_user)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 9, cursor: 'pointer', background: unread > 0 ? 'var(--bg-inset)' : 'transparent', transition: 'background 0.2s' }}>
+                        <div style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-inset)' }}>
+                          {c.other_user?.profile_image ? (
+                            <img src={c.other_user.profile_image} alt={c.other_user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{c.other_user?.name?.charAt(0) || '?'}</div>
+                          )}
+                          {online && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.other_user?.name}</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.last_message}</div>
+                        </div>
+                        {unread > 0 && (
+                          <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: 'var(--error)', color: '#fff', fontSize: '0.62rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{unread}</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {(conversations as any[]).length > 3 && (
+                  <Link href="/inbox" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View all in inbox</Link>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Thread header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <button onClick={() => setActiveChat(null)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'var(--bg-muted)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                  </button>
+                  <div style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-inset)' }}>
+                    {activeChat.profile_image ? (
+                      <img src={activeChat.profile_image} alt={activeChat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{activeChat.name?.charAt(0)}</div>
+                    )}
+                    {onlineIds.has(activeChat.user_id) && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />}
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.other_user?.name}</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.last_message}</div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }} className="truncate">{activeChat.name}</div>
+                    <div style={{ fontSize: '0.66rem', color: onlineIds.has(activeChat.user_id) ? 'var(--success)' : 'var(--text-tertiary)' }}>{onlineIds.has(activeChat.user_id) ? 'Online' : 'Offline'}</div>
                   </div>
                 </div>
-              ))}
-            </div>
-            <Link href="/inbox" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View Inbox</Link>
+
+                {/* Messages */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto', padding: '4px 2px', marginBottom: 10 }}>
+                  {chatLoading ? (
+                    <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-tertiary)', padding: 16 }}>Loading…</p>
+                  ) : chatMessages.length === 0 ? (
+                    <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-tertiary)', padding: 16 }}>Say hi to {activeChat.name?.split(' ')[0]} 👋</p>
+                  ) : (
+                    chatMessages.map((m: any) => {
+                      const mine = m.sender_id === userId
+                      return (
+                        <div key={m.message_id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                          <div style={{
+                            maxWidth: '80%', padding: '7px 11px', borderRadius: 12, fontSize: '0.76rem', lineHeight: 1.4,
+                            color: mine ? '#fff' : 'var(--text-primary)',
+                            background: mine ? 'var(--primary)' : 'var(--bg-muted)',
+                            borderBottomRightRadius: mine ? 3 : 12,
+                            borderBottomLeftRadius: mine ? 12 : 3,
+                          }}>
+                            {m.content}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+
+                {/* Composer */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={chatDraft}
+                    onChange={e => setChatDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') sendChatMessage() }}
+                    placeholder={`Message ${activeChat.name?.split(' ')[0]}…`}
+                    style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 10, padding: '9px 12px', fontSize: '0.8rem', color: 'var(--text-primary)', background: 'var(--bg-base)', outline: 'none' }}
+                  />
+                  <button onClick={sendChatMessage} disabled={!chatDraft.trim()} style={{ width: 38, height: 38, borderRadius: 10, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: chatDraft.trim() ? 1 : 0.5 }}>
+                    <Send size={15} />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Following */}
