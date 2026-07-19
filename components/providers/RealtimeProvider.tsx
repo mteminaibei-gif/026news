@@ -54,8 +54,9 @@ interface RealtimeState {
   // Articles
   latestArticle: LiveArticle | null
   articleCount: number
-  // Notifications
-  unreadCount: number
+  // Notifications — full list is the single source of truth; unreadCount is derived from it
+  notifications: LiveNotification[]
+  notificationsLoading: boolean
   latestNotification: LiveNotification | null
   // Comments
   latestComment: LiveComment | null
@@ -72,7 +73,8 @@ interface RealtimeState {
 const initialState: RealtimeState = {
   latestArticle: null,
   articleCount: 0,
-  unreadCount: 0,
+  notifications: [],
+  notificationsLoading: true,
   latestNotification: null,
   latestComment: null,
   latestActivity: null,
@@ -85,7 +87,11 @@ interface RealtimeContextValue extends RealtimeState {
   subscribeToArticle: (articleId: number) => () => void
   subscribeToComments: (articleId: number) => () => void
   markNotificationRead: (id: number) => void
+  markNotificationUnread: (id: number) => void
+  setNotifications: (rows: LiveNotification[]) => void
   markAllNotificationsRead: () => void
+  deleteNotification: (id: number) => void
+  clearAllNotifications: () => void
   clearBreakingNews: () => void
 }
 
@@ -132,40 +138,50 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
       .subscribe()
     channels.push(articlesCh)
 
-    // 2. Notifications — INSERT/UPDATE/DELETE (filtered by user)
-    // Seed the authoritative unread count from the DB so the badge is correct on load.
-    Promise.resolve(
-      supabase
-        .from('notifications')
-        .select('notification_id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('read', false)
-    ).then(({ count }) => {
-      if (count != null) setState(s => ({ ...s, unreadCount: count }))
-    }).catch(() => {})
+    // 2. Notifications — full list is the single source of truth for all
+    //    consumers (navbar badge, dropdown, notifications page). Seed it from
+    //    the DB on mount, then keep it in sync via realtime INSERT/UPDATE/DELETE.
+    const seedNotif = supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    Promise.resolve(seedNotif).then(({ data }) => {
+      setState(s => ({
+        ...s,
+        notifications: (data ?? []) as LiveNotification[],
+        notificationsLoading: false,
+      }))
+    }).catch(() => {
+      setState(s => ({ ...s, notificationsLoading: false }))
+    })
 
     const notifCh = supabase
       .channel(`rt:notifications:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
         const n = payload.new as LiveNotification
-        if (!n.read) setState(s => ({ ...s, unreadCount: s.unreadCount + 1, latestNotification: n }))
-        else setState(s => ({ ...s, latestNotification: n }))
+        setState(s => {
+          if (s.notifications.some(x => x.notification_id === n.notification_id)) {
+            return { ...s, latestNotification: n }
+          }
+          return { ...s, notifications: [n, ...s.notifications].slice(0, 50), latestNotification: n }
+        })
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
-        // If a notification was marked read, decrement the unread count.
         const updated = payload.new as LiveNotification
-        if (updated.read) {
-          setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
-        }
+        setState(s => ({
+          ...s,
+          notifications: s.notifications.map(x =>
+            x.notification_id === updated.notification_id ? { ...x, ...updated } : x
+          ),
+        }))
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
-        // Decrement unread count only if the deleted notification was unread.
-        // The payload on DELETE may contain the old row depending on Supabase version;
-        // clamp to 0 so the badge never goes negative after bulk clears.
         const deleted = payload.old as LiveNotification | undefined
-        if (deleted && deleted.read === false) {
-          setState(s => ({ ...s, unreadCount: Math.max(0, s.unreadCount - 1) }))
-        }
+        const id = deleted?.notification_id
+        if (id == null) return
+        setState(s => ({ ...s, notifications: s.notifications.filter(x => x.notification_id !== id) }))
       })
       .subscribe()
     channels.push(notifCh)
@@ -270,12 +286,41 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
   const markNotificationRead = useCallback((id: number) => {
     setState(s => ({
       ...s,
-      unreadCount: Math.max(0, s.unreadCount - 1),
+      notifications: s.notifications.map(n =>
+        n.notification_id === id ? { ...n, read: true } : n
+      ),
     }))
   }, [])
 
   const markAllNotificationsRead = useCallback(() => {
-    setState(s => ({ ...s, unreadCount: 0 }))
+    setState(s => ({
+      ...s,
+      notifications: s.notifications.map(n => ({ ...n, read: true })),
+    }))
+  }, [])
+
+  const markNotificationUnread = useCallback((id: number) => {
+    setState(s => ({
+      ...s,
+      notifications: s.notifications.map(n =>
+        n.notification_id === id ? { ...n, read: false } : n
+      ),
+    }))
+  }, [])
+
+  const setNotifications = useCallback((rows: LiveNotification[]) => {
+    setState(s => ({ ...s, notifications: rows }))
+  }, [])
+
+  const deleteNotification = useCallback((id: number) => {
+    setState(s => ({
+      ...s,
+      notifications: s.notifications.filter(n => n.notification_id !== id),
+    }))
+  }, [])
+
+  const clearAllNotifications = useCallback(() => {
+    setState(s => ({ ...s, notifications: [] }))
   }, [])
 
   const clearBreakingNews = useCallback(() => {
@@ -287,7 +332,11 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
     subscribeToArticle,
     subscribeToComments,
     markNotificationRead,
+    markNotificationUnread,
+    setNotifications,
     markAllNotificationsRead,
+    deleteNotification,
+    clearAllNotifications,
     clearBreakingNews,
   }
 

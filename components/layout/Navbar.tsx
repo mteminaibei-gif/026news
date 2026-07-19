@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/ThemeProvider'
-import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio, Newspaper, Compass, FileText, PenLine, MessageSquare, Tv } from 'lucide-react'
+import { Moon, Sun, Search, Menu, X, LayoutDashboard, LogOut, User, Bell, Radio, Newspaper, Compass, FileText, PenLine, MessageSquare, Tv, Trophy, Bookmark, Settings } from 'lucide-react'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { useUnreadMessages } from '@/lib/hooks/useUnreadMessages'
@@ -16,6 +16,17 @@ import { NAV_LINKS } from '@/lib/constants/navigation'
 import { Logo } from '@/components/layout/Logo'
 
 const NAVBAR_H = 64
+
+// Links shown in a second section of the mobile drawer (not in the top-level
+// nav). Kept here so the hamburger menu exposes the full site, not just the
+// primary categories.
+const MOBILE_SECONDARY_LINKS: { href: string; label: string; Icon: typeof Compass }[] = [
+  { href: '/journalists', label: 'Authors', Icon: PenLine },
+  { href: '/rankings', label: 'Rankings', Icon: Trophy },
+  { href: '/saved', label: 'Saved', Icon: Bookmark },
+  { href: '/profile', label: 'My Profile', Icon: User },
+  { href: '/settings', label: 'Settings', Icon: Settings },
+]
 
 export function Navbar() {
   const [mobileOpen,   setMobileOpen]   = useState(false)
@@ -284,7 +295,7 @@ export function Navbar() {
                     <Link
                       href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
                       style={{
-                        width: 44, height: 44, borderRadius: 10,
+                        width: 44, height: 44, borderRadius: '50%',
                         background: profile?.profile_image ? 'transparent' : 'var(--primary)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: 'var(--bg-elevated)',
@@ -298,7 +309,7 @@ export function Navbar() {
                         <img
                           src={profile.profile_image}
                           alt={profile?.name ?? 'Profile'}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                         />
                       ) : (
                         profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />
@@ -475,6 +486,32 @@ export function Navbar() {
               )
             })}
           </ul>
+
+          <p style={{
+            fontSize: '0.65rem', fontWeight: 600,
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+            color: 'var(--text-tertiary)', margin: '20px 0 12px',
+          }}>
+            More
+          </p>
+          <ul className="space-y-1" role="list">
+            {MOBILE_SECONDARY_LINKS.map(({ href, label, Icon }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-[var(--primary-light)] hover:shadow-[0_0_20px_-4px_var(--primary)]"
+                  style={{
+                    color: pathname === href ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    background: pathname === href ? 'var(--primary-light)' : 'transparent',
+                  }}
+                >
+                  <Icon size={16} />
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="p-5 pt-4 space-y-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
@@ -487,7 +524,7 @@ export function Navbar() {
                 style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}
               >
                 <div style={{
-                  width: 40, height: 40, borderRadius: 10,
+                  width: 40, height: 40, borderRadius: '50%',
                   background: profile?.profile_image ? 'transparent' : 'var(--primary)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'var(--bg-elevated)', fontSize: '0.8rem', fontWeight: 700,
@@ -498,7 +535,7 @@ export function Navbar() {
                     <img
                       src={profile.profile_image}
                       alt={profile?.name ?? 'Profile'}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                     />
                   ) : (
                     profile?.name?.charAt(0).toUpperCase() ?? '?'

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRealtime } from '@/components/providers/RealtimeProvider'
+import { useRealtime, type LiveNotification } from '@/components/providers/RealtimeProvider'
 
 export type NotificationType =
   | 'new_submission'
@@ -30,17 +30,7 @@ export interface AppNotification {
   actorName?: string | null
 }
 
-type Row = {
-  notification_id: number
-  type: string
-  title: string
-  message: string
-  link: string | null
-  read: boolean
-  created_at: string
-}
-
-function mapRow(r: Row): AppNotification {
+function mapRow(r: LiveNotification): AppNotification {
   return {
     id: String(r.notification_id),
     type: (r.type as NotificationType) ?? 'system',
@@ -53,98 +43,67 @@ function mapRow(r: Row): AppNotification {
 }
 
 /**
- * Notification hook — fetches initial data, then syncs with the
- * RealtimeProvider's global notification subscription.
- * No duplicate channels are created.
+ * Notification hook — a thin view over the RealtimeProvider's authoritative
+ * notifications list. Because every consumer (navbar badge, dropdown, full
+ * page) reads from the same provider state, marking a notification read (or
+ * marking all read) anywhere is reflected everywhere immediately.
  */
 export function useNotifications(userId: number, _role?: string) {
-  const [notifications, setNotifications] = useState<AppNotification[]>([])
-  const [loading, setLoading] = useState(true)
   const realtime = useRealtime()
 
-  // Fetch initial notifications
-  useEffect(() => {
-    if (!userId) { setLoading(false); return }
-    let active = true
-    const supabase = createClient()
+  const notifications = useMemo(
+    () => realtime.notifications.map(mapRow),
+    [realtime.notifications]
+  )
 
-    ;(async () => {
+  const unreadCount = useMemo(
+    () => realtime.notifications.filter(n => !n.read).length,
+    [realtime.notifications]
+  )
+
+  const loading = realtime.notificationsLoading
+
+  const markRead = useCallback((id: string) => {
+    const supabase = createClient()
+    supabase.from('notifications').update({ read: true } as never).eq('notification_id', Number(id))
+    realtime.markNotificationRead(Number(id))
+  }, [realtime])
+
+  const markUnread = useCallback((id: string) => {
+    const supabase = createClient()
+    supabase.from('notifications').update({ read: false } as never).eq('notification_id', Number(id))
+    realtime.markNotificationUnread(Number(id))
+  }, [realtime])
+
+  const markAllRead = useCallback(() => {
+    realtime.markAllNotificationsRead()
+    if (!userId) return
+    const supabase = createClient()
+    supabase.from('notifications').update({ read: true } as never).eq('user_id', userId).eq('read', false)
+  }, [realtime, userId])
+
+  const deleteNotification = useCallback(async (id: string) => {
+    realtime.deleteNotification(Number(id))
+    const supabase = createClient()
+    await supabase.from('notifications').delete().eq('notification_id', Number(id))
+  }, [realtime])
+
+  const clearAll = useCallback(async () => {
+    realtime.clearAllNotifications()
+    if (!userId) return
+    const supabase = createClient()
+    const { error } = await supabase.from('notifications').delete().eq('user_id', userId)
+    if (error) {
+      // On failure, re-seed the list from the DB so the UI recovers.
       const { data } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(50)
-
-      if (!active) return
-      const mapped = ((data ?? []) as Row[]).map(mapRow)
-      setNotifications(mapped)
-      setLoading(false)
-    })()
-
-    return () => { active = false }
-  }, [userId])
-
-  // Single source of truth for the unread count is the local list, so the
-  // navbar badge, the dropdown, and the full page never desync.
-  const unreadCount = notifications.filter(n => !n.read).length
-
-  // Prepend new notifications from RealtimeProvider
-  useEffect(() => {
-    if (!realtime.latestNotification || realtime.latestNotification.user_id !== userId) return
-    const n: AppNotification = {
-      id: String(realtime.latestNotification.notification_id),
-      type: (realtime.latestNotification.type as NotificationType) ?? 'system',
-      title: realtime.latestNotification.title,
-      message: realtime.latestNotification.message,
-      link: realtime.latestNotification.link,
-      read: realtime.latestNotification.read,
-      timestamp: realtime.latestNotification.created_at,
+      realtime.setNotifications(data ?? [])
     }
-    setNotifications(prev => {
-      if (prev.some(p => p.id === n.id)) return prev
-      return [n, ...prev].slice(0, 50)
-    })
-  }, [realtime.latestNotification, userId])
-
-  const markRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-    const supabase = createClient()
-    supabase.from('notifications').update({ read: true } as never).eq('notification_id', Number(id))
-  }, [])
-
-  const markUnread = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: false } : n))
-    const supabase = createClient()
-    supabase.from('notifications').update({ read: false } as never).eq('notification_id', Number(id))
-  }, [])
-
-  const markAllRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-    if (!userId) return
-    const supabase = createClient()
-    supabase.from('notifications').update({ read: true } as never).eq('user_id', userId).eq('read', false)
-  }, [userId])
-
-  const deleteNotification = useCallback(async (id: string) => {
-    const prev = notifications
-    setNotifications(prev => prev.filter(n => n.id !== id))
-    const supabase = createClient()
-    const { error } = await supabase.from('notifications').delete().eq('notification_id', Number(id))
-    if (error) setNotifications(prev)
-  }, [notifications])
-
-  const clearAll = useCallback(async () => {
-    const prev = notifications
-    setNotifications([])
-    if (!userId) return
-    const supabase = createClient()
-    const { error } = await supabase.from('notifications').delete().eq('user_id', userId)
-    if (error) {
-      setNotifications(prev)
-      return
-    }
-  }, [userId, notifications])
+  }, [realtime, userId])
 
   return {
     notifications,

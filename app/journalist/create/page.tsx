@@ -148,8 +148,10 @@ export default function CreatePostPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-base)' }}>
 
-      {/* ── Sticky action bar ── */}
-      <div className="sticky top-0 z-20 backdrop-blur-md shadow-sm" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
+      {/* ── Sticky action bar ──
+          Only sticky below the global navbar on >=md (mobile keeps it in flow so
+          it never covers content under the top navbar). */}
+      <div className="relative md:sticky md:top-16 z-20 backdrop-blur-md shadow-sm" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/journalist/profile"

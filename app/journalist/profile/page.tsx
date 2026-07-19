@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
 import { createClient } from '@/lib/supabase/client'
 import { uploadProfileImage } from '@/lib/storage'
+import { useQueryClient } from '@tanstack/react-query'
+import { authKeys } from '@/lib/hooks/useAuth'
 import { formatDate, formatNumber, formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { Plus, Trophy, TrendingUp, DollarSign, Clock, CheckCircle, XCircle, AlertTriangle, Eye, Edit, Trash2, Award, BarChart as BarChartIcon, Users, FileText, Settings, Star, Send, Camera, Loader2 } from 'lucide-react'
@@ -26,6 +28,7 @@ const inputCls = 'w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-
 
 export default function JournalistProfilePage() {
   const supabase = createClient()
+  const queryClient = useQueryClient()
 
   const [profile, setProfile]           = useState<Profile | null>(null)
   const [badges, setBadges]             = useState<BadgeRow[]>([])
@@ -112,6 +115,14 @@ export default function JournalistProfilePage() {
       if (!res.ok) { setError(data.error ?? 'Save failed'); return }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
+
+      // Refresh the cached profile so the navbar/public bio reflect the new
+      // values everywhere (stale React Query cache otherwise makes the edit
+      // look like it "reverted").
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.email) queryClient.invalidateQueries({ queryKey: authKeys.profile(user.email) })
+      } catch { /* non-fatal */ }
     } catch {
       setError('Network error — try again.')
     } finally {

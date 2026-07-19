@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { uploadProfileImage } from '@/lib/storage';
+import { useQueryClient } from '@tanstack/react-query';
+import { authKeys } from '@/lib/hooks/useAuth';
 
 const tabs = [
   { id: 'profile', label: 'Profile' },
@@ -14,6 +16,7 @@ const tabs = [
 ];
 
 export default function SettingsPage() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -131,6 +134,15 @@ export default function SettingsPage() {
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+
+      // Refresh the cached profile so the navbar/bio reflect the new values
+      // everywhere (otherwise they read stale React Query cache and look
+      // like the save "reverted").
+      try {
+        const sb = createClient();
+        const { data: { user } } = await sb.auth.getUser();
+        if (user?.email) queryClient.invalidateQueries({ queryKey: authKeys.profile(user.email) });
+      } catch { /* non-fatal */ }
     } catch {
       setError('Something went wrong while saving.');
     } finally {
