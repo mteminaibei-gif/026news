@@ -29,6 +29,8 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  const pathname = request.nextUrl.pathname
+
   // Auth pages should not be reachable once signed in. Send the user to their
   // role-appropriate home so they can't "sign in again" until they sign out.
   const authPages = ['/login', '/signup']
@@ -71,7 +73,6 @@ export async function updateSession(request: NextRequest) {
     { prefix: '/moderation',     allowed: ['admin', 'journalist'] },
   ]
 
-  const pathname = request.nextUrl.pathname
   const route = protectedRoutes.find(
     r => pathname === r.prefix || pathname.startsWith(r.prefix + '/')
   )
