@@ -396,10 +396,6 @@ export default function JournalistProfilePage() {
               <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24 }}>{profile.bio ?? 'No bio available.'}</p>
               <div className="about-info-grid">
                 <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Role</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, textTransform: 'capitalize' }}>{profile.role}</div>
-                </div>
-                <div style={{ padding: 16, background: 'var(--bg-inset)', borderRadius: 10 }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Joined</div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{joinDate}</div>
                 </div>
