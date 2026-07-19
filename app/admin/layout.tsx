@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Topbar } from '@/components/layout/Topbar'
-import { ChatWidget } from '@/components/layout/ChatWidget'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { MobileDrawerNav } from '@/components/layout/MobileDrawerNav'
 
@@ -74,7 +73,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {children}
         </main>
       </div>
-      <ChatWidget />
     </div>
   )
   } catch {

@@ -57,6 +57,14 @@ export function MessagesSidebar() {
 
   useEffect(() => { loadFollowers() }, [loadFollowers])
 
+  // Allow the profile/journalist sidebars to open this drawer on demand
+  // (e.g. clicking the "Messages" nav item) instead of redirecting to /inbox.
+  useEffect(() => {
+    const open = () => setExpanded(true)
+    window.addEventListener('open-messages', open as EventListener)
+    return () => window.removeEventListener('open-messages', open as EventListener)
+  }, [])
+
   // Realtime: refresh follower online state is handled by onlineUsers;
   // also poll every 20s in case presence churns.
   useEffect(() => {

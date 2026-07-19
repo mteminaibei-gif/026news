@@ -2,7 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, MessageSquare, Settings, PenTool, FileText, Users } from 'lucide-react'
+import { User, Bookmark, BarChart3, MessageSquare, Settings, PenTool, FileText, Users } from 'lucide-react'
+
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ReactNode
+  openChat?: boolean
+}
 
 interface ProfileSidebarProps {
   role: string
@@ -22,7 +29,7 @@ export function ProfileSidebar({ role }: ProfileSidebarProps) {
       {
         section: 'Communication',
         items: [
-          { href: '/inbox', label: 'Messages', icon: <MessageSquare size={18} /> },
+          { href: '/inbox', label: 'Messages', icon: <MessageSquare size={18} />, openChat: true },
           { href: '/settings', label: 'Settings', icon: <Settings size={18} /> },
         ]
       }
@@ -114,7 +121,23 @@ export function ProfileSidebar({ role }: ProfileSidebarProps) {
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const isActive = pathname === item.href
+                const isActive = !item.openChat && pathname === item.href
+                if (item.openChat) {
+                  return (
+                    <button
+                      key={item.href}
+                      type="button"
+                      onClick={() => window.dispatchEvent(new Event('open-messages'))}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full text-left"
+                      style={{ background: 'transparent', color: 'var(--text-secondary)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-inset)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <span aria-hidden="true" style={{ display: 'flex', opacity: 0.7 }}>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  )
+                }
                 return (
                   <Link
                     key={item.href}

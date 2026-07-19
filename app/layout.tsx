@@ -10,6 +10,7 @@ import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
 import { TVGlobalProvider } from '@/components/tv/TVGlobalProvider';
 import { LayoutNav } from '@/components/layout/LayoutNav';
+import { MessagesSidebar } from '@/components/layout/MessagesSidebar';
 import { PushSubscriptionManager } from '@/components/providers/PushSubscriptionManager';
 import { PushProvider } from '@/components/providers/PushProvider';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -107,6 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <LayoutNav>
                       {children}
                     </LayoutNav>
+                    <MessagesSidebar />
                     <CookieConsent />
                   </StyledJsxRegistry>
                   </PushProvider>

@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Topbar } from '@/components/layout/Topbar'
-import { ChatWidget } from '@/components/layout/ChatWidget'
 import { ProfileSidebar } from '@/components/profile/ProfileSidebar'
 
 type UserProfile = { user_id: number; name: string; profile_image: string | null; role: string }
@@ -56,7 +55,6 @@ export default async function ProfileLayout({ children }: { children: React.Reac
           {children}
         </main>
       </div>
-      <ChatWidget />
     </div>
   )
 }

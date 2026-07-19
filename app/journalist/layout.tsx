@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Topbar } from '@/components/layout/Topbar'
-import { ChatWidget } from '@/components/layout/ChatWidget'
 import { JournalistSidebar } from '@/components/journalist/JournalistSidebar'
 
 type UserProfile = { user_id: number; name: string; profile_image: string | null; role: string }
@@ -62,7 +61,6 @@ export default async function JournalistLayout({ children }: { children: React.R
           {children}
         </main>
       </div>
-      <ChatWidget />
     </div>
   )
 }
