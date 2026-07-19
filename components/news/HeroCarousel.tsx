@@ -152,14 +152,26 @@ export function HeroCarousel({ articles }: Props) {
 
             {/* Excerpt */}
             {stripHtml(slide.content).length > 10 && (
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.5 }}
-                style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: 20, maxWidth: 700, display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                style={{ 
+                  color: 'rgba(255,255,255,0.85)', 
+                  fontSize: '1.05rem', 
+                  marginBottom: 20, 
+                  maxWidth: 700, 
+                  maxHeight: '220px', 
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(255,255,255,0.3) transparent',
+                  paddingRight: 10
+                }}
               >
-                {stripHtml(slide.content).replace(/\n+/g, ' ').slice(0, 400).trim()}…
-              </motion.p>
+                {stripHtml(slide.content).split('\n').map((paragraph, idx) => (
+                  <p key={idx} style={{ marginBottom: '0.75rem', lineHeight: 1.6 }}>{paragraph}</p>
+                ))}
+              </motion.div>
             )}
 
             {/* Meta */}

@@ -67,12 +67,7 @@ export function Navbar() {
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
 
-  const handleGlow = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    const el = e.currentTarget
-    const rect = el.getBoundingClientRect()
-    el.style.setProperty('--mx', `${e.clientX - rect.left}px`)
-    el.style.setProperty('--my', `${e.clientY - rect.top}px`)
-  }, [])
+
 
   // Close mobile menu on resize to desktop
   useEffect(() => {
@@ -90,8 +85,7 @@ export function Navbar() {
     <>
       <header
         role="banner"
-        className="sticky top-0 z-50 border-b transition-all duration-300 glow-track"
-        onMouseMove={handleGlow}
+        className="sticky top-0 z-50 border-b transition-all duration-300"
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(20px)',
@@ -99,7 +93,6 @@ export function Navbar() {
           borderColor: 'var(--border-subtle)',
         }}
       >
-        <span className="glow-spot" aria-hidden="true" />
         <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo */}
           <Logo size="md" />
@@ -151,7 +144,7 @@ export function Navbar() {
                         )}
                       </span>
                     ) : (
-                      <Icon size={15} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : href === '/tv' ? { color: '#3b82f6', filter: 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 12px #3b82f6)' } : undefined} />
+                      <Icon size={15} style={href === '/radio' ? { color: '#ef4444' } : href === '/tv' ? { color: '#3b82f6' } : undefined} />
                     )
                   )}
                   {link.label}
@@ -319,12 +312,11 @@ export function Navbar() {
                       onClick={() => signOutMutation.mutate()}
                       title="Sign out"
                       aria-label="Sign out"
-                      className="hidden sm:flex"
+                      className="hidden sm:flex items-center justify-center"
                       style={{
                         width: 44, height: 44, borderRadius: 10,
                         border: '1px solid var(--border)',
                         background: 'var(--bg-surface)',
-                        display: 'none', alignItems: 'center', justifyContent: 'center',
                         color: 'var(--text-secondary)',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -413,10 +405,9 @@ export function Navbar() {
         id="mobile-nav"
         aria-label="Mobile navigation"
         className={cn(
-          'lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain glow-track',
+          'lg:hidden fixed right-0 z-50 flex flex-col overflow-y-auto overscroll-contain',
           mobileOpen ? 'flex' : 'hidden'
         )}
-        onMouseMove={handleGlow}
         style={{
           width: 320, maxWidth: '85vw',
           background: 'var(--bg-surface)',
@@ -427,7 +418,6 @@ export function Navbar() {
           transition: 'transform 0.3s var(--ease-out-expo)',
         }}
       >
-        <span className="glow-spot" aria-hidden="true" />
         <div className="flex-1 p-5">
           <p style={{
             fontSize: '0.65rem', fontWeight: 600,
@@ -477,7 +467,7 @@ export function Navbar() {
                           )}
                         </span>
                       ) : (
-                        <Icon size={16} style={href === '/radio' ? { color: '#ef4444', filter: 'drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 12px #ef4444)' } : href === '/tv' ? { color: '#3b82f6', filter: 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 12px #3b82f6)' } : undefined} />
+                        <Icon size={16} style={href === '/radio' ? { color: '#ef4444' } : href === '/tv' ? { color: '#3b82f6' } : undefined} />
                       )
                     )}
                     {link.label}
