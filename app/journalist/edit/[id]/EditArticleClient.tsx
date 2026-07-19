@@ -78,8 +78,11 @@ export function EditArticleClient({ article, categories }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           article_id: article.article_id,
-          title, category: categories.find(c => c.category_id === Number(categoryId))?.name ?? '',
-          tags, content, excerpt,
+          title, 
+          category_id: Number(categoryId) || null,
+          tags, 
+          content, 
+          excerpt,
           source_reference: sourceRef,
           monetization_type: monetization,
           featured_image: featuredImageUrl,

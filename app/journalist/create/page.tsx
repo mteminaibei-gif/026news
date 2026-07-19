@@ -17,10 +17,10 @@ const MONETIZE_OPTIONS = [
   { value: 'ad',        icon: '📢', label: 'Ad-supported', desc: 'Serves ad units' },
 ]
 
-const FALLBACK_CATEGORIES = [
-  'World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy',
-  'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena',
-]
+interface CategoryOption {
+  category_id: number
+  name: string
+}
 
 const fieldCls = 'w-full rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all'
 const labelCls = 'block text-[11px] font-black uppercase tracking-[0.1em] mb-2'
@@ -29,7 +29,7 @@ export default function CreatePostPage() {
   const router = useRouter()
 
   const [title,         setTitle]         = useState('')
-  const [category,      setCategory]      = useState('')
+  const [categoryId,    setCategoryId]    = useState<number | null>(null)
   const [tags,          setTags]          = useState('')
   const [content,       setContent]       = useState('')
   const [excerpt,       setExcerpt]       = useState('')
@@ -45,17 +45,23 @@ export default function CreatePostPage() {
   const [imagePreview,   setImagePreview]   = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState(false)
   const [imageError,     setImageError]     = useState('')
-  const [categories,     setCategories]     = useState<string[]>(FALLBACK_CATEGORIES)
+  const [categories,     setCategories]     = useState<CategoryOption[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
 
   useEffect(() => {
     async function fetchCategories() {
       try {
+        setLoadingCategories(true)
         const res = await fetch('/api/categories')
         if (res.ok) {
-          const data: { category_id: number; name: string }[] = await res.json()
-          if (data.length) setCategories(data.map(c => c.name))
+          const data: CategoryOption[] = await res.json()
+          setCategories(data)
         }
-      } catch { /* ignore */ }
+      } catch (err) {
+        console.error('Failed to load categories:', err)
+      } finally {
+        setLoadingCategories(false)
+      }
     }
     fetchCategories()
   }, [])
@@ -63,7 +69,7 @@ export default function CreatePostPage() {
   const plainText = content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
   const wordCount    = plainText ? plainText.split(/\s+/).length : 0
   const readMins     = Math.max(1, Math.ceil(wordCount / 200))
-  const completeness = [title, category, content.length > 50, imagePreview].filter(Boolean).length * 25
+  const completeness = [title, categoryId !== null, content.length > 50, imagePreview].filter(Boolean).length * 25
 
   // Autosave draft to localStorage
   useEffect(() => {
@@ -71,21 +77,21 @@ export default function CreatePostPage() {
     if (saved) {
       try {
         const d = JSON.parse(saved)
-        if (d.title)    setTitle(d.title)
-        if (d.content)  setContent(d.content)
-        if (d.category) setCategory(d.category)
-        if (d.tags)     setTags(d.tags)
-        if (d.excerpt)  setExcerpt(d.excerpt)
+        if (d.title)       setTitle(d.title)
+        if (d.content)     setContent(d.content)
+        if (d.categoryId)  setCategoryId(d.categoryId)
+        if (d.tags)        setTags(d.tags)
+        if (d.excerpt)     setExcerpt(d.excerpt)
       } catch { /* ignore */ }
     }
   }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      localStorage.setItem('draft_create', JSON.stringify({ title, content, category, tags, excerpt }))
+      localStorage.setItem('draft_create', JSON.stringify({ title, content, categoryId, tags, excerpt }))
     }, 1000)
     return () => clearTimeout(timer)
-  }, [title, content, category, tags, excerpt])
+  }, [title, content, categoryId, tags, excerpt])
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -116,7 +122,11 @@ export default function CreatePostPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title, category, tags, content, excerpt,
+          title, 
+          category_id: categoryId,
+          tags, 
+          content, 
+          excerpt,
           source_reference:  sourceRef,
           monetization_type: monetization,
           featured_image:    featuredImageUrl,
@@ -230,11 +240,21 @@ export default function CreatePostPage() {
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className={labelCls} htmlFor="cr-category" style={{ color: 'var(--text-tertiary)' }}>🗂 Category</label>
-                  <select id="cr-category" value={category} onChange={e => setCategory(e.target.value)}
+                  <select 
+                    id="cr-category" 
+                    value={categoryId ?? ''} 
+                    onChange={e => setCategoryId(e.target.value ? Number(e.target.value) : null)}
+                    disabled={loadingCategories}
                     className={fieldCls}
                     style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
-                    <option value="">Choose…</option>
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="">
+                      {loadingCategories ? 'Loading categories…' : 'Choose…'}
+                    </option>
+                    {categories.map(c => (
+                      <option key={c.category_id} value={c.category_id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -396,7 +416,7 @@ export default function CreatePostPage() {
               <div className="grid grid-cols-2 gap-1.5">
                 {[
                   { label: 'Headline',  done: !!title },
-                  { label: 'Category',  done: !!category },
+                  { label: 'Category',  done: categoryId !== null },
                   { label: 'Content',   done: content.length > 50 },
                   { label: 'Image',     done: !!imagePreview },
                 ].map(item => (
@@ -431,7 +451,7 @@ export default function CreatePostPage() {
               slug={slugify(title)}
               featuredImage={imagePreview ?? undefined}
               tags={tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined}
-              category={category}
+              category={categories.find(c => c.category_id === categoryId)?.name || ''}
               onApplyTitle={(t) => setTitle(t)}
               onApplyExcerpt={(e) => setExcerpt(e)}
               onApplyContent={(c) => setContent(c)}

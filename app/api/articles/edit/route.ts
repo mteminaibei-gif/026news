@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
 
     const title = sanitize(String(body.title ?? '')).substring(0, 300)
     const content = sanitizeArticleHtml(String(body.content ?? '')).trim().substring(0, 100_000)
-    const category = sanitize(String(body.category ?? '')).substring(0, 100)
+    const category_id_input = body.category_id ? Number(body.category_id) : null
+    const category_name = sanitize(String(body.category ?? '')).substring(0, 100)
     const rawTags = String(body.tags ?? '')
     const tags: string[] = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : []
     const action = body.action === 'submit' ? 'submit' : 'draft'
@@ -61,9 +62,14 @@ export async function POST(req: NextRequest) {
 
     if (!title || !content) return NextResponse.json({ error: 'title and content required' }, { status: 400 })
 
-    const { data: rawCat } = await supabase
-      .from('categories').select('category_id').eq('name', category || 'Kenya').single()
-    const cat = rawCat as unknown as { category_id: number } | null
+    // Resolve category_id
+    let finalCategoryId: number | null = category_id_input || null
+    if (!finalCategoryId && category_name) {
+      const { data: rawCat } = await supabase
+        .from('categories').select('category_id').eq('name', category_name).single()
+      const cat = rawCat as unknown as { category_id: number } | null
+      finalCategoryId = cat?.category_id ?? null
+    }
 
     const newStatus = action === 'submit' ? 'under_review' : 'draft'
     const slug = slugify(title)
@@ -72,7 +78,7 @@ export async function POST(req: NextRequest) {
       .from('articles')
       .update({
         title, slug, content, excerpt,
-        category_id: cat?.category_id ?? null,
+        category_id: finalCategoryId,
         tags: tags.length > 0 ? tags : null,
         featured_image,
         source_reference: source_reference || null,

@@ -146,7 +146,8 @@ export async function POST(req: NextRequest) {
 
     const title              = sanitize(String(body.title ?? '')).substring(0, 300)
     const content            = sanitizeArticleHtml(String(body.content ?? '')).trim().substring(0, 100_000)
-    const category           = sanitize(String(body.category ?? '')).substring(0, 100)
+    const category_id_input  = body.category_id ? Number(body.category_id) : null
+    const category_name      = sanitize(String(body.category ?? '')).substring(0, 100)
     const source_reference   = String(body.source_reference ?? '').substring(0, 500)
     const monetization_type  = ['free', 'sponsored', 'ad'].includes(String(body.monetization_type))
       ? String(body.monetization_type) : 'free'
@@ -171,12 +172,15 @@ export async function POST(req: NextRequest) {
       catch { return NextResponse.json({ error: 'source_reference must be a valid URL' }, { status: 400 }) }
     }
 
-    const { data: rawCat } = await supabase
-      .from('categories').select('category_id').eq('name', category || 'Kenya').single()
-    const cat = rawCat as unknown as { category_id: number } | null
-
-    // Auto-categorize if no category provided or looked up
-    let finalCategoryId = cat?.category_id ?? null
+    // Resolve category_id from category_id_input or category_name
+    let finalCategoryId: number | null = category_id_input || null
+    
+    if (!finalCategoryId && category_name) {
+      const { data: rawCat } = await supabase
+        .from('categories').select('category_id').eq('name', category_name).single()
+      const cat = rawCat as unknown as { category_id: number } | null
+      finalCategoryId = cat?.category_id ?? null
+    }
     if (!finalCategoryId) {
       const catResult = autoCategorize({ title, content, excerpt: String(body.excerpt ?? '').trim(), tags })
       if (catResult.confidence !== 'low') {
@@ -252,7 +256,7 @@ export async function POST(req: NextRequest) {
                   <h2 style="color: #e23b3b;">New Article Submitted for Review</h2>
                   <p><strong>Title:</strong> ${title}</p>
                   <p><strong>Author:</strong> ${currentUser ? `User #${currentUser.userId}` : 'Unknown'}</p>
-                  <p><strong>Category:</strong> ${category || 'Uncategorized'}</p>
+                  <p><strong>Category:</strong> ${category_name || 'Uncategorized'}</p>
                   <p><strong>Status:</strong> Under Review</p>
                   <hr style="border: 1px solid #eee; margin: 16px 0;" />
                   <p><a href="${APP_URL}/admin/review/${articleRow.article_id}" style="background: #e23b3b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Review Article</a></p>

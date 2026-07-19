@@ -52,14 +52,28 @@ export default function AdminCategoriesPage() {
 
   async function loadCategories() {
     setLoading(true)
+    setError('')
     try {
       const res = await fetch('/api/categories')
-      if (res.ok) {
-        const data = await res.json()
-        setCategories(data)
+      if (!res.ok) {
+        setError('Failed to load categories')
+        setCategories([])
+        return
       }
-    } catch { /* ignore */ }
-    setLoading(false)
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setCategories(data)
+      } else {
+        setError('Invalid categories data format')
+        setCategories([])
+      }
+    } catch (err) {
+      console.error('Failed to load categories:', err)
+      setError(err instanceof Error ? err.message : 'Network error')
+      setCategories([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -161,7 +175,7 @@ export default function AdminCategoriesPage() {
         {/* Create form */}
         <form onSubmit={handleCreate} className="rounded-2xl p-5 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
           <h2 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Add New Category</h2>
-          {error && <div className="mb-3 px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: 'var(--error-light)', color: 'var(--error)' }}>{error}</div>}
+          {error && <div className="mb-3 px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: 'var(--error-light)', color: 'var(--error)' }}>⚠️ {error}</div>}
           {success && <div className="mb-3 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1" style={{ background: 'var(--success-light)', color: 'var(--success)' }}><Check size={14} /> {success}</div>}
           <div className="flex gap-3 mb-3">
             <input

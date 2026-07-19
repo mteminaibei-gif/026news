@@ -1,1057 +1,736 @@
-// @ts-nocheck
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRealtime } from '@/components/providers/RealtimeProvider'
-import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, X, Search, ThumbsUp, Reply, Star, BarChart3, TrendingUp, Users, LayoutDashboard, PenTool, FileText, Eye, DollarSign, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { LayoutDashboard, Bookmark, Heart, MessageSquare, Users, PenTool, Settings, ArrowRight, DollarSign, FileText, BarChart3, Share2 } from 'lucide-react'
 
 interface UserProfile {
-  name: string; role: string; email?: string; created_at?: string
-  is_verified?: boolean; profile_image?: string | null; avatar_url?: string | null; user_id?: number
+  user_id: number
+  name: string
+  role: string
+  profile_image: string | null
+  email?: string
+  created_at?: string
+  bio?: string
+  rank_score?: number
+  total_views?: number
+}
+
+const TAB_CONFIG: Record<string, any[]> = {
+  reader: [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'saved', label: 'Saved', icon: Bookmark },
+    { id: 'liked', label: 'Liked', icon: Heart },
+    { id: 'comments', label: 'Comments', icon: MessageSquare },
+    { id: 'following', label: 'Following', icon: Users },
+    { id: 'apply', label: '✍️ Write for Us', icon: PenTool },
+  ],
+  journalist: [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'articles', label: 'My Articles', icon: FileText },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'earnings', label: 'Earnings', icon: DollarSign },
+    { id: 'followers', label: 'Followers', icon: Users },
+    { id: 'saved', label: 'Saved', icon: Bookmark },
+    { id: 'liked', label: 'Liked', icon: Heart },
+  ],
+  admin: [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'articles', label: 'Manage Articles', icon: FileText },
+    { id: 'users', label: 'Manage Users', icon: Users },
+    { id: 'journalists', label: 'Journalists', icon: Share2 },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  ]
 }
 
 export default function ProfilePage() {
   const router = useRouter()
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
-  const [userId, setUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [stats, setStats] = useState({ articles: 0, saved: 0, following: 0, comments: 0, followers: 0 })
 
-  const [savedArticles, setSaved] = useState([])
-  const [likedArticles, setLiked] = useState([])
-  const [comments, setComments] = useState([])
-  const [following, setFollowing] = useState([])
-  const [conversations, setConversations] = useState([])
-  const [notifs, setNotifs] = useState([])
-  // Inline messaging (wired directly into the profile sidebar)
-  const [activeChat, setActiveChat] = useState<any>(null)
-  const [chatMessages, setChatMessages] = useState<any[]>([])
-  const [chatDraft, setChatDraft] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const [msgUnread, setMsgUnread] = useState<Record<number, number>>({})
-  const { onlineUsers } = useRealtime()
-  const onlineIds = new Set((onlineUsers ?? []).map((o: any) => o.user_id))
-  const [selectedConversation, setSelectedConversation] = useState<any>(null)
-  const [messageDraft, setMessageDraft] = useState('')
-  const [isSending, setIsSending] = useState(false)
-  const [readingData, setReadingData] = useState([0, 0, 0, 0, 0, 0, 0])
-  const [interests, setInterests] = useState<string[]>([])
-  // Journalist dashboard data
-  const [myArticles, setMyArticles] = useState<any[]>([])
-  const [myEarnings, setMyEarnings] = useState<any[]>([])
-  const [totalJournalists, setTotalJournalists] = useState(0)
-  const [myRank, setMyRank] = useState(1)
-  const [stats, setStats] = useState({ articles: 0, saved: 0, following: 0, comments: 0 })
-  // Journalist application state
-  const [applyStep, setApplyStep] = useState(1)
-  const [applyFirstName, setApplyFirstName] = useState('')
-  const [applyLastName, setApplyLastName] = useState('')
-  const [applyTitle, setApplyTitle] = useState('')
-  const [applyNiche, setApplyNiche] = useState('')
-  const [applyBio, setApplyBio] = useState('')
-  const [applyExperience, setApplyExperience] = useState('')
-  const [applyPortfolio, setApplyPortfolio] = useState('')
-  const [applyLinkedin, setApplyLinkedin] = useState('')
-  const [applyMotivation, setApplyMotivation] = useState('')
-  const [applyTerms, setApplyTerms] = useState(false)
-  const [applySubmitting, setApplySubmitting] = useState(false)
-  const [applyError, setApplyError] = useState('')
-  const [applySuccess, setApplySuccess] = useState(false)
-  const APPLY_NICHES = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena']
-  const APPLY_EXP = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years']
-
-  useEffect(() => {
-    loadProfile()
-  }, [])
-
-  useEffect(() => {
-    if (userId === null || !user) return
-    loadSaved()
-    loadLiked()
-    loadComments()
-    loadNotifs()
-    loadFollowing()
-    loadConversations()
-    loadStats()
-    loadInterests()
-    loadReadingActivity()
-    loadDashboard()
-  }, [userId, user])
-
-  const loadDashboard = async () => {
-    if (!userId) return
+  const loadProfile = useCallback(async () => {
     try {
-      const role = (user as any)?.role
-      if (role === 'journalist') {
-        const [{ data: arts }, { data: earns }, { count: totJ }, { count: abvJ }] = await Promise.all([
-          supabase.from('articles').select('article_id, title, slug, status, featured_image, views, earnings, created_at').eq('author_id', userId).order('created_at', { ascending: false }).limit(10),
-          supabase.from('earnings').select('amount, payout_status, created_at, source').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
-          supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never),
-          supabase.from('users').select('user_id', { count: 'exact', head: true }).eq('role', 'journalist' as never).gt('rank_score', (user as any)?.rank_score ?? 0),
-        ])
-        setMyArticles((arts as any[]) || [])
-        setMyEarnings((earns as any[]) || [])
-        setTotalJournalists(totJ ?? 0)
-        setMyRank((abvJ ?? 0) + 1)
-      }
-    } catch {}
-  }
-
-  const loadProfile = async () => {
-    try {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-      // No valid session (stale/expired cookie, or none) — send the
-      // reader to login rather than rendering a broken/empty profile.
-      if (authError || !authUser?.id) {
-        if (typeof window !== 'undefined') router.push('/login?redirect=/profile')
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser?.id) {
+        router.push('/login?redirect=/profile')
         return
       }
-      const { data } = await supabase.from('users').select('*').eq('auth_id', authUser.id).maybeSingle()
-      const p = data as any
-      if (p) {
-        setUser(p as UserProfile)
-        setUserId(p.user_id)
-        return
-      }
-      // No users row yet — ask the server to create it (server-side,
-      // bypasses RLS so it always succeeds for a valid session).
-      try {
-        const res = await fetch('/api/profile/ensure', { method: 'POST' })
-        if (res.ok) {
-          const { profile } = await res.json()
-          if (profile) {
-            setUser(profile as UserProfile)
-            setUserId((profile as any).user_id)
-            return
-          }
-        }
-      } catch {}
-      // Last-resort fallback so the page still renders.
-      setUser({
-        name: (authUser.user_metadata?.name as string) || (authUser.email ? authUser.email.split('@')[0] : 'Reader'),
-        role: (authUser.user_metadata?.role as string) || 'reader',
-        email: authUser.email ?? undefined,
-        profile_image: (authUser.user_metadata?.avatar_url as string) || null,
-        created_at: authUser.created_at,
-      })
-      setUserId(null)
-    } catch {
-      setUser({ name: 'Reader', role: 'reader' })
-      setUserId(null)
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', authUser.id)
+        .maybeSingle()
+      if (data) setUser(data)
+    } catch (err) {
+      console.error('Failed to load profile:', err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase, router])
 
-  const loadStats = async () => {
-    if (!userId) return
+  const loadStats = useCallback(async () => {
+    if (!user?.user_id) return
     try {
-      const [saved, following, comments, articles] = await Promise.all([
-        supabase.from('saved_articles').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
-        supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('author_id', userId),
+      const [saved, following, comments, articles, followers] = await Promise.all([
+        supabase.from('saved_articles').select('*', { count: 'exact', head: true }).eq('user_id', user.user_id),
+        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.user_id),
+        supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', user.user_id),
+        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('author_id', user.user_id),
+        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', user.user_id),
       ])
       setStats({
         articles: articles.count ?? 0,
         saved: saved.count ?? 0,
         following: following.count ?? 0,
         comments: comments.count ?? 0,
+        followers: followers.count ?? 0,
       })
-    } catch {}
-  }
-
-  const loadInterests = async () => {
-    try {
-      const { data: cats } = await supabase.from('categories').select('name').limit(8)
-      if (cats && cats.length > 0) {
-        setInterests(cats.map((c: any) => c.name))
-      } else {
-        const stored = localStorage.getItem('026-interests')
-        if (stored) setInterests(JSON.parse(stored))
-      }
-    } catch {
-      const stored = localStorage.getItem('026-interests')
-      if (stored) setInterests(JSON.parse(stored))
+    } catch (err) {
+      console.error('Failed to load stats:', err)
     }
-  }
+  }, [user?.user_id, supabase])
 
-  const loadReadingActivity = async () => {
-    if (!userId) return
-    try {
-      const now = new Date()
-      const dayOfWeek = now.getDay()
-      const monday = new Date(now)
-      monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7))
-      monday.setHours(0, 0, 0, 0)
+  useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
 
-      const [savedRes, likedRes] = await Promise.all([
-        supabase.from('saved_articles').select('saved_at').eq('user_id', userId).gte('saved_at', monday.toISOString()),
-        supabase.from('article_likes').select('created_at').eq('user_id', userId).gte('created_at', monday.toISOString()),
-      ])
-
-      const dailyCounts = [0, 0, 0, 0, 0, 0, 0]
-      const allDates = [
-        ...(savedRes.data || []).map((s: any) => s.saved_at),
-        ...(likedRes.data || []).map((l: any) => l.created_at),
-      ]
-      for (const dateStr of allDates) {
-        const d = new Date(dateStr)
-        const diffDays = Math.floor((d.getTime() - monday.getTime()) / 86400000)
-        if (diffDays >= 0 && diffDays < 7) dailyCounts[diffDays]++
-      }
-      setReadingData(dailyCounts)
-    } catch {}
-  }
-
-  const loadSaved = async () => {
-    if (!userId) return
-    try {
-      const { data } = await supabase
-        .from('saved_articles')
-        .select('article_id, saved_at, articles!inner(article_id, title, slug, featured_image, excerpt, status, author_id, reading_time_minutes, created_at, author:users(name), category:categories(name))')
-        .eq('user_id', userId)
-        .order('saved_at', { ascending: false })
-        .limit(10)
-      setSaved((data as any[]) || [])
-    } catch {
-      setSaved([])
+  useEffect(() => {
+    if (user?.user_id) {
+      loadStats()
     }
-  }
+  }, [user?.user_id, loadStats])
 
-  const loadLiked = async () => {
-    if (!userId) return
-    try {
-      const { data } = await supabase
-        .from('article_likes')
-        .select('article_id, created_at, articles!inner(article_id, title, slug, featured_image, excerpt, status, reading_time_minutes, created_at, author:users(name), category:categories(name))')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      setLiked((data as any[]) || [])
-    } catch {
-      setLiked([])
-    }
-  }
+  if (loading) return <LoadingSpinner />
+  if (!user) return <div className="p-6 text-center" style={{ color: 'var(--text-secondary)' }}>Profile not found</div>
 
-  const loadComments = async () => {
-    if (!userId) return
-    try {
-      const { data } = await supabase
-        .from('comments')
-        .select('comment_id, comment_text, created_at, article_id, articles!inner(article_id, title)')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      setComments((data as any[]) || [])
-    } catch {
-      setComments([])
-    }
-  }
-
-  const loadNotifs = async () => {
-    if (!userId) return
-    try {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(5)
-      setNotifs((data as any[]) || [])
-    } catch {
-      setNotifs([])
-    }
-  }
-
-  const loadFollowing = async () => {
-    if (!userId) return
-    try {
-      const { data } = await supabase
-        .from('user_follows')
-        .select('following_id, users!inner(user_id, name, role, profile_image, total_views)')
-        .eq('follower_id', userId)
-        .limit(10)
-      setFollowing((data as any[]) || [])
-    } catch {
-      setFollowing([])
-    }
-  }
-
-  const loadConversations = async () => {
-    if (!userId) return
-    try {
-      const { data: msgs } = await supabase
-        .from('messages')
-        .select('sender_id, receiver_id, content, created_at, is_read')
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-        .order('created_at', { ascending: false })
-        .limit(50)
-      if (!msgs?.length) { setConversations([]); return }
-
-      const convMap = new Map()
-      for (const msg of msgs) {
-        const otherId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id
-        if (otherId === userId) continue
-        if (!convMap.has(otherId)) {
-          const { data: u } = await supabase.from('users').select('user_id, name, profile_image, role').eq('user_id', otherId).single()
-          const fallback = { user_id: otherId, name: 'Unknown', profile_image: null, role: 'user' }
-          convMap.set(otherId, {
-            other_user: u || fallback,
-            last_message: msg.content,
-            last_message_at: msg.created_at,
-            unread: msg.sender_id !== userId && !msg.is_read ? 1 : 0,
-          })
-        }
-      }
-      setConversations(Array.from(convMap.values()).slice(0, 5) as any)
-    } catch { setConversations([]) }
-  }
-
-  const openChat = async (other: any) => {
-    if (!userId) return
-    setActiveChat(other)
-    setChatLoading(true)
-    try {
-      const res = await fetch(`/api/messages/${other.user_id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setChatMessages(data.messages ?? [])
-      }
-      await fetch(`/api/messages/${other.user_id}`, { method: 'PATCH' })
-      setMsgUnread(prev => ({ ...prev, [other.user_id]: 0 }))
-    } catch { /* ignore */ } finally {
-      setChatLoading(false)
-    }
-  }
-
-  const sendChatMessage = async () => {
-    if (!chatDraft.trim() || !activeChat || !userId) return
-    const content = chatDraft.trim()
-    setChatDraft('')
-    const temp = { message_id: -Date.now(), sender_id: userId, receiver_id: activeChat.user_id, content, is_read: true, created_at: new Date().toISOString() }
-    setChatMessages(prev => [...prev, temp])
-    try {
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId: activeChat.user_id, content }),
-      })
-    } catch { /* ignore */ }
-  }
-
-  const getInitialsSafe = (name?: string | null) => {
-    const n = (name || '').trim()
-    if (!n) return 'U'
-    return n.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U'
-  }
-  const initials = getInitialsSafe(user?.name)
-  const displayName = user?.name || 'Reader'
-
-  const getNotificationDisplay = (n: any) => {
-    const name = n?.actor_name || n?.sender_name || 'Someone'
-    const inits = getInitialsSafe(name)
-    const colors = ['oklch(50% 0.14 200)', 'oklch(50% 0.14 320)', 'oklch(50% 0.14 90)', 'oklch(50% 0.14 30)', 'oklch(50% 0.14 350)']
-    const color = colors[(n.notification_id || 0) % colors.length]
-    const timeAgo = getTimeAgo(n.created_at)
-    const isUnread = !n.is_read
-    let text = ''
-    if (n.type === 'article_published') text = `<strong>${name}</strong> published a new article`
-    else if (n.type === 'comment_reply') text = `<strong>${name}</strong> replied to your comment`
-    else if (n.type === 'comment_like') text = `<strong>${name}</strong> liked your comment`
-    else if (n.type === 'follow') text = `<strong>${name}</strong> started following you`
-    else text = n.message || `<strong>${name}</strong> sent you a notification`
-    return { id: n.notification_id, initials: inits, color, text, time: timeAgo, unread: isUnread }
-  }
-
-  const getTimeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Just now'
-    if (mins < 60) return `${mins} min ago`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`
-    const days = Math.floor(hrs / 24)
-    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
-  const getFollowingDisplay = (f: any) => {
-    const u = f.users
-    const name = u?.name || 'Unknown'
-    const inits = getInitialsSafe(name)
-    const colors = ['oklch(50% 0.14 200)', 'oklch(50% 0.14 30)', 'oklch(50% 0.14 350)', 'oklch(50% 0.14 140)']
-    const color = colors[(f.following_id || 0) % colors.length]
-    const views = u?.total_views ? `${Math.round(u.total_views / 1000)}K views` : ''
-    const role = u?.role ? `${u.role}${views ? ' · ' + views : ''}` : views || 'Reader'
-    return { name, initials: inits, color, role }
-  }
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
-      <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  const tabs = TAB_CONFIG[user.role] || TAB_CONFIG.reader
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8">
-      {/* Profile Header */}
-      <div className="bg-surface border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden backdrop-blur-xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
-        <div className="profile-header" style={{ marginBottom: 0 }}>
-          <div style={{ width: 96, height: 96, borderRadius: 24, background: user?.profile_image ? 'transparent' : 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0, overflow: 'hidden' }}>
-            {user?.profile_image ? (
-              <img src={user.profile_image} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              initials
+    <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
+        <Header user={user} stats={stats} />
+        <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+        <TabContent user={user} activeTab={activeTab} stats={stats} />
+      </div>
+    </div>
+  )
+}
+
+function Header({ user, stats }: { user: UserProfile; stats: any }) {
+  const initials = (user.name || 'U')
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+
+  const handleButtonHover = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const target = e.currentTarget as HTMLAnchorElement
+    if (e.type === 'mouseenter') {
+      target.style.background = 'var(--primary-light)'
+      target.style.borderColor = 'var(--primary)'
+      target.style.color = 'var(--primary)'
+    } else {
+      target.style.background = 'transparent'
+      target.style.borderColor = 'var(--border)'
+      target.style.color = 'var(--text-secondary)'
+    }
+  }
+
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '20px',
+        padding: '36px',
+        boxShadow: '0 1px 3px var(--card-shadow)',
+        marginBottom: '32px',
+      }}
+      className="animate-fade-up"
+    >
+      <div className="flex flex-col md:flex-row gap-8">
+        <div
+          className="w-32 h-32 md:w-24 md:h-24 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-bold text-white overflow-hidden group"
+          style={{
+            background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+            boxShadow: '0 8px 24px rgba(29, 155, 240, 0.2)',
+          }}
+        >
+          {user.profile_image ? (
+            <img
+              src={user.profile_image}
+              alt={user.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
+
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+              {user.name}
+            </h1>
+            {user.role === 'admin' && (
+              <span
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  background: 'var(--error-light)',
+                  color: 'var(--error)',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                }}
+              >
+                ADMIN
+              </span>
+            )}
+            {user.role === 'journalist' && (
+              <span
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  background: 'var(--accent-light)',
+                  color: 'var(--accent)',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                }}
+              >
+                JOURNALIST
+              </span>
             )}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>{displayName}</h1>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: 10 }}>@{displayName.toLowerCase().replace(/\s/g, '')} · Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</p>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '55ch', lineHeight: 1.55, marginBottom: 16 }}>
-              {user?.bio || 'No bio yet.'}
+
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-tertiary)', marginBottom: '8px' }}>
+            @{user.name?.toLowerCase().replace(/\s/g, '')} · Member since{' '}
+            {user.created_at
+              ? new Date(user.created_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'Unknown'}
+          </p>
+          {user.bio && (
+            <p
+              style={{
+                fontSize: '0.95rem',
+                color: 'var(--text-secondary)',
+                marginBottom: '16px',
+                lineHeight: '1.6',
+                maxWidth: '600px',
+              }}
+            >
+              {user.bio}
             </p>
-            <div className="profile-stats-row" style={{ fontSize: '0.82rem' }}>
-              <span><strong style={{ fontWeight: 700 }}>{stats.articles}</strong> <span style={{ color: 'var(--text-tertiary)' }}>articles read</span></span>
-              <span><strong style={{ fontWeight: 700 }}>{stats.saved}</strong> <span style={{ color: 'var(--text-tertiary)' }}>saved</span></span>
-              <span><strong style={{ fontWeight: 700 }}>{stats.following}</strong> <span style={{ color: 'var(--text-tertiary)' }}>following</span></span>
-              <span><strong style={{ fontWeight: 700 }}>{stats.comments}</strong> <span style={{ color: 'var(--text-tertiary)' }}>comments</span></span>
-            </div>
-           </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <StatItem label="Following" value={user.role === 'reader' ? 0 : stats.following || 0} />
+            <StatItem
+              label="Followers"
+              value={user.role === 'journalist' ? stats.followers || 0 : stats.saved || 0}
+            />
+            {user.role !== 'admin' && <StatItem label="Saved" value={stats.saved || 0} />}
+            {user.role === 'journalist' && <StatItem label="Articles" value={stats.articles || 0} />}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/settings"
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                color: 'var(--text-secondary)',
+                background: 'transparent',
+                textDecoration: 'none',
+                transition: 'all 0.2s',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              onMouseEnter={handleButtonHover}
+              onMouseLeave={handleButtonHover}
+            >
+              <Settings size={16} /> Settings
+            </a>
+            {user.role === 'journalist' && (
+              <a
+                href="/journalist/analytics"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: 'var(--text-secondary)',
+                  background: 'transparent',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onMouseEnter={handleButtonHover}
+                onMouseLeave={handleButtonHover}
+              >
+                <BarChart3 size={16} /> Analytics
+              </a>
+            )}
+            {user.role === 'admin' && (
+              <a
+                href="/admin"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  background: 'var(--primary)',
+                  color: '#fff',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                ⚙️ Admin Panel <ArrowRight size={14} />
+              </a>
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
 
-        {/* Tabs — rendered below the user profile details */}
-        <div className="profile-tabs" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+function StatItem({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      style={{
+        padding: '12px',
+        borderRadius: '10px',
+        background: 'var(--bg-inset)',
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+        {value}
+      </div>
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{label}</div>
+    </div>
+  )
+}
+
+function TabNavigation({
+  tabs,
+  activeTab,
+  setActiveTab,
+}: {
+  tabs: any[]
+  activeTab: string
+  setActiveTab: (tab: string) => void
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: '8px',
+        overflowX: 'auto',
+        paddingBottom: '16px',
+        borderBottom: '1px solid var(--border-subtle)',
+        marginBottom: '32px',
+        scrollbarWidth: 'none',
+        WebkitOverflowScrolling: 'touch',
+      } as React.CSSProperties}
+    >
+      {tabs.map((tab) => {
+        const Icon = tab.icon
+        const isActive = activeTab === tab.id
+        return (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '12px 20px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              border: 'none',
+              background: 'transparent',
+              color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              borderBottom: isActive ? '2px solid var(--primary)' : '2px solid transparent',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <Icon size={16} /> {tab.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function TabContent({
+  user,
+  activeTab,
+  stats,
+}: {
+  user: UserProfile
+  activeTab: string
+  stats: any
+}) {
+  return (
+    <div className="animate-fade-up">
+      {activeTab === 'dashboard' && <DashboardTab user={user} stats={stats} />}
+      {activeTab === 'articles' && <ArticlesTab />}
+      {activeTab === 'analytics' && <AnalyticsTab />}
+      {activeTab === 'earnings' && <EarningsTab />}
+      {activeTab === 'followers' && <FollowersTab />}
+      {activeTab === 'saved' && <SavedTab />}
+      {activeTab === 'liked' && <LikedTab />}
+      {activeTab === 'comments' && <CommentsTab />}
+      {activeTab === 'following' && <FollowingTab stats={stats} />}
+      {activeTab === 'apply' && <ApplyTab />}
+      {activeTab === 'users' && <UsersTab />}
+      {activeTab === 'journalists' && <JournalistsTab />}
+    </div>
+  )
+}
+
+function DashboardTab({ user, stats }: { user: UserProfile; stats: any }) {
+  if (user.role === 'reader') {
+    return (
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card label="Articles Read" value={stats.articles || 0} icon="📖" color="var(--primary)" />
+          <Card label="Saved" value={stats.saved || 0} icon="🔖" color="var(--accent)" />
+          <Card label="Following" value={stats.following || 0} icon="👥" color="var(--success)" />
+          <Card label="Comments" value={stats.comments || 0} icon="💬" color="var(--warning)" />
+        </div>
+        <EmptyState
+          icon="📚"
+          title="Welcome, Reader!"
+          desc="Explore articles, save favorites, and follow writers"
+          cta="Browse Articles"
+          ctaLink="/"
+        />
+      </div>
+    )
+  }
+
+  if (user.role === 'journalist') {
+    return (
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card label="Published" value={stats.articles || 0} icon="✍️" color="var(--primary)" />
+          <Card label="Followers" value={stats.followers || 0} icon="👥" color="var(--accent)" />
+          <Card label="Total Views" value={user.total_views || 0} icon="👁️" color="var(--success)" />
+          <Card label="Earnings" value="Ksh 0" icon="💰" color="var(--warning)" />
+        </div>
+        <div className="bg-gradient-to-br from-primary-light to-accent-light rounded-2xl p-8 border border-border-subtle">
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-primary)' }}>
+            Journalist Dashboard
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            Manage your articles and track your success
+          </p>
+          <a
+            href="/journalist/create"
+            style={{
+              padding: '12px 24px',
+              background: 'var(--primary)',
+              color: '#fff',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              display: 'inline-block',
+            }}
+          >
+            ✍️ Create New Article
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card label="Total Articles" value="1,234" icon="📰" color="var(--primary)" />
+        <Card label="Active Users" value="5,678" icon="👥" color="var(--accent)" />
+      </div>
+      <div
+        style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '16px',
+          padding: '28px',
+          boxShadow: '0 1px 3px var(--card-shadow)',
+        }}
+      >
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>
+          Admin Dashboard
+        </h2>
+        <div className="flex flex-wrap gap-3">
           {[
-            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, count: null },
-            { id: 'saved', label: 'Saved', icon: Bookmark, count: stats.saved },
-            { id: 'liked', label: 'Liked', icon: Heart, count: likedArticles.length },
-            { id: 'comments', label: 'Comments', icon: MessageSquare, count: stats.comments },
-            { id: 'history', label: 'History', icon: null, count: null },
-            // Only show apply tab to readers who haven't applied yet
-            ...(user && user.role === 'reader' && !(user as any).author_application ? [{ id: 'become-journalist', label: '✍️ Write for Us', icon: null, count: null }] : []),
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`profile-tab-btn${activeTab === tab.id ? ' active' : ''}`}
-              style={{ fontWeight: activeTab === tab.id ? 600 : 500, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)' }}>
-              {tab.icon && <tab.icon size={15} />}
-              {tab.label}
-              {tab.count != null && (
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: activeTab === tab.id ? 'var(--primary-light)' : 'var(--bg-inset)', color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)' }}>{tab.count}</span>
-              )}
-            </button>
+            { href: '/admin/articles', label: 'Manage Articles', color: 'var(--primary)' },
+            { href: '/admin/users', label: 'Manage Users', color: 'var(--accent)' },
+            { href: '/admin/journalists', label: 'Journalists', color: 'var(--warning)' },
+            { href: '/admin/analytics', label: 'Analytics', color: 'var(--success)' },
+          ].map((btn) => (
+            <a
+              key={btn.href}
+              href={btn.href}
+              style={{
+                padding: '12px 20px',
+                background: btn.color,
+                color: '#fff',
+                borderRadius: '10px',
+                fontWeight: '600',
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              {btn.label}
+            </a>
           ))}
         </div>
-
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-        <main className="lg:col-span-2 space-y-6">
-          {/* Journalist application status */}
-          {user && (user as any).author_application?.status === 'pending' && (
-            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--warning-light)', color: 'var(--warning)', border: '1px solid var(--warning-light)' }}>
-              <span style={{ fontSize: '1.1rem' }}>⏳</span>
-              <span>Your journalist application is under review by our editorial team. We&apos;ll notify you once a decision is made.</span>
-            </div>
-          )}
-          {user && (user as any).author_application?.status === 'approved' && (
-            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--success-light)', color: 'var(--success)', border: '1px solid var(--success-light)' }}>
-              <span style={{ fontSize: '1.1rem' }}>✅</span>
-               <span>Your journalist application was approved! You can now publish articles. <Link href="/journalist/create" style={{ color: 'var(--success)', fontWeight: 600, textDecoration: 'underline' }}>Create your first article</Link></span>
-            </div>
-          )}
-          {user && (user as any).author_application?.status === 'declined' && (
-            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--error-light)', color: 'var(--error)', border: '1px solid var(--error-light)' }}>
-              <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
-              <span>Your journalist application was not approved{(user as any).author_application?.reason ? `: ${(user as any).author_application.reason}` : ''}. You can apply again anytime.</span>
-            </div>
-          )}
-
-          {/* Dashboard Tab — role-based, renders in the same page */}
-          {activeTab === 'dashboard' && (
-            <div className="space-y-6">
-              {user && user.role === 'reader' && (
-                <>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <DashCard label="Articles Read" value={stats.articles} icon={<Eye size={18} />} color="var(--primary)" />
-                    <DashCard label="Saved" value={stats.saved} icon={<Bookmark size={18} />} color="var(--accent)" />
-                    <DashCard label="Following" value={stats.following} icon={<Users size={18} />} color="var(--success)" />
-                    <DashCard label="Comments" value={stats.comments} icon={<MessageSquare size={18} />} color="var(--warning)" />
-                  </div>
-                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-                    <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <TrendingUp size={16} style={{ color: 'var(--accent)' }} /> Reading This Week
-                    </h3>
-                    <ReadingChart data={readingData} />
-                  </div>
-                  {!(user as any).author_application && (
-                    <button onClick={() => setActiveTab('become-journalist')} style={{ width: '100%', padding: '14px', borderRadius: 12, border: '1px solid var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
-                      ✍️ Want to write for us? Become a journalist
-                    </button>
-                  )}
-                </>
-              )}
-
-              {user && user.role === 'journalist' && (
-                <JournalistDashboard
-                  myArticles={myArticles}
-                  myEarnings={myEarnings}
-                  myRank={myRank}
-                  totalJournalists={totalJournalists}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Journalist Application Tab — only for readers without an existing application */}
-          {activeTab === 'become-journalist' && user && user.role === 'reader' && !(user as any).author_application && (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 24 }}>
-              {applySuccess ? (
-                <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '1.75rem' }}>✓</div>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Application Submitted!</h2>
-                  <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', maxWidth: 360, margin: '0 auto' }}>Our editorial team will review your application and get back to you within 48 hours.</p>
-                </div>
-              ) : (
-                <>
-                  {/* Progress steps */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, gap: 0 }}>
-                    {[{n:1,l:'About You'},{n:2,l:'Portfolio'},{n:3,l:'Submit'}].map((s, i) => (
-                      <div key={s.n} style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700, background: applyStep >= s.n ? 'var(--primary)' : 'var(--bg-inset)', color: applyStep >= s.n ? '#fff' : 'var(--text-muted)', border: applyStep >= s.n ? 'none' : '1px solid var(--border)', transition: 'all 0.3s' }}>{applyStep > s.n ? '✓' : s.n}</div>
-                          <span style={{ fontSize: '0.65rem', marginTop: 3, color: applyStep >= s.n ? 'var(--primary)' : 'var(--text-muted)', fontWeight: applyStep >= s.n ? 600 : 400 }}>{s.l}</span>
-                        </div>
-                        {i < 2 && <div style={{ width: 48, height: 2, margin: '0 6px', marginBottom: 14, background: applyStep > s.n ? 'var(--primary)' : 'var(--border)', transition: 'background 0.3s' }} />}
-                      </div>
-                    ))}
-                  </div>
-                  {applyError && <div style={{ padding: '10px 14px', borderRadius: 10, fontSize: '0.82rem', background: 'var(--error-light)', color: 'var(--error)', marginBottom: 16 }}>{applyError}</div>}
-                  {/* Step 1: About You */}
-                  {applyStep === 1 && (
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>About You</h3>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>Tell us about yourself and your writing background.</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                        <label style={{ display: 'block' }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>First Name</span><input value={applyFirstName} onChange={e => setApplyFirstName(e.target.value)} placeholder="John" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
-                        <label style={{ display: 'block' }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Last Name</span><input value={applyLastName} onChange={e => setApplyLastName(e.target.value)} placeholder="Doe" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
-                      </div>
-                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Professional Title</span><input value={applyTitle} onChange={e => setApplyTitle(e.target.value)} placeholder="e.g. Tech Reporter" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
-                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Writing Niche</span><select value={applyNiche} onChange={e => setApplyNiche(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}><option value="">Select a niche</option>{APPLY_NICHES.map(n => <option key={n} value={n}>{n}</option>)}</select></label>
-                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Bio</span><textarea value={applyBio} onChange={e => setApplyBio(e.target.value)} placeholder="Share your writing experience..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', minHeight: 80, resize: 'vertical' }} /></label>
-                      <label style={{ display: 'block', marginBottom: 20 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Experience</span><select value={applyExperience} onChange={e => setApplyExperience(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}><option value="">Select experience level</option>{APPLY_EXP.map(l => <option key={l} value={l}>{l}</option>)}</select></label>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setApplyStep(2)} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Continue →</button></div>
-                    </div>
-                  )}
-                  {/* Step 2: Portfolio */}
-                  {applyStep === 2 && (
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Your Portfolio</h3>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>Share links to your work.</p>
-                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Portfolio URL</span><input value={applyPortfolio} onChange={e => setApplyPortfolio(e.target.value)} placeholder="https://yourportfolio.com" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
-                      <label style={{ display: 'block', marginBottom: 20 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>LinkedIn Profile</span><input value={applyLinkedin} onChange={e => setApplyLinkedin(e.target.value)} placeholder="https://linkedin.com/in/yourprofile" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} /></label>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <button onClick={() => setApplyStep(1)} style={{ padding: '9px 22px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>← Back</button>
-                        <button onClick={() => setApplyStep(3)} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Continue →</button>
-                      </div>
-                    </div>
-                  )}
-                  {/* Step 3: Review & Submit */}
-                  {applyStep === 3 && (
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Review & Submit</h3>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>You're almost there! Tell us why you want to write for us.</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                        {[{ icon: '💰', title: '70% Revenue Share', desc: 'Keep the majority of your earnings' }, { icon: '📊', title: 'Analytics Dashboard', desc: 'Track your article performance' }, { icon: '💳', title: 'M-Pesa Withdrawals', desc: 'Get paid directly to your M-Pesa' }, { icon: '✍️', title: 'Rich Editor', desc: 'Powerful writing & editing tools' }].map(p => (
-                          <div key={p.title} style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--primary-muted)', border: '1px solid var(--border-subtle)' }}><span style={{ fontSize: '1.1rem' }}>{p.icon}</span><p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', margin: '4px 0 2px' }}>{p.title}</p><p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>{p.desc}</p></div>
-                        ))}
-                      </div>
-                      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 5 }}>Why do you want to write for 026connet!?</span><textarea value={applyMotivation} onChange={e => setApplyMotivation(e.target.value)} placeholder="Share your motivation..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', minHeight: 80, resize: 'vertical' }} /></label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
-                        <input type="checkbox" checked={applyTerms} onChange={e => setApplyTerms(e.target.checked)} style={{ accentColor: 'var(--primary)', width: 15, height: 15 }} />
-                        I agree to the terms and conditions
-                      </label>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <button onClick={() => setApplyStep(2)} style={{ padding: '9px 22px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>← Back</button>
-                        <button disabled={applySubmitting || !applyTerms} onClick={async () => {
-                          setApplySubmitting(true); setApplyError('')
-                          try {
-                            const res = await fetch('/api/auth/apply-journalist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ organization: [applyFirstName, applyLastName].filter(Boolean).join(' ') || undefined, portfolio: applyPortfolio || undefined, title: applyTitle || undefined, niche: applyNiche || undefined, bio: applyBio || undefined, experience: applyExperience || undefined, linkedin: applyLinkedin || undefined, motivation: applyMotivation || undefined }) })
-                            const data = await res.json()
-                            if (!res.ok) { setApplyError(data.error || 'Could not submit your application.'); setApplySubmitting(false); return }
-                            setApplySuccess(true)
-                          } catch { setApplyError('Network error. Please try again.') } finally { setApplySubmitting(false) }
-                        }} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: applyTerms ? 'pointer' : 'not-allowed', opacity: applyTerms ? 1 : 0.6 }}>
-                          {applySubmitting ? 'Submitting…' : 'Submit Application'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Saved Tab */}
-          {activeTab === 'saved' && (
-            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {savedArticles.length === 0 && (
-                <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
-                  <Bookmark size={40} style={{ color: 'var(--text-tertiary)', marginBottom: 12, opacity: 0.5 }} />
-                  <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>No saved articles yet</p>
-                  <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem', marginBottom: 16 }}>Save articles to read them later and keep track of what matters to you.</p>
-                  <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 9, fontSize: '0.82rem', fontWeight: 600, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', textDecoration: 'none' }}>
-                    Browse Articles
-                  </Link>
-                </div>
-              )}
-              {savedArticles.map((a: any, i) => {
-                const article = a.articles || a
-                return (
-                  <div key={i} className="profile-article-card" style={{ display: 'flex', gap: 16, padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, transition: 'all 0.25s', cursor: 'pointer' }}>
-                    <Link href={`/article/${article.slug || '#'}`} style={{ flex: '0 0 140px', textDecoration: 'none' }}>
-                      <Image src={article.featured_image || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
-                    </Link>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
-                      <div>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || 'Technology'}</span>
-                        <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          <Link href={`/article/${article.slug || '#'}`} style={{ color: 'inherit', textDecoration: 'none' }}>{article.title}</Link>
-                        </h3>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Saved {a.saved_at ? new Date(a.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.reading_time_minutes || 5} min read</div>
-                        </div>
-                        <button
-                          onClick={async (e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            if (!a.saved_id) return
-                            try {
-                              await fetch('/api/saved-articles', {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ saved_id: a.saved_id }),
-                              })
-                              setSaved((prev: any[]) => prev.filter((s: any) => s.saved_id !== a.saved_id))
-                              setStats((prev: any) => ({ ...prev, saved: Math.max(0, prev.saved - 1) }))
-                            } catch {}
-                          }}
-                          style={{
-                            width: 28, height: 28, borderRadius: 6,
-                            border: '1px solid var(--border-subtle)',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: 'var(--text-tertiary)',
-                            transition: 'all 0.15s',
-                          }}
-                          title="Remove from saved"
-                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--error-light)'; e.currentTarget.style.color = 'var(--error)'; e.currentTarget.style.borderColor = 'var(--error-light)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
-                        >
-                          <Bookmark size={13} fill="currentColor" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Liked Tab */}
-          {activeTab === 'liked' && (
-            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {likedArticles.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No liked articles yet.</p>}
-              {likedArticles.map((a: any, i) => {
-                const article = a.articles || a
-                return (
-                  <Link key={i} href={`/article/${article.slug || '#'}`} className="profile-article-card" style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer', opacity: 0.85 }}>
-                    <Image src={article.featured_image || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <div>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || 'Features & Profiles'}</span>
-                        <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.reading_time_minutes || 5} min read</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="card-action liked" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--error-light)', background: 'var(--error-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
-                            <Heart size={13} fill="currentColor" />
-                          </button>
-                          <button className="card-action" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-subtle)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>
-                            <Bookmark size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Comments Tab */}
-          {activeTab === 'comments' && (
-            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {comments.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No comments yet.</p>}
-              {comments.map((c: any) => (
-                <div key={c.comment_id} style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <MessageSquare size={12} /> Commented on <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{c.articles?.title || 'an article'}</span>
-                  </div>
-                  <p style={{ fontSize: '0.88rem', lineHeight: 1.55, color: 'var(--text-primary)', marginBottom: 10 }}>{c.comment_text}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                    <span>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* History Tab */}
-          {activeTab === 'history' && (
-            <div className="profile-tab-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {likedArticles.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>No reading history yet.</p>}
-              {likedArticles.slice(0, 5).map((a: any, i: number) => {
-                const article = a.articles || a
-                return (
-                  <Link key={i} href={`/article/${article.slug || '#'}`} className="profile-article-card" style={{ padding: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, textDecoration: 'none', color: 'inherit', transition: 'all 0.25s', cursor: 'pointer', opacity: 0.85 }}>
-                    <Image src={article.featured_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300&h=200&fit=crop'} alt={article.title} width={140} height={100} style={{ borderRadius: 9, objectFit: 'cover', width: '100%', height: 100 }} unoptimized />
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <div>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)' }}>{a.categories?.name || article.categories?.name || ''}</span>
-                        <h3 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.35, margin: '6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h3>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.users?.name || article.users?.name || 'Staff'}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Liked {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {article.reading_time_minutes || 5} min read</div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </main>
-
-        {/* Sidebar */}
-        <aside className="lg:col-span-1 space-y-6">
-          {/* Following — live online presence */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Users size={16} style={{ color: 'var(--accent)' }} /> Following
-              <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 600, color: 'var(--success)' }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', display: 'inline-block', animation: 'live-pulse 1.6s infinite' }} />
-                LIVE
-              </span>
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {following.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>Not following anyone yet.</p>}
-              {following.map((f: any, i: number) => {
-                const u = f.users
-                const online = u?.user_id && onlineIds.has(u.user_id)
-                return (
-                  <div key={i} onClick={() => u?.user_id && openChat({ user_id: u.user_id, name: u.name, profile_image: u.profile_image })} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: u?.user_id ? 'pointer' : 'default' }}>
-                    <div style={{ position: 'relative', width: 32, height: 32, borderRadius: 8, background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0, overflow: 'hidden' }}>
-                      {u?.profile_image
-                        ? <img src={u.profile_image} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : (u?.name?.charAt(0) || '?').toUpperCase()}
-                      {online && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{u?.name}</div>
-                      <div style={{ fontSize: '0.68rem', color: online ? 'var(--success)' : 'var(--text-tertiary)' }}>{online ? 'Online' : (u?.role || 'Offline')}</div>
-                    </div>
-                    <button style={{ padding: '5px 12px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 600, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>Following</button>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Reading This Week */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <TrendingUp size={16} style={{ color: 'var(--accent)' }} /> Reading This Week
-            </h3>
-            <ReadingChart data={readingData} />
-          </div>
-
-          {/* Your Interests */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Star size={16} style={{ color: 'var(--accent)' }} /> Your Interests
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {interests.map((interest, i) => (
-                <span key={i} style={{ padding: '5px 12px', background: 'var(--bg-inset)', borderRadius: 16, fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', cursor: 'pointer' }}>{interest}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Notifications */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Bell size={16} style={{ color: 'var(--accent)' }} /> Notifications
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {notifs.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No notifications.</p>}
-              {notifs.map((n: any) => {
-                const display = getNotificationDisplay(n)
-                return (
-                  <div key={display.id} style={{ display: 'flex', gap: 10, padding: 10, borderRadius: 9, background: display.unread ? 'var(--bg-inset)' : 'transparent', cursor: 'pointer', position: 'relative', paddingLeft: display.unread ? 16 : 10 }}>
-                    {display.unread && <span style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', width: 5, height: 5, background: 'var(--primary)', borderRadius: '50%' }} />}
-                    <div style={{ width: 28, height: 28, borderRadius: 7, background: display.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', flexShrink: 0 }}>
-                      {display.initials}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.78rem', lineHeight: 1.4, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: display.text }} />
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{display.time}</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <MessageSquare size={16} style={{ color: 'var(--accent)' }} /> Messages
-            </h3>
-
-            {!activeChat ? (
-              <>
-                {/* Online followers strip */}
-                {following.some((f: any) => onlineIds.has(f.users?.user_id)) && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', width: '100%', marginBottom: 2 }}>Online now</span>
-                    {following.filter((f: any) => onlineIds.has(f.users?.user_id)).slice(0, 8).map((f: any) => {
-                      const u = f.users
-                      return (
-                        <button key={u.user_id} onClick={() => openChat({ user_id: u.user_id, name: u.name, profile_image: u.profile_image })}
-                          title={`${u.name} · online`} style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--success)', cursor: 'pointer', background: 'var(--bg-inset)', padding: 0 }}>
-                          {u.profile_image
-                            ? <img src={u.profile_image} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontWeight: 700, fontSize: '0.7rem', color: 'var(--text-primary)' }}>{u.name?.charAt(0).toUpperCase()}</span>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {conversations.length === 0 ? (
-                    <p style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>No messages yet.</p>
-                  ) : (conversations as any[]).map((c: any, i: number) => {
-                    const oid = c.other_user?.user_id
-                    const online = oid && onlineIds.has(oid)
-                    const unread = msgUnread[oid] ?? c.unread ?? 0
-                    return (
-                      <div key={i} onClick={() => openChat(c.other_user)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 9, cursor: 'pointer', background: unread > 0 ? 'var(--bg-inset)' : 'transparent', transition: 'background 0.2s' }}>
-                        <div style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-inset)' }}>
-                          {c.other_user?.profile_image ? (
-                            <img src={c.other_user.profile_image} alt={c.other_user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{c.other_user?.name?.charAt(0) || '?'}</div>
-                          )}
-                          {online && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.other_user?.name}</div>
-                          <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.last_message}</div>
-                        </div>
-                        {unread > 0 && (
-                          <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: 'var(--error)', color: '#fff', fontSize: '0.62rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{unread}</span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-                {(conversations as any[]).length > 3 && (
-                  <Link href="/inbox" style={{ display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View all in inbox</Link>
-                )}
-              </>
-            ) : (
-              <>
-                {/* Thread header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <button onClick={() => setActiveChat(null)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'var(--bg-muted)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Back">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-                  </button>
-                  <div style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-inset)' }}>
-                    {activeChat.profile_image ? (
-                      <img src={activeChat.profile_image} alt={activeChat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{activeChat.name?.charAt(0)}</div>
-                    )}
-                    {onlineIds.has(activeChat.user_id) && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-surface)' }} />}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }} className="truncate">{activeChat.name}</div>
-                    <div style={{ fontSize: '0.66rem', color: onlineIds.has(activeChat.user_id) ? 'var(--success)' : 'var(--text-tertiary)' }}>{onlineIds.has(activeChat.user_id) ? 'Online' : 'Offline'}</div>
-                  </div>
-                </div>
-
-                {/* Messages */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto', padding: '4px 2px', marginBottom: 10 }}>
-                  {chatLoading ? (
-                    <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-tertiary)', padding: 16 }}>Loading…</p>
-                  ) : chatMessages.length === 0 ? (
-                    <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-tertiary)', padding: 16 }}>Say hi to {activeChat.name?.split(' ')[0]} 👋</p>
-                  ) : (
-                    chatMessages.map((m: any) => {
-                      const mine = m.sender_id === userId
-                      return (
-                        <div key={m.message_id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                          <div style={{
-                            maxWidth: '80%', padding: '7px 11px', borderRadius: 12, fontSize: '0.76rem', lineHeight: 1.4,
-                            color: mine ? '#fff' : 'var(--text-primary)',
-                            background: mine ? 'var(--primary)' : 'var(--bg-muted)',
-                            borderBottomRightRadius: mine ? 3 : 12,
-                            borderBottomLeftRadius: mine ? 12 : 3,
-                          }}>
-                            {m.content}
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-
-                {/* Composer */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={chatDraft}
-                    onChange={e => setChatDraft(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') sendChatMessage() }}
-                    placeholder={`Message ${activeChat.name?.split(' ')[0]}…`}
-                    style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 10, padding: '9px 12px', fontSize: '0.8rem', color: 'var(--text-primary)', background: 'var(--bg-base)', outline: 'none' }}
-                  />
-                  <button onClick={sendChatMessage} disabled={!chatDraft.trim()} style={{ width: 38, height: 38, borderRadius: 10, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: chatDraft.trim() ? 1 : 0.5 }}>
-                    <Send size={15} />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </aside>
       </div>
     </div>
   )
 }
 
-function DashCard({ label, value, icon, color }: { label: string; value: number | string; icon: React.ReactNode; color: string }) {
+function Card({ label, value, icon, color }: any) {
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
-    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>{label}</span>
-        <span style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-inset)', color }}>{icon}</span>
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '14px',
+        padding: '20px',
+        boxShadow: '0 1px 3px var(--card-shadow)',
+        transition: 'all 0.3s var(--ease-out-expo)',
+        cursor: 'pointer',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadowValue: isHovered ? '0 8px 16px rgba(0,0,0,0.1)' : '0 1px 3px var(--card-shadow)',
+      } as React.CSSProperties}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <span
+          style={{
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            color: 'var(--text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {label}
+        </span>
+        <span style={{ fontSize: '1.5rem' }}>{icon}</span>
       </div>
-      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
+      <div style={{ fontSize: '2rem', fontWeight: 'bold', color }}>{value}</div>
     </div>
   )
 }
 
-function ReadingChart({ data }: { data: number[] }) {
-  const max = Math.max(...data)
+function EmptyState({ icon, title, desc, cta, ctaLink }: any) {
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, padding: '8px 0' }}>
-        {data.map((val, i) => (
-          <div key={i} style={{ flex: 1, borderRadius: 3, background: val > 0 ? 'var(--primary-light)' : 'var(--bg-inset)', height: val > 0 ? `${Math.max(8, (val / max) * 100)}%` : '8px', opacity: val > 0 ? 1 : 0.3, minHeight: 4, transition: 'background 0.15s' }} />
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
-        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-      </div>
+    <div
+      style={{
+        background: 'linear-gradient(135deg, var(--primary-light) 0%, var(--accent-light) 100%)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '16px',
+        padding: '60px 40px',
+        textAlign: 'center',
+      }}
+      className="animate-fade-up"
+    >
+      <div style={{ fontSize: '3rem', marginBottom: '16px' }}>{icon}</div>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-primary)' }}>
+        {title}
+      </h2>
+      <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>{desc}</p>
+      <a
+        href={ctaLink}
+        style={{
+          padding: '12px 28px',
+          background: 'var(--primary)',
+          color: '#fff',
+          borderRadius: '10px',
+          textDecoration: 'none',
+          fontWeight: 'bold',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'transform 0.2s',
+          transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {cta} <ArrowRight size={16} />
+      </a>
     </div>
   )
 }
 
-function JournalistDashboard({ myArticles, myEarnings, myRank, totalJournalists }: {
-  myArticles: any[]
-  myEarnings: any[]
-  myRank: number
-  totalJournalists: number
-}) {
-  const published = myArticles.filter(a => a.status === 'published').length
-  const inReview = myArticles.filter(a => a.status === 'under_review').length
-  const totalViews = myArticles.reduce((s: number, a: any) => s + (a.views ?? 0), 0)
-  const totalEarn = myEarnings.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-  const thisMonth = new Date().toISOString().slice(0, 7)
-  const monthEarn = myEarnings.filter((e: any) => (e.created_at || '').startsWith(thisMonth)).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+function LoadingSpinner() {
   return (
-    <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashCard label="Published" value={published} icon={<CheckCircle size={18} />} color="var(--success)" />
-        <DashCard label="In Review" value={inReview} icon={<Clock size={18} />} color="var(--warning)" />
-        <DashCard label="Total Views" value={totalViews.toLocaleString()} icon={<Eye size={18} />} color="var(--primary)" />
-        <DashCard label="Earnings" value={`Ksh ${totalEarn.toLocaleString()}`} icon={<DollarSign size={18} />} color="var(--accent)" />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <PenTool size={16} style={{ color: 'var(--accent)' }} /> Recent Articles
-          </h3>
-          {myArticles.length === 0 ? (
-            <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>No articles yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {myArticles.slice(0, 5).map((a: any) => (
-                <Link key={a.article_id} href={`/article/${a.slug || a.article_id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-inset)', textDecoration: 'none', color: 'inherit' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</span>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', marginLeft: 8, flexShrink: 0 }}>{a.status}</span>
-                </Link>
-              ))}
-              <Link href="/journalist/articles" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>View all articles</Link>
-            </div>
-          )}
-        </div>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 20 }}>
-          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <DollarSign size={16} style={{ color: 'var(--accent)' }} /> Earnings
-          </h3>
-          <div className="space-y-2">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>This month</span><strong>Ksh {monthEarn.toLocaleString()}</strong></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>All time</span><strong>Ksh {totalEarn.toLocaleString()}</strong></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}><span style={{ color: 'var(--text-tertiary)' }}>Author rank</span><strong>#{myRank} of {totalJournalists}</strong></div>
-          </div>
-          <Link href="/journalist/earnings" style={{ display: 'block', textAlign: 'center', padding: '8px 0', fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', marginTop: 8 }}>View earnings</Link>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        <Link href="/journalist/create" style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--primary)', color: '#fff', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>+ New Article</Link>
-        <Link href="/journalist/analytics" style={{ padding: '10px 18px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none' }}>Analytics</Link>
-      </div>
-    </>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg-base)',
+      }}
+    >
+      <div className="animate-spin" style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--primary-light)', borderTopColor: 'var(--primary)' }} />
+    </div>
   )
 }
 
-function AdminQuickLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
+function ArticlesTab() {
   return (
-    <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, background: 'var(--bg-inset)', textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, transition: 'background 0.15s' }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--primary-light)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-inset)' }}>
-      <span style={{ color: 'var(--primary)' }}>{icon}</span>
-      {label}
-    </Link>
+    <EmptyState
+      icon="📝"
+      title="My Articles"
+      desc="Your articles will appear here"
+      cta="Create Article"
+      ctaLink="/journalist/create"
+    />
   )
 }
-
-
+function AnalyticsTab() {
+  return (
+    <EmptyState
+      icon="📊"
+      title="Analytics"
+      desc="Track your article performance and reader engagement"
+      cta="View Full Analytics"
+      ctaLink="/journalist/analytics"
+    />
+  )
+}
+function EarningsTab() {
+  return (
+    <EmptyState
+      icon="💰"
+      title="Earnings"
+      desc="Monitor your revenue and payouts"
+      cta="View Earnings"
+      ctaLink="/journalist/earnings"
+    />
+  )
+}
+function FollowersTab() {
+  return (
+    <EmptyState
+      icon="👥"
+      title="Followers"
+      desc="See who is following your content"
+      cta="Explore"
+      ctaLink="/"
+    />
+  )
+}
+function SavedTab() {
+  return (
+    <EmptyState
+      icon="🔖"
+      title="Saved Articles"
+      desc="Articles you save will appear here"
+      cta="Start Exploring"
+      ctaLink="/"
+    />
+  )
+}
+function LikedTab() {
+  return (
+    <EmptyState
+      icon="❤️"
+      title="Liked Articles"
+      desc="Articles you like will appear here"
+      cta="Browse"
+      ctaLink="/"
+    />
+  )
+}
+function CommentsTab() {
+  return (
+    <EmptyState
+      icon="💬"
+      title="Comments"
+      desc="Your comments will appear here"
+      cta="Read Articles"
+      ctaLink="/articles"
+    />
+  )
+}
+function FollowingTab({ stats }: { stats: any }) {
+  return (
+    <EmptyState
+      icon="👥"
+      title="Following"
+      desc={`You're following ${stats.following || 0} writers`}
+      cta="Explore Writers"
+      ctaLink="/journalists"
+    />
+  )
+}
+function ApplyTab() {
+  return (
+    <EmptyState
+      icon="✍️"
+      title="Become a Journalist"
+      desc="Share your stories and earn revenue from your content"
+      cta="Apply Now"
+      ctaLink="/auth/apply-journalist"
+    />
+  )
+}
+function UsersTab() {
+  return (
+    <EmptyState
+      icon="👤"
+      title="Manage Users"
+      desc="View and manage platform users"
+      cta="Go to Users"
+      ctaLink="/admin/users"
+    />
+  )
+}
+function JournalistsTab() {
+  return (
+    <EmptyState
+      icon="👥"
+      title="Manage Journalists"
+      desc="Review journalist applications and manage authors"
+      cta="Go to Journalists"
+      ctaLink="/admin/journalists"
+    />
+  )
+}
