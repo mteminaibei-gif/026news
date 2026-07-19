@@ -173,8 +173,8 @@ export function ChatWidget() {
       {/* Chat panel */}
       {open && (
         <div style={{
-          position: 'fixed', bottom: 80, left: 20, zIndex: 9998,
-          width: 360, maxHeight: 520,
+          position: 'fixed', bottom: 80, left: 20, right: 20, zIndex: 9998,
+          width: 'min(360px, calc(100vw - 40px))', maxHeight: 520,
           background: 'var(--bg-surface, #fff)',
           border: '1px solid var(--border, #e5e7eb)',
           borderRadius: 16,

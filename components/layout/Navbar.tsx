@@ -279,49 +279,50 @@ export function Navbar() {
             {/* Auth states */}
 {!userLoading && (
                 user ? (
-                  <div className="hidden sm:flex items-center gap-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <Link
-                        href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
-                        style={{
-                          width: 44, height: 44, borderRadius: 10,
-                          background: profile?.profile_image ? 'transparent' : 'var(--primary)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'var(--bg-elevated)',
-                          fontSize: '0.8rem', fontWeight: 700,
-                          textDecoration: 'none',
-                          cursor: 'pointer',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {profile?.profile_image ? (
-                          <img
-                            src={profile.profile_image}
-                            alt={profile?.name ?? 'Profile'}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
-                          />
-                        ) : (
-                          profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />
-                        )}
-                      </Link>
-                      <button
-                        onClick={() => signOutMutation.mutate()}
-                        title="Sign out"
-                        aria-label="Sign out"
-                        style={{
-                          width: 44, height: 44, borderRadius: 10,
-                          border: '1px solid var(--border)',
-                          background: 'var(--bg-surface)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        <LogOut size={16} />
-                      </button>
-                    </div>
+                  <>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={profile?.role === 'admin' ? '/admin/profile' : profile?.role === 'journalist' ? `/journalists/${profile?.user_id}` : '/profile'}
+                      style={{
+                        width: 44, height: 44, borderRadius: 10,
+                        background: profile?.profile_image ? 'transparent' : 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--bg-elevated)',
+                        fontSize: '0.8rem', fontWeight: 700,
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {profile?.profile_image ? (
+                        <img
+                          src={profile.profile_image}
+                          alt={profile?.name ?? 'Profile'}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
+                        />
+                      ) : (
+                        profile?.name?.charAt(0).toUpperCase() ?? <User size={16} />
+                      )}
+                    </Link>
+                    <button
+                      onClick={() => signOutMutation.mutate()}
+                      title="Sign out"
+                      aria-label="Sign out"
+                      className="hidden sm:flex"
+                      style={{
+                        width: 44, height: 44, borderRadius: 10,
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-surface)',
+                        display: 'none', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <LogOut size={16} />
+                    </button>
                   </div>
+                  </>
                 ) : (
                 <div className="hidden sm:flex items-center gap-2">
                   <Link

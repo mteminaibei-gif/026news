@@ -143,13 +143,18 @@ export function MessagePopout() {
   if (!myId || notifications.length === 0) return null
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3" role="region" aria-label="Message notifications">
+    <div
+      className="fixed z-50 flex flex-col gap-3"
+      style={{ bottom: 24, right: 24, left: 24, alignItems: 'flex-end' }}
+      role="region"
+      aria-label="Message notifications"
+    >
       {notifications.slice(0, 3).map((n, index) => (
         <div
           key={n.id}
           className="animate-slide-in"
           style={{
-            minWidth: 320,
+            width: '100%',
             maxWidth: 420,
             background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
@@ -221,6 +226,20 @@ export function MessagePopout() {
           to { opacity: 1; transform: translateX(0) scale(1); }
         }
         .animate-slide-in { animation: slide-in 0.3s var(--ease-out-expo) forwards; }
+        @media (max-width: 640px) {
+          div[role="region"][aria-label="Message notifications"] {
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            align-items: stretch !important;
+            padding: 12px;
+            gap: 8px;
+          }
+          div[role="region"][aria-label="Message notifications"] > div {
+            max-width: 100% !important;
+            border-radius: 16px !important;
+          }
+        }
       `}</style>
     </div>
   )
