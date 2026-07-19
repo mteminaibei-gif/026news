@@ -307,7 +307,7 @@ export default function CreatePostPage() {
           </div>
 
           {/* ════════ RIGHT ════════ */}
-          <div className="space-y-4 xl:sticky xl:top-16">
+          <div className="space-y-4">
 
             {/* Featured image */}
             <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>

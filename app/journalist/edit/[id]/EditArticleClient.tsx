@@ -196,7 +196,7 @@ export function EditArticleClient({ article, categories }: Props) {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4 xl:sticky xl:top-16">
+          <div className="space-y-4">
             {/* AI Enhance */}
             <AIEnhancePanel
               title={title}
