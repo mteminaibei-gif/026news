@@ -396,6 +396,13 @@ export function aiReady(): boolean {
   return groqConfigured()
 }
 
+export class GroqUnconfiguredError extends Error {
+  constructor() {
+    super('Groq API not configured')
+    this.name = 'GroqUnconfiguredError'
+  }
+}
+
 export function getAIStatus() {
   return {
     configured: groqConfigured(),

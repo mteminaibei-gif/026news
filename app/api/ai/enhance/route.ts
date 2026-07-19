@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeArticle, rewriteArticle, type EnhanceMode } from '@/lib/ai/enhance'
-import { OpenAIUnconfiguredError } from '@/lib/ai/provider'
+import { analyzeSEO, enhanceContent, GroqUnconfiguredError } from '@/lib/ai/unified'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,7 +11,7 @@ export async function POST(req: NextRequest) {
       action?: 'analyze' | 'rewrite'
       title?: string
       content?: string
-      mode?: EnhanceMode
+      mode?: 'grammar' | 'style' | 'cohesion' | 'paraphrase' | 'full'
     }
     try {
       body = await req.json()
@@ -27,16 +26,32 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'rewrite') {
-      const result = await rewriteArticle({ title, content, mode })
-      return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } })
+      const result = await enhanceContent({ title, content, mode: body.mode })
+      return NextResponse.json({
+        html: result.enhancedContent,
+        summary: result.summary,
+        changes: result.changes.map(c => `${c.type}: ${c.reason}`),
+      }, { headers: { 'Cache-Control': 'no-store' } })
     }
 
-    const analysis = await analyzeArticle({ title, content, mode })
-    return NextResponse.json(analysis, { headers: { 'Cache-Control': 'no-store' } })
+    const analysis = await analyzeSEO({ title, content })
+    return NextResponse.json({
+      score: analysis.score,
+      readability: analysis.readability,
+      summary: analysis.contentQuality.strengths.join('; ') + ' | ' + analysis.contentQuality.weaknesses.join('; '),
+      suggestions: analysis.recommendations.map(r => ({
+        type: r.category,
+        category: r.category,
+        message: r.issue,
+        suggestion: r.suggestion,
+        priority: r.priority,
+      })),
+      optimizedContent: analysis.optimizedContent?.content,
+    }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
-    if (err instanceof OpenAIUnconfiguredError) {
+    if (err instanceof Error && err.message.includes('Groq API not configured')) {
       return NextResponse.json(
-        { error: 'AI is not configured. Set OPENAI_API_KEY in the server environment.' },
+        { error: 'AI is not configured. Set GROQ_API_KEY in the server environment.' },
         { status: 503 },
       )
     }
