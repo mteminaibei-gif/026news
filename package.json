@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
+    "@sentry/nextjs": "^10.66.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
     "@swc/helpers": "0.5.23",
@@ -27,6 +28,8 @@
     "@tiptap/react": "^3.27.4",
     "@tiptap/starter-kit": "^3.27.4",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/kv": "^3.0.0",
+    "axios": "^1.18.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.42.2",
@@ -38,7 +41,9 @@
     "react-dom": "19.2.4",
     "sanitize-html": "^2.17.6",
     "tailwind-merge": "^3.6.0",
-    "web-push": "^3.6.7"
+    "twilio": "^6.0.2",
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
