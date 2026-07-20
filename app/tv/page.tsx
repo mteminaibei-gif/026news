@@ -30,7 +30,7 @@ type TVArticle = {
 function TVPageContent() {
   const { currentStation, isPlaying, playStation, stop, status, error, setStatus, setError } = useTVGlobal()
   const { tvStatus } = useMediaHealth()
-  const { statuses: allStatuses } = useAllTVStatus(45000) // Update every 45s
+  const { statuses: allStatuses } = useAllTVStatus(120000) // Update every 2 min — keep Vercel Fluid CPU low
   const realtimeData = useRealtimeTV({
     stationId: currentStation?.id ?? '',
     pollInterval: 30000,

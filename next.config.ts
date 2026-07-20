@@ -1,9 +1,6 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     // Serve modern formats first — big mobile bandwidth win (AVIF < WebP < JPEG).
     formats: ['image/avif', 'image/webp'],

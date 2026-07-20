@@ -147,6 +147,75 @@ Deno.serve(async () => {
     }
   }
 
+  // Also aggregate any feeds stored in the `rss_feeds` table (admin-managed).
+  try {
+    const { data: dbFeeds, error: dbErr } = await supabase
+      .from('rss_feeds')
+      .select('feed_id, name, feed_url, category_id')
+      .eq('is_active', true)
+
+    if (dbErr) {
+      errors.push(`rss_feeds: ${dbErr.message}`)
+    } else {
+      for (const feed of (dbFeeds ?? []) as { feed_id: number; name: string; feed_url: string; category_id: number | null }[]) {
+        results[feed.name] = results[feed.name] ?? 0
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 10000)
+          const response = await fetch(feed.feed_url, {
+            signal: controller.signal,
+            headers: { 'User-Agent': '026connet!/1.0 (Aggregator)' },
+          })
+          clearTimeout(timeoutId)
+          if (!response.ok) {
+            errors.push(`${feed.name}: HTTP ${response.status}`)
+            await supabase.from('rss_feeds').update({ last_error: `HTTP ${response.status}` }).eq('feed_id', feed.feed_id)
+            continue
+          }
+          const xml = await response.text()
+          const items = parseRss(xml).slice(0, 20)
+          for (const item of items) {
+            if (!item.title || !item.link) continue
+            const slug = slugify(item.title)
+            const contentHash = await hashArticle(item.title, item.link)
+            const { data: existing } = await supabase
+              .from('articles')
+              .select('article_id')
+              .eq('content_hash', contentHash)
+              .maybeSingle()
+            if (existing) continue
+            const { error: insertErr } = await supabase.from('articles').insert({
+              title: item.title.slice(0, 255),
+              slug,
+              content: (item.description || item.title).slice(0, 5000),
+              source_name: feed.name,
+              source_url: item.link,
+              content_hash: contentHash,
+              status: 'published',
+              is_aggregated: true,
+              category_id: feed.category_id,
+              views: 0,
+              featured_image: item.enclosure?.url ?? null,
+            })
+            if (insertErr) {
+              errors.push(`${feed.name} (${item.title.slice(0, 50)}): ${insertErr.message}`)
+              continue
+            }
+            results[feed.name]++
+            totalInserted++
+          }
+          await supabase.from('rss_feeds').update({ last_fetched: new Date().toISOString(), last_error: null }).eq('feed_id', feed.feed_id)
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err)
+          errors.push(`${feed.name}: ${errMsg}`)
+        }
+      }
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err)
+    errors.push(`rss_feeds loop: ${errMsg}`)
+  }
+
   return new Response(
     JSON.stringify({
       success: true,

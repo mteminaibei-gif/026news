@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { tvRealtimeManager } from '@/lib/tv/realtime-manager'
 
 /**
  * GET /api/tv/stream-health/[stationId]
- * Check if a TV station stream is healthy and live
+ * Lightweight, edge-cached health placeholder. On Vercel serverless there is
+ * no shared in-memory TV state, so we return a cached default instead of
+ * spinning up a function on every client poll (keeps Fluid CPU low).
  */
 export async function GET(
   req: NextRequest,
@@ -12,34 +13,26 @@ export async function GET(
   try {
     const { stationId } = await params
 
-    // Initialize if not already done
-    if (!tvRealtimeManager.getStatus(stationId)) {
-      tvRealtimeManager.initStation(stationId)
-    }
-
-    const status = tvRealtimeManager.getStatus(stationId)
-    const metrics = tvRealtimeManager.getMetrics(stationId)
-
-    if (!status || !metrics) {
-      return NextResponse.json(
-        { error: 'Station not found' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      stationId,
-      isOnline: status.isOnline,
-      isLive: status.isLive,
-      viewers: status.viewers,
-      bitrate: status.bitrate,
-      quality: status.quality,
-      healthScore: status.healthScore,
-      buffered: metrics.buffered,
-      currentTime: metrics.currentTime,
-      lastChecked: status.lastChecked,
-      error: status.failureCount > 0 ? `${status.failureCount} failures` : null,
-    })
+    return NextResponse.json(
+      {
+        stationId,
+        isOnline: false,
+        isLive: false,
+        viewers: 0,
+        bitrate: 0,
+        quality: 'auto',
+        healthScore: 100,
+        buffered: 0,
+        currentTime: 0,
+        lastChecked: new Date().toISOString(),
+        error: null,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
+        },
+      }
+    )
   } catch (error) {
     console.error('[TV Health Check]', error)
     return NextResponse.json(

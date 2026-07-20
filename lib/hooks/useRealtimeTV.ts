@@ -27,7 +27,7 @@ export function useRealtimeTV({
   stationId,
   onStatusChange,
   onMetricsUpdate,
-  pollInterval = 30000, // 30 seconds
+  pollInterval = 120000, // 2 minutes — keep Vercel Fluid CPU low on free tier
 }: UseRealtimeTVOptions) {
   const [state, setState] = useState<RealtimeTVState>({
     status: null,
@@ -165,7 +165,7 @@ export function useRealtimeTV({
 /**
  * Hook for getting all TV statuses
  */
-export function useAllTVStatus(pollInterval = 60000) {
+export function useAllTVStatus(pollInterval = 120000) {
   const [statuses, setStatuses] = useState<TVStationStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
