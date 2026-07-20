@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -31,15 +31,14 @@ function TVPageContent() {
   const { currentStation, isPlaying, playStation, stop, status, error, setStatus, setError } = useTVGlobal()
   const { tvStatus } = useMediaHealth()
   const { statuses: allStatuses } = useAllTVStatus(45000) // Update every 45s
-  const realtimeData = currentStation ? useRealtimeTV({
-    stationId: currentStation.id,
+  const realtimeData = useRealtimeTV({
+    stationId: currentStation?.id ?? '',
     pollInterval: 30000,
-  }) : null
+  })
   
   const [articles, setArticles] = useState<TVArticle[]>([])
   const [activeTab, setActiveTab] = useState<'live' | 'kenya' | 'africa' | 'global'>('live')
   const [metrics, setMetrics] = useState<{ bitrate: number; quality: string; buffered: number } | null>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -222,7 +221,6 @@ function TVPageContent() {
               {currentStation.embedType === 'hls' ? (
                 <video
                   key={currentStation.id}
-                  ref={videoRef}
                   className="absolute inset-0 w-full h-full object-contain"
                   playsInline
                   muted

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update metrics
-    if (metrics) {
+    if (bitrate !== undefined || quality !== undefined || buffered !== undefined) {
       tvRealtimeManager.updateMetrics(stationId, {
         bitrate: bitrate || 0,
         quality: quality || 'auto',

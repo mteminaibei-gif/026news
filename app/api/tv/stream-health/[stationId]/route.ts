@@ -7,10 +7,10 @@ import { tvRealtimeManager } from '@/lib/tv/realtime-manager'
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { stationId: string } }
+  { params }: { params: Promise<{ stationId: string }> }
 ) {
   try {
-    const stationId = params.stationId
+    const { stationId } = await params
 
     // Initialize if not already done
     if (!tvRealtimeManager.getStatus(stationId)) {

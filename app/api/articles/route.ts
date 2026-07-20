@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let finalTags = validated.tags
+    const finalTags = validated.tags
       ? validated.tags.split(',').map(t => t.trim()).filter(Boolean)
       : autoExtractTags(title, content)
 

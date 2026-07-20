@@ -40,7 +40,7 @@ export function useRealtimeTV({
     error: null,
   })
 
-  const pollTimeoutRef = useRef<NodeJS.Timeout>()
+  const pollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const fetchStatus = useCallback(async () => {
