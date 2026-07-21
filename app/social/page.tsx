@@ -244,6 +244,39 @@ export default function SocialPage() {
     if (pid) setOpenPostId(pid)
   }, [])
 
+  const handleDelete = useCallback(async (postId: number) => {
+    if (!confirm('Are you sure you want to delete this post?')) return
+    try {
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' })
+      if (res.ok) refetch()
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }, [refetch])
+
+  const handleEdit = useCallback(async (postId: number, newContent: string) => {
+    try {
+      const res = await fetch(`/api/posts/${postId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent }),
+      })
+      if (res.ok) refetch()
+    } catch (err) {
+      console.error('Edit failed:', err)
+    }
+  }, [refetch])
+
+  const handleHide = useCallback(async (postId: number) => {
+    if (!confirm('Hide this post?')) return
+    try {
+      const res = await fetch(`/api/posts/${postId}/hide`, { method: 'POST' })
+      if (res.ok) refetch()
+    } catch (err) {
+      console.error('Hide failed:', err)
+    }
+  }, [refetch])
+
   const allPosts = usePosts('home')
   const trending = useMemo(() => {
     const counts = new Map<string, number>()
@@ -307,7 +340,7 @@ export default function SocialPage() {
                 <p>{tab === 'saved' ? 'No saved posts yet. Tap the bookmark on any post.' : 'No posts yet. Be the first to share something!'}</p>
               </div>
             ) : (
-              posts.map(p => <PostCard key={p.post_id} post={p} onToggleLike={toggleLike} onOpen={setOpenPostId} />)
+              posts.map(p => <PostCard key={p.post_id} post={p} onToggleLike={toggleLike} onOpen={setOpenPostId} onDelete={handleDelete} onEdit={handleEdit} onHide={handleHide} />)
             )}
 
             {hasMore && tab !== 'saved' && (
@@ -338,6 +371,15 @@ export default function SocialPage() {
             </div>
           )}
           <Suggestions />
+          {/* Sponsored Ad Placeholder */}
+          <div className="social-side-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.4s both', border: '1px dashed var(--border)', background: 'var(--bg-glass)' }}>
+            <h3 className="social-side-title">Sponsored</h3>
+            <div style={{ padding: '1rem', textAlign: 'center', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Advertisement</div>
+              <div style={{ fontSize: '1rem', color: 'var(--fg)', fontWeight: 500 }}>Your Ad Here</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>Admin can inject sponsored content</div>
+            </div>
+          </div>
           <div className="social-side-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.3s both' }}>
             <h3 className="social-side-title">Community Guidelines</h3>
             <p className="social-side-note">

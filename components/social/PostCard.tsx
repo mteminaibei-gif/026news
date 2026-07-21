@@ -1,8 +1,8 @@
-'use client'
+use 'client'
 
 import Link from 'next/link'
-import { useState, Fragment } from 'react'
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark } from 'lucide-react'
+import { useState, Fragment, useRef, useEffect } from 'react'
+import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark, Edit2, Trash2, EyeOff, Flag } from 'lucide-react'
 import type { SocialPost, SocialComment } from '@/lib/hooks/usePosts'
 import { usePostComments } from '@/lib/hooks/usePosts'
 import { formatDistanceToNow } from 'date-fns'
@@ -33,10 +33,13 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
   return <div className="social-avatar">{name.charAt(0).toUpperCase()}</div>
 }
 
-export function PostCard({ post, onToggleLike, onOpen }: {
+export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide }: {
   post: SocialPost
   onToggleLike: (id: number) => void
   onOpen?: (id: number) => void
+  onDelete?: (id: number) => void
+  onEdit?: (postId: number, newContent: string) => void
+  onHide?: (id: number) => void
 }) {
   const [showComments, setShowComments] = useState(false)
   const { comments, addComment, loading: loadingComments } = usePostComments(showComments ? post.post_id : null)
@@ -46,6 +49,22 @@ export function PostCard({ post, onToggleLike, onOpen }: {
   const [saved, setSaved] = useState(!!post.saved)
   const [shareCount, setShareCount] = useState(post.share_count ?? 0)
   const [likeAnimating, setLikeAnimating] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState(post.content)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const submitComment = async () => {
     const text = draft.trim()
@@ -54,7 +73,6 @@ export function PostCard({ post, onToggleLike, onOpen }: {
     await addComment(text)
   }
 
-  const [sharing, setSharing] = useState(false)
   const share = async () => {
     if (sharing) return
     setSharing(true)
@@ -72,7 +90,6 @@ export function PostCard({ post, onToggleLike, onOpen }: {
     }
   }
 
-  const [saving, setSaving] = useState(false)
   const toggleSave = async () => {
     if (saving) return
     setSaving(true)
@@ -101,7 +118,7 @@ export function PostCard({ post, onToggleLike, onOpen }: {
   return (
     <article
       className="social-post"
-      style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) both' }}
+      style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) both', position: 'relative' }}
     >
       <header className="social-post-head">
         <Link href={`/journalists/${post.author?.user_id ?? ''}`} className="social-avatar-link">
@@ -116,29 +133,116 @@ export function PostCard({ post, onToggleLike, onOpen }: {
             {post.created_at ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : ''}
           </span>
         </div>
-        <button className="social-icon-btn" aria-label="More" style={{ transition: 'all 0.2s var(--ease-out-expo)' }}>
-          <MoreHorizontal size={18} />
-        </button>
+        <div className="relative" ref={menuRef}>
+          <button
+            className="social-icon-btn"
+            aria-label="More"
+            onClick={(e) => { e.stopPropagation(); setShowMenu(v => !v); }}
+            style={{ transition: 'all 0.2s var(--ease-out-expo)' }}
+          >
+            <MoreHorizontal size={18} />
+          </button>
+
+          {showMenu && (
+            <div
+              className="social-post-menu"
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: '100%',
+                marginTop: 8,
+                zIndex: 100,
+                background: 'var(--bg-elevated)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                padding: 4,
+                boxShadow: 'var(--shadow-lg)',
+                minWidth: 160,
+              }}
+            >
+              <button
+                onClick={() => { setEditing(true); setShowMenu(false); }}
+                className="social-menu-item"
+                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
+              >
+                <Edit2 size={16} />
+                Edit Post
+              </button>
+              {onHide && (
+                <button
+                  onClick={() => { onHide(post.post_id); setShowMenu(false); }}
+                  className="social-menu-item"
+                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
+                >
+                  <EyeOff size={16} />
+                  Hide Post
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => { onDelete(post.post_id); setShowMenu(false); }}
+                  className="social-menu-item"
+                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
+                >
+                  <Trash2 size={16} />
+                  Delete Post
+                </button>
+              )}
+              <button
+                onClick={() => { setShowMenu(false); }}
+                className="social-menu-item"
+                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
+              >
+                <Flag size={16} />
+                Report
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
-      <p
-        className="social-post-content"
-        onClick={() => onOpen?.(post.post_id)}
-        style={{
-          cursor: onOpen ? 'pointer' : undefined,
-          transition: 'color 0.2s',
-        }}
-      >
-        {renderContentWithLinks(post.content)}
-      </p>
+      {editing ? (
+        <div style={{ marginBlock: 12 }}>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full p-3 rounded-xl text-sm"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--primary)', color: 'var(--text-primary)', outline: 'none', minHeight: 80, resize: 'vertical' }}
+          />
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+            <button
+              onClick={() => { setEditing(false); setEditContent(post.content); }}
+              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => { onEdit?.(post.post_id, editContent.trim()); setEditing(false); }}
+              disabled={!editContent.trim()}
+              style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              Save Edit
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p
+          className="social-post-content"
+          onClick={() => onOpen?.(post.post_id)}
+          style={{
+            cursor: onOpen ? 'pointer' : undefined,
+            transition: 'color 0.2s',
+          }}
+        >
+          {renderContentWithLinks(post.content)}
+        </p>
+      )}
 
       {post.image_urls && post.image_urls.length > 0 && (
         <div className={`social-post-images count-${Math.min(post.image_urls.length, 4)}`}>
           {post.image_urls.slice(0, 4).map((url, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={url} alt="" className="social-post-image" style={{
-              transition: 'transform 0.4s var(--ease-out-expo)',
-            }} />
+            <img key={i} src={url} alt="" className="social-post-image" style={{ transition: 'transform 0.4s var(--ease-out-expo)' }} />
           ))}
         </div>
       )}
@@ -146,13 +250,7 @@ export function PostCard({ post, onToggleLike, onOpen }: {
       {post.tags && post.tags.length > 0 && (
         <div className="social-post-tags">
           {post.tags.map(t => (
-            <span key={t} className="social-tag" style={{
-              transition: 'all 0.2s var(--ease-out-expo)',
-              padding: '2px 6px',
-              borderRadius: 6,
-              background: 'var(--primary-light)',
-              fontSize: '0.78rem',
-            }}>#{t}</span>
+            <span key={t} className="social-tag" style={{ transition: 'all 0.2s var(--ease-out-expo)', padding: '2px 6px', borderRadius: 6, background: 'var(--primary-light)', fontSize: '0.78rem' }}>#{t}</span>
           ))}
         </div>
       )}
@@ -212,10 +310,7 @@ export function PostCard({ post, onToggleLike, onOpen }: {
             transform: sharing ? 'scale(0.9)' : 'scale(1)',
           }}
         >
-          <Share2 size={18} style={{
-            transition: 'transform 0.3s var(--ease-out-expo)',
-            transform: sharing ? 'rotate(180deg)' : 'rotate(0)',
-          }} />
+          <Share2 size={18} style={{ transition: 'transform 0.3s var(--ease-out-expo)', transform: sharing ? 'rotate(180deg)' : 'rotate(0)' }} />
           <span>{shareCount}</span>
         </button>
       </div>
@@ -229,9 +324,7 @@ export function PostCard({ post, onToggleLike, onOpen }: {
             </div>
           )}
           {comments.map(c => (
-            <div key={c.comment_id} className="social-comment" style={{
-              animation: 'futr-fade-up 0.3s var(--ease-out-expo) both',
-            }}>
+            <div key={c.comment_id} className="social-comment" style={{ animation: 'futr-fade-up 0.3s var(--ease-out-expo) both' }}>
               <Avatar src={c.author?.profile_image ?? null} name={c.author?.name ?? 'U'} />
               <div className="social-comment-body">
                 <span className="social-comment-author">{c.author?.name ?? 'Unknown'}</span>
@@ -242,17 +335,13 @@ export function PostCard({ post, onToggleLike, onOpen }: {
           <div className="social-comment-compose">
             <input
               value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') submitComment() }}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitComment() }}
               placeholder="Write a comment…"
               className="social-comment-input"
-              style={{
-                transition: 'all 0.25s var(--ease-out-expo)',
-              }}
+              style={{ transition: 'all 0.25s var(--ease-out-expo)' }}
             />
-            <button onClick={submitComment} className="social-send-btn" aria-label="Send" style={{
-              transition: 'all 0.25s var(--ease-out-expo)',
-            }}><Send size={16} /></button>
+            <button onClick={submitComment} className="social-send-btn" aria-label="Send" style={{ transition: 'all 0.25s var(--ease-out-expo)' }}><Send size={16} /></button>
           </div>
         </div>
       )}

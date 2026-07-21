@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+interface UserProfileExtended {
+  user_id: number
+  name: string | null
+  bio: string | null
+  profile_image: string | null
+  notification_prefs: Record<string, unknown> | null
+  social_links: Record<string, unknown> | null
+  show_online_status: boolean | null
+  updated_at: string | null
+  name_change_count: number | null
+  last_name_change_at: string | null
+}
+
 export async function GET() {
   try {
     const supabase = await createClient()
@@ -11,7 +24,7 @@ export async function GET() {
       .from('users')
       .select('*')
       .eq('auth_id', user.id)
-      .single()
+      .single() as { data: UserProfileExtended | null }
 
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
@@ -22,6 +35,16 @@ export async function GET() {
       (typeof social.website === 'string' && social.website) ||
       (Array.isArray(social.links) ? (social.links as string[])[0] : '') ||
       ''
+
+    // Name change tracking info
+    const nameChangeCount = profile.name_change_count ?? 0
+    const lastNameChangeAt = profile.last_name_change_at ? new Date(profile.last_name_change_at) : null
+    const MAX_NAME_CHANGES = 3
+    const COOLDOWN_MONTHS = 3
+    const cooldownEnd = lastNameChangeAt
+      ? new Date(lastNameChangeAt.getTime() + COOLDOWN_MONTHS * 30 * 24 * 60 * 60 * 1000)
+      : null
+    const canChangeName = nameChangeCount < MAX_NAME_CHANGES || (cooldownEnd && new Date() >= cooldownEnd)
 
     return NextResponse.json({
       name: profile.name || '',
@@ -42,6 +65,13 @@ export async function GET() {
       two_factor: prefs.two_factor === true,
       show_online_status: profile.show_online_status !== false,
       updated_at: profile.updated_at,
+      name_change_tracking: {
+        count: nameChangeCount,
+        max_changes: MAX_NAME_CHANGES,
+        last_changed_at: profile.last_name_change_at,
+        cooldown_ends_at: cooldownEnd?.toISOString() ?? null,
+        can_change: canChangeName,
+      },
     })
   } catch (err) {
     console.error('[GET /api/settings]', err)
@@ -67,7 +97,7 @@ export async function PATCH(req: NextRequest) {
     } = body
 
     const { data: profile } = await supabase
-      .from('users').select('user_id, name, social_links').eq('auth_id', user.id).single()
+      .from('users').select('user_id, name, social_links, name_change_count, last_name_change_at').eq('auth_id', user.id).single()
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
     const adminDb = await createAdminClient()
@@ -80,7 +110,28 @@ export async function PATCH(req: NextRequest) {
       typeof name === 'string' && name.trim()
         ? name.trim()
         : `${first_name ?? ''} ${last_name ?? ''}`.trim()
-    if (composedName) updatePayload.name = composedName.substring(0, 100)
+
+    // Name change validation: max 3 changes, 3-month cooldown
+    if (composedName && composedName !== (profile.name || '')) {
+      const MAX_NAME_CHANGES = 3
+      const COOLDOWN_MONTHS = 3
+
+      const count = profile.name_change_count ?? 0
+      const lastChange = profile.last_name_change_at ? new Date(profile.last_name_change_at) : null
+      const now = new Date()
+      const cooldownEnd = lastChange ? new Date(lastChange.getTime() + COOLDOWN_MONTHS * 30 * 24 * 60 * 60 * 1000) : null
+
+      if (count >= MAX_NAME_CHANGES && cooldownEnd && now < cooldownEnd) {
+        return NextResponse.json({
+          error: `Name change limit reached. You can change your name again after ${cooldownEnd.toLocaleDateString()}.`,
+        }, { status: 400 })
+      }
+
+      updatePayload.name = composedName.substring(0, 100)
+      updatePayload.name_change_count = count + 1
+      updatePayload.last_name_change_at = now.toISOString()
+    }
+
     if (typeof bio === 'string') updatePayload.bio = bio.substring(0, 500)
 
     if (typeof show_online_status === 'boolean') updatePayload.show_online_status = show_online_status

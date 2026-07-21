@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 
 // POST /api/auth/reset-password - Reset password with token
 export async function POST(req: NextRequest) {
@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const admin = await createAdminClient()
 
-    // Find the reset token
-    const result = await supabase
+    // Find the reset token (admin client bypasses RLS)
+    const result = await admin
       .from('password_reset_tokens')
       .select('*, user:users(user_id, auth_id)')
       .eq('token', token)
@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Use admin client to update password (no session needed)
-    const admin = await createAdminClient()
     const { error: authError } = await admin.auth.admin.updateUserById(
       resetToken.user.auth_id,
       { password: newPassword }
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark token as used
-    await supabase
+    await admin
       .from('password_reset_tokens')
       .update({ used_at: new Date().toISOString() } as never)
       .eq('id', resetToken.id)

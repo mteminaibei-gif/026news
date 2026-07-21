@@ -107,9 +107,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const supabase = await createClient()
+    const admin = await createAdminClient()
 
-    const { data: resetToken } = await supabase
+    const { data: resetToken } = await admin
       .from('password_reset_tokens')
       .select('*, user:users(email, name)')
       .eq('token', token)

@@ -10,7 +10,7 @@ import { PostCard } from '@/components/social/PostCard'
 import {
   Settings, Edit3, FileText, Bookmark, Heart, MessageSquare,
   Users, Newspaper, Radio, Tv, Compass, Calendar, ExternalLink, BookmarkCheck,
-  Activity, Eye, ThumbsUp,
+  Activity, Eye, ThumbsUp, PenLine
 } from 'lucide-react'
 
 const QUICK_LINKS = [
@@ -122,6 +122,16 @@ export default function ProfilePage() {
                 <ThumbsUp size={13} /> Active
               </span>
             </div>
+            {role === 'reader' && (
+              <div className="profile-hero-actions-author">
+                <button 
+                  className="profile-hero-btn primary"
+                  onClick={() => router.push('/author-apply')}
+                >
+                  <PenLine size={15} /> Apply to Write
+                </button>
+              </div>
+            )}
           </div>
           <div className="profile-hero-actions">
             <button className="profile-hero-btn primary" onClick={() => router.push('/settings')}>

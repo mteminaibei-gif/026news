@@ -116,7 +116,7 @@ export function useSignOut() {
     },
     onSuccess: () => {
       queryClient.clear()
-      router.push('/login')
+      router.push('/')
     },
   })
 }

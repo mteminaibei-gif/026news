@@ -53,7 +53,7 @@ function getNotificationIcon(type: string) {
   return NOTIFICATION_ICONS[type] ?? NOTIFICATION_ICONS.default
 }
 
-export function RealtimeNotifications() {
+export function RealtimeNotifications({ variant = 'dropdown' }: { variant?: 'dropdown' | 'inline' }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [userId, setUserId] = useState<number | null>(null)
@@ -141,6 +141,74 @@ export function RealtimeNotifications() {
   }
 
   const unreadCount = notifications.filter(n => !n.read).length
+
+  if (variant === 'inline') {
+    return (
+      <div className="w-full">
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              <Bell size={18} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>System Notifications</h3>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}</p>
+            </div>
+          </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={() => {
+                notifications.forEach(n => {
+                  if (!n.read) markAsRead(n.notification_id)
+                })
+              }}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              style={{ color: 'var(--primary)', background: 'var(--primary-light)' }}
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+
+        <div className="divide-y max-h-72 overflow-y-auto" style={{ borderColor: 'var(--glass-border)' }}>
+          {notifications.length === 0 ? (
+            <div className="px-6 py-6 text-center">
+              <p className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>No recent notifications</p>
+            </div>
+          ) : (
+            notifications.slice(0, 5).map(notif => {
+              const style = getNotificationStyle(notif.type)
+              return (
+                <div
+                  key={notif.notification_id}
+                  onClick={() => { if (!notif.read) markAsRead(notif.notification_id) }}
+                  className="px-6 py-3.5 flex items-start gap-3 text-left transition-colors cursor-pointer"
+                  style={{ background: notif.read ? 'transparent' : 'var(--primary-light)' }}
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: style.bg, color: style.fg }}>
+                    {getNotificationIcon(notif.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                        {notif.title}
+                      </p>
+                      <span className="text-[10px] shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+                        {timeAgo(notif.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-tertiary)' }}>
+                      {notif.message}
+                    </p>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div ref={dropdownRef} className="relative">

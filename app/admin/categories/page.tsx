@@ -252,7 +252,11 @@ export default function AdminCategoriesPage() {
               <tbody>
                 {categories.map(cat => (
                   <tr key={cat.category_id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                    <td className="px-4 py-3 text-center text-2xl">{cat.icon || '📁'}</td>
+<td className="px-4 py-3 text-center text-2xl">
+                      <div className="flex items-center justify-center gap-1">
+                        {cat.icon || '📁'}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>{cat.name}</td>
                     <td className="px-4 py-3" style={{ color: 'var(--text-tertiary)' }}>{cat.description || '—'}</td>
                     <td className="px-4 py-3 text-right">
