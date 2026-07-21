@@ -96,7 +96,7 @@ export async function PATCH(req: NextRequest) {
       show_online_status,
     } = body
 
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('users').select('user_id, name, social_links, name_change_count, last_name_change_at').eq('auth_id', user.id).single()
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 

@@ -2195,8 +2195,10 @@ export type Database = {
           is_public_profile: boolean | null
           last_active: string | null
           last_login: string | null
+          last_name_change_at: string | null
           location: string | null
           name: string
+          name_change_count: number
           notification_prefs: Json | null
           password_hash: string
           phone: string | null
@@ -2228,8 +2230,10 @@ export type Database = {
           is_public_profile?: boolean | null
           last_active?: string | null
           last_login?: string | null
+          last_name_change_at?: string | null
           location?: string | null
           name: string
+          name_change_count?: number
           notification_prefs?: Json | null
           password_hash: string
           phone?: string | null
@@ -2261,8 +2265,10 @@ export type Database = {
           is_public_profile?: boolean | null
           last_active?: string | null
           last_login?: string | null
+          last_name_change_at?: string | null
           location?: string | null
           name?: string
+          name_change_count?: number
           notification_prefs?: Json | null
           password_hash?: string
           phone?: string | null
