@@ -7,6 +7,8 @@ import { CategoryCloud } from '@/components/layout/CategoryCloud'
 import { stripHtml } from '@/lib/utils'
 import type { PostgrestResponse } from '@supabase/supabase-js'
 
+export const revalidate = 120 // ISR: cache for 2 minutes to reduce Supabase egress
+
 export const metadata: Metadata = {
   title: 'Most Popular Articles',
   description: 'The most-read stories on 026connet! — from our newsroom and leading publications across Kenya, Africa, and the world.',

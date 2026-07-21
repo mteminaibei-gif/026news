@@ -16,7 +16,8 @@ import type { Metadata } from 'next'
 import type { ArticleWithAuthor } from '@/lib/supabase/types'
 import { APP_URL } from '@/lib/constants/app'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60 // ISR: regenerate every 60s to reduce Supabase egress
+export const dynamic = 'force-static'
 
 const getSourceHost = (url?: string | null) => {
   if (!url) return null

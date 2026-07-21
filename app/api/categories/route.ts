@@ -13,7 +13,9 @@ export async function GET() {
       .select('category_id, name, slug, description, icon')
       .order('name')
     if (error) throw error
-    return NextResponse.json(data ?? [])
+    return NextResponse.json(data ?? [], {
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+    })
   } catch (err) {
     console.error('[GET /api/categories]', err)
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
