@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare, Bell, Bookmark, PenLine, LogOut, Sun, Moon, Settings, BarChart3,
   LayoutDashboard, DollarSign, Star, Newspaper, FileText, Users, UsersRound,
@@ -19,6 +20,22 @@ interface NavItem {
   Icon: any
   match?: (p: string) => boolean
   badge?: number
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+  active: { x: 4, transition: { duration: 0.15 } },
 }
 
 export function AppSidebar({
@@ -92,95 +109,178 @@ export function AppSidebar({
         ]
       : []
 
-  const SideLink = ({ item }: { item: NavItem }) => (
-    <Link
-      href={item.href}
-      onClick={onClose}
-      className={`app-rail-link ${isActive(item) ? 'active' : ''}`}
-      aria-current={isActive(item) ? 'page' : undefined}
-    >
-      <span className="app-rail-icon">
-        <item.Icon size={18} />
-        {item.badge ? (
-          <span className="app-rail-badge">{item.badge > 99 ? '99+' : item.badge}</span>
-        ) : null}
-      </span>
-      <span className="app-rail-label">{item.label}</span>
-    </Link>
-  )
+  const SideLink = ({ item }: { item: NavItem }) => {
+    const active = isActive(item)
+    return (
+      <motion.div variants={itemVariants} custom={active ? 'active' : 'show'}>
+        <Link
+          href={item.href}
+          onClick={onClose}
+          className={`app-rail-link ${active ? 'active' : ''}`}
+          aria-current={active ? 'page' : undefined}
+        >
+          <span className="app-rail-icon">
+            <motion.div animate={{ scale: active ? 1.1 : 1 }} transition={{ duration: 0.15 }}>
+              <item.Icon size={18} />
+            </motion.div>
+            {item.badge ? (
+              <motion.span
+                className="app-rail-badge"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                {item.badge > 99 ? '99+' : item.badge}
+              </motion.span>
+            ) : null}
+          </span>
+          <span className="app-rail-label">{item.label}</span>
+        </Link>
+      </motion.div>
+    )
+  }
 
   const SectionLabel = ({ label }: { label: string }) => (
-    <div className="app-rail-section-label">{label}</div>
+    <motion.div
+      className="app-rail-section-label"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.1 }}
+    >
+      {label}
+    </motion.div>
+  )
+
+  const Section = ({ label, items, delay = 0 }: { label: string; items: NavItem[]; delay?: number }) => (
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" custom={{ delay }}>
+      <SectionLabel label={label} />
+      {items.map(i => <SideLink key={i.href} item={i} />)}
+    </motion.div>
   )
 
   return (
     <>
-      <div
-        aria-hidden="true"
-        onClick={onClose}
-        className={mobileOpen ? 'app-rail-scrim show' : 'app-rail-scrim'}
-      />
+      <AnimatePresence mode="wait">
+        <motion.div
+          aria-hidden="true"
+          onClick={onClose}
+          className={mobileOpen ? 'app-rail-scrim show' : 'app-rail-scrim'}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: mobileOpen ? 1 : 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        />
 
-      <aside className={`app-rail ${mobileOpen ? 'open' : ''}`} aria-label="Personal">
-        <div className="app-rail-inner">
-          <nav className="app-rail-nav" aria-label="Personal">
-            <SectionLabel label="Personal" />
-            {personal.map(i => <SideLink key={i.href} item={i} />)}
-          </nav>
-
-          <div className="app-rail-sep" />
-          <nav className="app-rail-nav" aria-label="Browse">
-            <SectionLabel label="Browse" />
-            {browse.map(i => <SideLink key={i.href} item={i} />)}
-          </nav>
-
-          {studio.length > 0 && (
-            <>
-              <div className="app-rail-sep" />
-              <nav className="app-rail-nav" aria-label="Studio">
-                <SectionLabel label={role === 'admin' ? 'Admin' : 'Studio'} />
-                {studio.map((i: any) => <SideLink key={i.href} item={i} />)}
-              </nav>
-            </>
-          )}
-
-          <div className="app-rail-bottom">
-            {user ? (
-              <div className="app-rail-account">
-                <button className="app-rail-account-btn" onClick={() => setAccountOpen(v => !v)}>
-                  <span className="app-rail-account-avatar">
-                    {profile?.profile_image
-                      ? <img src={profile.profile_image} alt="" />
-                      : (profile?.name?.charAt(0).toUpperCase() ?? <Users size={16} />)}
-                  </span>
-                  <span className="app-rail-account-meta app-rail-label">
-                    <span className="app-rail-account-name">{profile?.name ?? 'Account'}</span>
-                    <span className="app-rail-account-role">{role === 'journalist' ? 'Author' : role === 'admin' ? 'Admin' : 'Reader'}</span>
-                  </span>
-                </button>
-                {accountOpen && (
-                  <div className="app-rail-account-menu">
-                    <Link href="/settings" onClick={() => setAccountOpen(false)} className="app-rail-menu-item">
-                      <Settings size={14} /> Settings
-                    </Link>
-                    <button onClick={toggleDarkMode} className="app-rail-menu-item">
-                      {darkMode ? <Sun size={14} /> : <Moon size={14} />} {darkMode ? 'Light mode' : 'Dark mode'}
-                    </button>
-                    <button onClick={() => signOut.mutate()} className="app-rail-menu-item danger">
-                      <LogOut size={14} /> Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="app-rail-auth">
-                <Link href="/login" onClick={onClose} className="app-rail-auth-btn ghost"><span>Sign in</span></Link>
-                <Link href="/onboarding" onClick={onClose} className="app-rail-auth-btn primary"><span>Sign up</span></Link>
-              </div>
+        <motion.aside
+          className={`app-rail ${mobileOpen ? 'open' : ''}`}
+          aria-label="Personal"
+          initial={{ x: -300 }}
+          animate={{ x: mobileOpen ? 0 : -300 }}
+          exit={{ x: -300 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        >
+          <div className="app-rail-inner">
+            <Section label="Personal" items={personal} delay={0.05} />
+            <motion.div
+              className="app-rail-sep"
+              initial={{ opacity: 0, scaleY: 0 }}
+              animate={{ opacity: 1, scaleY: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            />
+            <Section label="Browse" items={browse} delay={0.1} />
+            {studio.length > 0 && (
+              <>
+                <motion.div
+                  className="app-rail-sep"
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ duration: 0.3, delay: 0.25 }}
+                />
+                <Section label={role === 'admin' ? 'Admin' : 'Studio'} items={studio} delay={0.15} />
+              </>
             )}
+
+            <motion.div
+              className="app-rail-bottom"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+            >
+              {user ? (
+                <motion.div className="app-rail-account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.35 }}>
+                  <button className="app-rail-account-btn" onClick={() => setAccountOpen(v => !v)}>
+                    <motion.span
+                      className="app-rail-account-avatar"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {profile?.profile_image
+                        ? <img src={profile.profile_image} alt="" />
+                        : (profile?.name?.charAt(0).toUpperCase() ?? <Users size={16} />)}
+                    </motion.span>
+                    <span className="app-rail-account-meta app-rail-label">
+                      <span className="app-rail-account-name">{profile?.name ?? 'Account'}</span>
+                      <span className="app-rail-account-role">{role === 'journalist' ? 'Author' : role === 'admin' ? 'Admin' : 'Reader'}</span>
+                    </span>
+                  </button>
+                  {accountOpen && (
+                    <AnimatePresence>
+                      <motion.div
+                        className="app-rail-account-menu"
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Link href="/settings" onClick={() => setAccountOpen(false)} className="app-rail-menu-item">
+                          <Settings size={14} /> Settings
+                        </Link>
+                        <motion.button
+                          onClick={toggleDarkMode}
+                          className="app-rail-menu-item"
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {darkMode ? <Sun size={14} /> : <Moon size={14} />} {darkMode ? 'Light mode' : 'Dark mode'}
+                        </motion.button>
+                        <motion.button
+                          onClick={() => signOut.mutate()}
+                          className="app-rail-menu-item danger"
+                          whileHover={{ x: 4, backgroundColor: '#fee2e2' }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <LogOut size={14} /> Sign out
+                        </motion.button>
+                      </motion.div>
+                    </AnimatePresence>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div className="app-rail-auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.35 }}>
+                  <motion.link
+                    href="/login"
+                    onClick={onClose}
+                    className="app-rail-auth-btn ghost"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span>Sign in</span>
+                  </motion.link>
+                  <motion.link
+                    href="/onboarding"
+                    onClick={onClose}
+                    className="app-rail-auth-btn primary"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span>Sign up</span>
+                  </motion.link>
+                </motion.div>
+              )}
+            </motion.div>
           </div>
-        </div>
-      </aside>
+        </motion.aside>
+      </AnimatePresence>
     </>
   )
 }
