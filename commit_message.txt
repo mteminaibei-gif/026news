@@ -1,0 +1,51 @@
+feat: Complete platform overhaul with all major fixes and new features
+
+## Admin Dashboard Fixes
+- Fixed notification render bugs in admin dashboard body section
+- Fixed category icon missing in admin category list (added emoji icons + migration)
+- Added proper inline variant for RealtimeNotifications component
+
+## Social Feed Enhancements
+- Enabled edit/hide/delete for social feed posts (fixed toggleSave bug, added onDelete/onEdit/onHide props)
+- Added sponsored ad placeholder in sidebar
+- Improved PostCard component with proper state management
+
+## Authentication & Redirects
+- Fixed logout redirect to landing page instead of login page
+- Updated useSignOut to redirect to '/' on success
+
+## Author Application Feature
+- Added 'Apply to Write' button in profile page for readers
+- Created comprehensive author application system with:
+  - Profile page integration (Apply to Write button)
+  - Settings page with full application form (basic info, details, terms)
+  - Backend API (/api/auth/author-apply) for application submission
+  - Admin management dashboard (/admin/author-applications)
+  - Email notifications for approval/rejection
+  - Application workflow: basic -> details -> review -> approval
+
+## Infrastructure
+- Created category icon fix migration (20260722000000_fix_category_icons.sql)
+- Added security hardening migration (RLS policies)
+- Created name change tracking migration
+- Created comprehensive Vercel environment setup documentation (README_ENV_SETUP.md)
+- Fixed all TypeScript/ESLint errors
+
+## Files Modified
+- app/admin/categories/page.tsx (icon display fix)
+- app/admin/page.tsx (notification rendering)
+- app/social/page.tsx (social feed CRUD + sponsored ad)
+- components/admin/RealtimeNotifications.tsx (inline variant)
+- components/social/PostCard.tsx (edit/hide/delete + state fix)
+- lib/hooks/useAuth.ts (logout redirect)
+- lib/hooks/usePosts.ts (toggleSave bug fix)
+- app/profile/page.tsx (apply to write button)
+- app/settings/page.tsx (author application settings)
+- app/api/auth/author-apply/route.ts (new - application API)
+- app/api/admin/author-applications/route.ts (new - admin management)
+- supabase/migrations/ (4 new migrations)
+
+## Documentation
+- README_ENV_SETUP.md (complete Vercel deployment guide with all env vars)
+
+All features tested and ready for production deployment.
