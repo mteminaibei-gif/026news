@@ -182,7 +182,7 @@ export async function fetchFeaturedArticles(limit: number = 5): Promise<Article[
       .from('articles')
       .select('*')
       .eq('status', 'published')
-      .eq('is_featured', true)
+      .eq('featured', true)
       .order('published_at', { ascending: false })
       .limit(limit)) as any
 

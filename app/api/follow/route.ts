@@ -117,6 +117,22 @@ export async function GET(req: NextRequest) {
     }
 
     // List followers (users who follow the current user)
+    if (mode === 'suggestions') {
+      const { data: me } = await supabase
+        .from('users').select('user_id').eq('auth_id', user.id).single()
+      let excludeIds: number[] = []
+      if (me) {
+        const { data: following } = await supabase
+          .from('user_follows').select('following_id').eq('follower_id', (me as { user_id: number }).user_id)
+        excludeIds = (following ?? []).map((f: { following_id: number }) => f.following_id)
+      }
+      let q = supabase.from('users').select('user_id, name, profile_image, role, bio').limit(8)
+      if (excludeIds.length) q = q.not('user_id', 'in', `(${excludeIds.join(',')})`)
+      const { data: users, error: uErr } = await q
+      if (uErr) throw uErr
+      return NextResponse.json({ suggestions: users ?? [] })
+    }
+
     if (mode === 'followers') {
       const { data: links, error } = await supabase
         .from('user_follows')

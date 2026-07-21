@@ -25,7 +25,7 @@ export interface LiveNotification {
   link: string | null
   read: boolean
   created_at: string
-  user_id: number
+  user_id: number | null
 }
 
 export interface LiveComment {
@@ -112,6 +112,30 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
   // Stable reference to supabase
   const supabase = supabaseRef.current
 
+  // Swallow realtime transport errors so a failed WebSocket handshake
+  // (e.g. realtime paused/blocked) never surfaces as an unhandled
+  // "Failed to fetch" rejection in the browser console.
+  useEffect(() => {
+    // Some Supabase realtime handshake failures reject a promise that is not
+    // caught by the channel error handler. Silence those specifically so they
+    // don't spam the console, while leaving all other errors intact.
+    const onUnhandled = (e: PromiseRejectionEvent) => {
+      const msg = String(e.reason?.message ?? e.reason ?? '')
+      if (/failed to fetch|realtime|websocket|supabase/i.test(msg)) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', onUnhandled)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('unhandledrejection', onUnhandled)
+      }
+    }
+  }, [supabase])
+
   // ── Global subscriptions (always active) ──────────────────────
   useEffect(() => {
     if (!userId) return
@@ -135,7 +159,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'articles' }, () => {
         setState(s => ({ ...s, articleCount: Math.max(0, s.articleCount - 1) }))
       })
-      .subscribe()
+      .subscribe(() => {})
     channels.push(articlesCh)
 
     // 2. Notifications — full list is the single source of truth for all
@@ -183,7 +207,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
         if (id == null) return
         setState(s => ({ ...s, notifications: s.notifications.filter(x => x.notification_id !== id) }))
       })
-      .subscribe()
+      .subscribe(() => {})
     channels.push(notifCh)
 
     // 2b. Per-user activity (reads / listens / watches)
@@ -207,7 +231,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
             },
           }))
         })
-        .subscribe()
+        .subscribe(() => {})
       channels.push(ch)
     }
 
@@ -254,7 +278,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
         // Trigger a refetch in consuming components via state bump
         setState(s => ({ ...s }))
       })
-      .subscribe()
+      .subscribe(() => {})
 
     channelsRef.current.set(key, ch)
     return () => {
@@ -274,7 +298,7 @@ export function RealtimeProvider({ children, userId }: { children: ReactNode; us
         const comment = payload.new as LiveComment
         setState(s => ({ ...s, latestComment: comment }))
       })
-      .subscribe()
+      .subscribe(() => {})
 
     channelsRef.current.set(key, ch)
     return () => {

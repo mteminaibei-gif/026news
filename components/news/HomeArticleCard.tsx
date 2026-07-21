@@ -67,7 +67,7 @@ export function HomeArticleCard({ article }: { article: ArticleWithAuthor }) {
               {article.author?.name ?? 'Staff Writer'}
             </span>
             <span className="article-card-dot">·</span>
-            <span>{formatDate(article.created_at)}</span>
+            <span>{article.created_at ? formatDate(article.created_at) : ''}</span>
             <span className="article-card-dot">·</span>
             <span>{readTime} min read</span>
           </div>

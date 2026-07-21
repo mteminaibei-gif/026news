@@ -44,8 +44,8 @@ export async function updateSession(request: NextRequest) {
           .eq('auth_id', user.id)
           .single()
         const role = (rawProfile as { role?: string } | null)?.role
-        if (role === 'admin') home = '/admin/profile'
-        else if (role === 'journalist') home = '/journalist/profile'
+        if (role === 'admin') home = '/admin'
+        else if (role === 'journalist') home = '/journalist'
       } catch {
         /* fall back to /profile */
       }

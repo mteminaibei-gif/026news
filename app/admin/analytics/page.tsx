@@ -34,7 +34,7 @@ export default async function AdminAnalyticsPage() {
 
   const safeCount = async (table: string, eq?: { col: string; val: string }) => {
     try {
-      let q = supabase.from(table).select('id', { count: 'exact', head: true })
+      let q = (supabase.from(table as never) as any).select('id', { count: 'exact', head: true })
       if (eq) q = q.eq(eq.col, eq.val)
       const { count } = await q
       return count ?? 0

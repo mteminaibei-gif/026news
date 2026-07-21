@@ -15,8 +15,8 @@ interface ArticleCardProps {
     excerpt?: string | null
     featured_image?: string | null
     source_reference?: string | null
-    views: number
-    created_at: string
+    views?: number | null
+    created_at?: string | null
     author?: { name: string; profile_image?: string | null } | null
     category?: { name: string } | null
   }
@@ -85,9 +85,9 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
             </Link>
           </h5>
           <p className="text-xs flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
-            <span>{formatNumber(article.views)} views</span>
+            <span>{formatNumber(article.views ?? 0)} views</span>
             <span>·</span>
-            <span>{formatDate(article.created_at)}</span>
+            <span>{article.created_at ? formatDate(article.created_at) : ''}</span>
           </p>
         </div>
       </motion.div>
@@ -166,8 +166,8 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatNumber(article.views)} views</span>
-            <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>{formatDate(article.created_at)}</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatNumber(article.views ?? 0)} views</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>{article.created_at ? formatDate(article.created_at) : ''}</span>
           </div>
         </div>
       </div>

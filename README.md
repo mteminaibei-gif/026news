@@ -1,57 +1,253 @@
-# 026connet! — Next.js + Supabase Platform
+# 026connet! — Digital News & Freelance Journalism Platform
 
-A full-stack news platform with freelance journalism, content moderation, and monetization. Built with **Next.js 16**, **TailwindCSS v4**, and **Supabase**.
+Kenya's full-stack news platform with freelance journalism, content moderation, monetization, and real-time social features. Built with **Next.js 16**, **React 19**, **Supabase**, and **TailwindCSS v4**.
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 (App Router, SSR, TypeScript) |
-| Styling | TailwindCSS v4 |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (email, OAuth, magic links) |
-| Storage | Supabase Storage (images) |
-| State | React Query (@tanstack/react-query) |
-| Payments | Stripe / M-Pesa (configured in .env) |
+| Framework | Next.js 16.2 (App Router, Turbopack, TypeScript) |
+| UI | React 19, TailwindCSS v4, oklch color system |
+| Styling | Glassmorphism design system, Space Grotesk + Newsreader fonts |
+| Database | Supabase (PostgreSQL 15, 30+ tables, full RLS) |
+| Auth | Supabase Auth (email/password, OAuth, magic links) |
+| Storage | Supabase Storage (profile images, article media) |
+| State | React Query (@tanstack/react-query v5) |
+| Editor | TipTap rich text editor with AI enhancement |
+| AI | Groq API (article enhancement, SEO analysis, content moderation) |
+| Payments | M-Pesa Daraja (STK push, C2B, B2C payouts) |
+| Realtime | Supabase Realtime (live feeds, notifications, presence) |
+| Push | Web Push API with VAPID keys |
+| Email | Gmail API integration (admin inbox) |
+| Analytics | Vercel Analytics, custom per-article analytics |
+| Monitoring | Sentry error tracking |
 | Deployment | Vercel (frontend) + Supabase (backend) |
+
+## Features
+
+### Core Platform
+- **Landing page** — hero slideshow, trending stories, features grid, visitor-only
+- **Social feed** (`/social`) — main hub for logged-in users with posts, compose, reactions
+- **News feed** (`/news`) — categorized news with breaking news ticker and banner
+- **Explore** (`/explore`) — discover content by category, trending, and recommendations
+- **Articles** (`/articles`) — most popular longform articles
+- **Radio** (`/radio`) — live radio stations with persistent player widget
+- **TV** (`/tv`) — live TV streams with HLS playback and viewer metrics
+
+### User Features
+- **Profile** (`/profile`) — personal dashboard with Quick Links, stats, about
+- **Settings** (`/settings`) — 6-tab settings (Account, Profile, Notifications, Privacy, Online Status, Danger)
+- **Notifications** (`/notifications`) — real-time notifications with filters
+- **Messages** (`/inbox`) — real-time messaging with conversation threads
+- **Saved** (`/saved`) — bookmarked articles
+- **Communities** (`/communities`) — topic-based communities
+- **People** (`/people`) — user discovery with online status indicators
+- **Search** (`/search`) — full-text search across articles, people, topics
+- **Leaderboard** (`/leaderboard`) — top contributors ranking
+- **Rankings** (`/rankings`) — journalist rankings by category
+
+### Author/Journalist Features
+- **Author apply** (`/author-apply`) — 3-step application for existing readers
+- **Studio** (`/journalist`) — dashboard with 7 tabs (Overview, Articles, Analytics, Earnings, Followers, Subscribers, Profile)
+- **Write article** (`/journalist/create`) — TipTap editor with AI enhance, SEO analyzer, category/tag management
+- **Edit article** (`/journalist/edit/[id]`) — edit existing articles
+- **Journalist profiles** (`/journalists/[id]`) — public journalist profiles
+
+### Admin Features
+- **Dashboard** (`/admin`) — overview with live feeds, stats, article management
+- **Articles** (`/admin/articles`) — full article management with filters
+- **Authors** (`/admin/journalists`) — journalist management and approvals
+- **Users** (`/admin/users`) — user management table
+- **Reviews** (`/admin/reviews`) — article review queue
+- **Analytics** (`/admin/analytics`) — platform analytics dashboard
+- **Earnings** (`/admin/earnings`) — revenue and payout tracking
+- **Sources** (`/admin/sources`) — RSS feed management
+- **Categories** (`/admin/categories`) — content category management
+- **Notifications** (`/admin/notifications`) — admin notification center
+- **Settings** (`/admin/settings`) — platform configuration
+- **Write article** (`/admin/write`) — admin article creation
+- **Gmail** (`/admin/gmail`) — integrated email inbox
+
+### Technical Features
+- **Auto-collapsing sidebar** — icons-only by default, expands on hover
+- **Mobile-responsive** — off-canvas drawer sidebar, bottom tab bar
+- **Dark/light themes** — oklch color system with CSS variables
+- **Glassmorphism UI** — backdrop blur, glass layers, glow effects
+- **Realtime presence** — online user indicators with heartbeat
+- **SEO** — per-page metadata, OpenGraph, Twitter cards, sitemap, robots.txt
+- **PWA** — web manifest, push notifications, service worker
+- **Cookie consent** — GDPR-compliant consent banner
+- **Error boundaries** — graceful error handling with retry
+
+## Pages (60+ routes)
+
+```
+/                           Landing page (visitor-only)
+/login                      Sign in (split-panel design)
+/signup                     Create account (reader-only)
+/onboarding                 Multi-step onboarding (5 steps)
+/verify-email               Email verification
+/forgot-password            Password reset
+
+/social                     Social feed (main hub for logged-in users)
+/explore                    Content discovery
+/news                       News feed with categories
+/articles                   Popular articles
+/radio                      Live radio
+/tv                         Live TV
+
+/profile                    Personal dashboard
+/settings                   Account settings (6 tabs)
+/notifications              Notification center
+/inbox                      Messages
+/saved                      Bookmarked articles
+/communities                Topic communities
+/people                     User discovery
+/search                     Full-text search
+/leaderboard                Top contributors
+/rankings                   Journalist rankings
+/stats                      Personal reading stats
+/activity                   Activity history
+
+/article/[slug]             Article view with engagement
+/category/[slug]            Category page
+/authors/[id]               Journalist public profile
+
+/author-apply               Become a writer (3-step form)
+/journalist                 Studio dashboard (7 tabs)
+/journalist/create          Write article
+/journalist/edit/[id]       Edit article
+
+/admin                      Admin dashboard
+/admin/articles             Article management
+/admin/journalists          Author management
+/admin/users                User management
+/admin/reviews              Article review queue
+/admin/analytics            Platform analytics
+/admin/earnings             Revenue tracking
+/admin/sources              RSS feed management
+/admin/categories           Category management
+/admin/notifications        Admin notifications
+/admin/settings             Platform settings
+/admin/write                Admin article creation
+/admin/gmail                Gmail inbox
+/admin/edit/[id]            Edit article (admin)
+
+/about                      About page
+/contact                    Contact page
+/privacy                    Privacy policy
+/terms                      Terms of service
+/moderation                 Content moderation
+/rss-admin                  RSS feed admin
+/mpesa-withdrawal           M-Pesa withdrawals
+/subscribe                  Subscription plans
+/chat                       Live chat
+/audio-player               Audio player
+/editorial/write            Editorial write
+```
+
+## Database Schema
+
+30+ tables with full RLS policies:
+
+| Table | Purpose |
+|---|---|
+| `users` | User accounts (admin, journalist, reader roles) with online status |
+| `articles` | Content with full lifecycle (draft → review → published/rejected) |
+| `categories` | Content categories (Politics, Business, Tech, etc.) |
+| `comments` | Threaded comments with moderation states |
+| `post_comments` | Social feed comments |
+| `post_likes` | Social feed reactions |
+| `posts` | Social feed posts |
+| `thread_posts` | Discussion thread posts |
+| `likes` / `article_likes` | Article engagement tracking |
+| `analytics` | Per-article view/like/share/comment metrics |
+| `earnings` | Per-article revenue tracking |
+| `review_workflow` | Admin audit trail for review actions |
+| `reviews` | Article review records |
+| `subscriptions` | M-Pesa subscription management |
+| `sources` | RSS feed integrations (Reuters, BBC, CNN) |
+| `rss_feeds` | RSS feed configuration |
+| `messages` | Direct messages between users |
+| `threads` / `thread_members` | Conversation threads |
+| `chat_rooms` / `chat_room_members` / `chat_messages` | Real-time chat |
+| `notifications` | User notifications with actor metadata |
+| `push_subscriptions` | Web push notification subscriptions |
+| `saved_articles` | Bookmarked articles |
+| `user_follows` | User follow relationships |
+| `journalists` | Journalist profiles and applications |
+| `journalist_badges` | Author badge system |
+| `journalist_rankings` | Author ranking scores |
+| `article_tags` / `article_tag_mappings` | Article tagging system |
+| `article_versions` | Article version history |
+| `article_reads` | Reading history |
+| `article_regions` / `regions` | Geographic content targeting |
+| `article_revenue` / `payout_records` / `payout_requests` | Payment tracking |
+| `podcasts` | Podcast content |
+| `recently_played` / `listen_history` / `watch_history` | Media consumption history |
+| `site_settings` | Platform configuration (key-value) |
+| `gmail_integration` | Gmail OAuth tokens |
+| `email_templates` | Email template storage |
+| `content_moderation` | AI moderation results |
+| `password_reset_tokens` | Password reset tokens |
+| `audit_log` | System audit trail |
+| `api_rate_limits` | API rate limiting |
 
 ## Project Structure
 
 ```
 026connet!-nextjs/
-├── app/
-│   ├── page.tsx                    # Homepage
-│   ├── login/page.tsx              # Auth page
-│   ├── article/[slug]/page.tsx     # Article page
-│   ├── journalist/
-│   │   ├── layout.tsx              # Journalist layout w/ sidebar
-│   │   ├── dashboard/page.tsx      # Journalist dashboard
-│   │   └── create/page.tsx         # Create post editor
-│   ├── admin/
-│   │   ├── layout.tsx              # Admin layout w/ sidebar
-│   │   ├── dashboard/page.tsx      # Admin dashboard
-│   │   └── review/[id]/page.tsx    # Article review page
-│   └── api/
-│       ├── articles/route.ts        # GET/POST articles
-│       ├── articles/review/route.ts # POST review action
-│       ├── auth/login/route.ts      # POST login
-│       ├── auth/signup/route.ts     # POST signup
-│       └── analytics/route.ts       # GET analytics
+├── app/                          # Next.js App Router pages
+│   ├── page.tsx                  # Landing page (visitor-only)
+│   ├── layout.tsx                # Root layout with global providers
+│   ├── globals.css               # Design system (3400+ lines)
+│   ├── social/page.tsx           # Social feed (main hub)
+│   ├── news/page.tsx             # News feed
+│   ├── explore/page.tsx          # Content discovery
+│   ├── article/[slug]/page.tsx   # Article view
+│   ├── journalist/               # Author studio
+│   ├── admin/                    # Admin panel (14 pages)
+│   ├── api/                      # API routes
+│   │   ├── auth/                 # Auth (login, signup, onboard, apply)
+│   │   ├── articles/             # Article CRUD + review
+│   │   ├── payments/             # M-Pesa payments
+│   │   ├── presence/             # Online status heartbeat
+│   │   ├── settings/             # User settings
+│   │   ├── shares/               # Share tracking
+│   │   └── ...                   # 20+ API routes
+│   └── ...                       # 60+ page routes
 ├── components/
-│   ├── layout/   Navbar, Sidebar, Footer, Topbar
-│   ├── news/     ArticleCard
-│   └── ui/       Badge, StatCard, BarChart
+│   ├── layout/                   # Navbar, AppSidebar, MobileTabBar, Footer
+│   ├── news/                     # ArticleCard, HeroSlideshow, Comments, etc.
+│   ├── social/                   # PostCard, compose box
+│   ├── admin/                    # Admin dashboards, tables, charts
+│   ├── landing/                  # Landing hero slideshow, reveal sections
+│   ├── ui/                       # 20+ reusable UI components
+│   ├── settings/                 # Settings layout components
+│   ├── inbox/                    # Messaging components
+│   ├── radio/                    # Radio player widget
+│   ├── tv/                       # TV player widget
+│   ├── providers/                # Theme, Query, Realtime, Push providers
+│   ├── seo/                      # SEO analyzer
+│   └── authors/                  # Author management
 ├── lib/
-│   ├── supabase/
-│   │   ├── client.ts    # Browser Supabase client
-│   │   ├── server.ts    # Server Supabase client + admin client
-│   │   ├── middleware.ts # Auth session refresh
-│   │   └── types.ts     # Full DB type definitions
-│   ├── mock-data.ts     # Demo data (replace with Supabase queries)
-│   └── utils.ts         # cn, formatDate, slugify, etc.
+│   ├── supabase/                 # Client, server, types, middleware
+│   ├── hooks/                    # 25+ custom React hooks
+│   ├── ai/                       # Groq AI integration
+│   ├── rss/                      # RSS feed parser + classifier
+│   ├── push/                     # Push notification sender
+│   ├── gmail/                    # Gmail API integration
+│   ├── tv/                       # TV station config + HLS
+│   ├── radio/                    # Radio station config
+│   ├── seo/                      # SEO analysis tools
+│   ├── services/                 # Business logic services
+│   ├── constants/                # App, navigation, SEO constants
+│   └── utils.ts                  # Utility functions
 ├── supabase/
-│   └── migrations/001_initial_schema.sql  # Full DB schema + RLS
-└── middleware.ts        # Route protection
+│   └── migrations/               # 60+ SQL migration files
+├── public/                       # Static assets
+├── middleware.ts                  # Route protection + session refresh
+└── package.json                  # Dependencies and scripts
 ```
 
 ## Quick Start
@@ -64,8 +260,9 @@ npm install
 ### 2. Set up Supabase
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** → paste and run `supabase/migrations/001_initial_schema.sql`
-3. Copy your project URL and API keys from **Settings → API**
+2. Go to **SQL Editor** → paste and run `supabase/migrations/20240101000000_initial_schema.sql`
+3. Run subsequent migrations in order (or use `supabase db push`)
+4. Copy your project URL and API keys from **Settings → API**
 
 ### 3. Configure environment variables
 
@@ -75,29 +272,31 @@ cp .env.example .env.local
 ```
 
 ```env
+# Required
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_PROJECT_REF=your-project-ref
-NEXT_PUBLIC_APP_URL=https://your-vercel-domain.vercel.app
+NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
 
-# Stripe
-STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+# AI (free tier at console.groq.com)
+GROQ_API_KEY=
 
-# M-Pesa / Daraja
-MPESA_CONSUMER_KEY=your-mpesa-consumer-key
-MPESA_CONSUMER_SECRET=your-mpesa-consumer-secret
-MPESA_SHORTCODE=123456
-MPESA_PASSKEY=your-mpesa-passkey
+# M-Pesa (optional)
+MPESA_ENV=sandbox
+MPESA_CONSUMER_KEY=
+MPESA_CONSUMER_SECRET=
+MPESA_SHORTCODE=
+MPESA_PASSKEY=
+MPESA_CALLBACK_URL=https://your-domain.vercel.app/api/payments/mpesa/callback
 
-# Optional analytics / monitoring
-NEXT_PUBLIC_ADSENSE_ID=ca-pub-...
-SENTRY_DSN=
-LOGFLARE_SOURCE_TOKEN=
+# Gmail integration (optional)
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REDIRECT_URI=https://your-domain.vercel.app/api/gmail/callback
+GMAIL_ENCRYPTION_SECRET=
 ```
 
-Use environment variables securely in Vercel or GitHub Actions; do not commit secrets to source control.
+Use environment variables securely in Vercel or GitHub Actions; never commit secrets.
 
 ### 4. Run the dev server
 ```bash
@@ -106,98 +305,49 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-## Demo (without Supabase)
-
-The app runs fully on mock data out of the box. Demo login shortcuts are on the login page, or navigate directly:
-
-| URL | Page |
-|---|---|
-| `/` | Homepage |
-| `/login` | Login / Signup |
-| `/article/solar-technology-breakthrough` | Article page |
-| `/journalist/dashboard` | Journalist dashboard |
-| `/journalist/create` | Create article |
-| `/admin/dashboard` | Admin dashboard |
-| `/admin/review/3` | Review pending article |
-
-## Connecting Supabase
-
-Each API route has a commented block showing the Supabase query to replace the mock data. Search for `// When Supabase is configured` across the codebase.
-
-Example in `app/api/articles/route.ts`:
-```ts
-// Replace mock with:
-const supabase = await createClient()
-const { data, error } = await supabase
-  .from('articles')
-  .select('*, author:users(...), category:categories(name)')
-  .eq('status', 'published')
-  .order('created_at', { ascending: false })
-```
-
 ## Authentication Flow
 
-1. User signs in via `/login` → Supabase Auth issues JWT
-2. Middleware refreshes session on every request
-3. `/journalist/*` and `/admin/*` routes are protected — unauthenticated users are redirected to `/login`
-4. Role-based access is enforced via Supabase RLS policies in the migration file
+1. User signs up via `/signup` → creates reader account
+2. Onboarding (`/onboarding`) collects interests, follows, notification prefs
+3. Email verification via `/verify-email`
+4. Login via `/login` → Supabase Auth issues JWT
+5. Middleware refreshes session on every request
+6. `/journalist/*` and `/admin/*` routes are role-protected
+7. Admins access via `/admin`, journalists via `/journalist`
+8. Readers can apply to become authors via `/author-apply`
 
-## Database Schema
+## Styling System
 
-9 tables with full RLS policies:
-- **users** — admin, journalist, reader roles
-- **articles** — full workflow (draft → under_review → published/rejected)
-- **categories** — Politics, Business, Tech, Science, Entertainment, Sports, Freelance
-- **comments** — reader engagement with moderation states
-- **earnings** — per-article revenue tracking
-- **review_workflow** — admin audit trail for every review action
-- **subscriptions** — Stripe/M-Pesa subscription management
-- **sources** — RSS feed integrations (Reuters, BBC, CNN)
-- **analytics** — views, likes, shares, comment counts per article
+The platform uses a custom glassmorphism design system built on oklch color space:
 
-## Deployment to Vercel
+- **Light theme**: White glass panels with subtle blur
+- **Dark theme**: Dark glass panels with enhanced blur and glow
+- **Fonts**: Space Grotesk (headings/UI), Newsreader (body/article text)
+- **Components**: Auto-collapsing sidebar, glass cards, gradient buttons, glow effects
+- **Responsive**: Desktop sidebar + mobile off-canvas drawer + bottom tab bar
 
+## Deployment
+
+### Vercel
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Deploy
 vercel --prod
 ```
 
-## CI/CD with GitHub Actions
+### Environment Variables (Vercel Dashboard)
+Set all required variables in **Settings → Environment Variables**.
 
-This repo includes a GitHub Actions workflow in `.github/workflows/deploy.yml` that:
-- runs ESLint and TypeScript checks
-- installs dependencies and builds the Next.js app
-- optionally pushes Supabase migrations using `supabase db push`
-- deploys previews for pull requests and production on `main`
+### Database
+Run migrations via Supabase SQL Editor or `supabase db push`.
 
-Configure the following secrets in GitHub:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_PROJECT_REF`
-- `NEXT_PUBLIC_APP_URL`
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
+## CI/CD
 
-For secure M-Pesa or payment storage, use Vercel environment variables or Supabase secrets rather than checked-in files.
-
-Add your environment variables in **Vercel Dashboard → Settings → Environment Variables**.
-
-Set `NEXT_PUBLIC_APP_URL` to your Vercel deployment URL.
-
-## Payments
-
-### Stripe
-Set `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in `.env.local`.
-Use Stripe's subscription API for premium/pro plans.
-
-### M-Pesa (East Africa)
-Set `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET`, `MPESA_SHORTCODE`, and `MPESA_PASSKEY`.
-Use the Daraja API for STK push payments.
+GitHub Actions workflow (`.github/workflows/deploy.yml`):
+- ESLint + TypeScript checks
+- Next.js build verification
+- Supabase migration push
+- Preview deployments for PRs
+- Production deployment on `main`
 
 ## License
 

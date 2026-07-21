@@ -23,10 +23,10 @@ function VerifyEmailInner() {
   const [resendMsg, setResendMsg] = useState('')
   const router = useRouter()
 
-  // After a successful confirmation, send the reader to their profile.
+  // After a successful confirmation, send the reader to their social feed.
   useEffect(() => {
     if (!success) return
-    const t = setTimeout(() => router.push('/profile'), 4000)
+    const t = setTimeout(() => router.push('/social'), 4000)
     return () => clearTimeout(t)
   }, [success, router])
 
@@ -49,7 +49,7 @@ function VerifyEmailInner() {
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
       <div style={{ width: '100%', maxWidth: 480, textAlign: 'center' }}>
         <Link href="/" style={{ display: 'inline-block', marginBottom: 40 }}>
-          <Logo size="md" href="" />
+          <Logo size="md" href="/" />
         </Link>
 
         {/* ── Check your email ── */}
@@ -127,14 +127,14 @@ function VerifyEmailInner() {
               ))}
             </div>
 
-            <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 28px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 700, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', textDecoration: 'none', marginBottom: 10 }}>
-              🎉 Go to my profile
+            <Link href="/social" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 28px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 700, background: 'var(--primary)', color: 'oklch(98% 0.005 175)', textDecoration: 'none', marginBottom: 10 }}>
+              🎉 Go to my feed
             </Link>
             <Link href="/" style={{ display: 'block', width: '100%', padding: '13px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}>
               Browse news instead
             </Link>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 14 }}>
-              Redirecting you to your profile…
+              Redirecting you to your feed…
             </p>
           </div>
         )}

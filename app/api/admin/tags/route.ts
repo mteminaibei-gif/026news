@@ -93,8 +93,8 @@ export async function POST(req: NextRequest) {
             .insert({ article_id, tag_id: (existingTag as { tag_id: number }).tag_id } as never)
 
           // Increment usage_count
-          const tagId = (existingTag as { tag_id: number; usage_count: number }).tag_id
-          const currentCount = (existingTag as { usage_count: number }).usage_count
+          const tagId = (existingTag as { tag_id: number }).tag_id
+          const currentCount = (existingTag as unknown as { usage_count: number | null }).usage_count ?? 0
           await supabase.from('article_tags')
             .update({ usage_count: currentCount + 1 } as never)
             .eq('tag_id', tagId)

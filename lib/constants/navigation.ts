@@ -22,20 +22,21 @@ export const ROUTES = {
   // Authors
   AUTHORS: '/journalists',
   AUTHOR_DETAIL: (id: string | number) => `/journalists/${id}`,
-  AUTHOR_DASHBOARD: '/journalist/profile',
+  AUTHOR_STUDIO: '/journalist',
   AUTHOR_CREATE: '/journalist/create',
-  AUTHOR_ARTICLES: '/journalist/articles',
-  AUTHOR_ANALYTICS: '/journalist/analytics',
-  AUTHOR_EARNINGS: '/journalist/earnings',
-  AUTHOR_PROFILE: '/journalist/profile',
-  AUTHOR_SUBSCRIBERS: '/journalist/subscribers',
+  AUTHOR_ARTICLES: '/journalist?tab=articles',
+  AUTHOR_ANALYTICS: '/journalist?tab=analytics',
+  AUTHOR_EARNINGS: '/journalist?tab=earnings',
+  AUTHOR_FOLLOWERS: '/journalist?tab=followers',
+  AUTHOR_SUBSCRIBERS: '/journalist?tab=subscribers',
+  AUTHOR_PROFILE: '/journalist?tab=profile',
   
   // Rankings & Leaderboards
   RANKINGS: '/rankings',
   LEADERBOARD: '/leaderboard',
   
   // Admin
-  ADMIN_DASHBOARD: '/admin/profile',
+  ADMIN_DASHBOARD: '/admin',
   ADMIN_ANALYTICS: '/admin/analytics',
   ADMIN_ARTICLES: '/admin/articles',
   ADMIN_EARNINGS: '/admin/earnings',
@@ -67,6 +68,9 @@ export const ROUTES = {
 export const NAV_LINKS = [
   { href: ROUTES.HOME, label: 'Home', icon: '🏠' },
   { href: '/explore', label: 'Explore', icon: '📡' },
+  { href: '/social', label: 'Social', icon: '💬' },
+  { href: '/communities', label: 'Communities', icon: '👥' },
+  { href: '/people', label: 'People', icon: '🔍' },
   { href: ROUTES.NEWS, label: 'News', icon: '📰' },
   { href: ROUTES.ARTICLES, label: 'Articles', icon: '📑' },
   { href: ROUTES.RADIO, label: 'Radio', icon: '📻' },
@@ -106,12 +110,13 @@ export const ADMIN_NAV_LINKS = [
 ] as const
 
 export const AUTHOR_NAV_LINKS = [
-  { href: ROUTES.AUTHOR_DASHBOARD, label: 'Dashboard', icon: '📊' },
+  { href: ROUTES.AUTHOR_STUDIO, label: 'Studio', icon: '📊' },
   { href: ROUTES.AUTHOR_CREATE, label: 'Write Article', icon: '✏️' },
   { href: ROUTES.AUTHOR_ARTICLES, label: 'My Articles', icon: '📰' },
   { href: ROUTES.AUTHOR_ANALYTICS, label: 'Analytics', icon: '📈' },
   { href: ROUTES.AUTHOR_EARNINGS, label: 'Earnings', icon: '💰' },
-  { href: ROUTES.AUTHOR_SUBSCRIBERS, label: 'Subscribers', icon: '👥' },
+  { href: ROUTES.AUTHOR_FOLLOWERS, label: 'Followers', icon: '👥' },
+  { href: ROUTES.AUTHOR_SUBSCRIBERS, label: 'Subscribers', icon: '🔔' },
   { href: ROUTES.AUTHOR_PROFILE, label: 'Profile', icon: '👤' },
 ] as const
 

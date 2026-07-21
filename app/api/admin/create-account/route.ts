@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     // Log admin action
     try {
       await adminClient
-        .from('admin_logs')
+        .from('admin_logs' as never)
         .insert([{
           admin_id: admin.userId,
           action: `Created ${role} account: ${email}`,

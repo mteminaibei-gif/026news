@@ -70,7 +70,7 @@ export function useSignIn() {
         .single()
       const profile = rawProfile as unknown as { role: string } | null
       if (profile?.role === 'admin')      router.push('/admin/profile')
-      else if (profile?.role === 'journalist') router.push('/journalist/profile')
+      else if (profile?.role === 'journalist') router.push('/journalist')
       else router.push('/')
     },
   })

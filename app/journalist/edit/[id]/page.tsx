@@ -29,10 +29,10 @@ export default async function EditArticlePage({ params }: Props) {
     .eq('article_id', Number(id))
     .single()
 
-  if (!article) redirect('/journalist/articles')
+  if (!article) redirect('/journalist?tab=articles')
   const articleData = article as unknown as { author_id: number; status: string }
-  if (articleData.author_id !== (profile as { user_id: number }).user_id) redirect('/journalist/articles')
-  if (articleData.status === 'published') redirect('/journalist/articles')
+  if (articleData.author_id !== (profile as { user_id: number }).user_id) redirect('/journalist?tab=articles')
+  if (articleData.status === 'published') redirect('/journalist?tab=articles')
 
   const { data: categories } = await adminDb
     .from('categories').select('category_id, name').order('name')

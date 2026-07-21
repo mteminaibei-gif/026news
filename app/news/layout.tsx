@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'News — 026connet!',
+  title: 'News',
   description: 'Stay informed with the latest breaking news, trending stories, and in-depth coverage from Kenya, Africa, and around the world.',
   openGraph: {
     title: 'News — 026connet!',

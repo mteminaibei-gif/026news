@@ -106,11 +106,7 @@ export async function POST(req: NextRequest) {
       email,
       password,
       name,
-      role = 'reader',
       bio = '',
-      organization = '',
-      portfolio = '',
-      phone = '',
     } = body
 
     // Validate all inputs
@@ -118,11 +114,11 @@ export async function POST(req: NextRequest) {
       email,
       password,
       name,
-      role,
+      role: 'reader',
       bio,
-      organization,
-      portfolio,
-      phone,
+      organization: '',
+      portfolio: '',
+      phone: '',
     })
 
     if (validationErrors.length > 0) {
@@ -194,34 +190,18 @@ export async function POST(req: NextRequest) {
     //    by RLS or would duplicate the trigger-created row.
     const admin = await createAdminClient()
 
-    // Journalist signups are NOT granted the role immediately. They are
-    // created as readers with a PENDING author_application that a site admin
-    // must approve (via /api/admin/journalists). This keeps "apply to write"
-    // consistent whether the person is brand new or an existing member.
-    const isJournalistApplication = role === 'journalist'
-    const effectiveRole = isJournalistApplication ? 'reader' : role
-
+    // All signups create reader accounts. To become a journalist, users
+    // apply via /author-apply after creating their account.
     const profilePayload: Record<string, any> = {
       auth_id: authData.user.id,
       name: name.trim(),
       email: email.toLowerCase(),
-      role: effectiveRole,
+      role: 'reader',
       bio: bio.trim() || null,
       status: 'active',
       password_hash: '',
-      social_links: isJournalistApplication ? {
-        organization: organization.trim() || null,
-        portfolio: portfolio.trim() || null,
-        phone: phone.trim() || null,
-      } : {},
-      author_application: isJournalistApplication
-        ? {
-            status: 'pending',
-            organization: organization.trim() || null,
-            portfolio: portfolio.trim() || null,
-            submitted_at: new Date().toISOString(),
-          }
-        : null,
+      social_links: {},
+      author_application: null,
     }
 
     const { error: profileError } = await admin
@@ -247,19 +227,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Success response
-    const pendingJournalist = isJournalistApplication
     return NextResponse.json(
       {
         success: true,
-        pendingJournalist,
-        message: pendingJournalist
-          ? 'Account created! Your journalist application is pending admin review.'
-          : 'Account created successfully! You can now sign in.',
+        message: 'Account created successfully! You can now sign in.',
         user: {
           id: authData.user.id,
           email: authData.user.email,
           name: name.trim(),
-          role: effectiveRole,
+          role: 'reader',
         },
       },
       { status: 201 }

@@ -1,60 +1,84 @@
-import { cn } from '@/lib/utils'
+'use client'
+
+import { ReactNode } from 'react'
 
 interface StatCardProps {
   label: string
-  value: string | number | React.ReactNode
+  value: ReactNode
+  icon?: ReactNode
   sub?: string
-  accent?: 'blue' | 'orange' | 'green' | 'red' | 'gold' | 'purple' | 'cyan' | 'kenya'
-  icon?: React.ReactNode
-  trend?: string
-  trendUp?: boolean
-  className?: string
+  accent?: string
+  change?: {
+    value: number | string
+    direction: 'up' | 'down' | 'neutral'
+    period?: string
+  }
+  color?: string
+  size?: 'sm' | 'md' | 'lg'
 }
 
-const accentStyles: Record<string, { iconBg: string; iconColor: string; border: string; iconBgStyle?: React.CSSProperties; borderStyle?: React.CSSProperties }> = {
-  kenya: { iconBg: '', iconColor: 'text-white', border: 'border-l-4', iconBgStyle: { backgroundColor: 'var(--primary)' }, borderStyle: { borderLeftColor: 'var(--primary)' } },
-  green: { iconBg: 'bg-emerald-100', iconColor: 'text-emerald-700', border: 'border-l-4 border-emerald-500' },
-  gold: { iconBg: 'bg-amber-100', iconColor: 'text-amber-700', border: 'border-l-4 border-amber-500' },
-  blue: { iconBg: 'bg-blue-100', iconColor: 'text-blue-700', border: 'border-l-4 border-blue-500' },
-  red: { iconBg: 'bg-red-100', iconColor: 'text-red-700', border: 'border-l-4 border-red-500' },
-  orange: { iconBg: 'bg-orange-100', iconColor: 'text-orange-700', border: 'border-l-4 border-orange-500' },
-  purple: { iconBg: 'bg-violet-100', iconColor: 'text-violet-700', border: 'border-l-4 border-violet-500' },
-  cyan: { iconBg: 'bg-cyan-100', iconColor: 'text-cyan-700', border: 'border-l-4 border-cyan-500' },
-}
-
-export function StatCard({ label, value, sub, accent = 'kenya', icon, trend, trendUp, className }: StatCardProps) {
-  const style = accentStyles[accent] || accentStyles.kenya
+export function StatCard({ label, value, icon, sub, accent, change, color = 'var(--primary)', size = 'md' }: StatCardProps) {
+  const padding = size === 'sm' ? '1rem' : size === 'lg' ? '2rem' : '1.5rem'
+  const valueSize = size === 'sm' ? '1.5rem' : size === 'lg' ? '2.5rem' : '2rem'
+  const labelSize = size === 'sm' ? '0.75rem' : size === 'lg' ? '0.95rem' : '0.875rem'
+  const accentColor = accent ? `var(--${accent})` : color
 
   return (
     <div
-      className={cn(
-        'rounded-xl shadow-sm p-5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5',
-        style.border,
-        className
-      )}
-      style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', ...(style.borderStyle || {}) }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '0.75rem',
+        padding,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        gap: '0.75rem',
+      }}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
-          <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
-          {sub && <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{sub}</p>}
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: labelSize, fontWeight: 500, color: 'var(--text-secondary)' }}>{label}</span>
         {icon && (
           <div
-            className={cn('w-10 h-10 rounded-lg flex items-center justify-center text-lg', style.iconColor)}
-            style={style.iconBgStyle || {}}
+            style={{
+              width: size === 'sm' ? 24 : size === 'lg' ? 32 : 28,
+              height: size === 'sm' ? 24 : size === 'lg' ? 32 : 28,
+              borderRadius: '0.5rem',
+              background: `${accentColor}22`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: accentColor,
+            }}
           >
             {icon}
           </div>
         )}
       </div>
-      {trend && (
-        <div className={cn('flex items-center gap-1 mt-3 text-xs font-medium', trendUp ? 'text-emerald-600' : 'text-red-600')}>
-          <span>{trendUp ? '↑' : '↓'}</span>
-          <span>{trend}</span>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+          <span style={{ fontSize: valueSize, fontWeight: 700, color: 'var(--text-primary)' }}>{value}</span>
+          {change && (
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color:
+                  change.direction === 'up'
+                    ? 'var(--success)'
+                    : change.direction === 'down'
+                      ? 'var(--error)'
+                      : 'var(--text-tertiary)',
+              }}
+            >
+              {change.direction === 'up' ? '↑' : change.direction === 'down' ? '↓' : '—'} {change.value}
+              {change.period && ` ${change.period}`}
+            </span>
+          )}
         </div>
-      )}
+        {sub && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{sub}</span>}
+      </div>
     </div>
   )
 }

@@ -98,10 +98,10 @@ export function EditArticleClient({ article, categories }: Props) {
 
       if (action === 'submit') {
         setSubmitSuccess('Article submitted for review!')
-        setTimeout(() => router.push('/journalist/articles'), 2000)
+        setTimeout(() => router.push('/journalist?tab=articles'), 2000)
       } else {
         setSubmitSuccess('Draft saved!')
-        setTimeout(() => router.push('/journalist/articles'), 1500)
+        setTimeout(() => router.push('/journalist?tab=articles'), 1500)
       }
     } catch {
       setSubmitError('Unexpected error')
@@ -116,7 +116,7 @@ export function EditArticleClient({ article, categories }: Props) {
       <div className="sticky top-0 z-20 backdrop-blur-md shadow-sm" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link href="/journalist/articles" className="transition-colors shrink-0" style={{ color: 'var(--text-tertiary)' }}>←</Link>
+            <Link href="/journalist?tab=articles" className="transition-colors shrink-0" style={{ color: 'var(--text-tertiary)' }}>←</Link>
             <div className="w-2 h-6 rounded-full shrink-0" style={{ background: 'linear-gradient(to bottom, var(--primary), var(--accent))' }} />
             <h1 className="text-sm font-black truncate" style={{ color: 'var(--primary)' }}>Edit Article</h1>
             {title && <span className="text-xs truncate hidden md:block" style={{ color: 'var(--text-tertiary)' }}>— {title}</span>}

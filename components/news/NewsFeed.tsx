@@ -356,9 +356,9 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
                     <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{article.author?.name ?? 'Staff'}</span>
                   </div>
                   <span>·</span>
-                  <span>{timeAgo(article.created_at)}</span>
+                  <span>{article.created_at ? timeAgo(article.created_at) : ''}</span>
                   <span>·</span>
-                  <span>{formatNumber(article.views)} views</span>
+                  <span>{formatNumber(article.views ?? 0)} views</span>
                   <span style={{ flex: 1 }} />
                   <button
                     onClick={e => { e.preventDefault(); e.stopPropagation(); handleLike(article.article_id) }}

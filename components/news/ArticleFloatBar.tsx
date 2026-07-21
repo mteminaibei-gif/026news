@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, MessageCircle, Bookmark, Share2 } from 'lucide-react'
+import { Heart, MessageCircle, Bookmark, Share2, Users } from 'lucide-react'
 import { useUser } from '@/lib/hooks/useAuth'
 import { useLike } from '@/lib/hooks/useLike'
 
@@ -15,13 +15,14 @@ function compact(n: number): string {
 interface Props {
   articleId: number
   slug: string
+  articleTitle?: string
   initialLikes?: number
   initialSaves?: number
   commentCount?: number
   variant?: 'float' | 'inline'
 }
 
-export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSaves = 0, commentCount = 0, variant = 'float' }: Props) {
+export function ArticleFloatBar({ articleId, slug, articleTitle, initialLikes = 0, initialSaves = 0, commentCount = 0, variant = 'float' }: Props) {
   const isInline = variant === 'inline'
   const router = useRouter()
   const { data: user } = useUser()
@@ -30,6 +31,7 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
   const [savedId, setSavedId] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [shareToSocial, setShareToSocial] = useState<'idle' | 'sharing' | 'done' | 'error'>('idle')
 
   useEffect(() => {
     if (!user) return
@@ -115,6 +117,35 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
     }
   }
 
+  const handleShareToSocial = async () => {
+    if (!user) {
+      router.push(`/login?redirect=/article/${slug}`)
+      return
+    }
+    if (shareToSocial === 'sharing') return
+    setShareToSocial('sharing')
+    try {
+      const articleUrl = `${window.location.origin}/article/${slug}`
+      const title = articleTitle || document.title
+      const content = `Check out this article: ${title}\n\n${articleUrl}`
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, tags: ['article'] }),
+      })
+      if (res.ok) {
+        setShareToSocial('done')
+        setTimeout(() => setShareToSocial('idle'), 3000)
+      } else {
+        setShareToSocial('error')
+        setTimeout(() => setShareToSocial('idle'), 3000)
+      }
+    } catch {
+      setShareToSocial('error')
+      setTimeout(() => setShareToSocial('idle'), 3000)
+    }
+  }
+
   return (
     <div className={isInline ? 'inline-bar' : 'float-bar'}>
       <button className={`float-btn ${liked ? 'active' : ''}`} onClick={toggleLike} aria-label="Like article">
@@ -136,6 +167,16 @@ export function ArticleFloatBar({ articleId, slug, initialLikes = 0, initialSave
       <button className="float-btn" onClick={share} aria-label="Share article">
         <Share2 size={20} />
         {isInline && <span>{copied ? 'Copied!' : 'Share'}</span>}
+      </button>
+      <div className="float-divider" />
+      <button
+        className={`float-btn ${shareToSocial === 'done' ? 'active' : ''}`}
+        onClick={handleShareToSocial}
+        disabled={shareToSocial === 'sharing'}
+        aria-label="Share to Social feed"
+      >
+        <Users size={20} />
+        {isInline && <span>{shareToSocial === 'sharing' ? 'Sharing…' : shareToSocial === 'done' ? 'Shared!' : shareToSocial === 'error' ? 'Failed' : 'Share to Social'}</span>}
       </button>
     </div>
   )

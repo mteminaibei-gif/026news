@@ -21,7 +21,7 @@ export default function ErrorPage({
       <header className="bg-white dark:bg-[#0a1628] border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center">
           <Link href="/" aria-label="026connet! — home">
-            <Logo size="md" href="" />
+            <Logo size="md" href="/" />
           </Link>
         </div>
       </header>

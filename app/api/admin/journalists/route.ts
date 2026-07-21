@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
             <p>Hi ${applicantName},</p>
             <p>Congratulations! Your application to write for <strong>026connet!</strong> has been <strong>approved</strong>.</p>
             <p>You can now log in and start publishing articles. Your account has been upgraded to <strong>Journalist</strong> status.</p>
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://026news.vercel.app'}/profile/studio" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#0f766e;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Go to your journalist dashboard</a></p>
+            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://026news.vercel.app'}/journalist" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#0f766e;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Go to your journalist studio</a></p>
             <hr style="margin:24px 0;border:none;border-top:1px solid #e4e9e7" />
             <p style="font-size:12px;color:#6b776f;">If you have any questions, reply to this email or contact our editorial team.</p>
           `,

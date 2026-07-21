@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5
+type Step = 0 | 1 | 2 | 3 | 4
 
 const INTERESTS = [
   { id: 'tech-innovation', label: 'Tech & Innovation', icon: '💻' },
@@ -33,9 +33,6 @@ const NOTIFS = [
   { id: 'weekly_recap', name: 'Weekly Recap', desc: 'Your reading stats every Sunday' },
 ]
 
-const NICHES = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena']
-const EXPERIENCE = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years']
-
 const inputStyle: CSSProperties = {
   width: '100%', padding: '14px 16px', borderRadius: 12, border: '1.5px solid var(--border)',
   background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontFamily: 'inherit',
@@ -58,19 +55,6 @@ export default function OnboardingPage() {
   const [notifs, setNotifs] = useState<Record<string, boolean>>({
     daily_digest: true, push: true, comment_replies: true, weekly_recap: false,
   })
-
-  // Author application
-  const [applyAuthor, setApplyAuthor] = useState(false)
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [title, setTitle] = useState('')
-  const [niche, setNiche] = useState('')
-  const [bio, setBio] = useState('')
-  const [experience, setExperience] = useState('')
-  const [portfolioUrl, setPortfolioUrl] = useState('')
-  const [linkedinUrl, setLinkedinUrl] = useState('')
-  const [motivation, setMotivation] = useState('')
-  const [terms, setTerms] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -106,7 +90,7 @@ export default function OnboardingPage() {
       })
   }, [])
 
-  const TOTAL = 6
+  const TOTAL = 5
 
   const toggle = (list: string[], set: (v: string[]) => void, id: string) =>
     set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
@@ -117,14 +101,9 @@ export default function OnboardingPage() {
     password.length >= 8 && /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password) &&
     password === confirm
 
-  const applyValid = !applyAuthor || (
-    firstName.trim() !== '' && lastName.trim() !== '' && title.trim() !== '' && niche !== '' && bio.trim() !== '' && terms
-  )
-
   async function finish() {
     setError('')
     if (!accountValid) { setStep(0); setError('Please complete your account details.'); return }
-    if (!applyValid) { setError('Please complete the author application or uncheck it.'); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/onboard', {
@@ -134,8 +113,6 @@ export default function OnboardingPage() {
           name, email, password,
           interests,
           notification_prefs: notifs,
-          applyAuthor,
-          application: { firstName, lastName, title, niche, bio, experience, portfolioUrl, linkedinUrl, motivation },
         }),
       })
       const data = await res.json()
@@ -327,72 +304,18 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 4: Apply as Author ── */}
+          {/* ── Step 4: Done / Review ── */}
           {step === 4 && (
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ fontSize: '2.2rem', marginBottom: 12 }}>✨</div>
-                <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>Want to write for us?</h1>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: 6 }}>You&apos;re signed up as a reader. Apply to become an author — it only takes a minute.</p>
-              </div>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, border: `1.5px solid ${applyAuthor ? 'var(--primary)' : 'var(--border-subtle)'}`, background: applyAuthor ? 'var(--primary-light)' : 'var(--bg-surface)', cursor: 'pointer', marginBottom: 16 }}>
-                <input type="checkbox" checked={applyAuthor} onChange={(e) => setApplyAuthor(e.target.checked)} style={{ accentColor: 'var(--primary)', width: 18, height: 18 }} />
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>Apply as an Author</div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>Earn 70% revenue share, M-Pesa payouts, analytics & more.</div>
-                </div>
-              </label>
-
-              {applyAuthor && (
-                <div style={{ display: 'grid', gap: 12, marginBottom: 18, animation: 'ob-fade-in 0.4s var(--ease-out-expo)' }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10 }}>
-                    <input style={inputStyle} placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                    <input style={inputStyle} placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                  </div>
-                  <input style={inputStyle} placeholder="Professional title (e.g. Tech Author)" value={title} onChange={(e) => setTitle(e.target.value)} />
-                  <select style={inputStyle} value={niche} onChange={(e) => setNiche(e.target.value)}>
-                    <option value="">Select your writing niche</option>
-                    {NICHES.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                  <textarea style={{ ...inputStyle, minHeight: 84, resize: 'vertical' }} placeholder="Short bio — what you cover" value={bio} onChange={(e) => setBio(e.target.value)} />
-                  <select style={inputStyle} value={experience} onChange={(e) => setExperience(e.target.value)}>
-                    <option value="">Years of experience</option>
-                    {EXPERIENCE.map((x) => <option key={x} value={x}>{x}</option>)}
-                  </select>
-                  <input style={inputStyle} placeholder="Portfolio URL (optional)" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
-                  <input style={inputStyle} placeholder="LinkedIn profile (optional)" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} />
-                  <textarea style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }} placeholder="Why do you want to write for 026connet!?" value={motivation} onChange={(e) => setMotivation(e.target.value)} />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
-                    I agree to the terms and conditions
-                  </label>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setStep(3)} style={ghostBtn}>← Back</button>
-                <button onClick={() => setStep(5)} disabled={!applyValid} style={primaryBtn(applyValid)}>
-                  {applyAuthor ? 'Review →' : 'Finish →'}
-                </button>
-              </div>
-              {applyAuthor && !applyValid && (
-                <p style={{ textAlign: 'center', fontSize: '0.74rem', color: 'var(--error)', marginTop: 10 }}>
-                  Please complete the required fields and accept the terms.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* ── Step 5: Done / Review ── */}
-          {step === 5 && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: 80, height: 80, borderRadius: 20, background: 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', margin: '0 auto 20px' }}>
                 {name.trim().charAt(0).toUpperCase() || '👋'}
               </div>
               <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>You&apos;re all set, {name.split(' ')[0] || 'friend'}!</h1>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '40ch', margin: '0 auto 24px' }}>
-                {applyAuthor ? 'Your author application is ready to submit. ' : ''}We&apos;ll send a verification link to <strong style={{ color: 'var(--primary)' }}>{email}</strong>.
+                We&apos;ll send a verification link to <strong style={{ color: 'var(--primary)' }}>{email}</strong>.
+              </p>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', maxWidth: '40ch', margin: '0 auto 24px' }}>
+                Want to write for 026connet!? You can apply to become an author from your profile anytime.
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 28 }}>
                 <div><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{interests.length}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Topics</div></div>
@@ -400,9 +323,9 @@ export default function OnboardingPage() {
                 <div><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{Object.values(notifs).filter(Boolean).length}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Alerts</div></div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setStep(4)} style={ghostBtn}>← Back</button>
+                <button onClick={() => setStep(3)} style={ghostBtn}>← Back</button>
                 <button onClick={finish} disabled={loading} style={{ ...primaryBtn(true), flex: 1 }}>
-                  {loading ? '⏳ Creating account…' : applyAuthor ? 'Submit Application' : 'Create Account'}
+                  {loading ? 'Creating account...' : 'Create Account'}
                 </button>
               </div>
             </div>

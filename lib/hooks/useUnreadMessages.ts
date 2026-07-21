@@ -36,8 +36,9 @@ export function useUnreadMessages() {
   useEffect(() => {
     if (!myId) return
     const supabase = createClient()
+    const channelName = `unread-messages-${myId}-${Math.random().toString(36).slice(2)}`
     const channel = supabase
-      .channel(`unread-messages-${myId}`)
+      .channel(channelName)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${myId}` },
         () => fetchUnread()

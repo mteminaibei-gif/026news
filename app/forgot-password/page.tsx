@@ -106,7 +106,7 @@ function ForgotPasswordForm() {
       <div style={{ maxWidth: 440, width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/">
-            <div style={{ textAlign: 'center', marginBottom: 16 }}><Logo size="lg" href="" /></div>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}><Logo size="lg" href="/" /></div>
           </Link>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>Reset Password</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Enter your email to receive a reset link</p>
@@ -249,7 +249,7 @@ function VerifyToken({ token }: { token: string }) {
       <div style={{ maxWidth: 440, width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/">
-            <div style={{ textAlign: 'center', marginBottom: 16 }}><Logo size="lg" href="" /></div>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}><Logo size="lg" href="/" /></div>
           </Link>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>New Password</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Enter your new password for {userEmail}</p>

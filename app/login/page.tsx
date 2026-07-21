@@ -25,7 +25,7 @@ function LoginForm() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      let home = '/profile'
+      let home = '/social'
       try {
         const { data: p } = await supabase
           .from('users')
@@ -34,7 +34,6 @@ function LoginForm() {
           .single()
         const role = (p as { role?: string } | null)?.role
         if (role === 'admin') home = '/admin'
-        else if (role === 'journalist') home = '/profile'
       } catch { /* ignore */ }
       router.replace(home)
     })
@@ -68,11 +67,9 @@ function LoginForm() {
 
       const role = data.user?.role?.toLowerCase()
       if (role === 'admin') {
-        window.location.href = '/profile'
-      } else if (role === 'journalist') {
-        window.location.href = '/profile'
+        window.location.href = '/admin'
       } else {
-        window.location.href = '/profile'
+        window.location.href = '/social'
       }
     } catch {
       setError('An error occurred. Please try again.')
@@ -117,7 +114,7 @@ function LoginForm() {
         <div style={{ position: 'absolute', bottom: '-10%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, oklch(50% 0.1 55 / 0.15) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <Logo size="lg" href="" baseColor="oklch(95% 0.005 175)" suffixColor="#e23b3b" />
+          <Logo size="lg" href="/" baseColor="oklch(95% 0.005 175)" suffixColor="#e23b3b" />
         </div>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -145,7 +142,7 @@ function LoginForm() {
         <div style={{ width: '100%', maxWidth: 400 }}>
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <Logo size="lg" href="" />
+            <Logo size="lg" href="/" />
           </div>
 
           <div className="mb-8">

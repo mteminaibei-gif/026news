@@ -9,8 +9,8 @@ const FOOTER_LINKS = {
     { label: 'Contact Us', href: '/contact' },
   ],
   Platform: [
-    { label: 'Author Portal', href: '/profile' },
-    { label: 'Admin Panel', href: '/profile' },
+    { label: 'Social Feed', href: '/social' },
+    { label: 'News', href: '/news' },
     { label: 'Become an Author', href: '/signup' },
   ],
   Kenya: [

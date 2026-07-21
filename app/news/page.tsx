@@ -279,9 +279,9 @@ export default function NewsPage() {
   const remainingArticles = articles.slice(4)
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-base)' }}>
+    <div className="flex flex-col min-h-screen news-page">
       {/* Breaking News Ticker */}
-      <div style={{ background: 'var(--primary)', color: 'oklch(98% 0.005 175)', overflow: 'hidden' }}>
+      <div className="news-ticker-breaking">
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
           <div style={{
             padding: '8px 16px', background: 'rgba(0,0,0,0.2)',
@@ -357,11 +357,7 @@ export default function NewsPage() {
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div style={{
-            marginBottom: 'var(--space-lg)', padding: 16,
-            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-            borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 14,
-          }}>
+          <div className="news-filter-panel">
             {/* Category filters */}
             <div>
               <p style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>Category</p>
@@ -432,7 +428,7 @@ export default function NewsPage() {
         {loading ? (
           <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading news...</div>
         ) : articles.length === 0 ? (
-          <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: 16, border: '1px solid var(--border-subtle)' }}>
+          <div className="news-empty">
             <Radio size={32} style={{ color: 'var(--text-tertiary)', marginBottom: 12 }} />
             <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>No news articles yet</p>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>Check back soon for breaking stories.</p>
@@ -441,38 +437,32 @@ export default function NewsPage() {
           <>
             {/* Top Story Hero */}
             {topStory && (
-              <Link href={`/article/${topStory.slug}`} style={{
-                display: 'block', borderRadius: 16, overflow: 'hidden',
-                position: 'relative', height: 420, marginBottom: 24,
-                textDecoration: 'none', color: 'inherit',
-              }}>
+              <Link href={`/article/${topStory.slug}`} className="news-hero">
                 {topStory.featured_image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={topStory.featured_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={topStory.featured_image} alt="" />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, oklch(45% 0.12 175), oklch(45% 0.12 220))' }} />
+                  <div className="news-hero-fallback" />
                 )}
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(10% 0.02 175 / 0.9) 0%, oklch(10% 0.02 175 / 0.15) 50%, transparent 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 32, color: 'oklch(96% 0.005 175)' }}>
+                <div className="news-hero-overlay" />
+                <div className="news-hero-content">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <span style={{
-                      padding: '3px 10px', borderRadius: 4,
+                    <span className="news-hero-badge" style={{
                       background: CATEGORY_COLORS[topStory.category?.name ?? ''] || 'var(--primary)',
-                      fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
                     }}>
                       {topStory.category?.name ?? 'Breaking'}
                     </span>
                     <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Top Story</span>
                   </div>
-                  <h2 style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', fontWeight: 600, lineHeight: 1.25, marginBottom: 12, textWrap: 'balance' as const }}>
+                  <h2 className="news-hero-title">
                     {topStory.title}
                   </h2>
                   {topStory.excerpt && (
-                    <p style={{ fontSize: '0.88rem', opacity: 0.85, marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    <p className="news-hero-excerpt">
                       {stripHtml(topStory.excerpt)}
                     </p>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.78rem', opacity: 0.8 }}>
+                  <div className="news-hero-meta">
                     <span>{topStory.author?.name ?? '026connet!'}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={13} /> {formatNumber(topStory.views ?? 0)}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> {new Date(topStory.created_at).toLocaleDateString()}</span>
@@ -485,17 +475,12 @@ export default function NewsPage() {
             {sideStories.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {sideStories.map((a) => (
-                  <Link key={a.article_id} href={`/article/${a.slug}`} style={{
-                    display: 'flex', gap: 14, padding: 16,
-                    background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                    borderRadius: 12, textDecoration: 'none', color: 'inherit',
-                    transition: 'all 0.2s',
-                  }}>
+                  <Link key={a.article_id} href={`/article/${a.slug}`} className="news-side-card">
                     {a.featured_image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.featured_image} alt="" style={{ width: 80, height: 80, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} />
+                      <img src={a.featured_image} alt="" />
                     ) : (
-                      <div style={{ width: 80, height: 80, borderRadius: 9, background: 'var(--bg-inset)', flexShrink: 0 }} />
+                      <div className="news-side-card-fallback" />
                     )}
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
                       <div>
@@ -527,17 +512,12 @@ export default function NewsPage() {
             {/* Article list with infinite scroll */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
               {remainingArticles.map((a) => (
-                <Link key={a.article_id} href={`/article/${a.slug}`} style={{
-                  display: 'flex', gap: 16, padding: 16,
-                  background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                  borderRadius: 12, textDecoration: 'none', color: 'inherit',
-                  transition: 'all 0.2s', cursor: 'pointer',
-                }}>
+                <Link key={a.article_id} href={`/article/${a.slug}`} className="news-list-card">
                   {a.featured_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.featured_image} alt="" style={{ width: 120, height: 90, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} />
+                    <img src={a.featured_image} alt="" />
                   ) : (
-                    <div style={{ width: 120, height: 90, borderRadius: 9, background: 'var(--bg-inset)', flexShrink: 0 }} />
+                    <div className="news-list-card-fallback" />
                   )}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
                     <div>

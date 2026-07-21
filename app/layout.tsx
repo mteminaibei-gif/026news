@@ -100,8 +100,11 @@ const newsreader = Newsreader({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" data-scroll-behavior="smooth" className={`h-full antialiased ${spaceGrotesk.variable} ${newsreader.variable}`}>
-      <body className="min-h-full flex flex-col font-sans" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+    <html lang="en" data-theme="light" data-scroll-behavior="smooth" className={`h-full antialiased ${spaceGrotesk.variable} ${newsreader.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('026connet!-dark-mode');if(t==='true'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark')}}catch(e){}` }} />
+      </head>
+      <body className="min-h-full flex flex-col font-sans" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }} suppressHydrationWarning>
         <ThemeProvider>
           <ToastProvider>
             <QueryProvider>

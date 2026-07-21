@@ -8,6 +8,7 @@ import { formatNumber } from '@/lib/utils'
 interface Props {
   articleId: number
   slug: string
+  articleTitle?: string
   initialViews: number
   initialLikes: number
   initialComments: number
@@ -18,7 +19,7 @@ interface Props {
  * Client wrapper providing real-time views/likes/comments to both
  * the article header stats and the engagement float bar.
  */
-export function ArticleEngagement({ articleId, slug, initialViews, initialLikes, initialComments, initialSaves }: Props) {
+export function ArticleEngagement({ articleId, slug, articleTitle, initialViews, initialLikes, initialComments, initialSaves }: Props) {
   const stats = useArticleStats(articleId, {
     views: initialViews,
     likes: initialLikes,
@@ -45,6 +46,7 @@ export function ArticleEngagement({ articleId, slug, initialViews, initialLikes,
         variant="inline"
         articleId={articleId}
         slug={slug}
+        articleTitle={articleTitle}
         initialLikes={stats.likes}
         initialSaves={initialSaves}
         commentCount={stats.comments}

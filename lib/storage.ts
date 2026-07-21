@@ -5,6 +5,7 @@ export const BUCKETS = {
   FEATURED_IMAGES: 'article-images',
   PROFILE_IMAGES:  'avatars',
   ARTICLE_MEDIA:   'article-images',
+  POST_MEDIA:      'posts',
 } as const
 
 type BucketName = typeof BUCKETS[keyof typeof BUCKETS]
@@ -73,6 +74,11 @@ export async function uploadFeaturedImage(file: File, articleSlug: string) {
 // ─── Upload journalist profile picture ────────────────────────────────────────
 export async function uploadProfileImage(file: File, userId: number) {
   return uploadFile(BUCKETS.PROFILE_IMAGES, file, `users/${userId}/`)
+}
+
+// ─── Upload social post media ─────────────────────────────────────────────────
+export async function uploadPostMedia(file: File, userId: number) {
+  return uploadFile(BUCKETS.POST_MEDIA, file, `users/${userId}/`)
 }
 
 // ─── Delete a file ────────────────────────────────────────────────────────────

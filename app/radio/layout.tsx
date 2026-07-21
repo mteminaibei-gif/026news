@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Radio — 026connet!',
+  title: 'Radio',
   description: 'Listen to live radio streams from Kenya and around the world. News, music, talk shows, and podcasts — stream online for free.',
   openGraph: {
     title: 'Radio — 026connet!',

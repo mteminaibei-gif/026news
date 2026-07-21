@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
@@ -8,7 +8,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Heart, Bookmark, MessageSquare, Bell, Settings, Send, Share2, UserPlus, UserMinus, Loader2 } from 'lucide-react'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { ChatWidget } from '@/components/ui/ChatWidget'
-import { ProfileNav } from '@/components/layout/ProfileNav'
+import { useUserPosts, type SocialPost } from '@/lib/hooks/usePosts'
+import { PostCard } from '@/components/social/PostCard'
 
 interface Profile {
   user_id: number; name: string; role: string; bio: string | null
@@ -37,7 +38,7 @@ export default function JournalistProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [currentUserRole, setCurrentUserRole] = useState<'reader' | 'journalist' | 'admin'>('reader')
-  const [activeTab, setActiveTab] = useState<'articles' | 'about'>('articles')
+  const [activeTab, setActiveTab] = useState<'articles' | 'about' | 'posts'>('articles')
 
   const [articles, setArticles] = useState<Article[]>([])
   const [savedArticles, setSaved] = useState<any[]>([])
@@ -158,7 +159,7 @@ export default function JournalistProfilePage() {
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(10)
-      setNotifs((data as Notification[]) || [])
+      setNotifs((data as unknown as Notification[]) || [])
     } catch { setNotifs([]) }
   }
 
@@ -180,7 +181,7 @@ export default function JournalistProfilePage() {
     try {
       const { data: msgs } = await supabase
         .from('messages')
-        .select('sender_id, receiver_id, message, created_at')
+        .select('sender_id, receiver_id, content, created_at')
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
         .order('created_at', { ascending: false })
         .limit(50)
@@ -341,14 +342,15 @@ export default function JournalistProfilePage() {
           style={{ fontWeight: 500, color: activeTab === 'about' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'about' ? 'var(--primary)' : 'transparent' }}>
           About
         </button>
+        <button onClick={() => setActiveTab('posts')}
+          className="profile-tab-btn"
+          style={{ fontWeight: 500, color: activeTab === 'posts' ? 'var(--primary)' : 'var(--text-tertiary)', borderBottomColor: activeTab === 'posts' ? 'var(--primary)' : 'transparent' }}>
+          Posts
+        </button>
       </div>
 
       {/* Content */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }} className="journalist-layout">
-        {/* Profile Nav */}
-        <aside style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
-          <ProfileNav role={currentUserRole} userId={currentUserId ?? undefined} />
-        </aside>
         {/* Main */}
         <main>
           {activeTab === 'articles' ? (
@@ -390,6 +392,8 @@ export default function JournalistProfilePage() {
                 <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>No published articles yet.</p>
               </div>
             )
+          ) : activeTab === 'posts' ? (
+            <ProfilePosts userId={profile.user_id} />
           ) : (
             <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 32 }}>
               <h2 style={{ fontFamily: "'Newsreader', Georgia, serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 16 }}>About {profile.name}</h2>
@@ -501,6 +505,33 @@ export default function JournalistProfilePage() {
           receiverImage={profile.profile_image}
         />
       )}
+    </div>
+  )
+}
+
+function ProfilePosts({ userId }: { userId: number }) {
+  const { posts: initial, loading } = useUserPosts(userId)
+  const [posts, setPosts] = useState<SocialPost[]>(initial)
+  useEffect(() => { setPosts(initial) }, [initial])
+
+  const toggleLike = useCallback(async (postId: number) => {
+    setPosts(prev => prev.map(p => p.post_id === postId
+      ? { ...p, liked: !p.liked, like_count: p.like_count + (p.liked ? -1 : 1) }
+      : p))
+    try {
+      await fetch(`/api/posts/${postId}/like`, { method: 'POST' })
+    } catch { /* keep optimistic */ }
+  }, [])
+
+  if (loading) return <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem', padding: '32px 0', textAlign: 'center' }}>Loading posts…</p>
+  if (posts.length === 0) return (
+    <div style={{ textAlign: 'center', padding: '64px 0', background: 'var(--bg-surface)', borderRadius: 16, border: '1px solid var(--border-subtle)' }}>
+      <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>No posts yet.</p>
+    </div>
+  )
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {posts.map(p => <PostCard key={p.post_id} post={p} onToggleLike={toggleLike} />)}
     </div>
   )
 }

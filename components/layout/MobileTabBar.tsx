@@ -3,15 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Home, Compass, Search, User, Newspaper,
+  Home, Compass, MessageSquare, User, Newspaper,
 } from 'lucide-react'
 
 const ITEMS = [
-  { href: '/', label: 'Home', icon: Home, match: (p: string) => p === '/' },
+  { href: '/social', label: 'Social', icon: Home, match: (p: string) => p.startsWith('/social') },
   { href: '/explore', label: 'Explore', icon: Compass, match: (p: string) => p.startsWith('/explore') },
-  { href: '/search', label: 'Search', icon: Search, match: (p: string) => p.startsWith('/search') },
+  { href: '/inbox', label: 'Messages', icon: MessageSquare, match: (p: string) => p.startsWith('/inbox') },
   { href: '/news', label: 'News', icon: Newspaper, match: (p: string) => p.startsWith('/news') },
-  { href: '/profile', label: 'Profile', icon: User, match: (p: string) => p.startsWith('/profile') || p.startsWith('/stats') },
 ] as const
 
 export function MobileTabBar() {

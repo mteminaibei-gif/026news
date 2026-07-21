@@ -1,30 +1,55 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
+import { AppSidebar } from '@/components/layout/AppSidebar'
 import { Footer } from '@/components/layout/Footer'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
+import { usePresence } from '@/lib/hooks/usePresence'
+import { useUser } from '@/lib/hooks/useAuth'
 
-const HIDE_NAV_ROUTES = ['/admin', '/journalist']
+function hasOwnChrome(pathname: string): boolean {
+  return (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/verify-email')
+  )
+}
+
+function isLandingPage(pathname: string): boolean {
+  return pathname === '/'
+}
 
 export function LayoutNav({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? ''
-  const hideNav = HIDE_NAV_ROUTES.some(r => pathname.startsWith(r))
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const { data: user, isLoading: userLoading } = useUser()
+  usePresence()
 
-  if (hideNav) {
+  if (hasOwnChrome(pathname)) {
     return <>{children}</>
   }
 
+  // Landing page: content only — the page renders its own nav/hero/footer
+  if (isLandingPage(pathname)) {
+    return <>{children}</>
+  }
+
+  const isAuthenticated = !!user
+
   return (
-    <>
-      <div style={{ position: 'sticky', top: 0, zIndex: 50, alignSelf: 'flex-start', width: '100%' }}>
-        <Navbar />
-      </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {children}
+    <div className="app-layout">
+      <Navbar onMenu={() => setMobileOpen(v => !v)} />
+      <div className="app-body">
+        {isAuthenticated && <AppSidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />}
+        <main className="app-content">
+          {children}
+        </main>
       </div>
       <Footer />
-      <MobileTabBar />
-    </>
+      {isAuthenticated && <MobileTabBar />}
+    </div>
   )
 }

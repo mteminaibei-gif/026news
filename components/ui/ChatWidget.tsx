@@ -66,7 +66,7 @@ export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidg
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*, sender:users(name, profile_image)')
+        .select('*, sender:users!sender_id(name, profile_image)')
         .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUserId})`)
         .order('created_at', { ascending: true })
         .limit(50)

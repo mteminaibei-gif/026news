@@ -27,7 +27,7 @@ function sortInhouseFirst(list: ArticleWithAuthor[]): ArticleWithAuthor[] {
     const ai = aAny.is_aggregated === true ? 1 : 0
     const bi = bAny.is_aggregated === true ? 1 : 0
     if (ai !== bi) return ai - bi
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return new Date(b.created_at ?? '').getTime() - new Date(a.created_at ?? '').getTime()
   })
 }
 
@@ -145,11 +145,11 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
         .eq('status', 'published' as never)
         .order('created_at', { ascending: false })
         .range(from, from + PAGE - 1)
-      if (categoryFilterName) {
-        query = query.eq('category', categoryFilterName as never)
-      }
       const { data } = await query
-      const rows = (data ?? []) as ArticleWithAuthor[]
+      let rows = (data ?? []) as ArticleWithAuthor[]
+      if (categoryFilterName) {
+        rows = rows.filter((r) => r.category?.name === categoryFilterName)
+      }
       loadedRef.current = from + rows.length
       if (rows.length < PAGE) setHasMore(false)
       if (rows.length) {

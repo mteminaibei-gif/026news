@@ -1,10 +1,27 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 import { createClient } from '@/lib/supabase/server'
 import { CategoryCloud } from '@/components/layout/CategoryCloud'
 import { stripHtml } from '@/lib/utils'
 import type { PostgrestResponse } from '@supabase/supabase-js'
+
+export const metadata: Metadata = {
+  title: 'Most Popular Articles',
+  description: 'The most-read stories on 026connet! — from our newsroom and leading publications across Kenya, Africa, and the world.',
+  openGraph: {
+    title: 'Most Popular Articles — 026connet!',
+    description: 'The most-read stories on 026connet! — from our newsroom and leading publications across Kenya, Africa, and the world.',
+    siteName: '026connet!',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Most Popular Articles — 026connet!',
+    description: 'The most-read stories on 026connet! — from our newsroom and leading publications.',
+  },
+}
 
 type ArticleRow = {
   article_id: number

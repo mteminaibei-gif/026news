@@ -6,6 +6,7 @@ import { ReadingProgress } from '@/components/ui/ReadingProgress'
 import { ViewTracker } from '@/components/ui/ViewTracker'
 import { ArticleEngagement } from '@/components/news/ArticleEngagement'
 import { ArticleComments } from '@/components/news/ArticleComments'
+import { ArticlePaywall } from '@/components/news/ArticlePaywall'
 import { BannerAd, InArticleAd } from '@/components/ads/AdSense'
 import { stripHtml } from '@/lib/utils'
 import { sanitizeArticleHtml } from '@/lib/sanitizeHtml'
@@ -163,6 +164,21 @@ const ARTICLE_CSS = `
 .article-view .related-section { margin-top:56px; padding-top:40px; border-top:1px solid var(--border-subtle); }
 .article-view .related-title { font-size:1.1rem; font-weight:700; margin-bottom:24px; }
 .article-view .related-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:20px; }
+.article-view .article-gate-hint { display:block; margin: 20px 0; padding: 14px 18px; border-radius: 12px; background: var(--primary-light); border: 1px solid var(--glass-border); color: var(--primary); font-size: 0.9rem; font-weight: 600; text-decoration: none; transition: all 0.18s; }
+.article-view .article-gate-hint:hover { border-color: oklch(65% 0.12 175 / 0.5); }
+.article-view .article-paywall { position: relative; overflow: hidden; margin: 36px 0 8px; padding: 40px 32px; border-radius: 20px; text-align: center; background: var(--glass-bg-strong); border: 1px solid var(--glass-border); backdrop-filter: blur(calc(var(--glass-blur) + 6px)); box-shadow: var(--glow-soft); }
+.article-view .article-paywall-glow { position:absolute; inset:0; pointer-events:none; background: radial-gradient(80% 120% at 50% -20%, oklch(65% 0.12 175 / 0.18), transparent 60%); }
+.article-view .article-paywall-lock { position: relative; width: 60px; height: 60px; margin: 0 auto 18px; border-radius: 18px; display:flex; align-items:center; justify-content:center; background: var(--grad-primary); color:#fff; box-shadow: var(--glow-primary); }
+.article-view .article-paywall-title { position: relative; font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0 0 10px; letter-spacing: -0.01em; }
+.article-view .article-paywall-text { position: relative; max-width: 48ch; margin: 0 auto 22px; color: var(--text-secondary); font-size: 0.98rem; line-height: 1.6; }
+.article-view .article-paywall-actions { position: relative; display:flex; gap: 0.7rem; justify-content:center; flex-wrap: wrap; margin-bottom: 20px; }
+.article-view .article-paywall-btn { display:inline-flex; align-items:center; gap: 0.5rem; padding: 0.75rem 1.4rem; border-radius: 999px; font-weight: 700; font-size: 0.92rem; text-decoration: none; transition: transform var(--dur) var(--ease-out-expo), box-shadow var(--dur) var(--ease-out-expo); }
+.article-view .article-paywall-btn.primary { background: var(--grad-primary); color:#fff; box-shadow: var(--glow-primary); }
+.article-view .article-paywall-btn.primary:hover { transform: translateY(-2px); }
+.article-view .article-paywall-btn.ghost { background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border); }
+.article-view .article-paywall-btn.ghost:hover { transform: translateY(-2px); border-color: oklch(65% 0.12 175 / 0.45); }
+.article-view .article-paywall-perks { position: relative; display:flex; gap: 1.4rem; justify-content:center; flex-wrap: wrap; color: var(--text-tertiary); font-size: 0.8rem; }
+.article-view .article-paywall-perks span { display:inline-flex; align-items:center; gap: 6px; }
 .article-view .related-card { border-radius:14px; overflow:hidden; background: var(--bg-surface); border:1px solid var(--border-subtle); transition: all 0.25s var(--ease-out-expo); cursor:pointer; text-decoration:none; color:inherit; display:block; }
 .article-view .related-card:hover { transform: translateY(-3px); box-shadow: var(--card-hover-shadow); border-color: var(--border); }
 .article-view .related-card-img { width:100%; height:140px; object-fit:cover; }
@@ -188,6 +204,10 @@ const ARTICLE_CSS = `
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
+
+  // Gate full content behind auth: anonymous visitors read the intro only.
+  const { data: authData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
+  const isAuthed = !!authData.user
 
   let rawArticle: unknown = null
   try {
@@ -253,6 +273,13 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   const readTime = article.reading_time_minutes ?? readingTime(article.content)
+
+  // Intro shown to everyone; full body is members-only.
+  const teaserText = (() => {
+    const base = article.excerpt ? stripHtml(article.excerpt) : stripHtml(article.content || '')
+    const trimmed = base.replace(/\s+/g, ' ').trim()
+    return trimmed.length > 320 ? `${trimmed.slice(0, 320).trimEnd()}…` : trimmed
+  })()
   const likes = article.like_count ?? article.likes ?? 0
   const authorInitials = (article.author?.name ?? 'S').split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()
   const coverCaption = article.source_name
@@ -313,7 +340,7 @@ export default async function ArticlePage({ params }: Props) {
                 <div className="author-info">
                   <span className="author-name">{article.author?.name ?? '026connet!'}</span>
                   <span className="author-detail">
-                    Published {formatDate(article.created_at)} · {readTime} min read
+                    Published {article.created_at ? formatDate(article.created_at) : ''} · {readTime} min read
                   </span>
                 </div>
               </div>
@@ -339,14 +366,21 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           )}
 
-          {/* Body */}
-          <div
-            className="article-body rich-editor-content"
-            dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content || '') }}
-          />
+          {/* Body — full for members, intro-only for anonymous visitors */}
+          {isAuthed ? (
+            <div
+              className="article-body rich-editor-content"
+              dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content || '') }}
+            />
+          ) : (
+            <p className="article-body" style={{ fontSize: '1.15rem', lineHeight: 1.85 }}>{teaserText}</p>
+          )}
 
           {/* Ad after article */}
           <BannerAd />
+
+          {/* Sign-in wall for anonymous visitors */}
+          {!isAuthed && <ArticlePaywall slug={article.slug} redirectTo={`/article/${article.slug}`} />}
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
@@ -358,16 +392,21 @@ export default async function ArticlePage({ params }: Props) {
           )}
 
           {/* Like / Comment / Share bar — below article content */}
-          <div className="my-6">
-            <ArticleEngagement
-              articleId={article.article_id}
-              slug={article.slug}
-              initialViews={article.views ?? 0}
-              initialLikes={likes}
-              initialComments={comments.length}
-              initialSaves={article.save_count ?? 0}
-            />
-          </div>
+          {isAuthed ? (
+            <div className="my-6">
+              <ArticleEngagement
+                articleId={article.article_id}
+                slug={article.slug}
+                articleTitle={article.title}
+                initialViews={article.views ?? 0}
+                initialLikes={likes}
+                initialComments={comments.length}
+                initialSaves={article.save_count ?? 0}
+              />
+            </div>
+          ) : (
+            <div className="article-gate-hint">Sign in to like, save and share this story.</div>
+          )}
 
           {/* Author card */}
           {article.author && (
@@ -381,7 +420,7 @@ export default async function ArticlePage({ params }: Props) {
                 <h3 className="author-card-name">{article.author.name}</h3>
                 {article.author.bio && <p className="author-card-bio">{article.author.bio}</p>}
                 <div className="author-card-stats">
-                  <span><strong>{formatNumber(article.views)}</strong> views on this article</span>
+                  <span><strong>{formatNumber(article.views ?? 0)}</strong> views on this article</span>
                   <span><strong>{authorArticleCount}</strong> articles</span>
                 </div>
               </div>
@@ -394,9 +433,20 @@ export default async function ArticlePage({ params }: Props) {
           )}
 
           {/* Comments */}
-          <section id="comments" className="comments-section">
-            <ArticleComments articleId={article.article_id} initialComments={comments} />
-          </section>
+          {isAuthed ? (
+            <section id="comments" className="comments-section">
+              <ArticleComments articleId={article.article_id} initialComments={comments} />
+            </section>
+          ) : (
+            <section className="comments-section">
+              <div className="comments-header">
+                <h2 className="comments-title">Join the conversation</h2>
+              </div>
+              <Link href={`/login?redirect=${encodeURIComponent(`/article/${article.slug}#comments`)}`} className="article-gate-hint" style={{ display: 'inline-flex' }}>
+                Sign in to read and write comments →
+              </Link>
+            </section>
+          )}
 
           {/* Related */}
           {related.length > 0 && (

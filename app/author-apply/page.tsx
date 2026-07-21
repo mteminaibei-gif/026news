@@ -1,65 +1,63 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Logo } from '@/components/layout/Logo';
-import { createClient } from '@/lib/supabase/client';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Logo } from '@/components/layout/Logo'
+import { createClient } from '@/lib/supabase/client'
 
 const steps = [
   { number: 1, label: 'About You' },
   { number: 2, label: 'Portfolio' },
   { number: 3, label: 'Review' },
   { number: 4, label: 'Submitted' },
-];
+]
 
-const niches = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena'];
-const experienceLevels = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years'];
+const niches = ['World Updates', 'Kenya Focus', 'Politics & Governance', 'Business & Economy', 'Tech & Innovation', 'Health & Wellness', 'Arts & Culture', 'Sports Arena']
+const experienceLevels = ['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years']
 
 export default function AuthorApplyPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [title, setTitle] = useState('');
-  const [niche, setNiche] = useState('');
-  const [bio, setBio] = useState('');
-  const [experience, setExperience] = useState('');
-  const [portfolioUrl, setPortfolioUrl] = useState('');
-  const [linkedinUrl, setLinkedinUrl] = useState('');
-  const [motivation, setMotivation] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [authState, setAuthState] = useState<'checking' | 'guest' | 'reader' | 'journalist' | 'pending'>('checking');
+  const router = useRouter()
+  const [step, setStep] = useState(1)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [title, setTitle] = useState('')
+  const [niche, setNiche] = useState('')
+  const [bio, setBio] = useState('')
+  const [experience, setExperience] = useState('')
+  const [portfolioUrl, setPortfolioUrl] = useState('')
+  const [linkedinUrl, setLinkedinUrl] = useState('')
+  const [motivation, setMotivation] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [authState, setAuthState] = useState<'checking' | 'guest' | 'reader' | 'journalist' | 'pending'>('checking')
 
-  // Determine the visitor's state: signed-out guest, active reader (can
-  // apply), already a journalist, or already has a pending application.
   useEffect(() => {
     let active = true;
     (async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        if (active) setAuthState('guest');
-        return;
+        if (active) setAuthState('guest')
+        return
       }
       const { data } = await supabase
         .from('users')
         .select('role, author_application')
         .eq('auth_id', user.id)
-        .single();
-      if (!active) return;
-      const app = (data as any)?.author_application;
-      if (app?.status === 'pending') setAuthState('pending');
-      else if ((data as any)?.role === 'journalist') setAuthState('journalist');
-      else setAuthState('reader');
-    })();
-    return () => { active = false; };
-  }, []);
+        .single()
+      if (!active) return
+      const app = (data as any)?.author_application
+      if (app?.status === 'pending') setAuthState('pending')
+      else if ((data as any)?.role === 'journalist') setAuthState('journalist')
+      else setAuthState('reader')
+    })()
+    return () => { active = false }
+  }, [])
 
   async function submitApplication() {
-    setSubmitting(true);
-    setError('');
+    setSubmitting(true)
+    setError('')
     try {
       const res = await fetch('/api/auth/apply-journalist', {
         method: 'POST',
@@ -74,182 +72,208 @@ export default function AuthorApplyPage() {
           linkedin: linkedinUrl || undefined,
           motivation: motivation || undefined,
         }),
-      });
-      const data = await res.json();
+      })
+      const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Could not submit your application.');
-        if (data.status === 'pending') setAuthState('pending');
-        setSubmitting(false);
-        return;
+        setError(data.error || 'Could not submit your application.')
+        if (data.status === 'pending') setAuthState('pending')
+        setSubmitting(false)
+        return
       }
-      setStep(4);
+      setStep(4)
     } catch {
-      setError('Network error. Please try again.');
+      setError('Network error. Please try again.')
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
+  }
+
+  const cardStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '520px',
+    background: 'var(--glass-bg)',
+    border: '1px solid var(--glass-border)',
+    borderRadius: '20px',
+    padding: '2.5rem',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.05) inset',
   }
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    border: '1px solid var(--border)',
+    padding: '12px 16px',
+    borderRadius: '12px',
+    border: '1.5px solid var(--border)',
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     fontFamily: 'inherit',
-    fontSize: '0.88rem',
+    fontSize: '0.92rem',
     outline: 'none',
-  };
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  }
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
     fontSize: '0.82rem',
-    fontWeight: 500,
+    fontWeight: 600,
     color: 'var(--text-secondary)',
-    marginBottom: '6px',
-  };
+    marginBottom: '8px',
+  }
 
   const btnPrimary: React.CSSProperties = {
-    padding: '10px 24px',
-    borderRadius: '8px',
+    padding: '12px 28px',
+    borderRadius: '12px',
     border: 'none',
-    background: 'var(--primary)',
+    background: 'linear-gradient(135deg, oklch(55% 0.15 175), oklch(45% 0.12 220))',
     color: '#fff',
     cursor: 'pointer',
     fontFamily: 'inherit',
-    fontSize: '0.88rem',
-    fontWeight: 600,
-    transition: 'background 0.2s',
-  };
+    fontSize: '0.92rem',
+    fontWeight: 700,
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+  }
 
   const btnSecondary: React.CSSProperties = {
-    padding: '10px 24px',
-    borderRadius: '8px',
-    border: '1px solid var(--border)',
-    background: 'var(--bg-elevated)',
+    padding: '12px 28px',
+    borderRadius: '12px',
+    border: '1.5px solid var(--border)',
+    background: 'transparent',
     color: 'var(--text-primary)',
     cursor: 'pointer',
     fontFamily: 'inherit',
-    fontSize: '0.88rem',
-    fontWeight: 500,
-    transition: 'border-color 0.2s',
-  };
+    fontSize: '0.92rem',
+    fontWeight: 600,
+    transition: 'all 0.2s',
+  }
 
   if (authState === 'checking') {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--text-tertiary)' }}>Loading…</div>
+        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.92rem' }}>Loading...</div>
       </div>
-    );
+    )
   }
 
   if (authState === 'guest') {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '2.5rem' }}>
-          <Logo size="lg" href="" />
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', margin: '1.5rem 0 0.5rem' }}>
-            Sign in to apply
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
-            You need an account to become a journalist. Sign in, or create one and choose &ldquo;Journalist&rdquo; at sign-up.
-          </p>
-          <button style={btnPrimary} onClick={() => router.push('/login?redirect=/author-apply')}>
-            Sign in
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem' }}>
+        <div style={cardStyle}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <Logo size="lg" href="/" />
+          </div>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, oklch(55% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem' }}>
+              ✍️
+            </div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              Become a Writer
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', maxWidth: '320px', margin: '0 auto' }}>
+              Share your stories with thousands of readers. Sign in to apply.
+            </p>
+          </div>
+          <button style={{ ...btnPrimary, width: '100%' }} onClick={() => router.push('/login?redirect=/author-apply')}>
+            Sign in to Apply
           </button>
-          <p style={{ marginTop: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            New here?{' '}
+          <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            Don&apos;t have an account?{' '}
             <span style={{ color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }} onClick={() => router.push('/signup')}>
-              Create an account
+              Create one
             </span>
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   if (authState === 'journalist') {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '2.5rem' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✍️</div>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            You&apos;re already a journalist
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
-            You can start writing and publishing right away.
-          </p>
-          <button style={btnPrimary} onClick={() => router.push('/journalist/profile')}>
-            Go to your dashboard
-          </button>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem' }}>
+        <div style={cardStyle}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, oklch(55% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem' }}>
+              ✍️
+            </div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              You&apos;re Already a Writer
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+              Start writing and publishing right away.
+            </p>
+            <button style={btnPrimary} onClick={() => router.push('/journalist')}>
+              Go to Studio
+            </button>
+          </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (authState === 'pending') {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '2.5rem' }}>
-          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', fontSize: '1.75rem' }}>
-            ⏳
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem' }}>
+        <div style={cardStyle}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, oklch(55% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem' }}>
+              ⏳
+            </div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              Application Under Review
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem', maxWidth: '320px', margin: '0 auto 1.5rem' }}>
+              Your application is being reviewed. We&apos;ll email you once a decision is made.
+            </p>
+            <button style={btnPrimary} onClick={() => router.push('/social')}>
+              Back to Feed
+            </button>
           </div>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Application under review
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
-            Thanks! Your journalist application is already being reviewed by our editorial team. We&apos;ll email you once a decision is made.
-          </p>
-          <button style={btnPrimary} onClick={() => router.push('/profile')}>
-            Back to profile
-          </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem 1.5rem' }}>
-      <div style={{ maxWidth: '620px', width: '100%' }}>
-        {/* Logo */}
+      <div style={{ maxWidth: '520px', width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Logo size="lg" href="" />
+          <Logo size="lg" href="/" />
         </div>
 
         {error && (
-          <div style={{ marginBottom: '1.5rem', padding: '12px 16px', borderRadius: '10px', fontSize: '0.85rem', background: 'var(--error-light)', color: 'var(--error)' }}>
+          <div style={{ marginBottom: '1.5rem', padding: '14px 18px', borderRadius: '14px', fontSize: '0.88rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
             {error}
           </div>
         )}
 
-        {/* Progress Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2.5rem', gap: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', gap: 0 }}>
           {steps.map((s, i) => (
             <div key={s.number} style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{
-                  width: '32px', height: '32px', borderRadius: '50%',
+                  width: '36px', height: '36px', borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.82rem', fontWeight: 600,
-                  background: step >= s.number ? 'var(--primary)' : 'var(--bg-elevated)',
+                  fontSize: '0.82rem', fontWeight: 700,
+                  background: step >= s.number ? 'linear-gradient(135deg, oklch(55% 0.15 175), oklch(45% 0.12 220))' : 'var(--bg-elevated)',
                   color: step >= s.number ? '#fff' : 'var(--text-muted)',
-                  border: step >= s.number ? 'none' : '1px solid var(--border)',
-                  transition: 'all 0.3s',
+                  border: step >= s.number ? 'none' : '1.5px solid var(--border)',
+                  transition: 'all 0.3s var(--ease-out-expo)',
+                  boxShadow: step >= s.number ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
                 }}>
                   {step > s.number ? '✓' : s.number}
                 </div>
                 <span style={{
                   fontSize: '0.72rem', color: step >= s.number ? 'var(--primary)' : 'var(--text-muted)',
-                  marginTop: '4px', fontWeight: step >= s.number ? 500 : 400,
+                  marginTop: '6px', fontWeight: step >= s.number ? 600 : 400,
                 }}>
                   {s.label}
                 </span>
               </div>
               {i < steps.length - 1 && (
                 <div style={{
-                  width: '60px', height: '2px', margin: '0 8px', marginBottom: '18px',
-                  background: step > s.number ? 'var(--primary)' : 'var(--border)',
+                  width: '60px', height: '2px', margin: '0 8px', marginBottom: '20px',
+                  background: step > s.number ? 'linear-gradient(90deg, oklch(55% 0.15 175), oklch(45% 0.12 220))' : 'var(--border)',
                   transition: 'background 0.3s',
                 }} />
               )}
@@ -257,22 +281,14 @@ export default function AuthorApplyPage() {
           ))}
         </div>
 
-        {/* Step Card */}
-        <div style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '2rem',
-          boxShadow: 'var(--card-shadow)',
-        }}>
-          {/* Step 1: About You */}
+        <div style={cardStyle}>
           {step === 1 && (
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
                 About You
               </h2>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
-                Tell us a bit about yourself to get started.
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+                Tell us about your writing background.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem', marginBottom: '1rem' }}>
@@ -323,13 +339,12 @@ export default function AuthorApplyPage() {
             </div>
           )}
 
-          {/* Step 2: Portfolio */}
           {step === 2 && (
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
                 Your Portfolio
               </h2>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
                 Share your work and professional presence.
               </p>
 
@@ -345,16 +360,16 @@ export default function AuthorApplyPage() {
 
               <div style={{
                 border: '2px dashed var(--border)',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 padding: '2rem',
                 textAlign: 'center',
                 marginBottom: '1.5rem',
                 cursor: 'pointer',
-                transition: 'border-color 0.2s',
+                transition: 'border-color 0.2s, background 0.2s',
               }}>
                 <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📄</p>
-                <p style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                  Upload your writing samples
+                <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                  Upload Writing Samples
                 </p>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                   PDF, DOC, or TXT files up to 10MB
@@ -368,13 +383,12 @@ export default function AuthorApplyPage() {
             </div>
           )}
 
-          {/* Step 3: Review & Submit */}
           {step === 3 && (
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
                 Review & Submit
               </h2>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
                 Review the benefits and submit your application.
               </p>
 
@@ -386,8 +400,9 @@ export default function AuthorApplyPage() {
                   { icon: '✍️', title: 'Rich Editor', desc: 'Powerful writing and editing tools' },
                 ].map((perk) => (
                   <div key={perk.title} style={{
-                    padding: '1rem', borderRadius: '10px',
-                    background: 'var(--primary-muted)', border: '1px solid var(--border-subtle)',
+                    padding: '1rem', borderRadius: '14px',
+                    background: 'var(--glass-bg)',
+                    border: '1px solid var(--glass-border)',
                   }}>
                     <span style={{ fontSize: '1.25rem' }}>{perk.icon}</span>
                     <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px', marginBottom: '2px' }}>
@@ -409,14 +424,14 @@ export default function AuthorApplyPage() {
               </div>
 
               <label style={{
-                display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer',
-                fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1.5rem',
+                display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem',
               }}>
                 <input
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
-                  style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
+                  style={{ accentColor: 'var(--primary)', width: '18px', height: '18px' }}
                 />
                 I agree to the terms and conditions
               </label>
@@ -424,27 +439,27 @@ export default function AuthorApplyPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <button style={btnSecondary} onClick={() => setStep(2)}>Back</button>
                 <button style={btnPrimary} onClick={submitApplication} disabled={submitting || !termsAccepted}>
-                  {submitting ? 'Submitting…' : 'Submit Application'}
+                  {submitting ? 'Submitting...' : 'Submit Application'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 4: Submitted */}
           {step === 4 && (
             <div style={{ textAlign: 'center', padding: '2rem 0' }}>
               <div style={{
                 width: '72px', height: '72px', borderRadius: '50%',
-                background: 'var(--success-light)', display: 'flex', alignItems: 'center',
+                background: 'linear-gradient(135deg, oklch(55% 0.15 175), oklch(45% 0.12 220))',
+                display: 'flex', alignItems: 'center',
                 justifyContent: 'center', margin: '0 auto 1.25rem', fontSize: '2rem',
               }}>
                 ✓
               </div>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
                 Application Submitted!
               </h2>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', maxWidth: '380px', margin: '0 auto 1.5rem' }}>
-                Thank you for applying to become a writer on 026connet!. We&apos;ll review your application and get back to you within 48 hours.
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', maxWidth: '360px', margin: '0 auto 1.5rem' }}>
+                Thank you for applying. We&apos;ll review your application and get back to you within 48 hours.
               </p>
               <button style={btnPrimary} onClick={() => window.location.href = '/'}>
                 Back to Homepage
@@ -454,5 +469,5 @@ export default function AuthorApplyPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

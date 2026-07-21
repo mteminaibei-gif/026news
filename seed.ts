@@ -108,12 +108,12 @@ async function seed() {
   Admin:
     email:    admin@026connet!.com
     password: Admin026!
-    url:      /admin/dashboard
+    url:      /admin
 
   Journalist:
     email:    journalist@026connet!.com
     password: Journalist026!
-    url:      /journalist/dashboard
+    url:      /journalist
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `)

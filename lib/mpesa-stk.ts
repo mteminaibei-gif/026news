@@ -126,7 +126,7 @@ export async function initiateSTKPush({
 
     // Save transaction record
     const supabase = await createAdminClient()
-    await supabase.from('mpesa_transactions').insert({
+    await (supabase.from('mpesa_transactions' as never) as any).insert({
       phone_number: phoneNumber,
       amount: amount,
       status: 'pending',
@@ -215,16 +215,14 @@ export async function handleMpesaCallback(callbackData: STKCallbackData) {
       updateData.error = errorMsg
     }
 
-    await supabase
-      .from('mpesa_transactions')
+    await (supabase.from('mpesa_transactions' as never) as any)
       .update(updateData as never)
       .eq('checkout_request_id', checkoutRequestId)
 
     // If payment successful, activate subscription
     if (resultCode === 0) {
       // Get transaction to find order_id
-      const { data: transaction } = await supabase
-        .from('mpesa_transactions')
+      const { data: transaction } = await (supabase.from('mpesa_transactions' as never) as any)
         .select('order_id, amount, phone_number')
         .eq('checkout_request_id', checkoutRequestId)
         .single()
@@ -232,8 +230,7 @@ export async function handleMpesaCallback(callbackData: STKCallbackData) {
       if (transaction) {
         const txn = transaction as any
         // Find corresponding subscription
-        const { data: subscription } = await supabase
-          .from('subscriptions')
+        const { data: subscription } = await (supabase.from('subscriptions' as never) as any)
           .select('*')
           .eq('reference_id', txn.order_id)
           .single()
@@ -254,8 +251,7 @@ export async function handleMpesaCallback(callbackData: STKCallbackData) {
             expires_at: endDate.toISOString(),
           }
 
-          await supabase
-            .from('subscriptions')
+          await (supabase.from('subscriptions' as never) as any)
             .update(updatePayload as never)
             .eq('id', subData.id)
 
