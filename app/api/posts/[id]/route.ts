@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const rateLimit = checkRateLimit(`edit_post_${user.id}`, 10, 60)
+    const rateLimit = await checkRateLimit(`edit_post_${user.id}`, 10, 60)
     if (!rateLimit.allowed) {
       return NextResponse.json({ error: 'Too many edit requests. Please slow down.' }, { status: 429 })
     }
@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!content) return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     if (content.length > 2000) return NextResponse.json({ error: 'Content too long' }, { status: 400 })
 
-    const { data: post } = await supabase
+    const { data: post } = await (supabase as any)
       .from('posts')
       .select('user_id, content')
       .eq('post_id', postId)
@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const adminDb = await createAdminClient()
-    const { data: updated, error } = await adminDb
+    const { data: updated, error } = await (adminDb as any)
       .from('posts')
       .update({ content, updated_at: new Date().toISOString() })
       .eq('post_id', postId)
@@ -68,7 +68,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: post } = await supabase
+    const { data: post } = await (supabase as any)
       .from('posts')
       .select('user_id')
       .eq('post_id', postId)
@@ -92,7 +92,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const adminDb = await createAdminClient()
-    const { error } = await adminDb
+    const { error } = await (adminDb as any)
       .from('posts')
       .delete()
       .eq('post_id', postId)
