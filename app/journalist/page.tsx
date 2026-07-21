@@ -247,8 +247,11 @@ function StudioInner() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center p-8 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
           <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Account not found</h2>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Your account is not set up yet. Please contact an admin.</p>
-          <Link href="/" className="inline-block px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: 'var(--primary)', color: '#fff' }}>Go Home</Link>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Your account is not set up yet. Please complete onboarding or contact an admin.</p>
+          <div className="flex gap-3 justify-center">
+            <Link href="/onboarding" className="px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: 'var(--primary)', color: '#fff' }}>Complete Onboarding</Link>
+            <Link href="/" className="px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>Go Home</Link>
+          </div>
         </div>
       </div>
     )
