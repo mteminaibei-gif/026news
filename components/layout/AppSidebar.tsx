@@ -22,16 +22,6 @@ interface NavItem {
   badge?: number
 }
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-}
-
 const itemVariants = {
   hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const } },
@@ -151,16 +141,9 @@ export function AppSidebar({
     </motion.div>
   )
 
-  const Section = ({ label, items, delay = 0 }: { label: string; items: NavItem[]; delay?: number }) => (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" custom={{ delay }}>
-      <SectionLabel label={label} />
-      {items.map(i => <SideLink key={i.href} item={i} />)}
-    </motion.div>
-  )
-
   return (
     <>
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
           aria-hidden="true"
           onClick={onClose}
@@ -174,20 +157,36 @@ export function AppSidebar({
         <motion.aside
           className={`app-rail ${mobileOpen ? 'open' : ''}`}
           aria-label="Personal"
-          initial={{ x: -300 }}
-          animate={{ x: mobileOpen ? 0 : -300 }}
-          exit={{ x: -300 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         >
           <div className="app-rail-inner">
-            <Section label="Personal" items={personal} delay={0.05} />
+            <motion.div
+              className="app-rail-nav"
+              aria-label="Personal"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <SectionLabel label="Personal" />
+              {personal.map(i => <SideLink key={i.href} item={i} />)}
+            </motion.div>
+
             <motion.div
               className="app-rail-sep"
               initial={{ opacity: 0, scaleY: 0 }}
               animate={{ opacity: 1, scaleY: 1 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             />
-            <Section label="Browse" items={browse} delay={0.1} />
+            <motion.div
+              className="app-rail-nav"
+              aria-label="Browse"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <SectionLabel label="Browse" />
+              {browse.map(i => <SideLink key={i.href} item={i} />)}
+            </motion.div>
+
             {studio.length > 0 && (
               <>
                 <motion.div
@@ -196,7 +195,16 @@ export function AppSidebar({
                   animate={{ opacity: 1, scaleY: 1 }}
                   transition={{ duration: 0.3, delay: 0.25 }}
                 />
-                <Section label={role === 'admin' ? 'Admin' : 'Studio'} items={studio} delay={0.15} />
+                <motion.div
+                  className="app-rail-nav"
+                  aria-label="Studio"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
+                  <SectionLabel label={role === 'admin' ? 'Admin' : 'Studio'} />
+                  {studio.map((i: any) => <SideLink key={i.href} item={i} />)}
+                </motion.div>
               </>
             )}
 
@@ -257,7 +265,7 @@ export function AppSidebar({
                 </motion.div>
               ) : (
                 <motion.div className="app-rail-auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.35 }}>
-                  <motion.link
+                  <motion.a
                     href="/login"
                     onClick={onClose}
                     className="app-rail-auth-btn ghost"
@@ -265,8 +273,8 @@ export function AppSidebar({
                     whileTap={{ scale: 0.98 }}
                   >
                     <span>Sign in</span>
-                  </motion.link>
-                  <motion.link
+                  </motion.a>
+                  <motion.a
                     href="/onboarding"
                     onClick={onClose}
                     className="app-rail-auth-btn primary"
@@ -274,7 +282,7 @@ export function AppSidebar({
                     whileTap={{ scale: 0.98 }}
                   >
                     <span>Sign up</span>
-                  </motion.link>
+                  </motion.a>
                 </motion.div>
               )}
             </motion.div>
