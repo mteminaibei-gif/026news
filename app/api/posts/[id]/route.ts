@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const rateLimit = checkRateLimit(`edit_post_${user.id}`)
+    const rateLimit = checkRateLimit(`edit_post_${user.id}`, 10, 60)
     if (!rateLimit.allowed) {
       return NextResponse.json({ error: 'Too many edit requests. Please slow down.' }, { status: 429 })
     }
