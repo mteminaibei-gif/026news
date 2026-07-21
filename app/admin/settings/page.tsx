@@ -221,12 +221,15 @@ export default function AdminSettingsPage() {
     const dbKey = KEY_MAP[activeTab] ?? activeTab
 
     try {
-      const supabase = createClient()
-      const { error } = await (supabase.from('site_settings') as any).upsert(
-        { key: dbKey, value: data[dbKey as keyof PanelState] },
-        { onConflict: 'key' }
-      )
-      if (error) throw error
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: dbKey, value: data[dbKey as keyof PanelState] }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to save')
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {

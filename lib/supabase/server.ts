@@ -42,9 +42,12 @@ export async function createClient() {
 // Admin client that bypasses RLS — server-only
 // Does NOT pass cookies so service role key is used instead of user JWT
 export async function createAdminClient() {
+  if (!SUPABASE_SVC) {
+    console.error('[Supabase] SUPABASE_SERVICE_ROLE_KEY is not set — admin operations will fail')
+  }
   return createServerClient<Database>(
     SUPABASE_URL || 'https://placeholder.supabase.co',
-    SUPABASE_SVC || SUPABASE_ANON || 'placeholder-service-key',
+    SUPABASE_SVC || 'https://placeholder.supabase.co',
     {
       cookies: {
         getAll() { return [] },

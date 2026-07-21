@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     !next.includes('://')
   const safeNext = isSafeNext ? next : '/'
 
-  let response: NextResponse
+  let response = NextResponse.next({ request })
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON, {
     cookies: {

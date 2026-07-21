@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
       .order('name')
       .limit(30)
 
-    if (q) query = query.or(`name.ilike.%${q}%,bio.ilike.%${q}%`)
+    if (q) {
+      const escaped = q.replace(/%/g, '\\%').replace(/_/g, '\\_')
+      query = query.or(`name.ilike.%${escaped}%,bio.ilike.%${escaped}%`)
+    }
 
     const { data, error } = await query
     if (error) throw error

@@ -17,13 +17,18 @@ export function SettingsSection({ title, description, children }: SettingsSectio
             fontSize: '1.1rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
-            marginBottom: '0.25rem',
+            marginBottom: '0.35rem',
+            letterSpacing: '-0.01em',
           }}
         >
           {title}
         </h2>
         {description && (
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          <p style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-tertiary)',
+            lineHeight: 1.5,
+          }}>
             {description}
           </p>
         )}

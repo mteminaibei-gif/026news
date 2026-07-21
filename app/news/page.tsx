@@ -93,7 +93,6 @@ export default function NewsPage() {
 
   const supabase = createClient()
 
-  // Fetch initial articles
   const fetchArticles = useCallback(async (reset = false) => {
     if (reset) {
       offsetRef.current = 0
@@ -145,13 +144,11 @@ export default function NewsPage() {
     offsetRef.current += fetched.length
   }, [activeCategory, activeRegion, sortBy, supabase])
 
-  // Initial load
   useEffect(() => {
     setLoading(true)
     fetchArticles(true).finally(() => setLoading(false))
   }, [fetchArticles])
 
-  // Infinite scroll observer
   useEffect(() => {
     if (observerRef.current) observerRef.current.disconnect()
 
@@ -172,7 +169,6 @@ export default function NewsPage() {
     return () => { observerRef.current?.disconnect() }
   }, [hasMore, loadingMore, loading, fetchArticles])
 
-  // Auto-refresh: check for new posts every 60s
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!latestTimestampRef.current) return
@@ -208,7 +204,6 @@ export default function NewsPage() {
     return () => clearInterval(interval)
   }, [activeCategory, activeRegion, supabase])
 
-  // Auto-scroll ticker
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -281,15 +276,25 @@ export default function NewsPage() {
   return (
     <div className="flex flex-col min-h-screen news-page">
       {/* Breaking News Ticker */}
-      <div className="news-ticker-breaking">
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
+      <div className="news-ticker-breaking" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', position: 'relative' }}>
           <div style={{
-            padding: '8px 16px', background: 'rgba(0,0,0,0.2)',
+            padding: '10px 18px', background: 'rgba(0,0,0,0.2)',
             fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em',
             textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6,
-            flexShrink: 0,
+            flexShrink: 0, backdropFilter: 'blur(4px)',
           }}>
-            <Radio size={12} /> Breaking
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: '#ff4444', boxShadow: '0 0 8px rgba(255,68,68,0.6)',
+              animation: 'futr-pulse 1.5s ease-in-out infinite',
+            }} />
+            Breaking
           </div>
           <div
             ref={scrollRef}
@@ -300,7 +305,7 @@ export default function NewsPage() {
           >
             {[...BREAKING, ...BREAKING].map((item, i) => (
               <span key={i} style={{
-                display: 'inline-block', padding: '8px 24px',
+                display: 'inline-block', padding: '10px 24px',
                 fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap',
               }}>
                 {item}
@@ -313,10 +318,19 @@ export default function NewsPage() {
 
       <main style={{ flex: 1, maxWidth: 1200, margin: '0 auto', paddingInline: 'var(--space-md)', width: '100%' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBlock: 'var(--space-xl)', borderBottom: '1px solid var(--border-subtle)', marginBottom: 'var(--space-lg)' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingBlock: 'var(--space-xl)',
+          borderBottom: '1px solid var(--glass-border)',
+          marginBottom: 'var(--space-lg)',
+        }}>
           <div>
-            <h1 className="font-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Radio size={24} style={{ color: 'var(--primary)' }} /> News
+            <h1 className="font-serif" style={{
+              fontSize: '1.75rem', fontWeight: 700,
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'var(--text-gradient)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+            }}>
+              <Radio size={24} /> News
             </h1>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 2 }}>
               Breaking stories and latest updates
@@ -326,15 +340,22 @@ export default function NewsPage() {
             onClick={() => setShowFilters(v => !v)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-              borderRadius: 10, border: '1px solid var(--border)', cursor: 'pointer',
-              background: showFilters ? 'var(--primary-light)' : 'var(--bg-surface)',
+              borderRadius: 10, border: `1px solid ${showFilters ? 'oklch(65% 0.12 175 / 0.4)' : 'var(--glass-border)'}`,
+              cursor: 'pointer',
+              background: showFilters ? 'var(--primary-light)' : 'var(--glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur))',
               color: showFilters ? 'var(--primary)' : 'var(--text-secondary)',
-              fontSize: '0.78rem', fontWeight: 600, transition: 'all 0.2s',
+              fontSize: '0.78rem', fontWeight: 600,
+              transition: 'all 0.3s var(--ease-out-expo)',
+              boxShadow: showFilters ? 'var(--glow-primary)' : 'none',
             }}
           >
             <Filter size={14} />
             Filters
-            <ChevronDown size={12} style={{ transform: showFilters ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+            <ChevronDown size={12} style={{
+              transition: 'transform 0.3s var(--ease-out-expo)',
+              transform: showFilters ? 'rotate(180deg)' : 'rotate(0)',
+            }} />
           </button>
         </div>
 
@@ -344,10 +365,15 @@ export default function NewsPage() {
             onClick={showNewPosts}
             style={{
               width: '100%', padding: '10px 16px', marginBottom: 16,
-              background: 'var(--primary-light)', border: '1px solid var(--primary)',
+              background: 'var(--glass-bg-strong)',
+              backdropFilter: 'blur(var(--glass-blur))',
+              border: '1px solid oklch(65% 0.12 175 / 0.3)',
               borderRadius: 10, cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center', gap: 8,
               fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)',
+              transition: 'all 0.3s var(--ease-out-expo)',
+              animation: 'futr-fade-up 0.4s var(--ease-out-expo) both',
+              boxShadow: 'var(--glow-primary)',
             }}
           >
             <RefreshCw size={14} />
@@ -358,7 +384,6 @@ export default function NewsPage() {
         {/* Collapsible Filters */}
         {showFilters && (
           <div className="news-filter-panel">
-            {/* Category filters */}
             <div>
               <p style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>Category</p>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -367,30 +392,39 @@ export default function NewsPage() {
                   className="font-semibold"
                   style={{
                     fontSize: '0.72rem', padding: '5px 12px', borderRadius: 9999,
-                    border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
-                    borderColor: activeCategory === 'All' ? 'var(--primary)' : 'var(--border)',
-                    background: activeCategory === 'All' ? 'var(--primary)' : 'var(--bg-surface)',
+                    border: '1px solid', cursor: 'pointer',
+                    transition: 'all 0.25s var(--ease-out-expo)',
+                    borderColor: activeCategory === 'All' ? 'transparent' : 'var(--glass-border)',
+                    background: activeCategory === 'All' ? 'var(--grad-primary)' : 'var(--surface-2)',
                     color: activeCategory === 'All' ? '#fff' : 'var(--text-secondary)',
+                    boxShadow: activeCategory === 'All' ? 'var(--glow-primary)' : 'none',
+                    transform: activeCategory === 'All' ? 'translateY(-1px)' : 'none',
                   }}
                 >All</button>
-                {categories.map(cat => (
-                  <button
-                    key={cat.category_id}
-                    onClick={() => setActiveCategory(cat.name)}
-                    className="font-semibold"
-                    style={{
-                      fontSize: '0.72rem', padding: '5px 12px', borderRadius: 9999,
-                      border: '1px solid', cursor: 'pointer', transition: 'all 0.2s',
-                      borderColor: activeCategory === cat.name ? (CATEGORY_COLORS[cat.name] || 'var(--primary)') : 'var(--border)',
-                      background: activeCategory === cat.name ? (CATEGORY_COLORS[cat.name] || 'var(--primary)') : 'var(--bg-surface)',
-                      color: activeCategory === cat.name ? '#fff' : 'var(--text-secondary)',
-                    }}
-                  >{cat.name}</button>
-                ))}
+                {categories.map(cat => {
+                  const color = CATEGORY_COLORS[cat.name] || 'var(--primary)'
+                  const isActive = activeCategory === cat.name
+                  return (
+                    <button
+                      key={cat.category_id}
+                      onClick={() => setActiveCategory(cat.name)}
+                      className="font-semibold"
+                      style={{
+                        fontSize: '0.72rem', padding: '5px 12px', borderRadius: 9999,
+                        border: '1px solid', cursor: 'pointer',
+                        transition: 'all 0.25s var(--ease-out-expo)',
+                        borderColor: isActive ? color : 'var(--glass-border)',
+                        background: isActive ? color : 'var(--surface-2)',
+                        color: isActive ? '#fff' : 'var(--text-secondary)',
+                        boxShadow: isActive ? `0 0 12px -4px ${color}` : 'none',
+                        transform: isActive ? 'translateY(-1px)' : 'none',
+                      }}
+                    >{cat.name}</button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Region + Sort row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {REGION_FILTERS.map((region) => (
@@ -400,8 +434,9 @@ export default function NewsPage() {
                     style={{
                       fontSize: '0.72rem', padding: '5px 12px', borderRadius: 8,
                       border: '1px solid', cursor: 'pointer', fontWeight: 600,
-                      borderColor: activeRegion === region ? 'var(--accent)' : 'var(--border-subtle)',
-                      background: activeRegion === region ? 'var(--accent-light)' : 'transparent',
+                      transition: 'all 0.25s var(--ease-out-expo)',
+                      borderColor: activeRegion === region ? 'oklch(72% 0.16 55 / 0.4)' : 'var(--glass-border)',
+                      background: activeRegion === region ? 'var(--accent-light)' : 'var(--surface-2)',
                       color: activeRegion === region ? 'var(--accent)' : 'var(--text-tertiary)',
                     }}
                   >{region}</button>
@@ -415,6 +450,7 @@ export default function NewsPage() {
                     style={{
                       fontSize: '0.72rem', padding: '5px 12px', borderRadius: 8,
                       border: 'none', cursor: 'pointer', fontWeight: 600,
+                      transition: 'all 0.2s var(--ease-out-expo)',
                       background: sortBy === opt ? 'var(--primary-light)' : 'transparent',
                       color: sortBy === opt ? 'var(--primary)' : 'var(--text-tertiary)',
                     }}
@@ -426,7 +462,14 @@ export default function NewsPage() {
         )}
 
         {loading ? (
-          <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading news...</div>
+          <div style={{ paddingBlock: 'var(--space-3xl)', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 600, margin: '0 auto' }}>
+              <div className="skeleton" style={{ height: 420, borderRadius: 'var(--radius-lg)' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 120, borderRadius: 'var(--radius-md)' }} />)}
+              </div>
+            </div>
+          </div>
         ) : articles.length === 0 ? (
           <div className="news-empty">
             <Radio size={32} style={{ color: 'var(--text-tertiary)', marginBottom: 12 }} />
@@ -437,10 +480,22 @@ export default function NewsPage() {
           <>
             {/* Top Story Hero */}
             {topStory && (
-              <Link href={`/article/${topStory.slug}`} className="news-hero">
+              <Link
+                href={`/article/${topStory.slug}`}
+                className="news-hero"
+                style={{
+                  transition: 'all 0.4s var(--ease-out-expo)',
+                  display: 'block',
+                }}
+              >
                 {topStory.featured_image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={topStory.featured_image} alt="" />
+                  <img
+                    src={topStory.featured_image}
+                    alt=""
+                    style={{ transition: 'transform 0.6s var(--ease-out-expo)' }}
+                    onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.03)')}
+                    onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                  />
                 ) : (
                   <div className="news-hero-fallback" />
                 )}
@@ -452,7 +507,11 @@ export default function NewsPage() {
                     }}>
                       {topStory.category?.name ?? 'Breaking'}
                     </span>
-                    <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Top Story</span>
+                    <span style={{
+                      fontSize: '0.72rem', opacity: 0.8,
+                      background: 'rgba(255,255,255,0.12)', padding: '3px 10px',
+                      borderRadius: 999, fontWeight: 600,
+                    }}>Top Story</span>
                   </div>
                   <h2 className="news-hero-title">
                     {topStory.title}
@@ -463,8 +522,10 @@ export default function NewsPage() {
                     </p>
                   )}
                   <div className="news-hero-meta">
-                    <span>{topStory.author?.name ?? '026connet!'}</span>
+                    <span style={{ fontWeight: 600 }}>{topStory.author?.name ?? '026connet!'}</span>
+                    <span style={{ opacity: 0.4 }}>·</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={13} /> {formatNumber(topStory.views ?? 0)}</span>
+                    <span style={{ opacity: 0.4 }}>·</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> {new Date(topStory.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -474,24 +535,45 @@ export default function NewsPage() {
             {/* Side Stories */}
             {sideStories.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 32 }}>
-                {sideStories.map((a) => (
-                  <Link key={a.article_id} href={`/article/${a.slug}`} className="news-side-card">
+                {sideStories.map((a, i) => (
+                  <Link
+                    key={a.article_id}
+                    href={`/article/${a.slug}`}
+                    className="news-side-card"
+                    style={{
+                      animation: `futr-fade-up 0.5s var(--ease-out-expo) ${i * 100}ms both`,
+                    }}
+                  >
                     {a.featured_image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.featured_image} alt="" />
+                      <img
+                        src={a.featured_image}
+                        alt=""
+                        style={{ transition: 'transform 0.4s var(--ease-out-expo)' }}
+                        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+                        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      />
                     ) : (
                       <div className="news-side-card-fallback" />
                     )}
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
                       <div>
-                        <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)' }}>
+                        <span style={{
+                          fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                          color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)',
+                        }}>
                           {a.category?.name ?? 'News'}
                         </span>
-                        <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.3, marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
+                        <h3 style={{
+                          fontFamily: "'Newsreader', serif", fontSize: '0.9rem', fontWeight: 600,
+                          lineHeight: 1.3, marginTop: 4,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                          color: 'var(--text-primary)',
+                          transition: 'color 0.2s',
+                        }}>
                           {a.title}
                         </h3>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.68rem', color: 'var(--text-tertiary)', marginTop: 8 }}>
                         <span>{a.author?.name ?? 'Staff'}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={11} /> {formatNumber(a.views ?? 0)}</span>
                       </div>
@@ -504,51 +586,105 @@ export default function NewsPage() {
             {/* Divider */}
             {remainingArticles.length > 0 && (
               <>
-                <div style={{ borderTop: '1px solid var(--border-subtle)', marginBlock: 24 }} />
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Latest News</h2>
+                <div style={{
+                  borderTop: '1px solid var(--glass-border)', marginBlock: 24,
+                  position: 'relative',
+                }}>
+                  <div style={{
+                    position: 'absolute', left: '50%', top: -1,
+                    width: 40, height: 3, borderRadius: 3,
+                    background: 'var(--grad-primary)', transform: 'translateX(-50%)',
+                  }} />
+                </div>
+                <h2 style={{
+                  fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <span style={{
+                    width: 3, height: 20, borderRadius: 3,
+                    background: 'var(--grad-primary)',
+                  }} />
+                  Latest News
+                </h2>
               </>
             )}
 
             {/* Article list with infinite scroll */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
-              {remainingArticles.map((a) => (
-                <Link key={a.article_id} href={`/article/${a.slug}`} className="news-list-card">
+              {remainingArticles.map((a, i) => (
+                <Link
+                  key={a.article_id}
+                  href={`/article/${a.slug}`}
+                  className="news-list-card"
+                  style={{
+                    animation: `futr-fade-up 0.4s var(--ease-out-expo) ${Math.min(i * 60, 300)}ms both`,
+                  }}
+                >
                   {a.featured_image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.featured_image} alt="" />
+                    <img
+                      src={a.featured_image}
+                      alt=""
+                      style={{ transition: 'transform 0.4s var(--ease-out-expo)' }}
+                      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+                      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                    />
                   ) : (
                     <div className="news-list-card-fallback" />
                   )}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
                     <div>
-                      <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)' }}>
+                      <span style={{
+                        fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                        color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)',
+                      }}>
                         {a.category?.name ?? 'News'}
                       </span>
-                      <h3 style={{ fontFamily: "'Newsreader', serif", fontSize: '0.95rem', fontWeight: 600, lineHeight: 1.3, marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)' }}>
+                      <h3 style={{
+                        fontFamily: "'Newsreader', serif", fontSize: '0.95rem', fontWeight: 600,
+                        lineHeight: 1.3, marginTop: 4,
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        color: 'var(--text-primary)',
+                      }}>
                         {a.title}
                       </h3>
                       {a.excerpt && (
-                        <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <p style={{
+                          fontSize: '0.78rem', color: 'var(--text-tertiary)', marginTop: 4,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        }}>
                           {stripHtml(a.excerpt)}
                         </p>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                      <span>{a.author?.name ?? 'Staff'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: 8 }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{a.author?.name ?? 'Staff'}</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={12} /> {formatNumber(a.views ?? 0)}</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={12} /> {new Date(a.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <button
                     onClick={(e) => { e.preventDefault(); toggleBookmark(a.article_id) }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: bookmarked.has(a.article_id) ? 'var(--primary)' : 'var(--text-tertiary)', flexShrink: 0, alignSelf: 'center' }}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 8,
+                      color: bookmarked.has(a.article_id) ? 'var(--primary)' : 'var(--text-tertiary)',
+                      flexShrink: 0, alignSelf: 'center',
+                      transition: 'all 0.25s var(--ease-out-expo)',
+                      borderRadius: 10,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'var(--primary-light)'
+                      e.currentTarget.style.transform = 'scale(1.1)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'none'
+                      e.currentTarget.style.transform = 'scale(1)'
+                    }}
                   >
                     {bookmarked.has(a.article_id) ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
                   </button>
                 </Link>
               ))}
 
-              {/* Infinite scroll sentinel */}
               <div ref={loadMoreRef} style={{ height: 1 }} />
 
               {loadingMore && (
@@ -559,7 +695,11 @@ export default function NewsPage() {
               )}
 
               {!hasMore && articles.length > 0 && (
-                <div style={{ textAlign: 'center', padding: 24, fontSize: '0.82rem', color: 'var(--text-tertiary)' }}>
+                <div style={{
+                  textAlign: 'center', padding: 24, fontSize: '0.82rem', color: 'var(--text-tertiary)',
+                  background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)',
+                  border: '1px dashed var(--glass-border)',
+                }}>
                   You&apos;ve reached the end
                 </div>
               )}

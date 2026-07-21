@@ -18,22 +18,41 @@ export function SettingRow({ label, description, value, action, divider = true }
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '1rem 0',
+          padding: '1rem 0.85rem',
           gap: '1rem',
+          borderRadius: '14px',
+          transition: 'background 0.2s var(--ease-out-expo)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--surface-2)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
         }}
       >
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontSize: '0.95rem',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: description ? '0.2rem' : 0,
+            letterSpacing: '-0.01em',
+          }}>
             {label}
           </p>
           {description && (
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
+            <p style={{
+              fontSize: '0.8rem',
+              color: 'var(--text-tertiary)',
+              lineHeight: 1.5,
+              margin: 0,
+            }}>
               {description}
             </p>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
           {value && (
             <span
               style={{
@@ -41,6 +60,7 @@ export function SettingRow({ label, description, value, action, divider = true }
                 color: 'var(--text-secondary)',
                 minWidth: 150,
                 textAlign: 'right',
+                fontWeight: 500,
               }}
             >
               {value}
@@ -54,8 +74,8 @@ export function SettingRow({ label, description, value, action, divider = true }
         <div
           style={{
             height: '1px',
-            background: 'var(--border)',
-            margin: '0',
+            background: 'var(--glass-border)',
+            margin: '0 0.85rem',
           }}
         />
       )}

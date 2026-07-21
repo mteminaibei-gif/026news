@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, batch_id: data.batch_header.payout_batch_id })
     }
 
-    return NextResponse.json({ error: data.message ?? 'PayPal payout failed', raw: data }, { status: 400 })
+    return NextResponse.json({ error: 'PayPal payout failed' }, { status: 400 })
   } catch (err) {
     console.error('[POST /api/payments/paypal]', err)
     return NextResponse.json({ error: 'PayPal payment failed' }, { status: 500 })

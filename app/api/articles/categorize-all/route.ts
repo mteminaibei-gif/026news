@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentAdmin } from '@/lib/server-auth'
 import { categorizeWithAutoCreate } from '@/lib/auto-categorize'
 
 export const runtime = 'nodejs'
@@ -9,6 +10,9 @@ export const dynamic = 'force-dynamic'
 // Articles that clearly fit a brand-new topic get a freshly-minted category.
 export async function POST() {
   try {
+    const admin = await getCurrentAdmin()
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
     const adminDb = await createAdminClient()
 
     // Load the live taxonomy so scoring uses real category ids.

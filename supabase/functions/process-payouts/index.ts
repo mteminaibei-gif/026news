@@ -168,13 +168,13 @@ Deno.serve(async (req) => {
       // ── Stripe payout (placeholder — wire in real Stripe Transfer API) ──────
       if (STRIPE_SECRET_KEY) {
         // await stripe.transfers.create({ amount: Math.round(amount * 100), currency: 'usd', destination: stripeAccountId })
-        console.log(`[Stripe] Would pay ${user.email} $${amount.toFixed(2)}`)
+        console.log(`[Stripe] Would pay user #${userId} $${amount.toFixed(2)}`)
       }
 
       // ── M-Pesa payout (placeholder — wire in Daraja B2C API) ─────────────
       if (MPESA_CONSUMER_KEY) {
         // await mpesaB2C({ phoneNumber, amount, remarks: '026connet! payout' })
-        console.log(`[M-Pesa] Would pay ${user.email} KES ${(amount * 130).toFixed(0)}`)
+        console.log(`[M-Pesa] Would pay user #${userId} KES ${(amount * 130).toFixed(0)}`)
       }
 
       // Mark earnings as paid

@@ -28,11 +28,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Search users by name (excluding self)
+    const escaped = query.replace(/%/g, '\\%').replace(/_/g, '\\_')
     const { data: users, error } = await supabase
       .from('users')
       .select('user_id, name, profile_image, role, bio')
       .neq('user_id', profile.user_id)
-      .ilike('name', `%${query}%`)
+      .ilike('name', `%${escaped}%`)
       .eq('status', 'active')
       .order('name')
       .limit(20)

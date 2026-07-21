@@ -167,8 +167,9 @@ export async function PATCH(req: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { user_id, status } = await req.json()
-    if (!user_id || !status) {
-      return NextResponse.json({ error: 'user_id and status are required' }, { status: 400 })
+    const VALID_STATUSES = ['active', 'inactive', 'banned']
+    if (!user_id || !status || !VALID_STATUSES.includes(status)) {
+      return NextResponse.json({ error: 'user_id and valid status (active/inactive/banned) are required' }, { status: 400 })
     }
 
     const admin = await createAdminClient()

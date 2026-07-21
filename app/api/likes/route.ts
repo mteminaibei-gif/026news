@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/likes?article_id=123 -> { count, liked }
 // Public: count is always returned; `liked` reflects the current user.
@@ -51,6 +52,12 @@ export async function GET(req: NextRequest) {
 // POST /api/likes { article_id } -> toggles the current user's like.
 // Requires authentication (401 otherwise).
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req.headers)
+  const rl = await checkRateLimit(`likes:${ip}`, RATE_LIMITS.PUBLIC_POST.limit, RATE_LIMITS.PUBLIC_POST.window)
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 60) } })
+  }
+
   const ct = req.headers.get('content-type') ?? ''
   if (!ct.includes('application/json')) {
     return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 })

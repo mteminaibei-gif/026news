@@ -20,7 +20,16 @@ function renderContentWithLinks(text: string) {
 }
 
 function Avatar({ src, name }: { src: string | null; name: string }) {
-  if (src) return <img src={src} alt={name} className="social-avatar-img" />
+  if (src) return (
+    <img
+      src={src}
+      alt={name}
+      className="social-avatar-img"
+      style={{
+        transition: 'transform 0.2s var(--ease-out-expo)',
+      }}
+    />
+  )
   return <div className="social-avatar">{name.charAt(0).toUpperCase()}</div>
 }
 
@@ -36,6 +45,7 @@ export function PostCard({ post, onToggleLike, onOpen }: {
   const [likeCount, setLikeCount] = useState(post.like_count ?? 0)
   const [saved, setSaved] = useState(!!post.saved)
   const [shareCount, setShareCount] = useState(post.share_count ?? 0)
+  const [likeAnimating, setLikeAnimating] = useState(false)
 
   const submitComment = async () => {
     const text = draft.trim()
@@ -83,11 +93,16 @@ export function PostCard({ post, onToggleLike, onOpen }: {
   const like = () => {
     setLiked(l => !l)
     setLikeCount(c => c + (liked ? -1 : 1))
+    setLikeAnimating(true)
+    setTimeout(() => setLikeAnimating(false), 400)
     onToggleLike(post.post_id)
   }
 
   return (
-    <article className="social-post">
+    <article
+      className="social-post"
+      style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) both' }}
+    >
       <header className="social-post-head">
         <Link href={`/journalists/${post.author?.user_id ?? ''}`} className="social-avatar-link">
           <Avatar src={post.author?.profile_image ?? null} name={post.author?.name ?? 'U'} />
@@ -101,10 +116,19 @@ export function PostCard({ post, onToggleLike, onOpen }: {
             {post.created_at ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : ''}
           </span>
         </div>
-        <button className="social-icon-btn" aria-label="More"><MoreHorizontal size={18} /></button>
+        <button className="social-icon-btn" aria-label="More" style={{ transition: 'all 0.2s var(--ease-out-expo)' }}>
+          <MoreHorizontal size={18} />
+        </button>
       </header>
 
-      <p className="social-post-content" onClick={() => onOpen?.(post.post_id)} style={{ cursor: onOpen ? 'pointer' : undefined }}>
+      <p
+        className="social-post-content"
+        onClick={() => onOpen?.(post.post_id)}
+        style={{
+          cursor: onOpen ? 'pointer' : undefined,
+          transition: 'color 0.2s',
+        }}
+      >
         {renderContentWithLinks(post.content)}
       </p>
 
@@ -112,7 +136,9 @@ export function PostCard({ post, onToggleLike, onOpen }: {
         <div className={`social-post-images count-${Math.min(post.image_urls.length, 4)}`}>
           {post.image_urls.slice(0, 4).map((url, i) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={url} alt="" className="social-post-image" />
+            <img key={i} src={url} alt="" className="social-post-image" style={{
+              transition: 'transform 0.4s var(--ease-out-expo)',
+            }} />
           ))}
         </div>
       )}
@@ -120,7 +146,13 @@ export function PostCard({ post, onToggleLike, onOpen }: {
       {post.tags && post.tags.length > 0 && (
         <div className="social-post-tags">
           {post.tags.map(t => (
-            <span key={t} className="social-tag">#{t}</span>
+            <span key={t} className="social-tag" style={{
+              transition: 'all 0.2s var(--ease-out-expo)',
+              padding: '2px 6px',
+              borderRadius: 6,
+              background: 'var(--primary-light)',
+              fontSize: '0.78rem',
+            }}>#{t}</span>
           ))}
         </div>
       )}
@@ -129,28 +161,77 @@ export function PostCard({ post, onToggleLike, onOpen }: {
         <button
           className={`social-action ${liked ? 'liked' : ''}`}
           onClick={like}
+          style={{
+            transition: 'all 0.25s var(--ease-out-expo)',
+            transform: likeAnimating ? 'scale(1.2)' : 'scale(1)',
+          }}
         >
-          <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+          <Heart
+            size={18}
+            fill={liked ? 'currentColor' : 'none'}
+            style={{
+              transition: 'all 0.25s var(--ease-out-expo)',
+              filter: liked ? 'drop-shadow(0 0 4px var(--error))' : undefined,
+            }}
+          />
           <span>{likeCount}</span>
         </button>
-        <button className="social-action" onClick={() => setShowComments(v => !v)}>
+        <button
+          className="social-action"
+          onClick={() => setShowComments(v => !v)}
+          style={{
+            transition: 'all 0.25s var(--ease-out-expo)',
+            color: showComments ? 'var(--primary)' : undefined,
+          }}
+        >
           <MessageCircle size={18} />
           <span>{post.comment_count}</span>
         </button>
-        <button className={`social-action ${saved ? 'saved' : ''}`} onClick={toggleSave}>
-          <Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />
+        <button
+          className={`social-action ${saved ? 'saved' : ''}`}
+          onClick={toggleSave}
+          style={{
+            transition: 'all 0.25s var(--ease-out-expo)',
+            transform: saving ? 'scale(0.9)' : 'scale(1)',
+          }}
+        >
+          <Bookmark
+            size={18}
+            fill={saved ? 'currentColor' : 'none'}
+            style={{
+              transition: 'all 0.25s var(--ease-out-expo)',
+              filter: saved ? 'drop-shadow(0 0 4px var(--primary))' : undefined,
+            }}
+          />
         </button>
-        <button className="social-action" onClick={share}>
-          <Share2 size={18} />
+        <button
+          className="social-action"
+          onClick={share}
+          style={{
+            transition: 'all 0.25s var(--ease-out-expo)',
+            transform: sharing ? 'scale(0.9)' : 'scale(1)',
+          }}
+        >
+          <Share2 size={18} style={{
+            transition: 'transform 0.3s var(--ease-out-expo)',
+            transform: sharing ? 'rotate(180deg)' : 'rotate(0)',
+          }} />
           <span>{shareCount}</span>
         </button>
       </div>
 
       {showComments && (
-        <div className="social-comments">
-          {loadingComments && <p className="social-comments-loading">Loading comments…</p>}
+        <div className="social-comments" style={{ animation: 'futr-fade-up 0.3s var(--ease-out-expo) both' }}>
+          {loadingComments && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 0' }}>
+              <div className="skeleton" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+              <div className="skeleton" style={{ width: 120, height: 28, borderRadius: 14 }} />
+            </div>
+          )}
           {comments.map(c => (
-            <div key={c.comment_id} className="social-comment">
+            <div key={c.comment_id} className="social-comment" style={{
+              animation: 'futr-fade-up 0.3s var(--ease-out-expo) both',
+            }}>
               <Avatar src={c.author?.profile_image ?? null} name={c.author?.name ?? 'U'} />
               <div className="social-comment-body">
                 <span className="social-comment-author">{c.author?.name ?? 'Unknown'}</span>
@@ -165,8 +246,13 @@ export function PostCard({ post, onToggleLike, onOpen }: {
               onKeyDown={e => { if (e.key === 'Enter') submitComment() }}
               placeholder="Write a comment…"
               className="social-comment-input"
+              style={{
+                transition: 'all 0.25s var(--ease-out-expo)',
+              }}
             />
-            <button onClick={submitComment} className="social-send-btn" aria-label="Send"><Send size={16} /></button>
+            <button onClick={submitComment} className="social-send-btn" aria-label="Send" style={{
+              transition: 'all 0.25s var(--ease-out-expo)',
+            }}><Send size={16} /></button>
           </div>
         </div>
       )}

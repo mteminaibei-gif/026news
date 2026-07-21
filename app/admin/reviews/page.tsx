@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { timeAgo, formatNumber } from '@/lib/utils'
+import { sanitizeArticleHtml } from '@/lib/sanitizeHtml'
 import { FileText, Eye, CheckCircle, XCircle, RotateCcw, Clock, User, Folder } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
@@ -238,7 +239,7 @@ export default function AdminReviewsPage() {
                   <div
                     className="rich-editor-content text-sm leading-relaxed mb-4"
                     style={{ color: 'var(--text-primary)', maxHeight: 400, overflowY: 'auto' }}
-                    dangerouslySetInnerHTML={{ __html: article.content }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }}
                   />
 
                   {/* Revision notes (for return for amendments) */}

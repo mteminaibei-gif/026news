@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error'
-      results[feed.name] = `ERROR: ${msg}`
+      results[feed.name] = 'Feed fetch failed'
       totalErrors++
       await adminSupabase
         .from('rss_feeds')

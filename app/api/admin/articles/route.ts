@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
     if (category) query = query.eq('category_id', Number(category))
 
     if (search) {
-      query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%`)
+      const escaped = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+      query = query.or(`title.ilike.%${escaped}%,excerpt.ilike.%${escaped}%`)
     }
 
     if (tag) {
@@ -85,6 +86,9 @@ export async function PATCH(req: NextRequest) {
 
     if (!ids?.length) {
       return NextResponse.json({ error: 'ids array is required' }, { status: 400 })
+    }
+    if (ids.length > 100) {
+      return NextResponse.json({ error: 'Maximum 100 articles per batch operation' }, { status: 400 })
     }
 
     const adminDb = await createAdminClient()

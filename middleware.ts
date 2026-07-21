@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
       response = await updateSession(request)
     } catch (err) {
       console.error('[middleware] updateSession failed:', err)
-      response = NextResponse.next()
+      response = NextResponse.redirect(new URL('/login?error=session_expired', request.url))
     }
   }
 

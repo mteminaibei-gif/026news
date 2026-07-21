@@ -8,6 +8,7 @@ import { Footer } from '@/components/layout/Footer'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { usePresence } from '@/lib/hooks/usePresence'
 import { useUser } from '@/lib/hooks/useAuth'
+import { useSettings } from '@/components/providers/SettingsProvider'
 
 function hasOwnChrome(pathname: string): boolean {
   return (
@@ -27,6 +28,7 @@ export function LayoutNav({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { data: user, isLoading: userLoading } = useUser()
   usePresence()
+  useSettings()
 
   if (hasOwnChrome(pathname)) {
     return <>{children}</>

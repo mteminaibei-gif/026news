@@ -122,7 +122,7 @@ export async function PUT(req: NextRequest) {
     if (featured_image !== undefined) updatePayload.featured_image = featured_image
     if (monetization_type) updatePayload.monetization_type = monetization_type
     if (tags !== undefined) {
-      let tagsArray = tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean).slice(0, 20) : null
+    let tagsArray = tags ? String(tags).split(',').map(t => t.replace(/<[^>]*>/g, '').trim()).filter(Boolean).slice(0, 20) : null
       // Auto-tag if empty tags
       if ((!tagsArray || tagsArray.length === 0) && title?.trim()) {
         tagsArray = autoExtractTags(title, content?.trim() || '')

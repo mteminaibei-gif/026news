@@ -64,7 +64,8 @@ export async function GET(req: NextRequest) {
       dataQuery = (dataQuery as any).eq('status', status)
     }
     if (q) {
-      const filterStr = `%${q}%`
+      const escaped = q.replace(/%/g, '\\%').replace(/_/g, '\\_')
+      const filterStr = `%${escaped}%`
       countQuery = (countQuery as any).or(`name.ilike.${filterStr},email.ilike.${filterStr}`)
       dataQuery = (dataQuery as any).or(`name.ilike.${filterStr},email.ilike.${filterStr}`)
     }
@@ -169,7 +170,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ user: data })
   } catch (err) {
     console.error('[PATCH /api/admin/users]', err)
-    const message = err instanceof Error ? err.message : 'Failed to update user'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
 }

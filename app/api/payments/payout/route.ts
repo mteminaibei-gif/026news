@@ -36,6 +36,9 @@ export async function POST(req: NextRequest) {
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
+    if (amount > 500000) {
+      return NextResponse.json({ error: 'Maximum payout amount is KES 500,000' }, { status: 400 })
+    }
 
     // Create payout record
     const { data: payout, error: payoutErr } = await supabase

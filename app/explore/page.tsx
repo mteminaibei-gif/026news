@@ -67,6 +67,68 @@ const RECENT_SEARCHES_KEY = 'explore_recent_searches'
 
 const TRENDING_TAGS = ['Elections', 'Tech', 'Markets', 'Football', 'Climate', 'Health', 'Startups', 'Politics', 'AI', 'Culture']
 
+const SearchDropdown = ({ recentSearches, clearRecent, runSearch }: {
+  recentSearches: string[]
+  clearRecent: () => void
+  runSearch: (q: string) => void
+}) => (
+  <div
+    className="absolute top-full left-0 right-0 mt-2 p-4 z-30"
+    style={{
+      background: 'var(--glass-bg-strong)',
+      backdropFilter: 'blur(calc(var(--glass-blur) + 6px)) saturate(150%)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--glow-soft)',
+      animation: 'futr-fade-up 0.3s var(--ease-out-expo) both',
+    }}
+  >
+    {recentSearches.length > 0 && (
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Recent Searches</span>
+          <button onClick={clearRecent} className="text-xs border-0 bg-transparent cursor-pointer" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>Clear</button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {recentSearches.map(s => (
+            <button
+              key={s}
+              onClick={() => runSearch(s)}
+              className="px-3 py-1.5 rounded-full text-xs font-medium"
+              style={{
+                background: 'var(--surface-2)', color: 'var(--text-secondary)',
+                border: '1px solid var(--glass-border)', cursor: 'pointer',
+                transition: 'all 0.2s var(--ease-out-expo)',
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+    <div>
+      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Trending Tags</span>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {TRENDING_TAGS.map(tag => (
+          <button
+            key={tag}
+            onClick={() => runSearch(tag)}
+            className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1"
+            style={{
+              background: 'var(--primary-light)', color: 'var(--primary)',
+              border: '1px solid transparent', cursor: 'pointer',
+              transition: 'all 0.2s var(--ease-out-expo)',
+            }}
+          >
+            <Flame size={11} /> {tag}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+)
+
 export default function ExplorePage() {
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [articles, setArticles] = useState<ExploreArticle[]>([])
@@ -86,6 +148,7 @@ export default function ExplorePage() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const searchWrapRef = useRef<HTMLDivElement>(null)
+  const [searchFocused, setSearchFocused] = useState(false)
 
   const loadExploreData = useCallback(async () => {
     setLoading(true)
@@ -104,7 +167,6 @@ export default function ExplorePage() {
     }
   }, [])
 
-  // Real-time category updates (categories table is in the realtime publication)
   useEffect(() => {
     let active = true
     import('@/lib/supabase/client').then(({ createClient }) => {
@@ -324,13 +386,13 @@ export default function ExplorePage() {
   return (
     <div style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <main className="max-w-6xl mx-auto px-4 pb-16">
-        {/* Explore sub-nav: category menu tags (global nav above provides logo/theme/bell) */}
+        {/* Explore sub-nav */}
         {!activeCategory && !searchQuery && categories.length > 0 && (
           <nav className="flex items-center gap-2 overflow-x-auto py-3" style={{ scrollbarWidth: 'none' }} aria-label="Explore categories">
             <button
               onClick={backToAll}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-              style={{ background: 'var(--primary)', color: '#fff', border: '1px solid transparent', cursor: 'pointer' }}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
+              style={{ background: 'var(--grad-primary)', color: '#fff', border: '1px solid transparent', cursor: 'pointer', boxShadow: 'var(--glow-primary)', transition: 'all 0.2s var(--ease-out-expo)' }}
             >
               All
             </button>
@@ -338,8 +400,13 @@ export default function ExplorePage() {
               <button
                 key={cat.id}
                 onClick={() => selectCategory(cat)}
-                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium"
+                style={{
+                  background: 'var(--glass-bg)', color: 'var(--text-secondary)',
+                  border: '1px solid var(--glass-border)', cursor: 'pointer',
+                  backdropFilter: 'blur(var(--glass-blur))',
+                  transition: 'all 0.2s var(--ease-out-expo)',
+                }}
               >
                 {CATEGORY_ICONS[cat.name] || cat.icon || ICON_FALLBACK} {cat.name}
               </button>
@@ -349,7 +416,10 @@ export default function ExplorePage() {
 
         {/* Search hero */}
         <section className="pt-8 pb-6">
-          <h1 className="text-2xl font-extrabold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+          <h1 className="text-2xl font-extrabold mb-1" style={{
+            fontFamily: 'var(--font-display)',
+            background: 'var(--text-gradient)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          }}>
             Explore
           </h1>
           <p className="text-sm mb-5" style={{ color: 'var(--text-tertiary)' }}>
@@ -358,31 +428,36 @@ export default function ExplorePage() {
 
           <div ref={searchWrapRef} className="relative">
             <div className="relative">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }} />
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: searchFocused ? 'var(--primary)' : 'var(--text-tertiary)', transition: 'color 0.2s' }} />
               <input
                 type="text"
                 placeholder="Search articles, topics, authors..."
                 value={searchQuery}
-                onFocus={() => !searchQuery && setShowSuggestions(true)}
+                onFocus={() => { !searchQuery && setShowSuggestions(true); setSearchFocused(true) }}
+                onBlur={() => setSearchFocused(false)}
                 onChange={e => {
                   setSearchQuery(e.target.value)
                   if (e.target.value.trim()) { doSearch(e.target.value); setShowSuggestions(false) }
                   else { setSearchResults([]); setShowSuggestions(true) }
                 }}
                 onKeyDown={e => { if (e.key === 'Enter') runSearch(searchQuery) }}
-                className="w-full rounded-2xl border text-sm outline-none transition-all"
+                className="w-full rounded-2xl text-sm outline-none"
                 style={{
                   padding: '14px 44px 14px 44px',
-                  background: 'var(--bg-surface)',
-                  borderColor: 'var(--border)',
+                  background: 'var(--glass-bg-strong)',
+                  backdropFilter: 'blur(calc(var(--glass-blur) + 4px)) saturate(150%)',
+                  border: `1px solid ${searchFocused ? 'oklch(65% 0.12 175 / 0.4)' : 'var(--glass-border)'}`,
                   color: 'var(--text-primary)',
+                  transition: 'all 0.3s var(--ease-out-expo)',
+                  boxShadow: searchFocused ? 'var(--glow-primary)' : 'var(--glow-soft)',
+                  transform: searchFocused ? 'translateY(-1px)' : 'none',
                 }}
               />
               {searchQuery && (
                 <button
                   onClick={clearSearch}
                   className="absolute right-4 top-1/2 -translate-y-1/2 border-0 bg-transparent cursor-pointer"
-                  style={{ color: 'var(--text-tertiary)' }}
+                  style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}
                   aria-label="Clear search"
                 >
                   <X size={16} />
@@ -391,72 +466,53 @@ export default function ExplorePage() {
             </div>
 
             {showSuggestions && !searchQuery && (
-              <div
-                className="absolute top-full left-0 right-0 mt-2 p-4 rounded-2xl z-30"
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
-              >
-                {recentSearches.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Recent Searches</span>
-                      <button onClick={clearRecent} className="text-xs border-0 bg-transparent cursor-pointer" style={{ color: 'var(--text-tertiary)' }}>Clear</button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {recentSearches.map(s => (
-                        <button
-                          key={s}
-                          onClick={() => runSearch(s)}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                          style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)', cursor: 'pointer' }}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Trending Tags</span>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {TRENDING_TAGS.map(tag => (
-                      <button
-                        key={tag}
-                        onClick={() => runSearch(tag)}
-                        className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1"
-                        style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid transparent', cursor: 'pointer' }}
-                      >
-                        <Flame size={11} /> {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <SearchDropdown recentSearches={recentSearches} clearRecent={clearRecent} runSearch={runSearch} />
             )}
           </div>
         </section>
 
         {!activeCategory && !searchQuery && (
           <>
-            {/* Category carousel */}
+            {/* Category grid */}
             {categories.length > 0 && (
               <section className="mb-10">
                 <h2 className="text-base font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                   <Tag size={16} style={{ color: 'var(--primary)' }} />
                   Browse Categories
                 </h2>
-                <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
-                  {categories.map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => selectCategory(cat)}
-                      className="flex flex-col items-center gap-2 p-5 rounded-2xl transition-all cursor-pointer flex-shrink-0 w-32"
-                      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
-                    >
-                      <span style={{ fontSize: '1.9rem' }}>{CATEGORY_ICONS[cat.name] || cat.icon || ICON_FALLBACK}</span>
-                      <span className="text-xs font-bold text-center leading-tight" style={{ color: 'var(--text-primary)' }}>{cat.name}</span>
-                      <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{cat.articleCount} articles</span>
-                    </button>
-                  ))}
+                <div className="flex gap-3 overflow-x-auto pb-3 hide-scrollbar">
+                  {categories.map((cat, i) => {
+                    const color = CATEGORY_COLORS[cat.name] || COLOR_FALLBACK
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => selectCategory(cat)}
+                        className="flex flex-col items-center gap-2 p-5 rounded-2xl flex-shrink-0 w-32"
+                        style={{
+                          background: 'var(--glass-bg)',
+                          backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                          border: '1px solid var(--glass-border)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s var(--ease-out-expo)',
+                          animation: `futr-fade-up 0.5s var(--ease-out-expo) ${i * 60}ms both`,
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-4px)'
+                          e.currentTarget.style.borderColor = color + '60'
+                          e.currentTarget.style.boxShadow = `0 0 20px -6px ${color}40`
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.borderColor = 'var(--glass-border)'
+                          e.currentTarget.style.boxShadow = 'none'
+                        }}
+                      >
+                        <span style={{ fontSize: '1.9rem' }}>{CATEGORY_ICONS[cat.name] || cat.icon || ICON_FALLBACK}</span>
+                        <span className="text-xs font-bold text-center leading-tight" style={{ color: 'var(--text-primary)' }}>{cat.name}</span>
+                        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{cat.articleCount} articles</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </section>
             )}
@@ -473,12 +529,26 @@ export default function ExplorePage() {
                     <Link href={`/article/${featuredHero.slug}`} className="lg:col-span-2 group" style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div
                         className="relative rounded-2xl overflow-hidden flex items-end min-h-[320px]"
-                        style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}
+                        style={{
+                          border: '1px solid var(--glass-border)',
+                          background: 'var(--glass-bg)',
+                          transition: 'all 0.3s var(--ease-out-expo)',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-3px)'
+                          e.currentTarget.style.boxShadow = 'var(--glow-primary)'
+                          e.currentTarget.style.borderColor = 'oklch(65% 0.12 175 / 0.4)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = 'none'
+                          e.currentTarget.style.borderColor = 'var(--glass-border)'
+                        }}
                       >
                         {featuredHero.featured_image ? (
-                          <Image src={featuredHero.featured_image} alt="" fill className="object-cover" unoptimized priority sizes="(max-width: 1024px) 100vw, 66vw" />
+                          <Image src={featuredHero.featured_image} alt="" fill className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized priority sizes="(max-width: 1024px) 100vw, 66vw" />
                         ) : null}
-                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.1))' }} />
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.1))' }} />
                         <div className="relative p-5">
                           {featuredHero.category?.name && (
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full mb-2 inline-block" style={{ background: CATEGORY_COLORS[featuredHero.category.name] || COLOR_FALLBACK, color: '#fff' }}>
@@ -496,11 +566,32 @@ export default function ExplorePage() {
                   )}
 
                   <div className="flex flex-col gap-3">
-                    {featuredStack.map(a => (
-                      <Link key={a.article_id} href={`/article/${a.slug}`} className="flex gap-3 p-3 rounded-xl transition-all group" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', textDecoration: 'none', color: 'inherit' }}>
+                    {featuredStack.map((a, i) => (
+                      <Link
+                        key={a.article_id}
+                        href={`/article/${a.slug}`}
+                        className="flex gap-3 p-3 rounded-xl group"
+                        style={{
+                          background: 'var(--glass-bg)',
+                          border: '1px solid var(--glass-border)',
+                          textDecoration: 'none', color: 'inherit',
+                          transition: 'all 0.25s var(--ease-out-expo)',
+                          animation: `futr-fade-up 0.4s var(--ease-out-expo) ${(i + 1) * 100}ms both`,
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.borderColor = 'oklch(65% 0.12 175 / 0.3)'
+                          e.currentTarget.style.boxShadow = 'var(--glow-soft)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.borderColor = 'var(--glass-border)'
+                          e.currentTarget.style.boxShadow = 'none'
+                        }}
+                      >
                         {a.featured_image ? (
                           <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                            <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized sizes="80px" loading="lazy" />
+                            <Image src={a.featured_image} alt="" fill className="object-cover transition-transform duration-300 group-hover:scale-110" unoptimized sizes="80px" loading="lazy" />
                           </div>
                         ) : (
                           <div className="w-20 h-16 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
@@ -532,12 +623,36 @@ export default function ExplorePage() {
                   Trending Topics
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {latestArticles.map(a => (
-                    <Link key={a.article_id} href={`/article/${a.slug}`} className="group" style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <div className="rounded-2xl overflow-hidden transition-all" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                  {latestArticles.map((a, i) => (
+                    <Link
+                      key={a.article_id}
+                      href={`/article/${a.slug}`}
+                      className="group"
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      <div
+                        className="rounded-2xl overflow-hidden"
+                        style={{
+                          background: 'var(--glass-bg)',
+                          backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                          border: '1px solid var(--glass-border)',
+                          transition: 'all 0.3s var(--ease-out-expo)',
+                          animation: `futr-fade-up 0.5s var(--ease-out-expo) ${i * 80}ms both`,
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-4px)'
+                          e.currentTarget.style.boxShadow = 'var(--glow-primary)'
+                          e.currentTarget.style.borderColor = 'oklch(65% 0.12 175 / 0.4)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = 'none'
+                          e.currentTarget.style.borderColor = 'var(--glass-border)'
+                        }}
+                      >
                         {a.featured_image ? (
-                          <div className="relative w-full h-40">
-                            <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized sizes="(max-width: 1024px) 100vw, 33vw" loading="lazy" />
+                          <div className="relative w-full h-40 overflow-hidden">
+                            <Image src={a.featured_image} alt="" fill className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized sizes="(max-width: 1024px) 100vw, 33vw" loading="lazy" />
                           </div>
                         ) : (
                           <div className="w-full h-40 flex items-center justify-center" style={{ background: 'var(--bg-muted)' }}>
@@ -568,17 +683,38 @@ export default function ExplorePage() {
                   <UserPlus size={16} style={{ color: 'var(--primary)' }} />
                   Authors to Follow
                 </h2>
-                <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
-                  {authors.map(author => (
-                    <Link key={author.user_id} href={`/journalists/${author.user_id}`} className="flex-shrink-0 w-44 p-4 rounded-2xl flex flex-col items-center text-center transition-all" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', textDecoration: 'none', color: 'inherit' }}>
+                <div className="flex gap-3 overflow-x-auto pb-3 hide-scrollbar">
+                  {authors.map((author, i) => (
+                    <Link
+                      key={author.user_id}
+                      href={`/journalists/${author.user_id}`}
+                      className="flex-shrink-0 w-44 p-4 rounded-2xl flex flex-col items-center text-center"
+                      style={{
+                        background: 'var(--glass-bg)',
+                        border: '1px solid var(--glass-border)',
+                        textDecoration: 'none', color: 'inherit',
+                        transition: 'all 0.3s var(--ease-out-expo)',
+                        animation: `futr-fade-up 0.4s var(--ease-out-expo) ${i * 70}ms both`,
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-4px)'
+                        e.currentTarget.style.boxShadow = 'var(--glow-primary)'
+                        e.currentTarget.style.borderColor = 'oklch(65% 0.12 175 / 0.4)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = 'none'
+                        e.currentTarget.style.borderColor = 'var(--glass-border)'
+                      }}
+                    >
                       {author.profile_image ? (
-                        <Image src={author.profile_image} alt={author.name} width={56} height={56} className="rounded-full object-cover mb-2" style={{ boxShadow: '0 0 0 2px var(--border-subtle)' }} />
+                        <Image src={author.profile_image} alt={author.name} width={56} height={56} className="rounded-full object-cover mb-2" style={{ boxShadow: '0 0 0 2px var(--glass-bg), 0 0 0 4px oklch(65% 0.12 175 / 0.2)' }} />
                       ) : (
-                        <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold mb-2" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>{author.name.charAt(0)}</div>
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold mb-2" style={{ background: 'var(--grad-primary)', color: '#fff', boxShadow: 'var(--glow-primary)' }}>{author.name.charAt(0)}</div>
                       )}
                       <span className="text-sm font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{author.name}</span>
                       <span className="text-[10px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{formatNumber(author.followers)} followers</span>
-                      <span className="mt-2 px-3 py-1 rounded-full text-[11px] font-semibold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>+ Follow</span>
+                      <span className="mt-2 px-3 py-1 rounded-full text-[11px] font-semibold" style={{ background: 'var(--primary-light)', color: 'var(--primary)', transition: 'all 0.2s' }}>+ Follow</span>
                     </Link>
                   ))}
                 </div>
@@ -591,7 +727,11 @@ export default function ExplorePage() {
         {!activeCategory && searchQuery && (
           <section>
             <div className="flex items-center gap-3 mb-4">
-              <button onClick={backToAll} className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)', cursor: 'pointer' }}>
+              <button onClick={backToAll} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{
+                background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                color: 'var(--text-primary)', cursor: 'pointer',
+                transition: 'all 0.2s var(--ease-out-expo)',
+              }}>
                 <ArrowLeft size={18} />
               </button>
               <h2 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
@@ -605,20 +745,28 @@ export default function ExplorePage() {
                 <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Searching...</p>
               </div>
             ) : searchResults.length === 0 ? (
-              <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <div className="text-center py-16 rounded-2xl" style={{
+                background: 'var(--glass-bg)', border: '1px dashed var(--glass-border)',
+              }}>
                 <Search size={40} className="mx-auto mb-4" style={{ color: 'var(--text-tertiary)' }} />
                 <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No articles found</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Try a different search term.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {searchResults.map(a => (
-                  <Link key={a.article_id} href={`/article/${a.slug}`} style={{
-                    display: 'flex', gap: 16, padding: 16,
-                    background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                    borderRadius: 14, textDecoration: 'none', color: 'inherit',
-                    transition: 'all 0.2s',
-                  }}>
+                {searchResults.map((a, i) => (
+                  <Link
+                    key={a.article_id}
+                    href={`/article/${a.slug}`}
+                    style={{
+                      display: 'flex', gap: 16, padding: 16,
+                      background: 'var(--glass-bg)',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: 14, textDecoration: 'none', color: 'inherit',
+                      transition: 'all 0.25s var(--ease-out-expo)',
+                      animation: `futr-fade-up 0.3s var(--ease-out-expo) ${i * 50}ms both`,
+                    }}
+                  >
                     {a.featured_image ? (
                       <div className="relative w-24 h-20 rounded-xl overflow-hidden flex-shrink-0">
                         <Image src={a.featured_image} alt="" fill className="object-cover" unoptimized sizes="96px" loading="lazy" />
@@ -654,7 +802,11 @@ export default function ExplorePage() {
         {activeCategory && (
           <>
             <div className="flex items-center gap-3 mb-4">
-              <button onClick={backToAll} className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)', cursor: 'pointer' }}>
+              <button onClick={backToAll} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{
+                background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                color: 'var(--text-primary)', cursor: 'pointer',
+                transition: 'all 0.2s var(--ease-out-expo)',
+              }}>
                 <ArrowLeft size={18} />
               </button>
               <div>
@@ -668,7 +820,9 @@ export default function ExplorePage() {
                 )}
               </div>
               {unmatchedArticles.length > 0 && (
-                <span className="text-[11px] font-semibold flex items-center gap-1 px-2 py-1 rounded-full ml-auto" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
+                <span className="text-[11px] font-semibold flex items-center gap-1 px-2 py-1 rounded-full ml-auto" style={{
+                  background: 'var(--warning-light)', color: 'var(--warning)',
+                }}>
                   <Sparkles size={12} /> {unmatchedArticles.length} suggestion{unmatchedArticles.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -680,7 +834,9 @@ export default function ExplorePage() {
                 <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Loading articles...</p>
               </div>
             ) : articles.length === 0 ? (
-              <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+              <div className="text-center py-16 rounded-2xl" style={{
+                background: 'var(--glass-bg)', border: '1px dashed var(--glass-border)',
+              }}>
                 <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No articles yet</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Check back soon for {activeCategory.name} news.</p>
               </div>
@@ -692,9 +848,10 @@ export default function ExplorePage() {
                   const mismatch = sug && article.category_id && sug.bestCategoryId !== article.category_id
 
                   return (
-                    <div key={article.article_id} className="rounded-xl transition-all" style={{
-                      background: 'var(--bg-surface)',
-                      border: `1px solid ${mismatch ? 'var(--warning)' : 'var(--border-subtle)'}`,
+                    <div key={article.article_id} className="rounded-xl" style={{
+                      background: 'var(--glass-bg)',
+                      border: `1px solid ${mismatch ? 'var(--warning)' : 'var(--glass-border)'}`,
+                      transition: 'all 0.25s var(--ease-out-expo)',
                     }}>
                       <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="flex gap-4 p-4">
@@ -734,17 +891,17 @@ export default function ExplorePage() {
                                 Suggested: <span className="font-bold" style={{ color: 'var(--primary)' }}>{getCategoryName(sug.bestCategoryId)}</span>
                                 <span className="ml-1">({sug.confidence})</span>
                               </span>
-                              <button onClick={() => applyCategory(article.article_id, sug.bestCategoryId)} className="text-[10px] font-bold px-2 py-0.5 rounded-md border-0 cursor-pointer" style={{ background: 'var(--primary)', color: '#fff' }}>
+                              <button onClick={() => applyCategory(article.article_id, sug.bestCategoryId)} className="text-[10px] font-bold px-2 py-0.5 rounded-md border-0 cursor-pointer" style={{ background: 'var(--grad-primary)', color: '#fff' }}>
                                 Apply
                               </button>
                               {sug.scores.length > 1 && sug.scores.slice(1, 3).map(s => (
-                                <button key={s.categoryId} onClick={() => applyCategory(article.article_id, s.categoryId)} className="text-[10px] px-2 py-0.5 rounded-md border cursor-pointer" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)', background: 'transparent' }}>
+                                <button key={s.categoryId} onClick={() => applyCategory(article.article_id, s.categoryId)} className="text-[10px] px-2 py-0.5 rounded-md border cursor-pointer" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)', background: 'transparent', transition: 'all 0.2s' }}>
                                   {getCategoryName(s.categoryId)}
                                 </button>
                               ))}
                             </div>
                           ) : (
-                            <button onClick={() => classifyArticle(article)} disabled={analyzing.has(article.article_id)} className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md border-0 cursor-pointer" style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>
+                            <button onClick={() => classifyArticle(article)} disabled={analyzing.has(article.article_id)} className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md border-0 cursor-pointer" style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)', transition: 'all 0.2s' }}>
                               {analyzing.has(article.article_id) ? (<><Loader2 size={10} className="animate-spin" /> Analyzing...</>) : (<><Sparkles size={10} /> Auto-classify</>)}
                             </button>
                           )}
@@ -759,7 +916,7 @@ export default function ExplorePage() {
                               <span className="font-bold" style={{ color: 'var(--primary)' }}>{getCategoryName(sug!.bestCategoryId)}</span>
                               {' '}(currently in {article.category?.name})
                             </span>
-                            <button onClick={() => applyCategory(article.article_id, sug!.bestCategoryId)} className="text-[10px] font-bold px-2 py-0.5 rounded-md border-0 cursor-pointer" style={{ background: 'var(--warning)', color: '#fff' }}>
+                            <button onClick={() => applyCategory(article.article_id, sug!.bestCategoryId)} className="text-[10px] font-bold px-2 py-0.5 rounded-md border-0 cursor-pointer" style={{ background: 'var(--warning)', color: '#fff', transition: 'all 0.2s' }}>
                               Re-categorize
                             </button>
                           </div>
@@ -773,7 +930,12 @@ export default function ExplorePage() {
 
             {hasMore && (
               <div className="text-center mt-6">
-                <button onClick={loadMore} disabled={loading} className="px-6 py-2.5 rounded-xl font-semibold text-sm border-0 cursor-pointer transition-all" style={{ background: 'var(--primary)', color: '#fff', opacity: loading ? 0.6 : 1 }}>
+                <button onClick={loadMore} disabled={loading} className="px-6 py-2.5 rounded-xl font-semibold text-sm border-0 cursor-pointer" style={{
+                  background: 'var(--grad-primary)', color: '#fff',
+                  opacity: loading ? 0.6 : 1,
+                  boxShadow: 'var(--glow-primary)',
+                  transition: 'all 0.3s var(--ease-out-expo)',
+                }}>
                   {loading ? 'Loading...' : `Load More (${articles.length} of ${totalArticles})`}
                 </button>
               </div>

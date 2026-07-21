@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, checkout_request_id: stkData.CheckoutRequestID })
     }
 
-    return NextResponse.json({ error: stkData.errorMessage ?? 'STK Push failed', raw: stkData }, { status: 400 })
+    return NextResponse.json({ error: 'STK Push failed' }, { status: 400 })
   } catch (err) {
     console.error('[POST /api/payments/mpesa]', err)
     return NextResponse.json({ error: 'M-Pesa payment failed' }, { status: 500 })

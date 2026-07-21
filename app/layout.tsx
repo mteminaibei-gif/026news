@@ -5,6 +5,7 @@ import { Space_Grotesk, Newsreader } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { SettingsProvider } from '@/components/providers/SettingsProvider';
 import { RealtimeShell } from '@/components/providers/RealtimeShell';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { RadioProvider } from '@/components/radio/RadioProvider';
@@ -108,6 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <ToastProvider>
             <QueryProvider>
+            <SettingsProvider>
             <RealtimeShell>
               <RadioProvider>
                 <TVGlobalProvider>
@@ -122,6 +124,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </TVGlobalProvider>
               </RadioProvider>
             </RealtimeShell>
+            </SettingsProvider>
           </QueryProvider>
           </ToastProvider>
         </ThemeProvider>

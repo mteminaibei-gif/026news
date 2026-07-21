@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
     // SVG can carry script.
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
     ],
     // Disabled: user-controlled SVG can carry script. Serve avatars from Supabase
     // storage (already sanitized on upload) instead of arbitrary SVG URLs.
@@ -72,6 +71,10 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
           { key: 'Permissions-Policy', value: "geolocation=(), microphone=(), camera=(), payment=()" },
           // Content-Security-Policy: mitigate stored XSS, clickjacking, mixed content.
           {

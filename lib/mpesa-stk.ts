@@ -264,7 +264,7 @@ export async function handleMpesaCallback(callbackData: STKCallbackData) {
 
           if (user) {
             const userData = user as any
-            console.log(`Payment confirmed for ${userData.email}: KES ${txn.amount}`)
+            console.log(`Payment confirmed for user #${(user as any).user_id}: KES ${txn.amount}`)
           }
         }
       }

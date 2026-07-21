@@ -2,7 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/layout/Logo'
-import { ArrowRight, Newspaper, Users, Radio, Tv, PenLine, Shield, Zap, Clock, Eye, TrendingUp, ChevronRight, Compass, FileText } from 'lucide-react'
+import {
+  ArrowRight, Newspaper, Users, Radio, Tv, PenLine, Shield, Zap,
+  Clock, Eye, TrendingUp, ChevronRight, Compass, FileText,
+  Flame, Star, Search, AtSign, Hash, Globe2,
+  Megaphone, Share2, Mail, CheckCircle, Globe, ArrowUpRight, Timer,
+} from 'lucide-react'
 import { stripHtml } from '@/lib/utils'
 import type { Metadata } from 'next'
 import { LandingHeroSlideshow } from '@/components/landing/LandingHeroSlideshow'
@@ -68,6 +73,41 @@ function formatViews(n: number): string {
   return String(n)
 }
 
+function relativeTime(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diff = Math.max(0, now - then)
+  const seconds = Math.floor(diff / 1000)
+  if (seconds < 60) return 'Just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days}d ago`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 4) return `${weeks}w ago`
+  return new Date(dateStr).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
+}
+
+function readingTime(content: string): string {
+  const text = stripHtml(content)
+  const words = text.split(/\s+/).filter(Boolean).length
+  const minutes = Math.max(1, Math.ceil(words / 200))
+  return `${minutes} min read`
+}
+
+function getInitials(name: string | null | undefined): string {
+  if (!name) return 'S'
+  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+}
+
+function isRecent(dateStr: string): boolean {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  return diff < 3 * 60 * 60 * 1000
+}
+
 export default async function LandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -98,29 +138,35 @@ export default async function LandingPage() {
   const top = (topArticles ?? []) as any[]
   const recent = (recentArticles ?? []) as any[]
 
+  const totalArticles = top.length + recent.length
+  const uniqueAuthors = new Set([
+    ...top.map((a: any) => a.author?.name).filter(Boolean),
+    ...recent.map((a: any) => a.author?.name).filter(Boolean),
+  ]).size
+
   return (
-    <div className="landing-page">
+    <div className="landing-page" suppressHydrationWarning>
       {/* Nav */}
-      <nav className="landing-nav">
+      <nav className="landing-nav" role="navigation" aria-label="Main navigation">
         <div className="landing-nav-inner">
           <Logo size="md" href="" />
-          <div className="hidden md:flex items-center gap-0.5">
-            <Link href="/social" className="nav-tab-link"><Users size={15} /> Social</Link>
-            <Link href="/explore" className="nav-tab-link"><Compass size={15} /> Explore</Link>
-            <Link href="/news" className="nav-tab-link"><Newspaper size={15} /> News</Link>
-            <Link href="/articles" className="nav-tab-link"><FileText size={15} /> Articles</Link>
-            <Link href="/radio" className="nav-tab-link"><Radio size={15} /> Radio</Link>
-            <Link href="/tv" className="nav-tab-link"><Tv size={15} /> TV</Link>
+          <div className="hidden md:flex items-center gap-0.5" role="menubar">
+            <Link href="/social" className="nav-tab-link" role="menuitem"><Users size={15} aria-hidden="true" /> Social</Link>
+            <Link href="/explore" className="nav-tab-link" role="menuitem"><Compass size={15} aria-hidden="true" /> Explore</Link>
+            <Link href="/news" className="nav-tab-link" role="menuitem"><Newspaper size={15} aria-hidden="true" /> News</Link>
+            <Link href="/articles" className="nav-tab-link" role="menuitem"><FileText size={15} aria-hidden="true" /> Articles</Link>
+            <Link href="/radio" className="nav-tab-link" role="menuitem"><Radio size={15} aria-hidden="true" /> Radio</Link>
+            <Link href="/tv" className="nav-tab-link" role="menuitem"><Tv size={15} aria-hidden="true" /> TV</Link>
           </div>
           <div className="landing-nav-actions">
-            <Link href="/login" className="landing-btn ghost">Sign In</Link>
-            <Link href="/onboarding" className="landing-btn primary">Sign Up Free</Link>
+            <Link href="/login" className="landing-btn ghost" aria-label="Sign in to your account">Sign In</Link>
+            <Link href="/onboarding" className="landing-btn primary" aria-label="Create a free account">Sign Up Free</Link>
           </div>
         </div>
       </nav>
 
       {/* Hero with slideshow */}
-      <section className="landing-hero">
+      <section className="landing-hero" aria-label="Welcome to 026connet!">
         <LandingHeroSlideshow slides={heroSlides} />
         <div className="landing-hero-bg" aria-hidden="true">
           <div className="landing-orb orb-1" />
@@ -128,7 +174,7 @@ export default async function LandingPage() {
           <div className="landing-orb orb-3" />
         </div>
         <div className="landing-hero-content lfloat-anim lfloat-anim-1">
-          <span className="pill landing-pill"><Zap size={13} /> The future of African journalism</span>
+          <span className="pill landing-pill"><Zap size={13} aria-hidden="true" /> The future of African journalism</span>
           <h1 className="landing-title">
             026<span className="text-gradient-hero">connect</span>
           </h1>
@@ -138,15 +184,40 @@ export default async function LandingPage() {
             and be part of the news.
           </p>
           <div className="landing-ctas">
-            <Link href="/onboarding" className="landing-btn primary large">
-              Get Started Free <ArrowRight size={18} />
+            <Link href="/onboarding" className="landing-btn primary large" aria-label="Get started for free">
+              Get Started Free <ArrowRight size={18} aria-hidden="true" />
             </Link>
-            <Link href="/login" className="landing-btn ghost large">
+            <Link href="/login" className="landing-btn ghost large" aria-label="Sign in to your account">
               Sign In
             </Link>
           </div>
-          <div className="landing-trust">
+          <div className="landing-trust" aria-label="Trusted by thousands of readers across Kenya">
             <span>Trusted by thousands of readers across Kenya</span>
+          </div>
+
+          {/* Floating animated stats */}
+          <div className="landing-hero-stats" aria-label="Platform statistics">
+            <div className="landing-hero-stat lfloat-anim lfloat-anim-1">
+              <span className="landing-hero-stat-icon"><FileText size={14} aria-hidden="true" /></span>
+              <span className="landing-hero-stat-val">{totalArticles}+</span>
+              <span className="landing-hero-stat-lbl">Articles</span>
+            </div>
+            <div className="landing-hero-stat lfloat-anim lfloat-anim-2" style={{ animationDelay: '0.3s' }}>
+              <span className="landing-hero-stat-icon"><Users size={14} aria-hidden="true" /></span>
+              <span className="landing-hero-stat-val">{uniqueAuthors}+</span>
+              <span className="landing-hero-stat-lbl">Authors</span>
+            </div>
+            <div className="landing-hero-stat lfloat-anim lfloat-anim-2" style={{ animationDelay: '0.45s' }}>
+              <span className="landing-hero-stat-icon"><Eye size={14} aria-hidden="true" /></span>
+              <span className="landing-hero-stat-val">{formatViews(top.reduce((s: number, a: any) => s + (a.views ?? 0), 0))}+</span>
+              <span className="landing-hero-stat-lbl">Views</span>
+            </div>
+          </div>
+
+          {/* Keyboard shortcut hint */}
+          <div className="landing-hero-kbd lfloat-anim lfloat-anim-2" style={{ animationDelay: '0.6s' }} aria-hidden="true">
+            <Search size={13} />
+            <span>Press <kbd>/</kbd> to search</span>
           </div>
         </div>
       </section>
@@ -154,46 +225,54 @@ export default async function LandingPage() {
       {/* Trending / Top Stories */}
       {top.length > 0 && (
         <LandingRevealSection>
-          <section className="landing-section">
+          <section className="landing-section" aria-label="Trending stories">
             <div className="landing-section-header">
               <div className="landing-section-title-row">
-                <TrendingUp size={20} className="landing-section-icon" />
+                <TrendingUp size={20} className="landing-section-icon" aria-hidden="true" />
                 <h2 className="landing-section-title">Trending Now</h2>
               </div>
-              <Link href="/news" className="landing-section-link">View all <ChevronRight size={16} /></Link>
+              <Link href="/news" className="landing-section-link" aria-label="View all trending stories">
+                View all <ChevronRight size={16} aria-hidden="true" />
+              </Link>
             </div>
             <div className="landing-top-grid">
               {/* Hero card — first article */}
-              <Link href={`/article/${top[0].slug}`} className="landing-top-hero">
+              <Link href={`/article/${top[0].slug}`} className="landing-top-hero" aria-label={`Featured article: ${top[0].title}`}>
                 {top[0].featured_image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={top[0].featured_image} alt="" className="landing-top-hero-img" />
+                  <img src={top[0].featured_image} alt={top[0].title} className="landing-top-hero-img" />
                 ) : (
                   <div className="landing-top-hero-fallback" />
                 )}
                 <div className="landing-top-hero-overlay" />
                 <div className="landing-top-hero-content">
-                  <span className="landing-top-badge" style={{ background: CATEGORY_COLORS[top[0].category?.name ?? ''] || 'var(--primary)' }}>
-                    {top[0].category?.name ?? 'Top Story'}
-                  </span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span className="landing-top-badge" style={{ background: CATEGORY_COLORS[top[0].category?.name ?? ''] || 'var(--primary)' }}>
+                      {top[0].category?.name ?? 'Top Story'}
+                    </span>
+                    <span className="landing-top-badge landing-top-featured-badge">
+                      <Star size={10} aria-hidden="true" /> Editor&apos;s Pick
+                    </span>
+                  </div>
                   <h3 className="landing-top-hero-title">{top[0].title}</h3>
                   {top[0].excerpt && (
                     <p className="landing-top-hero-excerpt">{stripHtml(top[0].excerpt)}</p>
                   )}
                   <div className="landing-top-meta">
-                    <span>{top[0].author?.name ?? 'Staff'}</span>
-                    <span><Eye size={12} /> {formatViews(top[0].views ?? 0)}</span>
+                    <span><span className="landing-author-avatar-sm">{getInitials(top[0].author?.name)}</span> {top[0].author?.name ?? 'Staff'}</span>
+                    <span><Eye size={12} aria-hidden="true" /> {formatViews(top[0].views ?? 0)}</span>
+                    <span><Timer size={12} aria-hidden="true" /> {readingTime(top[0].content)}</span>
                   </div>
                 </div>
               </Link>
 
               {/* Side cards */}
-              <div className="landing-top-side">
+              <div className="landing-top-side" role="list" aria-label="More trending stories">
                 {top.slice(1, 4).map((a: any) => (
-                  <Link key={a.article_id} href={`/article/${a.slug}`} className="landing-top-side-card">
+                  <Link key={a.article_id} href={`/article/${a.slug}`} className="landing-top-side-card" role="listitem" aria-label={a.title}>
                     {a.featured_image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.featured_image} alt="" className="landing-top-side-img" />
+                      <img src={a.featured_image} alt={a.title} className="landing-top-side-img" />
                     ) : (
                       <div className="landing-top-side-fallback" />
                     )}
@@ -202,7 +281,13 @@ export default async function LandingPage() {
                         {a.category?.name ?? 'News'}
                       </span>
                       <h4 className="landing-top-side-title">{a.title}</h4>
-                      <span className="landing-top-side-author">{a.author?.name ?? 'Staff'} &middot; {formatViews(a.views ?? 0)} views</span>
+                      <div className="landing-top-side-details">
+                        <span className="landing-top-side-author">{a.author?.name ?? 'Staff'}</span>
+                        <span className="landing-top-side-sep">&middot;</span>
+                        <span className="landing-top-side-author">{formatViews(a.views ?? 0)} views</span>
+                        <span className="landing-top-side-sep">&middot;</span>
+                        <span className="landing-top-side-author">{readingTime(a.content)}</span>
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -214,10 +299,10 @@ export default async function LandingPage() {
 
       {/* Features */}
       <LandingRevealSection>
-        <section className="landing-features">
+        <section className="landing-features" aria-label="Why choose 026connet!">
           <div className="landing-section-header" style={{ marginBottom: '2rem' }}>
             <div className="landing-section-title-row">
-              <Zap size={20} className="landing-section-icon" />
+              <Zap size={20} className="landing-section-icon" aria-hidden="true" />
               <h2 className="landing-section-title">Why 026connet!?</h2>
             </div>
           </div>
@@ -230,11 +315,18 @@ export default async function LandingPage() {
               { icon: Shield, title: 'Trusted Sources', desc: 'Curated journalism from verified outlets and independent voices across the continent.' },
               { icon: Tv, title: 'Communities', desc: 'Join topic-based communities. From politics to tech, find your tribe and share perspectives.' },
             ].map((f, i) => (
-              <div key={f.title} className="landing-feature" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="landing-feature-icon"><f.icon size={24} /></div>
+              <article
+                key={f.title}
+                className="landing-feature"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className="landing-feature-header">
+                  <span className="landing-feature-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                  <div className="landing-feature-icon"><f.icon size={24} aria-hidden="true" /></div>
+                </div>
                 <h3>{f.title}</h3>
                 <p>{f.desc}</p>
-              </div>
+              </article>
             ))}
           </div>
         </section>
@@ -243,34 +335,53 @@ export default async function LandingPage() {
       {/* Recent Posts */}
       {recent.length > 0 && (
         <LandingRevealSection>
-          <section className="landing-section">
+          <section className="landing-section" aria-label="Latest stories">
             <div className="landing-section-header">
               <div className="landing-section-title-row">
-                <Clock size={20} className="landing-section-icon" />
+                <Clock size={20} className="landing-section-icon" aria-hidden="true" />
                 <h2 className="landing-section-title">Latest Stories</h2>
               </div>
-              <Link href="/news" className="landing-section-link">View all <ChevronRight size={16} /></Link>
+              <Link href="/news" className="landing-section-link" aria-label="View all latest stories">
+                View all <ChevronRight size={16} aria-hidden="true" />
+              </Link>
             </div>
             <div className="landing-recent-grid">
               {recent.map((a: any) => (
-                <Link key={a.article_id} href={`/article/${a.slug}`} className="landing-recent-card">
+                <Link key={a.article_id} href={`/article/${a.slug}`} className="landing-recent-card" aria-label={a.title}>
                   {a.featured_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.featured_image} alt="" className="landing-recent-img" />
+                    <img src={a.featured_image} alt={a.title} className="landing-recent-img" />
                   ) : (
                     <div className="landing-recent-img-fallback" />
                   )}
                   <div className="landing-recent-body">
-                    <span className="landing-recent-cat" style={{ color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)' }}>
-                      {a.category?.name ?? 'News'}
-                    </span>
+                    <div className="landing-recent-top-row">
+                      <span className="landing-recent-cat" style={{ color: CATEGORY_COLORS[a.category?.name ?? ''] || 'var(--primary)' }}>
+                        {a.category?.name ?? 'News'}
+                      </span>
+                      <div className="landing-recent-badges">
+                        {isRecent(a.created_at) && (
+                          <span className="landing-badge-new"><Flame size={10} aria-hidden="true" /> New</span>
+                        )}
+                        {(a.views ?? 0) > 500 && (
+                          <span className="landing-badge-hot"><TrendingUp size={10} aria-hidden="true" /> Hot</span>
+                        )}
+                      </div>
+                    </div>
                     <h3 className="landing-recent-title">{a.title}</h3>
                     {a.excerpt && (
                       <p className="landing-recent-excerpt">{stripHtml(a.excerpt)}</p>
                     )}
-                    <div className="landing-recent-meta">
-                      <span>{a.author?.name ?? 'Staff'}</span>
-                      <span><Eye size={12} /> {formatViews(a.views ?? 0)}</span>
+                    <div className="landing-recent-footer">
+                      <div className="landing-recent-author">
+                        <span className="landing-author-avatar">{getInitials(a.author?.name)}</span>
+                        <span>{a.author?.name ?? 'Staff'}</span>
+                      </div>
+                      <div className="landing-recent-meta">
+                        <span><Timer size={11} aria-hidden="true" /> {readingTime(a.content)}</span>
+                        <span><Eye size={11} aria-hidden="true" /> {formatViews(a.views ?? 0)}</span>
+                        <span title={new Date(a.created_at).toLocaleString()}>{relativeTime(a.created_at)}</span>
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -282,27 +393,99 @@ export default async function LandingPage() {
 
       {/* CTA */}
       <LandingRevealSection>
-        <section className="landing-cta-section">
-          <h2>Ready to join the story?</h2>
-          <p>Start reading, sharing, and shaping the news today.</p>
-          <div className="landing-ctas">
-            <Link href="/onboarding" className="landing-btn primary large">
-              Create Your Account <ArrowRight size={18} />
-            </Link>
+        <section className="landing-cta-section" aria-label="Join 026connet!">
+          <div className="landing-cta-pattern" aria-hidden="true">
+            <div className="landing-cta-dot landing-cta-dot-1" />
+            <div className="landing-cta-dot landing-cta-dot-2" />
+            <div className="landing-cta-dot landing-cta-dot-3" />
+          </div>
+          <div className="landing-cta-content">
+            <span className="pill landing-pill-cta"><CheckCircle size={13} aria-hidden="true" /> Free forever, no credit card</span>
+            <h2>Ready to join the story?</h2>
+            <p>Start reading, sharing, and shaping the news today.</p>
+            <div className="landing-cta-stats" aria-label="Social proof">
+              <span className="landing-cta-stat"><Users size={16} aria-hidden="true" /> Join 10,000+ readers</span>
+              <span className="landing-cta-stat-sep" aria-hidden="true" />
+              <span className="landing-cta-stat"><Newspaper size={16} aria-hidden="true" /> {totalArticles}+ stories published</span>
+              <span className="landing-cta-stat-sep" aria-hidden="true" />
+              <span className="landing-cta-stat"><Globe size={16} aria-hidden="true" /> Across Kenya &amp; Africa</span>
+            </div>
+            <div className="landing-ctas">
+              <Link href="/onboarding" className="landing-btn primary large" aria-label="Create your free account">
+                Create Your Account <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <Link href="/news" className="landing-btn ghost large" aria-label="Browse latest news">
+                Browse Stories <ArrowUpRight size={18} aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </section>
       </LandingRevealSection>
 
       {/* Footer */}
-      <footer className="landing-footer">
-        <div className="landing-footer-inner">
-          <Logo size="sm" href="" />
-          <span>&copy; {new Date().getFullYear()} 026connet!. Made in Kenya.</span>
-          <div className="landing-footer-links">
-            <Link href="/about">About</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/contact">Contact</Link>
+      <footer className="landing-footer" role="contentinfo" aria-label="Site footer">
+        <div className="landing-footer-top">
+          <div className="landing-footer-inner">
+            <div className="landing-footer-brand">
+              <Logo size="sm" href="" />
+              <p className="landing-footer-tagline">Kenya&apos;s leading digital news platform. Breaking news, in-depth analysis, and freelance journalism from across Africa.</p>
+              <div className="landing-footer-social" aria-label="Social media links">
+                <a href="https://twitter.com/026connet" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Twitter" className="landing-social-link"><AtSign size={18} /></a>
+                <a href="https://facebook.com/026connet" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook" className="landing-social-link"><Globe2 size={18} /></a>
+                <a href="https://instagram.com/026connet" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram" className="landing-social-link"><Hash size={18} /></a>
+                <a href="https://youtube.com/026connet" target="_blank" rel="noopener noreferrer" aria-label="Subscribe on YouTube" className="landing-social-link"><Megaphone size={18} /></a>
+                <a href="https://github.com/026connet" target="_blank" rel="noopener noreferrer" aria-label="View our GitHub" className="landing-social-link"><Share2 size={18} /></a>
+              </div>
+            </div>
+
+            <div className="landing-footer-links-group">
+              <h4 className="landing-footer-heading">Platform</h4>
+              <Link href="/news">News</Link>
+              <Link href="/articles">Articles</Link>
+              <Link href="/explore">Explore</Link>
+              <Link href="/radio">Radio</Link>
+              <Link href="/tv">TV</Link>
+            </div>
+
+            <div className="landing-footer-links-group">
+              <h4 className="landing-footer-heading">Company</h4>
+              <Link href="/about">About Us</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/privacy">Privacy Policy</Link>
+              <Link href="/terms">Terms of Service</Link>
+            </div>
+
+            <div className="landing-footer-newsletter">
+              <h4 className="landing-footer-heading">Stay updated</h4>
+              <p className="landing-footer-newsletter-desc">Get the latest stories delivered to your inbox.</p>
+              <form className="landing-footer-form" aria-label="Newsletter signup">
+                <div className="landing-footer-input-wrap">
+                  <Mail size={16} aria-hidden="true" className="landing-footer-input-icon" />
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="landing-footer-input"
+                    aria-label="Email address for newsletter"
+                    suppressHydrationWarning
+                  />
+                </div>
+                <button type="submit" className="landing-footer-submit" aria-label="Subscribe to newsletter">
+                  Subscribe <ArrowRight size={14} aria-hidden="true" />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div className="landing-footer-bottom">
+          <div className="landing-footer-bottom-inner">
+            <span>&copy; {new Date().getFullYear()} 026connet!. Made with ❤️ in Kenya.</span>
+            <div className="landing-footer-bottom-links">
+              <Link href="/about">About</Link>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+              <Link href="/contact">Contact</Link>
+            </div>
           </div>
         </div>
       </footer>

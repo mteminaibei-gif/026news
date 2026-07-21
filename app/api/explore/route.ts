@@ -21,7 +21,10 @@ export async function GET(req: NextRequest) {
         .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)', { count: 'exact' })
         .eq('status', 'published')
         .eq('category_id', catId)
-      if (query) qb = qb.ilike('title', `%${query}%`)
+      if (query) {
+        const escaped = query.replace(/%/g, '\\%').replace(/_/g, '\\_')
+        qb = qb.ilike('title', `%${escaped}%`)
+      }
       const { data: articles, count } = await qb
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
@@ -35,11 +38,12 @@ export async function GET(req: NextRequest) {
     }
 
     if (query) {
+      const escaped = query.replace(/%/g, '\\%').replace(/_/g, '\\_')
       const { data: articles } = await supabase
         .from('articles')
         .select(ARTICLE_SELECT, { count: 'exact' })
         .eq('status', 'published')
-        .ilike('title', `%${query}%`)
+        .ilike('title', `%${escaped}%`)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
       return NextResponse.json({

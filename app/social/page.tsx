@@ -7,7 +7,7 @@ import { useFollowSuggestions, useFollow } from '@/lib/hooks/useFollow'
 import { PostCard } from '@/components/social/PostCard'
 import { useUser, useProfile } from '@/lib/hooks/useAuth'
 import { uploadPostMedia } from '@/lib/storage'
-import { Image as ImageIcon, Users, Sparkles, UserPlus, X, Send } from 'lucide-react'
+import { Image as ImageIcon, Users, Sparkles, UserPlus, X, Send, Bookmark } from 'lucide-react'
 
 function FollowButton({ userId }: { userId: number }) {
   const { following, toggle, loading } = useFollow(userId)
@@ -39,6 +39,7 @@ function ComposeBox({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [images, setImages] = useState<string[]>([])
+  const [focused, setFocused] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const { data: user } = useUser()
   const { data: profile } = useProfile(user?.email ?? undefined)
@@ -75,6 +76,7 @@ function ComposeBox({
       await createPost(content, images.length ? images : undefined, parseTags(content))
       setText('')
       setImages([])
+      setFocused(false)
       onPosted?.()
     } catch (err: any) {
       setError(err?.message ? String(err.message) : 'Could not publish your post. Please try again.')
@@ -84,7 +86,15 @@ function ComposeBox({
   }
 
   return (
-    <div className="social-compose">
+    <div
+      className="social-compose"
+      style={{
+        transition: 'all 0.35s var(--ease-out-expo)',
+        boxShadow: focused ? 'var(--glow-primary)' : 'var(--glow-soft)',
+        borderColor: focused ? 'oklch(65% 0.12 175 / 0.4)' : undefined,
+        transform: focused ? 'translateY(-1px)' : undefined,
+      }}
+    >
       <div className="social-compose-avatar">
         {profile?.profile_image
           ? <img src={profile.profile_image} alt="" />
@@ -94,13 +104,21 @@ function ComposeBox({
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="What's happening in your world? Use #hashtags to tag topics."
           className="social-compose-input"
           rows={2}
           maxLength={MAX_CHARS}
         />
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: overLimit ? 'var(--error)' : nearLimit ? 'var(--accent)' : 'var(--text-tertiary)' }}>
+          <span style={{
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            fontFamily: 'var(--font-ui)',
+            transition: 'color 0.2s',
+            color: overLimit ? 'var(--error)' : nearLimit ? 'var(--accent)' : 'var(--text-tertiary)',
+          }}>
             {charCount}/{MAX_CHARS}
           </span>
         </div>
@@ -119,7 +137,17 @@ function ComposeBox({
         )}
         <div className="social-compose-actions">
           <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onPickImages} />
-          <button className="social-icon-btn" aria-label="Add image" type="button" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <button
+            className="social-icon-btn"
+            aria-label="Add image"
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            style={{
+              transition: 'all 0.25s var(--ease-out-expo)',
+              transform: uploading ? 'scale(0.9)' : undefined,
+            }}
+          >
             <ImageIcon size={18} />
           </button>
           <button className="social-icon-btn" aria-label="Tag" type="button" onClick={() => setText(t => t + (t && !t.endsWith(' ') ? ' ' : '') + '#')}>
@@ -129,6 +157,11 @@ function ComposeBox({
             className="social-post-btn"
             onClick={submit}
             disabled={(!text.trim() && images.length === 0) || posting || uploading || overLimit}
+            style={{
+              transition: 'all 0.3s var(--ease-out-expo)',
+              opacity: posting ? 0.7 : undefined,
+              transform: posting ? 'scale(0.97)' : undefined,
+            }}
           >
             {posting ? 'Posting…' : 'Post'}
           </button>
@@ -150,14 +183,37 @@ function Suggestions() {
     })
   }, [suggestions])
 
-  if (loading) return <p className="social-side-note">Finding people…</p>
+  if (loading) return (
+    <p className="social-side-note" style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span className="animate-pulse-soft" style={{ width: 16, height: 16, borderRadius: '50%', background: 'var(--primary-light)', display: 'inline-block' }} />
+      Finding people…
+    </p>
+  )
   if (!suggestions.length) return null
   return (
-    <div className="social-suggest-card">
+    <div className="social-suggest-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) both' }}>
       <h3 className="social-side-title"><Sparkles size={15} /> Who to follow</h3>
       <div className="social-suggest-list">
-        {suggestions.slice(0, 5).map(s => (
-          <div key={s.user_id} className="social-suggest-item">
+        {suggestions.slice(0, 5).map((s, i) => (
+          <div
+            key={s.user_id}
+            className="social-suggest-item"
+            style={{
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-sm)',
+              transition: 'all 0.25s var(--ease-out-expo)',
+              animation: `futr-fade-up 0.4s var(--ease-out-expo) ${i * 80}ms both`,
+              cursor: 'default',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--surface-2)'
+              e.currentTarget.style.transform = 'translateX(4px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.transform = 'translateX(0)'
+            }}
+          >
             <Link href={`/journalists/${s.user_id}`} className="social-suggest-avatar" style={{ position: 'relative' }}>
               {s.profile_image
                 ? <img src={s.profile_image} alt={s.name} />
@@ -182,7 +238,6 @@ export default function SocialPage() {
   const { posts, loading, loadMore, hasMore, toggleLike, refetch } = feed
   const [openPostId, setOpenPostId] = useState<number | null>(null)
 
-  // Read ?post=ID from URL to open a post detail
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const pid = Number(params.get('post'))
@@ -196,6 +251,12 @@ export default function SocialPage() {
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8)
   }, [allPosts.posts])
 
+  const tabs = [
+    { key: 'home' as const, label: 'For You' },
+    { key: 'following' as const, label: 'Following' },
+    { key: 'saved' as const, label: 'Saved' },
+  ]
+
   return (
     <div className="social-page">
       <div className="social-container">
@@ -208,17 +269,41 @@ export default function SocialPage() {
           <ComposeBox createPost={feed.createPost} onPosted={refetch} />
           <div id="compose" style={{ scrollMarginTop: 80 }} />
 
-          <div className="social-tabs">
-            <button className={tab === 'home' ? 'active' : ''} onClick={() => setTab('home')}>For You</button>
-            <button className={tab === 'following' ? 'active' : ''} onClick={() => setTab('following')}>Following</button>
-            <button className={tab === 'saved' ? 'active' : ''} onClick={() => setTab('saved')}>Saved</button>
+          <div className="social-tabs" role="tablist">
+            {tabs.map(t => (
+              <button
+                key={t.key}
+                role="tab"
+                aria-selected={tab === t.key}
+                className={tab === t.key ? 'active' : ''}
+                onClick={() => setTab(t.key)}
+                style={{
+                  position: 'relative',
+                  transition: 'all 0.25s var(--ease-out-expo)',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
 
           <div className="social-feed">
             {loading && posts.length === 0 ? (
-              <p className="social-side-note">Loading feed…</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {[1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    className="skeleton"
+                    style={{
+                      height: 180,
+                      borderRadius: 'var(--radius-lg)',
+                      animationDelay: `${i * 150}ms`,
+                    }}
+                  />
+                ))}
+              </div>
             ) : posts.length === 0 ? (
-              <div className="social-empty">
+              <div className="social-empty" style={{ animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
                 <p>{tab === 'saved' ? 'No saved posts yet. Tap the bookmark on any post.' : 'No posts yet. Be the first to share something!'}</p>
               </div>
             ) : (
@@ -226,14 +311,22 @@ export default function SocialPage() {
             )}
 
             {hasMore && tab !== 'saved' && (
-              <button className="social-load-more" onClick={loadMore}>Load more</button>
+              <button
+                className="social-load-more"
+                onClick={loadMore}
+                style={{
+                  transition: 'all 0.3s var(--ease-out-expo)',
+                }}
+              >
+                Load more
+              </button>
             )}
           </div>
         </main>
 
         <aside className="social-sidebar">
           {trending.length > 0 && (
-            <div className="social-suggest-card">
+            <div className="social-suggest-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.1s both' }}>
               <h3 className="social-side-title"><Sparkles size={15} /> Trending Topics</h3>
               <div className="social-trending">
                 {trending.map(([tag, count]) => (
@@ -245,7 +338,7 @@ export default function SocialPage() {
             </div>
           )}
           <Suggestions />
-          <div className="social-side-card">
+          <div className="social-side-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.3s both' }}>
             <h3 className="social-side-title">Community Guidelines</h3>
             <p className="social-side-note">
               Be respectful. Share verified news. Tag topics with #hashtags.
@@ -302,7 +395,6 @@ function PostDetailModal({ postId, onClose }: { postId: number; onClose: () => v
         setLikeCount(data.like_count ?? likeCount)
       }
     } catch {
-      /* revert optimistic */
       setLiked(!next)
       setLikeCount(c => c + (next ? -1 : 1))
     } finally {
@@ -325,10 +417,12 @@ function PostDetailModal({ postId, onClose }: { postId: number; onClose: () => v
       <div className="social-modal" onClick={e => e.stopPropagation()}>
         <div className="social-modal-head">
           <h2 className="social-title" style={{ fontSize: '1.1rem' }}>Post</h2>
-          <button className="social-icon-btn" onClick={onClose} aria-label="Close">✕</button>
+          <button className="social-icon-btn" onClick={onClose} aria-label="Close" style={{ fontSize: '1rem' }}>✕</button>
         </div>
         {loading && !post ? (
-          <p className="social-side-note">Loading…</p>
+          <div style={{ padding: '2rem 0', display: 'flex', justifyContent: 'center' }}>
+            <div className="skeleton" style={{ width: '100%', height: 160, borderRadius: 'var(--radius-md)' }} />
+          </div>
         ) : post ? (
           <>
             <PostCard

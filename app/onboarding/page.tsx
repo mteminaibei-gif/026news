@@ -34,10 +34,19 @@ const NOTIFS = [
 ]
 
 const inputStyle: CSSProperties = {
-  width: '100%', padding: '14px 16px', borderRadius: 12, border: '1.5px solid var(--border)',
-  background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontFamily: 'inherit',
-  fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s',
+  width: '100%',
+  padding: '13px 16px',
+  borderRadius: 10,
+  border: '1.5px solid var(--border)',
+  background: 'var(--bg-elevated)',
+  color: 'var(--text-primary)',
+  fontFamily: 'var(--font-ui)',
+  fontSize: '0.9rem',
+  outline: 'none',
+  transition: 'border-color 0.25s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-expo)',
 }
+
+const STEP_LABELS = ['Account', 'Interests', 'Authors', 'Alerts', 'Review']
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -127,60 +136,117 @@ export default function OnboardingPage() {
     }
   }
 
+  const progressPct = (step / (TOTAL - 1)) * 100
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
-      <div style={{ width: '100%', maxWidth: 600 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-base)' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
+      <div style={{ width: '100%', maxWidth: 580 }}>
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32, animation: 'futr-fade-up 0.5s var(--ease-out-expo) both' }}>
           <Logo size="md" href="/" />
         </div>
 
         {/* Progress */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
-          {Array.from({ length: TOTAL }).map((_, i) => (
-            <div key={i} style={{
-              flex: 1, height: 4, borderRadius: 2,
-              background: i < step ? 'var(--success)' : i === step ? 'var(--primary)' : 'var(--border)',
-              transition: 'background 0.4s var(--ease-out-expo)',
+        <div style={{ marginBottom: 28, animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.1s both' }}>
+          {/* Step labels */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+            {STEP_LABELS.map((label, i) => (
+              <span key={i} style={{
+                fontSize: '0.7rem',
+                fontWeight: i === step ? 700 : 500,
+                color: i < step ? 'var(--success)' : i === step ? 'var(--primary)' : 'var(--text-muted)',
+                transition: 'color 0.3s var(--ease-out-expo)',
+                letterSpacing: '0.02em',
+              }}>
+                {label}
+              </span>
+            ))}
+          </div>
+          {/* Track */}
+          <div style={{ position: 'relative', height: 5, borderRadius: 99, background: 'var(--border)', overflow: 'hidden' }}>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, bottom: 0,
+              width: `${progressPct}%`,
+              background: 'var(--grad-primary)',
+              borderRadius: 99,
+              transition: 'width 0.5s var(--ease-out-expo)',
+              boxShadow: '0 0 12px -2px oklch(65% 0.12 175 / 0.4)',
             }} />
-          ))}
+          </div>
+          <div style={{ textAlign: 'right', marginTop: 6 }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', fontFeatureSettings: '"tnum"' }}>
+              Step {step + 1} of {TOTAL}
+            </span>
+          </div>
         </div>
 
         {/* Card */}
         <div style={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-          borderRadius: 20, padding: '40px 36px', minHeight: 380,
-          animation: 'ob-fade-in 0.5s var(--ease-out-expo)',
+          background: 'var(--glass-bg-strong)',
+          backdropFilter: 'blur(var(--glass-blur)) saturate(150%)',
+          WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(150%)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '36px 32px',
+          minHeight: 420,
+          boxShadow: 'var(--glow-soft)',
+          animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.15s both',
         }}>
           {error && (
-            <div style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid var(--error)', padding: '10px 14px', borderRadius: 12, fontSize: '0.85rem', marginBottom: 20 }}>
+            <div style={{
+              background: 'var(--error-light)',
+              color: 'var(--error)',
+              border: '1px solid oklch(65% 0.14 25 / 0.2)',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-xs)',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              marginBottom: 20,
+              boxShadow: '0 0 0 1px oklch(65% 0.14 25 / 0.08)',
+              animation: 'futr-fade-up 0.3s var(--ease-out-expo) both',
+            }}>
               {error}
             </div>
           )}
 
           {/* ── Step 0: Account ── */}
           {step === 0 && (
-            <div>
+            <div style={{ animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                <div style={{ fontSize: '2.4rem', marginBottom: 12 }}>📰</div>
-                <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.7rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Create your account</h1>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Join 026connet! and personalize your news experience.</p>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--primary-light)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, fontSize: '1.5rem' }}>📰</div>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.01em' }}>Create your account</h1>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Join 026connet! and personalize your news experience.</p>
               </div>
               <div style={{ display: 'grid', gap: 14 }}>
-                <input style={inputStyle} placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-                <input style={inputStyle} type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <input style={inputStyle} type="password" placeholder="Password (min 8, upper + lower + number)" value={password} onChange={(e) => setPassword(e.target.value)} />
-                <input style={inputStyle} type="password" placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                <input style={inputStyle} placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
+                />
+                <input style={inputStyle} type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
+                />
+                <input style={inputStyle} type="password" placeholder="Password (min 8, upper + lower + number)" value={password} onChange={(e) => setPassword(e.target.value)}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
+                />
+                <input style={inputStyle} type="password" placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
+                />
               </div>
               <button
                 onClick={() => setStep(1)}
                 disabled={!accountValid}
                 style={{
-                  width: '100%', marginTop: 22, padding: '14px', borderRadius: 11, border: 'none',
-                  background: accountValid ? 'var(--primary)' : 'var(--bg-inset)',
-                  color: accountValid ? 'oklch(98% 0.005 175)' : 'var(--text-muted)',
-                  fontWeight: 700, fontSize: '0.9rem', cursor: accountValid ? 'pointer' : 'not-allowed',
+                  width: '100%', marginTop: 22, padding: '14px', borderRadius: 10, border: 'none',
+                  background: accountValid ? 'var(--grad-primary)' : 'var(--border)',
+                  color: accountValid ? '#fff' : 'var(--text-muted)',
+                  fontWeight: 700, fontSize: '0.88rem', cursor: accountValid ? 'pointer' : 'not-allowed',
+                  boxShadow: accountValid ? 'var(--glow-primary)' : 'none',
+                  transition: 'all 0.3s var(--ease-out-expo)',
+                  fontFamily: 'var(--font-ui)',
                 }}
               >
                 Continue →
@@ -194,30 +260,36 @@ export default function OnboardingPage() {
 
           {/* ── Step 1: Interests ── */}
           {step === 1 && (
-            <div>
+            <div style={{ animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: '2.2rem', marginBottom: 12 }}>🎯</div>
-                <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>What are you interested in?</h1>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: 6 }}>Pick at least 3 topics so we can personalize your feed.</p>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--primary-light)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, fontSize: '1.5rem' }}>🎯</div>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>What are you interested in?</h1>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Pick at least 3 topics so we can personalize your feed.</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
                 {INTERESTS.map((it) => {
                   const sel = interests.includes(it.id)
                   return (
                     <button key={it.id} type="button" onClick={() => toggle(interests, setInterests, it.id)}
                       style={{
-                        padding: '16px 10px', borderRadius: 12, border: `2px solid ${sel ? 'var(--primary)' : 'var(--border)'}`,
-                        background: sel ? 'var(--primary-light)' : 'var(--bg-surface)', cursor: 'pointer',
-                        transition: 'all 0.2s var(--ease-out-expo)',
+                        padding: '16px 10px',
+                        borderRadius: 'var(--radius-xs)',
+                        border: `2px solid ${sel ? 'var(--primary)' : 'var(--glass-border)'}`,
+                        background: sel ? 'var(--primary-light)' : 'var(--glass-bg)',
+                        backdropFilter: sel ? 'none' : 'blur(6px)',
+                        WebkitBackdropFilter: sel ? 'none' : 'blur(6px)',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s var(--ease-out-expo)',
+                        boxShadow: sel ? 'var(--glow-primary)' : 'none',
                       }}>
-                      <div style={{ fontSize: '1.4rem', marginBottom: 4 }}>{it.icon}</div>
-                      <div style={{ fontSize: '0.76rem', fontWeight: 600, color: sel ? 'var(--primary)' : 'var(--text-primary)' }}>{it.label}</div>
+                      <div style={{ fontSize: '1.3rem', marginBottom: 6 }}>{it.icon}</div>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 600, color: sel ? 'var(--primary)' : 'var(--text-primary)', lineHeight: 1.3 }}>{it.label}</div>
                     </button>
                   )
                 })}
               </div>
-              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: 16 }}>
-                {interests.length} selected · Pick at least 3 to continue
+              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: 18 }}>
+                <span style={{ fontWeight: 700, color: interests.length >= 3 ? 'var(--success)' : 'var(--text-secondary)' }}>{interests.length}</span> selected · Pick at least 3 to continue
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setStep(0)} style={ghostBtn}>← Back</button>
@@ -228,33 +300,48 @@ export default function OnboardingPage() {
 
           {/* ── Step 2: Follow authors ── */}
           {step === 2 && (
-            <div>
+            <div style={{ animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: '2.2rem', marginBottom: 12 }}>✍️</div>
-                <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>Follow some authors</h1>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: 6 }}>Get notified when these writers publish new stories.</p>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--primary-light)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, fontSize: '1.5rem' }}>✍️</div>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Follow some authors</h1>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Get notified when these writers publish new stories.</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
                 {authors.length === 0 && (
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '16px 0' }}>Loading authors...</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0', gap: 8 }}>
+                    <span className="page-spinner" style={{ width: 24, height: 24, borderWidth: 3 }} />
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>Loading authors...</span>
+                  </div>
                 )}
                 {authors.map((a) => {
                   const f = follows.includes(a.id)
                   return (
-                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+                    <div key={a.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 16px',
+                      borderRadius: 'var(--radius-xs)',
+                      border: `1px solid ${f ? 'oklch(65% 0.12 175 / 0.2)' : 'var(--glass-border)'}`,
+                      background: f ? 'var(--primary-light)' : 'var(--glass-bg)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      transition: 'all 0.25s var(--ease-out-expo)',
+                    }}>
                       {a.profile_image ? (
                         <img src={a.profile_image} alt={a.name} style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
                       ) : (
-                        <div style={{ width: 44, height: 44, borderRadius: 12, background: a.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'oklch(98% 0.005 175)', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>{a.initials}</div>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: a.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'oklch(98% 0.005 175)', fontWeight: 700, fontSize: '0.85rem', flexShrink: 0 }}>{a.initials}</div>
                       )}
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{a.topic}</div>
                       </div>
                       <button onClick={() => toggle(follows, setFollows, a.id)} style={{
-                        padding: '7px 16px', borderRadius: 8, border: `1.5px solid ${f ? 'var(--primary)' : 'var(--border)'}`,
-                        background: f ? 'var(--primary)' : 'transparent', color: f ? 'oklch(98% 0.005 175)' : 'var(--text-secondary)',
-                        fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+                        padding: '8px 18px', borderRadius: 8,
+                        border: `1.5px solid ${f ? 'var(--primary)' : 'var(--border)'}`,
+                        background: f ? 'var(--primary)' : 'transparent',
+                        color: f ? '#fff' : 'var(--text-secondary)',
+                        fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-ui)',
+                        transition: 'all 0.25s var(--ease-out-expo)',
                       }}>{f ? 'Following' : 'Follow'}</button>
                     </div>
                   )
@@ -269,29 +356,52 @@ export default function OnboardingPage() {
 
           {/* ── Step 3: Notifications ── */}
           {step === 3 && (
-            <div>
+            <div style={{ animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: '2.2rem', marginBottom: 12 }}>🔔</div>
-                <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>Stay in the loop</h1>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: 6 }}>Choose how you&apos;d like to hear from us.</p>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--primary-light)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, fontSize: '1.5rem' }}>🔔</div>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Stay in the loop</h1>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Choose how you&apos;d like to hear from us.</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
                 {NOTIFS.map((n) => {
                   const on = notifs[n.id]
                   return (
-                    <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: '1.1rem' }}>{n.id === 'push' ? '🔔' : n.id === 'comment_replies' ? '💬' : n.id === 'weekly_recap' ? '📈' : '✉️'}</span>
+                    <div key={n.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 14, padding: 16,
+                      borderRadius: 'var(--radius-xs)',
+                      border: `1px solid ${on ? 'oklch(65% 0.12 175 / 0.15)' : 'var(--glass-border)'}`,
+                      background: on ? 'var(--primary-light)' : 'var(--glass-bg)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      transition: 'all 0.25s var(--ease-out-expo)',
+                    }}>
+                      <div style={{
+                        width: 42, height: 42, borderRadius: 12,
+                        background: on ? 'var(--primary)' : 'var(--bg-inset)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'background 0.25s var(--ease-out-expo)',
+                      }}>
+                        <span style={{ fontSize: '1.1rem', filter: on ? 'brightness(10)' : 'none' }}>{n.id === 'push' ? '🔔' : n.id === 'comment_replies' ? '💬' : n.id === 'weekly_recap' ? '📈' : '✉️'}</span>
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{n.name}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{n.desc}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{n.desc}</div>
                       </div>
                       <button onClick={() => setNotifs((p) => ({ ...p, [n.id]: !p[n.id] }))} style={{
-                        width: 42, height: 24, borderRadius: 12, background: on ? 'var(--primary)' : 'var(--border)',
-                        position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s',
+                        width: 46, height: 26, borderRadius: 13,
+                        background: on ? 'var(--primary)' : 'var(--border)',
+                        position: 'relative', cursor: 'pointer', flexShrink: 0,
+                        transition: 'background 0.25s var(--ease-out-expo)',
+                        border: 'none', padding: 0,
                       }}>
-                        <span style={{ position: 'absolute', top: 3, left: 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-elevated)', transition: 'transform 0.2s var(--ease-out-expo)', transform: on ? 'translateX(18px)' : 'translateX(0)' }} />
+                        <span style={{
+                          position: 'absolute', top: 3, left: 3,
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: '#fff',
+                          transition: 'transform 0.25s var(--ease-out-expo)',
+                          transform: on ? 'translateX(20px)' : 'translateX(0)',
+                          boxShadow: '0 1px 3px oklch(0% 0 0 / 0.15)',
+                        }} />
                       </button>
                     </div>
                   )
@@ -306,25 +416,52 @@ export default function OnboardingPage() {
 
           {/* ── Step 4: Done / Review ── */}
           {step === 4 && (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ width: 80, height: 80, borderRadius: 20, background: 'linear-gradient(135deg, oklch(50% 0.15 175), oklch(45% 0.12 220))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 700, color: 'oklch(98% 0.005 175)', margin: '0 auto 20px' }}>
+            <div style={{ textAlign: 'center', animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
+              <div style={{
+                width: 80, height: 80, borderRadius: 20,
+                background: 'var(--grad-primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.8rem', fontWeight: 700, color: '#fff',
+                margin: '0 auto 20px',
+                boxShadow: 'var(--glow-primary)',
+              }}>
                 {name.trim().charAt(0).toUpperCase() || '👋'}
               </div>
-              <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>You&apos;re all set, {name.split(' ')[0] || 'friend'}!</h1>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '40ch', margin: '0 auto 24px' }}>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.01em' }}>You&apos;re all set, {name.split(' ')[0] || 'friend'}!</h1>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '40ch', margin: '0 auto 24px', lineHeight: 1.6 }}>
                 We&apos;ll send a verification link to <strong style={{ color: 'var(--primary)' }}>{email}</strong>.
               </p>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', maxWidth: '40ch', margin: '0 auto 24px' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', maxWidth: '40ch', margin: '0 auto 24px', lineHeight: 1.5 }}>
                 Want to write for 026connet!? You can apply to become an author from your profile anytime.
               </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 28 }}>
-                <div><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{interests.length}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Topics</div></div>
-                <div><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{follows.length}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Authors</div></div>
-                <div><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{Object.values(notifs).filter(Boolean).length}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Alerts</div></div>
+
+              {/* Stats */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginBottom: 28 }}>
+                {[
+                  { value: interests.length, label: 'Topics' },
+                  { value: follows.length, label: 'Authors' },
+                  { value: Object.values(notifs).filter(Boolean).length, label: 'Alerts' },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)', fontFeatureSettings: '"tnum"' }}>{s.value}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', fontWeight: 500, marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
               </div>
+
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setStep(3)} style={ghostBtn}>← Back</button>
-                <button onClick={finish} disabled={loading} style={{ ...primaryBtn(true), flex: 1 }}>
+                <button onClick={finish} disabled={loading} style={{ ...primaryBtn(true), flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  {loading && (
+                    <span style={{
+                      width: 18, height: 18,
+                      border: '2.5px solid oklch(100% 0 0 / 0.3)',
+                      borderTopColor: '#fff',
+                      borderRadius: '50%',
+                      animation: 'spin 0.7s linear infinite',
+                      display: 'inline-block',
+                    }} />
+                  )}
                   {loading ? 'Creating account...' : 'Create Account'}
                 </button>
               </div>
@@ -332,7 +469,7 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        <a href="#" onClick={(e) => { e.preventDefault(); if (step < 5) setStep((s) => (s + 1) as Step) }} style={{ display: 'block', textAlign: 'center', marginTop: 16, fontSize: '0.78rem', color: 'var(--text-tertiary)', textDecoration: 'none' }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); if (step < 5) setStep((s) => (s + 1) as Step) }} style={{ display: 'block', textAlign: 'center', marginTop: 18, fontSize: '0.78rem', color: 'var(--text-tertiary)', textDecoration: 'none', transition: 'color 0.2s' }}>
           Skip for now
         </a>
       </div>
@@ -343,15 +480,18 @@ export default function OnboardingPage() {
 
 function primaryBtn(enabled: boolean): CSSProperties {
   return {
-    flex: 1, padding: '14px 24px', borderRadius: 11, border: 'none', fontWeight: 700, fontSize: '0.88rem',
-    background: enabled ? 'var(--primary)' : 'var(--bg-inset)', color: enabled ? 'oklch(98% 0.005 175)' : 'var(--text-muted)',
-    cursor: enabled ? 'pointer' : 'not-allowed', transition: 'all 0.2s var(--ease-out-expo)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'inherit',
+    flex: 1, padding: '14px 24px', borderRadius: 10, border: 'none', fontWeight: 700, fontSize: '0.88rem',
+    background: enabled ? 'var(--grad-primary)' : 'var(--border)',
+    color: enabled ? '#fff' : 'var(--text-muted)',
+    cursor: enabled ? 'pointer' : 'not-allowed',
+    boxShadow: enabled ? 'var(--glow-primary)' : 'none',
+    transition: 'all 0.25s var(--ease-out-expo)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'var(--font-ui)',
   }
 }
 
 const ghostBtn: CSSProperties = {
-  padding: '14px 22px', borderRadius: 11, border: '1px solid var(--border)', background: 'transparent',
-  color: 'var(--text-tertiary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit',
-  transition: 'all 0.2s var(--ease-out-expo)',
+  padding: '14px 22px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'transparent',
+  color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'var(--font-ui)',
+  transition: 'all 0.25s var(--ease-out-expo)',
 }

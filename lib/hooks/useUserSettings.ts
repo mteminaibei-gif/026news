@@ -1,5 +1,6 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface UserSettingsData {
   name: string
@@ -25,6 +26,9 @@ export function useUserSettings(email?: string) {
   const [settings, setSettings] = useState<UserSettingsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabaseRef = useRef(createClient())
+  const userIdRef = useRef<number | null>(null)
 
   const load = useCallback(async () => {
     if (!email) {
@@ -50,6 +54,7 @@ export function useUserSettings(email?: string) {
       if (err) throw err
 
       if (profile) {
+        userIdRef.current = profile.user_id as number
         const prefs = (profile.notification_prefs ?? {}) as Record<string, unknown>
         const social = (profile.social_links ?? {}) as Record<string, unknown>
         const nameParts = (profile.name || '').trim().split(/\s+/)
@@ -109,6 +114,33 @@ export function useUserSettings(email?: string) {
 
   useEffect(() => {
     load()
+  }, [load])
+
+  // Subscribe to realtime changes on the users table for this user
+  useEffect(() => {
+    if (!userIdRef.current) return
+    const uid = userIdRef.current
+    const supabase = supabaseRef.current
+
+    const channel = supabase
+      .channel(`rt:user-settings:${uid}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `user_id=eq.${uid}` },
+        () => {
+          load()
+        }
+      )
+      .subscribe()
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
   }, [load])
 
   return { settings, loading, error, updateSettings, refetch: load }

@@ -6,7 +6,7 @@ import { useUserSettings } from '@/lib/hooks/useUserSettings'
 import { useUser, useProfile } from '@/lib/hooks/useAuth'
 import { SettingsLayout, SettingsSection, SettingRow } from '@/components/settings'
 import { Toggle, Button, Input, Card } from '@/components/ui'
-import { User, Bell, Lock, Share2, Palette, Trash2 } from 'lucide-react'
+import { User, Bell, Lock, Share2, Palette, Trash2, CheckCircle, AlertCircle } from 'lucide-react'
 
 const SETTINGS_TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -112,12 +112,22 @@ export default function SettingsPage() {
           color: 'var(--text-tertiary)',
         }}
       >
-        Loading settings…
+        <div className="page-spinner" />
       </div>
     )
   }
 
   const initials = (settings.name || settings.first_name || 'U').charAt(0).toUpperCase()
+
+  const glassCardStyle = {
+    background: 'var(--glass-bg)',
+    backdropFilter: 'blur(var(--glass-blur)) saturate(140%)' as any,
+    WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)' as any,
+    border: '1px solid var(--glass-border)',
+    borderRadius: 'var(--radius-lg)',
+    boxShadow: 'var(--glow-soft)',
+    overflow: 'hidden',
+  }
 
   return (
     <>
@@ -129,15 +139,19 @@ export default function SettingsPage() {
         description="Manage your account and preferences"
       >
         {error && (
-          <Card variant="filled" padding="md" style={{ background: 'var(--error-light)', marginBottom: '1.5rem' }}>
-            <p style={{ color: 'var(--error)', fontSize: '0.875rem' }}>{error}</p>
-          </Card>
+          <div style={{ ...glassCardStyle, background: 'var(--error-light)', border: '1px solid var(--error)', marginBottom: '1.5rem', backdropFilter: 'none' }}>
+            <p style={{ color: 'var(--error)', fontSize: '0.875rem', padding: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AlertCircle size={16} /> {error}
+            </p>
+          </div>
         )}
 
         {saved && (
-          <Card variant="filled" padding="md" style={{ background: 'var(--success-light)', marginBottom: '1.5rem' }}>
-            <p style={{ color: 'var(--success)', fontSize: '0.875rem' }}>Settings saved successfully</p>
-          </Card>
+          <div style={{ ...glassCardStyle, background: 'var(--success-light)', border: '1px solid var(--success)', marginBottom: '1.5rem', backdropFilter: 'none' }}>
+            <p style={{ color: 'var(--success)', fontSize: '0.875rem', padding: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CheckCircle size={16} /> Settings saved successfully
+            </p>
+          </div>
         )}
 
         {/* Profile Tab */}
@@ -146,8 +160,8 @@ export default function SettingsPage() {
             title="Your Profile"
             description="Your public profile information visible to other readers and authors."
           >
-            <Card>
-              <div className="profile-edit-row">
+            <div style={glassCardStyle}>
+              <div className="profile-edit-row" style={{ padding: '1.5rem' }}>
                 <div className="profile-avatar-edit">
                   <div className="profile-avatar">
                     {settings.profile_image ? (
@@ -222,7 +236,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </SettingsSection>
         )}
 
@@ -232,7 +246,7 @@ export default function SettingsPage() {
             title="Notification Preferences"
             description="Control what you get notified about and how."
           >
-            <Card>
+            <div style={glassCardStyle}>
               <SettingRow
                 label="Daily Digest Email"
                 description="Top stories delivered to your inbox every morning"
@@ -259,14 +273,14 @@ export default function SettingsPage() {
                 action={<Toggle checked={settings.weekly_digest} onChange={v => patch({ weekly_digest: v })} />}
                 divider={false}
               />
-            </Card>
+            </div>
           </SettingsSection>
         )}
 
         {/* Security Tab */}
         {activeTab === 'security' && (
           <SettingsSection title="Security" description="Keep your account secure.">
-            <Card>
+            <div style={glassCardStyle}>
               <SettingRow
                 label="Email"
                 description="Your account email address"
@@ -289,15 +303,15 @@ export default function SettingsPage() {
                 action={<Button variant="ghost" size="sm">Manage</Button>}
                 divider={false}
               />
-            </Card>
+            </div>
           </SettingsSection>
         )}
 
         {/* Connected Accounts Tab */}
         {activeTab === 'connected' && (
           <SettingsSection title="Connected Accounts" description="Link external accounts for faster login and sharing.">
-            <Card>
-              <div className="connected-list">
+            <div style={glassCardStyle}>
+              <div className="connected-list" style={{ padding: '1rem' }}>
                 <div className="connected-item">
                   <div className="connected-icon" style={{ background: 'oklch(92% 0.02 0)' }}>
                     <svg viewBox="0 0 24 24" width={20} height={20}><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
@@ -329,15 +343,15 @@ export default function SettingsPage() {
                   <span className="connected-status linked">Connected</span>
                 </div>
               </div>
-            </Card>
+            </div>
           </SettingsSection>
         )}
 
         {/* Appearance Tab */}
         {activeTab === 'appearance' && (
           <SettingsSection title="Appearance" description="Customize how 026Newsblog looks for you.">
-            <Card>
-              <div style={{ marginBottom: '2rem' }}>
+            <div style={glassCardStyle}>
+              <div style={{ marginBottom: '2rem', padding: '1.5rem 1.5rem 0' }}>
                 <p className="field-label" style={{ marginBottom: '1rem' }}>Theme</p>
                 <div className="theme-options">
                   {[
@@ -357,18 +371,20 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <SettingRow
-                label="Reduce Motion"
-                description="Minimize animations throughout the interface"
-                action={<Toggle checked={false} onChange={() => {}} />}
-              />
-              <SettingRow
-                label="Compact View"
-                description="Show more articles with smaller cards"
-                action={<Toggle checked={false} onChange={() => {}} />}
-                divider={false}
-              />
-            </Card>
+              <div style={{ padding: '0 1.5rem 1.5rem' }}>
+                <SettingRow
+                  label="Reduce Motion"
+                  description="Minimize animations throughout the interface"
+                  action={<Toggle checked={false} onChange={() => {}} />}
+                />
+                <SettingRow
+                  label="Compact View"
+                  description="Show more articles with smaller cards"
+                  action={<Toggle checked={false} onChange={() => {}} />}
+                  divider={false}
+                />
+              </div>
+            </div>
           </SettingsSection>
         )}
 
@@ -378,16 +394,16 @@ export default function SettingsPage() {
             title="Danger Zone"
             description="Irreversible actions. Proceed with caution."
           >
-            <Card
-              variant="default"
-              padding="lg"
+            <div
               className="danger-section"
               style={{
                 border: '1px solid var(--error)',
                 background: 'var(--error-light)',
+                borderRadius: 'var(--radius-lg)',
+                overflow: 'hidden',
               }}
             >
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--error)' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--error)', marginBottom: '0.5rem' }}>
                   Deactivate Account
                 </h3>
@@ -399,7 +415,7 @@ export default function SettingsPage() {
                 </Button>
               </div>
 
-              <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--error)' }}>
+              <div style={{ padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--error)', marginBottom: '0.5rem' }}>
                   Delete Account Permanently
                 </h3>
@@ -410,13 +426,19 @@ export default function SettingsPage() {
                   Delete Account Permanently
                 </Button>
               </div>
-            </Card>
+            </div>
           </SettingsSection>
         )}
       </SettingsLayout>
 
       {dirty && (
-        <div className="save-bar">
+        <div className="save-bar" style={{
+          background: 'var(--glass-bg-strong)',
+          backdropFilter: 'blur(calc(var(--glass-blur) + 6px)) saturate(150%)' as any,
+          WebkitBackdropFilter: 'blur(calc(var(--glass-blur) + 6px)) saturate(150%)' as any,
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'var(--glow-soft)',
+        }}>
           <span className="save-bar-text"><span className="save-dot" />You have unsaved changes</span>
           <Button variant="ghost" size="sm" onClick={() => { setSettings(initialSettings || settings); setDirty(false); }}>Discard</Button>
           <Button variant="primary" size="sm" onClick={handleSave} loading={saving}>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,6 +104,12 @@ export async function GET(req: NextRequest) {
 // POST /api/posts  { content, image_urls?, tags? }
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req.headers)
+    const rl = await checkRateLimit(`posts:${ip}`, RATE_LIMITS.PUBLIC_POST.limit, RATE_LIMITS.PUBLIC_POST.window)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 60) } })
+    }
+
     const supabase = (await createClient()) as any
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

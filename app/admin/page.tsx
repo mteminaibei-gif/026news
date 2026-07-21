@@ -6,9 +6,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { uploadProfileImage } from '@/lib/storage'
-import { Loader2, Camera, UserCheck, UserX, Plus } from 'lucide-react'
+import { Loader2, Camera, UserCheck, UserX, Plus, TrendingUp, Settings as SettingsIcon, Newspaper, Clock, Users, DollarSign } from 'lucide-react'
 import { formatNumber, formatCurrency, timeAgo } from '@/lib/utils'
-import { Badge } from '@/components/ui/Badge'
 import { BarChart } from '@/components/ui/BarChart'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
@@ -271,7 +270,7 @@ export default function AdminProfilePage() {
   if (loading) {
     return (
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 className="animate-spin" size={32} style={{ color: 'var(--primary)' }} />
+        <div className="page-spinner" />
       </div>
     )
   }
@@ -327,29 +326,32 @@ export default function AdminProfilePage() {
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
       {notification && (
-        <div className="fixed top-24 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold animate-fade-in" style={{
-          borderRadius: 16,
+        <div className="animate-fade-up" style={{
+          position: 'fixed', top: 24, right: 24, zIndex: 50,
+          padding: '12px 20px', borderRadius: 16,
+          boxShadow: 'var(--glow-soft)', fontSize: '0.85rem', fontWeight: 600,
+          backdropFilter: notification.type === 'success' ? 'none' : 'blur(var(--glass-blur))',
           ...(notification.type === 'success'
             ? { background: 'var(--success-light)', border: '1px solid var(--success)', color: 'var(--success)' }
-            : { background: 'var(--primary-light)', border: '1px solid var(--primary)', color: 'var(--primary)' })
+            : { background: 'var(--glass-bg-strong)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' })
         }}>
           {notification.message}
         </div>
       )}
 
       {/* Compact Header */}
-      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)' }}>
+      <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur)) saturate(140%)', WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)', borderBottom: '1px solid var(--glass-border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
           <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           <div
             onClick={() => avatarInputRef.current?.click()}
-            style={{ width: 48, height: 48, borderRadius: 14, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--bg-inset)', cursor: 'pointer' }}
+            style={{ width: 48, height: 48, borderRadius: 14, overflow: 'hidden', position: 'relative', flexShrink: 0, cursor: 'pointer', boxShadow: 'var(--glow-primary)' }}
             title="Change avatar"
           >
             {profile.profile_image ? (
               <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+              <div style={{ width: '100%', height: '100%', background: 'var(--grad-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
                 {profile.name.charAt(0)}
               </div>
             )}
@@ -362,32 +364,33 @@ export default function AdminProfilePage() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 700, letterSpacing: '-0.01em', fontFamily: "'Newsreader', Georgia, serif", color: 'var(--text-primary)' }}>{profile.name}</h1>
-              <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 4 }}>Admin</span>
+              <h1 style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: '-0.02em', fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{profile.name}</h1>
+              <span style={{ padding: '2px 8px', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: 'var(--grad-primary)', color: '#fff', borderRadius: 4, boxShadow: 'var(--glow-primary)' }}>Admin</span>
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} · Joined {joinDate}</p>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>@{profile.name.toLowerCase().replace(/\s+/g, '')} &middot; Joined {joinDate}</p>
           </div>
-          <Link href="/admin/write" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', color: '#fff', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none', boxShadow: '0 2px 8px rgba(99,102,241,0.25)' }}>
+          <Link href="/admin/write" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 999, background: 'var(--grad-primary)', color: '#fff', fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none', boxShadow: 'var(--glow-primary)', transition: 'transform 0.2s var(--ease-out-expo), box-shadow 0.2s var(--ease-out-expo)' }}>
             <Plus size={14} /> New Article
           </Link>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 0 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: 0 }}>
         {[
-          { id: 'dashboard' as const, label: 'Dashboard', icon: '📊' },
-          { id: 'settings' as const, label: 'Settings', icon: '⚙️' },
+          { id: 'dashboard' as const, label: 'Dashboard', icon: TrendingUp },
+          { id: 'settings' as const, label: 'Settings', icon: SettingsIcon },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             style={{
-              padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+              padding: '14px 22px', background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 7,
               color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)',
-              borderBottom: `2px solid ${activeTab === tab.id ? 'var(--primary)' : 'transparent'}`,
-              transition: 'all 0.2s',
+              borderBottom: '2px solid transparent',
+              transition: 'all 0.2s var(--ease-out-expo)',
+              ...(activeTab === tab.id ? { borderBottomColor: 'var(--primary)' } : {}),
             }}>
-            <span>{tab.icon}</span> {tab.label}
+            <tab.icon size={16} /> {tab.label}
           </button>
         ))}
       </div>
@@ -400,47 +403,57 @@ export default function AdminProfilePage() {
             <div className="p-6 space-y-6">
               <RealtimeFeedFetcher initialArticlesCount={totalArticlesCount} />
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: 20 }}>📰</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Articles</p>
-                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{totalArticlesCount.toLocaleString()}</p>
-                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{published.length} published</p>
-                  </div>
-                </div>
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--warning-light)', color: 'var(--warning)', fontSize: 20 }}>⏳</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pending Review</p>
-                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{pending.length}</p>
-                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>Awaiting approval</p>
-                  </div>
-                </div>
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--info)', color: 'var(--text-inverse)', fontSize: 20 }}>👥</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Users</p>
-                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{formatNumber(totalUsers)}</p>
-                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{journalistsCount} authors</p>
-                  </div>
-                </div>
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', padding: 20, display: 'flex', alignItems: 'flex-start', gap: 16, transition: 'all 0.3s' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--success-light)', color: 'var(--success)', fontSize: 20 }}>💵</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenue</p>
-                    <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>{formatCurrency(totalRevenue)}</p>
-                    <p style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>{formatCurrency(pendingPayout)} pending</p>
-                  </div>
-                </div>
+                            {/* Stats Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {[
+                  { Icon: Newspaper, label: 'Total Articles', value: totalArticlesCount.toLocaleString(), sub: `${published.length} published`, color: 'var(--primary)', bg: 'var(--primary-light)' },
+                  { Icon: Clock, label: 'Pending Review', value: pending.length, sub: 'Awaiting approval', color: 'var(--warning)', bg: 'var(--warning-light)' },
+                  { Icon: Users, label: 'Total Users', value: formatNumber(totalUsers), sub: `${journalistsCount} authors`, color: 'oklch(55% 0.15 250)', bg: 'oklch(55% 0.15 250 / 0.12)' },
+                  { Icon: DollarSign, label: 'Revenue', value: formatCurrency(totalRevenue), sub: `${formatCurrency(pendingPayout)} pending`, color: 'var(--success)', bg: 'var(--success-light)' },
+                ].map((stat, i) => {
+                  const Icon = stat.Icon;
+                  return (
+                    <div
+                      key={i}
+                      className={`animate-fade-up delay-${(i + 1) * 100}`}
+                      style={{
+                        background: 'var(--glass-bg)',
+                        backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                        WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: 'var(--glow-soft)',
+                        padding: '1.25rem',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '1rem',
+                      }}
+                    >
+                      <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: stat.bg, color: stat.color, flexShrink: 0 }}>
+                        <Icon size={20} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{stat.label}</p>
+                        <p style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)', margin: '4px 0', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>{stat.value}</p>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', margin: 0 }}>{stat.sub}</p>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
 
-              {/* Real-time Notifications */}
-              <div className="animate-fade-in-up" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)' }}>
+              {/* Real-time Notifications */}{/* Real-time Notifications */}
+              <div style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--glow-soft)',
+              }}>
                 <div className="px-6 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>🔔 Notifications</h3>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
                       <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--primary)' }} />
@@ -453,8 +466,16 @@ export default function AdminProfilePage() {
 
               {/* Pending Journalist Applications */}
               {pendingApplications.length > 0 && (
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }} className="animate-fade-in-up">
-                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <div style={{
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--glow-soft)',
+                  overflow: 'hidden',
+                }} className="animate-fade-up">
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>📝</div>
                       <div>
@@ -463,7 +484,7 @@ export default function AdminProfilePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <div className="divide-y" style={{ borderColor: 'var(--glass-border)' }}>
                     {pendingApplications.map((app) => (
                       <div key={app.user_id} className="px-6 py-4 flex items-center gap-4">
                         {app.profile_image ? (
@@ -509,8 +530,16 @@ export default function AdminProfilePage() {
               {/* Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                 {/* Traffic Chart */}
-                <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <div style={{
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--glow-soft)',
+                  overflow: 'hidden',
+                }}>
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     <div>
                       <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>📈 Traffic Overview</h3>
                       <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Monthly article views</p>
@@ -523,7 +552,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 {/* Revenue Card */}
-                <div className="rounded-2xl p-6 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}>
+                <div className="rounded-2xl p-6 text-white shadow-lg" style={{ background: 'var(--grad-primary)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--glow-primary)' }}>
                   <h3 className="font-bold text-lg mb-4">💰 Revenue Summary</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
@@ -548,24 +577,24 @@ export default function AdminProfilePage() {
               {/* Main Content Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
                 {/* Publish Limits */}
-                <div className="lg:col-span-2" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <div className="lg:col-span-2" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur)) saturate(140%)', WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--glow-soft)', overflow: 'hidden' }}>
+                  <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     <div>
-                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>⚙️ Publish Limits</h3>
+                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Publish Limits</h3>
                       <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Max published articles surfaced per source type (0 = unlimited)</p>
                     </div>
                     <button
                       onClick={saveLimits}
                       disabled={savingLimits}
                       className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
-                      style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}
+                      style={{ background: 'var(--grad-primary)', color: '#fff', boxShadow: 'var(--glow-primary)' }}
                     >
                       {savingLimits ? 'Saving…' : 'Save Limits'}
                     </button>
                   </div>
                   <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
-                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>🏠 In-House (max published)</span>
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>In-House (max published)</span>
                       <input
                         type="number" min={0} max={500}
                         value={publishLimits.inhouse}
@@ -575,7 +604,7 @@ export default function AdminProfilePage() {
                       />
                     </label>
                     <label className="block">
-                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>📡 Sourced / RSS (max published)</span>
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Sourced / RSS (max published)</span>
                       <input
                         type="number" min={0} max={500}
                         value={publishLimits.sourced}
@@ -591,11 +620,11 @@ export default function AdminProfilePage() {
                 <div className="space-y-5">
                   {/* Pending Reviews */}
                   {pending.length > 0 && (
-                    <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur)) saturate(140%)', WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--glow-soft)', overflow: 'hidden' }}>
                       <div className="px-5 py-4" style={{ background: 'var(--warning-light)', borderBottom: '1px solid var(--warning)' }}>
-                        <h3 className="font-bold" style={{ color: 'var(--warning)' }}>⏳ Pending Review</h3>
+                        <h3 className="font-bold" style={{ color: 'var(--warning)' }}>Pending Review</h3>
                       </div>
-                      <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <div className="divide-y" style={{ borderColor: 'var(--glass-border)' }}>
                         {pending.slice(0, 3).map(a => (
                           <div key={a.article_id} className="p-4 flex items-center gap-3">
                             {a.featured_image && (
@@ -607,7 +636,7 @@ export default function AdminProfilePage() {
                               <p className="font-medium text-sm line-clamp-1" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
                               <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>By {a.author?.name}</p>
                             </div>
-                            <Link href={`/admin/review/${a.article_id}`} className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors" style={{ background: 'var(--primary)', color: 'var(--text-inverse)' }}>
+                            <Link href={`/admin/review/${a.article_id}`} className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors" style={{ background: 'var(--grad-primary)', color: '#fff' }}>
                               Review
                             </Link>
                           </div>
@@ -616,7 +645,7 @@ export default function AdminProfilePage() {
                     </div>
                   )}
 
-                  <Link href="/admin/articles" className="block w-full py-3 text-center rounded-xl font-semibold text-sm transition-colors" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--primary)' }}>
+                  <Link href="/admin/articles" className="block w-full py-3 text-center rounded-xl font-semibold text-sm transition-colors" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur)) saturate(140%)', WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)', border: '1px solid var(--glass-border)', color: 'var(--primary)' }}>
                     Manage all articles →
                   </Link>
                 </div>
@@ -629,8 +658,8 @@ export default function AdminProfilePage() {
           {activeTab === 'settings' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Profile Settings */}
-              <div className="lg:col-span-2" style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <div className="lg:col-span-2" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur)) saturate(140%)', WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--glow-soft)', overflow: 'hidden' }}>
+                <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                   <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Profile Settings</h3>
                   <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Update your name and bio</p>
                 </div>
@@ -638,13 +667,13 @@ export default function AdminProfilePage() {
                   <div className="flex items-center gap-4">
                     <div
                       onClick={() => avatarInputRef.current?.click()}
-                      style={{ width: 72, height: 72, borderRadius: 20, overflow: 'hidden', position: 'relative', cursor: 'pointer', flexShrink: 0, background: 'var(--bg-inset)' }}
+                      style={{ width: 72, height: 72, borderRadius: 20, overflow: 'hidden', position: 'relative', cursor: 'pointer', flexShrink: 0, boxShadow: 'var(--glow-primary)' }}
                       title="Change avatar"
                     >
                       {profile.profile_image ? (
                         <Image src={profile.profile_image} alt={profile.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
                       ) : (
-                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700, color: '#fff' }}>
+                        <div style={{ width: '100%', height: '100%', background: 'var(--grad-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700, color: '#fff' }}>
                           {profile.name.charAt(0)}
                         </div>
                       )}
@@ -652,7 +681,7 @@ export default function AdminProfilePage() {
                     <div>
                       <button onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar}
                         className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-                        style={{ background: 'var(--bg-muted)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                        style={{ background: 'var(--surface-2)', color: 'var(--text-primary)', border: '1px solid var(--glass-border)' }}>
                         {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
                       </button>
                       <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>JPG, PNG. Max 5MB.</p>
@@ -662,29 +691,29 @@ export default function AdminProfilePage() {
                     <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Name</label>
                     <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl text-sm"
-                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                      style={{ background: 'var(--surface-2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }} />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Bio</label>
                     <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} rows={4}
                       className="w-full px-4 py-2.5 rounded-xl text-sm resize-none"
-                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      style={{ background: 'var(--surface-2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }}
                       placeholder="Tell us about yourself..." />
                   </div>
                   <div className="flex items-center gap-3 pt-2">
                     <button onClick={handleSaveProfile} disabled={savingProfile || !editName.trim()}
                       className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
-                      style={{ background: 'var(--primary)', color: '#fff' }}>
+                      style={{ background: 'var(--grad-primary)', color: '#fff', boxShadow: 'var(--glow-primary)' }}>
                       {savingProfile ? 'Saving...' : profileSaved ? 'Saved!' : 'Save Changes'}
                     </button>
-                    {profileSaved && <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>Profile saved.</span>}
+                    {profileSaved && <span className="text-sm font-medium" style={{ color: 'var(--success)', fontWeight: 600 }}>Profile saved.</span>}
                   </div>
                 </div>
               </div>
 
               {/* Publish Limits */}
-              <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', alignSelf: 'start' }}>
-                <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur)) saturate(140%)', WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--glow-soft)', overflow: 'hidden', alignSelf: 'start' }}>
+                <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                   <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Publish Limits</h3>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Max articles per source (0 = unlimited)</p>
                 </div>
@@ -694,18 +723,18 @@ export default function AdminProfilePage() {
                     <input type="number" min={0} max={500} value={publishLimits.inhouse}
                       onChange={(e) => setPublishLimits({ ...publishLimits, inhouse: Math.max(0, Number(e.target.value) || 0) })}
                       className="mt-1.5 w-full px-3 py-2 rounded-lg text-sm"
-                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                      style={{ background: 'var(--surface-2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Sourced / RSS</span>
                     <input type="number" min={0} max={500} value={publishLimits.sourced}
                       onChange={(e) => setPublishLimits({ ...publishLimits, sourced: Math.max(0, Number(e.target.value) || 0) })}
                       className="mt-1.5 w-full px-3 py-2 rounded-lg text-sm"
-                      style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                      style={{ background: 'var(--surface-2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }} />
                   </label>
                   <button onClick={saveLimits} disabled={savingLimits}
                     className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
-                    style={{ background: 'var(--primary)', color: '#fff' }}>
+                    style={{ background: 'var(--grad-primary)', color: '#fff', boxShadow: 'var(--glow-primary)' }}>
                     {savingLimits ? 'Saving...' : 'Save Limits'}
                   </button>
                 </div>

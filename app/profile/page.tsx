@@ -10,6 +10,7 @@ import { PostCard } from '@/components/social/PostCard'
 import {
   Settings, Edit3, FileText, Bookmark, Heart, MessageSquare,
   Users, Newspaper, Radio, Tv, Compass, Calendar, ExternalLink, BookmarkCheck,
+  Activity, Eye, ThumbsUp,
 } from 'lucide-react'
 
 const QUICK_LINKS = [
@@ -69,7 +70,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="profile-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
         <div className="page-spinner" />
       </div>
     )
@@ -85,6 +86,10 @@ export default function ProfilePage() {
 
   const role = (user.role as string) ?? 'reader'
   const memberSince = new Date(user.created_at ?? Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  const roleBadge =
+    role === 'journalist' ? { label: 'Author', color: 'oklch(65% 0.12 145)', bg: 'oklch(65% 0.12 145 / 0.15)' } :
+    role === 'admin' ? { label: 'Admin', color: 'oklch(72% 0.16 55)', bg: 'oklch(72% 0.16 55 / 0.15)' } :
+    { label: 'Reader', color: '#1d9bf0', bg: 'rgba(29,155,240,0.15)' }
 
   return (
     <div className="profile-page">
@@ -101,13 +106,21 @@ export default function ProfilePage() {
           <div className="profile-hero-info">
             <div className="profile-hero-name-row">
               <h1 className="profile-hero-name">{user.name}</h1>
-              <span className="profile-hero-role">{role === 'journalist' ? 'Author' : role === 'admin' ? 'Admin' : 'Reader'}</span>
+              <span className="profile-hero-role"
+                style={{ background: roleBadge.bg, color: roleBadge.color, border: `1px solid ${roleBadge.color}` }}>{roleBadge.label}</span>
             </div>
             <p className="profile-hero-handle">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
             {user.bio && <p className="profile-hero-bio">{user.bio}</p>}
-            <div className="profile-hero-meta">
-              <span><Calendar size={14} /> Joined {memberSince}</span>
-              <span><FileText size={14} /> {myPosts.length} posts</span>
+            <div className="profile-stats-row" style={{ marginTop: '0.8rem' }}>
+              <span style={statBadge}>
+                <Activity size={13} /> {myPosts.length} posts
+              </span>
+              <span style={statBadge}>
+                <Eye size={13} /> Joined {memberSince}
+              </span>
+              <span style={statBadge}>
+                <ThumbsUp size={13} /> Active
+              </span>
             </div>
           </div>
           <div className="profile-hero-actions">
@@ -124,7 +137,7 @@ export default function ProfilePage() {
       <div className="profile-container">
         <main className="profile-main">
           <div className="profile-quick-links">
-            <h3 className="profile-sidebar-title" style={{ marginBottom: '0.5rem' }}>Quick Links</h3>
+            <h3 className="profile-sidebar-title" style={{ marginBottom: '0.75rem' }}>Quick Links</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.5rem' }}>
               {QUICK_LINKS.map(link => (
                 <Link
@@ -156,11 +169,11 @@ export default function ProfilePage() {
           <div className="profile-feed">
             {activeTab === 'posts' && (
               myLoading ? (
-                <p className="profile-empty">Loading your posts…</p>
+                <p className="profile-empty">Loading your posts.</p>
               ) : allPosts.length === 0 ? (
                 <div className="profile-empty-state">
                   <FileText size={32} />
-                  <p>You haven&apos;t posted anything yet.</p>
+                  <p>You haven&apos;t shared anything yet.</p>
                   <Link href="/social" className="profile-empty-link">Share your first thought on Social</Link>
                 </div>
               ) : (
@@ -189,15 +202,25 @@ export default function ProfilePage() {
         <aside className="profile-sidebar">
           <div className="profile-sidebar-card">
             <h3 className="profile-sidebar-title">About</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <span><strong style={{ color: 'var(--text-primary)' }}>{myPosts.length}</strong> posts</span>
-              <span>Member since {memberSince}</span>
-              {user.bio && <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{user.bio}</p>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              <div style={aboutRowStyle}>
+                <span style={aboutLabelStyle}>Posts</span>
+                <span style={aboutValueStyle}>{myPosts.length}</span>
+              </div>
+              <div style={aboutRowStyle}>
+                <span style={aboutLabelStyle}>Member since</span>
+                <span style={aboutValueStyle}>{memberSince}</span>
+              </div>
+              <div style={aboutRowStyle}>
+                <span style={aboutLabelStyle}>Role</span>
+                <span style={{ ...aboutValueStyle, color: roleBadge.color }}>{roleBadge.label}</span>
+              </div>
+              {user.bio && <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '4px 0 0', lineHeight: 1.6, borderTop: '1px solid var(--border-subtle)', paddingTop: 10 }}>{user.bio}</p>}
             </div>
           </div>
           <div className="profile-sidebar-card">
-            <h3 className="profile-sidebar-title">Guidelines</h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+            <h3 className="profile-sidebar-title">Community Guidelines</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
               Be respectful. Share verified news. Tag topics with #hashtags. Engage with the community.
             </p>
           </div>
@@ -207,9 +230,37 @@ export default function ProfilePage() {
   )
 }
 
+const statBadge = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  color: 'oklch(80% 0.03 200 / 0.8)',
+  background: 'oklch(100% 0 0 / 0.08)',
+  border: '1px solid oklch(100% 0 0 / 0.1)',
+  borderRadius: 999,
+  padding: '4px 10px',
+}
+
+const aboutRowStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}
+
+const aboutLabelStyle = {
+  color: 'var(--text-tertiary)'
+}
+
+const aboutValueStyle = {
+  color: 'var(--text-primary)',
+  fontWeight: 600,
+}
+
 function ProfileSavedPostsTab() {
   const { posts, loading } = usePosts('saved')
-  if (loading) return <p className="profile-empty">Loading saved posts…</p>
+  if (loading) return <p className="profile-empty">Loading saved posts.</p>
   if (posts.length === 0) return (
     <div className="profile-empty-state">
       <BookmarkCheck size={32} />

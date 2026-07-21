@@ -57,6 +57,7 @@ export async function PATCH(req: NextRequest) {
       .from('notifications')
       .update({ read: true } as never)
       .eq('notification_id', Number(notification_id))
+      .eq('user_id', admin.userId!)
 
     if (error) {
       console.error('[PATCH /api/admin/notifications]', error.message)

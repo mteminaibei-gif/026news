@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendPushNotification } from '@/lib/push-notifications'
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/messages — List conversations for current user
 // Returns each unique conversation partner with last message preview & unread count
@@ -101,6 +102,12 @@ export async function GET() {
 // POST /api/messages — Send a new message
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req.headers)
+    const rl = await checkRateLimit(`messages:${ip}`, RATE_LIMITS.PUBLIC_POST.limit, RATE_LIMITS.PUBLIC_POST.window)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 60) } })
+    }
+
     const body = await req.json()
     const { receiverId, content } = body
 
