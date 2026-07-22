@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Logo } from '@/components/layout/Logo'
 import {
   ArrowRight, Newspaper, Users, Radio, Tv, PenLine, Shield, Zap,
   Clock, Eye, TrendingUp, ChevronRight, Compass, FileText,
@@ -12,6 +11,7 @@ import { stripHtml } from '@/lib/utils'
 import type { Metadata } from 'next'
 import { LandingHeroSlideshow } from '@/components/landing/LandingHeroSlideshow'
 import { LandingRevealSection } from '@/components/landing/LandingRevealSection'
+import { LandingThemeToggle } from '@/components/landing/LandingThemeToggle'
 
 export const metadata: Metadata = {
   title: {
@@ -149,18 +149,20 @@ export default async function LandingPage() {
       {/* Nav */}
       <nav className="landing-nav" role="navigation" aria-label="Main navigation">
         <div className="landing-nav-inner">
-          <Logo size="md" href="" />
-          <div className="hidden md:flex items-center gap-0.5" role="menubar">
-            <Link href="/social" className="nav-tab-link" role="menuitem"><Users size={15} aria-hidden="true" /> Social</Link>
-            <Link href="/explore" className="nav-tab-link" role="menuitem"><Compass size={15} aria-hidden="true" /> Explore</Link>
-            <Link href="/news" className="nav-tab-link" role="menuitem"><Newspaper size={15} aria-hidden="true" /> News</Link>
-            <Link href="/articles" className="nav-tab-link" role="menuitem"><FileText size={15} aria-hidden="true" /> Articles</Link>
-            <Link href="/radio" className="nav-tab-link" role="menuitem"><Radio size={15} aria-hidden="true" /> Radio</Link>
-            <Link href="/tv" className="nav-tab-link" role="menuitem"><Tv size={15} aria-hidden="true" /> TV</Link>
+          <div className="landing-nav-brand">
+            <span className="landing-nav-brand-text">026<span className="landing-nav-brand-accent">connect</span></span>
+          </div>
+          <div className="landing-nav-links" role="menubar">
+            <Link href="/social" className="landing-nav-link" role="menuitem"><Users size={15} aria-hidden="true" /> Social</Link>
+            <Link href="/explore" className="landing-nav-link" role="menuitem"><Compass size={15} aria-hidden="true" /> Explore</Link>
+            <Link href="/news" className="landing-nav-link" role="menuitem"><Newspaper size={15} aria-hidden="true" /> News</Link>
+            <Link href="/articles" className="landing-nav-link" role="menuitem"><FileText size={15} aria-hidden="true" /> Articles</Link>
+            <Link href="/radio" className="landing-nav-link" role="menuitem"><Radio size={15} aria-hidden="true" /> Radio</Link>
+            <Link href="/tv" className="landing-nav-link" role="menuitem"><Tv size={15} aria-hidden="true" /> TV</Link>
           </div>
           <div className="landing-nav-actions">
+            <LandingThemeToggle />
             <Link href="/login" className="landing-btn ghost" aria-label="Sign in to your account">Sign In</Link>
-            <Link href="/onboarding" className="landing-btn primary" aria-label="Create a free account">Sign Up Free</Link>
           </div>
         </div>
       </nav>
@@ -427,7 +429,7 @@ export default async function LandingPage() {
         <div className="landing-footer-top">
           <div className="landing-footer-inner">
             <div className="landing-footer-brand">
-              <Logo size="sm" href="" />
+              <span className="landing-footer-brand-text">026<span className="landing-nav-brand-accent">connect</span></span>
               <p className="landing-footer-tagline">Kenya&apos;s leading digital news platform. Breaking news, in-depth analysis, and freelance journalism from across Africa.</p>
               <div className="landing-footer-social" aria-label="Social media links">
                 <a href="https://twitter.com/026connet" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Twitter" className="landing-social-link"><AtSign size={18} /></a>

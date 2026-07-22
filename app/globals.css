@@ -2924,18 +2924,46 @@ html:not([data-theme="dark"]):not(.dark) .app-rail-account-btn:hover {
 /* ─── Navigation ────────────────────────────────────────────── */
 .landing-nav {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(5, 10, 20, 0.72);
+  background: rgba(5, 10, 20, 0.82);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: background 0.4s var(--ease-out-expo),
               border-color 0.4s var(--ease-out-expo);
 }
 .landing-nav-inner {
   max-width: 1200px; margin: 0 auto; padding: 0 24px;
   height: 64px; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
 }
+.landing-nav-brand { flex-shrink: 0; }
+.landing-nav-brand-text {
+  font-family: var(--font-display); font-weight: 800; font-size: 1.15rem;
+  color: #fff; letter-spacing: -0.02em;
+}
+.landing-nav-brand-accent { color: var(--primary); }
+.landing-nav-links {
+  display: flex; align-items: center; gap: 2px;
+}
+.landing-nav-link {
+  display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px;
+  border-radius: 8px; font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  color: rgba(255,255,255,0.78); transition: all 0.2s var(--ease-out-expo);
+  white-space: nowrap; line-height: 1; position: relative;
+}
+.landing-nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.landing-nav-link svg { flex-shrink: 0; transition: transform 0.2s var(--ease-out-expo); }
+.landing-nav-link:hover svg { transform: scale(1.1); }
 .landing-nav-actions { display: flex; align-items: center; gap: 10px; }
+
+@media (max-width: 768px) {
+  .landing-nav-links { display: none; }
+  .landing-nav-inner { height: 56px; padding: 0 16px; }
+  .landing-nav-brand-text { font-size: 1rem; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .landing-nav-link { padding: 6px 8px; font-size: 0.78rem; }
+}
 
 /* ─── Hero section ──────────────────────────────────────────── */
 .landing-hero {
@@ -3544,6 +3572,10 @@ html:not([data-theme="dark"]):not(.dark) .app-rail-account-btn:hover {
   gap: 40px; font-size: 0.82rem;
 }
 .landing-footer-brand { display: flex; flex-direction: column; gap: 12px; }
+.landing-footer-brand-text {
+  font-family: var(--font-display); font-weight: 800; font-size: 1.05rem;
+  color: #fff; letter-spacing: -0.02em;
+}
 .landing-footer-tagline { font-size: 0.78rem; color: rgba(255,255,255,0.35); line-height: 1.6; margin: 0; max-width: 280px; }
 .landing-footer-social { display: flex; gap: 8px; margin-top: 4px; }
 .landing-social-link {
