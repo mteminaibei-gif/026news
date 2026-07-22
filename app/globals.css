@@ -1799,8 +1799,17 @@ select.field-input {
   .field-row { grid-template-columns: 1fr; }
   .profile-fields { grid-template-columns: 1fr; }
   .profile-edit-row { flex-direction: column; align-items: center; }
+  .profile-edit-row .profile-fields { width: 100%; }
   .theme-options { flex-direction: column; }
-  .save-bar { left: 16px; right: 16px; transform: none; justify-content: space-between; }
+  .save-bar {
+    left: 12px; right: 12px; bottom: 72px;
+    transform: none; justify-content: space-between;
+    padding: 10px 14px; border-radius: 12px;
+  }
+  .save-bar-text { font-size: 0.75rem; }
+  .setting-row { flex-wrap: wrap; }
+  .connected-list { padding: 0.75rem !important; }
+  .connected-item { flex-wrap: wrap; gap: 8px; }
 }
 
 /* About tab grid */
@@ -4340,6 +4349,62 @@ html:not([data-theme="dark"]):not(.dark) .app-rail-account-btn:hover {
 .settings-glass-sidebar button[style*="primary"] {
   background: var(--primary-light) !important;
   color: var(--primary) !important;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 2rem;
+}
+.settings-sidebar-wrap {
+  position: sticky;
+  top: 84px;
+  align-self: start;
+}
+.settings-sidebar-scroll {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.settings-content { min-width: 0; }
+.settings-grid .field-input { width: 100%; box-sizing: border-box; }
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .settings-sidebar-wrap {
+    position: static;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .settings-glass-sidebar {
+    border-radius: 14px;
+    padding: 4px;
+  }
+  .settings-sidebar-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+  .settings-sidebar-scroll > div {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 2px !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .settings-sidebar-scroll > div::-webkit-scrollbar { display: none; }
+  .settings-tab-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 8px 14px !important;
+    font-size: 0.8rem !important;
+  }
+  .settings-hero { padding: 1.5rem 1rem 1rem; }
+  .settings-hero-title { font-size: 1.35rem; }
+  .profile-edit-row { flex-direction: column !important; align-items: center !important; }
+  .profile-fields { width: 100% !important; }
+  .profile-fields .field-full { flex-basis: 100% !important; max-width: 100% !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

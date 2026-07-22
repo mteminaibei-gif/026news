@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { FolderPlus, Trash2, Check, ArrowLeft, Smile, X, Loader2 } from 'lucide-react'
+import { FolderPlus, Trash2, Check, ArrowLeft, Smile, X, Loader2, GitMerge } from 'lucide-react'
 
 // Common emoji icons for categories
 const CATEGORY_ICONS = [
@@ -33,6 +33,10 @@ export default function AdminCategoriesPage() {
   const [editDesc, setEditDesc] = useState('')
   const [editIcon, setEditIcon] = useState('📁')
   const [savingEdit, setSavingEdit] = useState(false)
+  const [mergingCategory, setMergingCategory] = useState<Category | null>(null)
+  const [mergeTargetId, setMergeTargetId] = useState<number | null>(null)
+  const [mergeOpen, setMergeOpen] = useState(false)
+  const [merging, setMerging] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -151,6 +155,33 @@ export default function AdminCategoriesPage() {
     setSavingEdit(false)
   }
 
+  function openMerge(cat: Category) {
+    setMergingCategory(cat)
+    setMergeTargetId(null)
+    setMergeOpen(true)
+    setError('')
+  }
+
+  async function confirmMerge() {
+    if (!mergingCategory || !mergeTargetId) return
+    setMergeOpen(false)
+    setMerging(true)
+    setError('')
+    try {
+      const res = await fetch('/api/categories/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_id: mergingCategory.category_id, target_id: mergeTargetId }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Merge failed'); return }
+      setSuccess(`Merged "${data.sourceName}" into "${data.targetName}" (${data.articlesMoved} articles moved)`)
+      loadCategories()
+      setTimeout(() => setSuccess(''), 4000)
+    } catch { setError('Network error') }
+    setMerging(false)
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <div className="px-4 py-4" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
@@ -263,16 +294,25 @@ export default function AdminCategoriesPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
+                          onClick={() => openMerge(cat)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
+                          style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)', cursor: 'pointer', border: 'none', minHeight: 32 }}
+                          title={`Merge "${cat.name}" into another category`}
+                          disabled={categories.length < 2}
+                        >
+                          <GitMerge size={12} /> Merge
+                        </button>
+                        <button
                           onClick={() => openEdit(cat)}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
-                          style={{ background: 'var(--primary-light)', color: 'var(--primary)', cursor: 'pointer', border: 'none' }}
+                          style={{ background: 'var(--primary-light)', color: 'var(--primary)', cursor: 'pointer', border: 'none', minHeight: 32 }}
                         >
                           <Check size={12} /> Edit
                         </button>
                         <button
                           onClick={() => handleDelete(cat.category_id, cat.name)}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
-                          style={{ background: 'var(--error-light)', color: 'var(--error)', cursor: 'pointer', border: 'none' }}
+                          style={{ background: 'var(--error-light)', color: 'var(--error)', cursor: 'pointer', border: 'none', minHeight: 32 }}
                         >
                           <Trash2 size={12} /> Delete
                         </button>
@@ -367,6 +407,66 @@ export default function AdminCategoriesPage() {
         onConfirm={confirmDelete}
         onCancel={() => { setConfirmOpen(false); setPendingDelete(null) }}
       />
+
+      {/* Merge modal */}
+      {mergeOpen && mergingCategory && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setMergeOpen(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl p-5"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                <GitMerge size={14} className="inline mr-1" /> Merge Category
+              </h2>
+              <button type="button" onClick={() => setMergeOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}><X size={18} /></button>
+            </div>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+              Merge <strong>&quot;{mergingCategory.name}&quot;</strong> into another category. All articles will be moved.
+            </p>
+            <select
+              value={mergeTargetId ?? ''}
+              onChange={e => setMergeTargetId(Number(e.target.value))}
+              className="w-full rounded-xl px-4 py-2.5 text-sm mb-4"
+              style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+            >
+              <option value="">Select target category...</option>
+              {categories
+                .filter(c => c.category_id !== mergingCategory.category_id)
+                .map(c => (
+                  <option key={c.category_id} value={c.category_id}>{c.icon} {c.name}</option>
+                ))}
+            </select>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMergeOpen(false)}
+                className="flex-1 px-4 py-2 rounded-xl text-xs font-semibold"
+                style={{ background: 'var(--surface-2)', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer', minHeight: 40 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmMerge}
+                disabled={!mergeTargetId || merging}
+                className="flex-1 px-4 py-2 rounded-xl text-xs font-bold"
+                style={{
+                  background: mergeTargetId ? 'var(--primary)' : 'var(--surface-2)',
+                  color: mergeTargetId ? '#fff' : 'var(--text-tertiary)',
+                  border: 'none', cursor: mergeTargetId ? 'pointer' : 'not-allowed',
+                  opacity: merging ? 0.6 : 1, minHeight: 40,
+                }}
+              >
+                {merging ? 'Merging...' : 'Merge'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

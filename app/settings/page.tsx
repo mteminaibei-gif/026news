@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { uploadProfileImage } from '@/lib/storage'
 import { useUserSettings } from '@/lib/hooks/useUserSettings'
 import { useUser, useProfile } from '@/lib/hooks/useAuth'
 import { SettingsLayout, SettingsSection, SettingRow } from '@/components/settings'
 import { Toggle, Button, Input, Card } from '@/components/ui'
 import { User, Bell, Lock, Share2, Palette, Trash2, CheckCircle, AlertCircle } from 'lucide-react'
+import { ImageCropModal } from '@/components/ui/ImageCropModal'
 
 const SETTINGS_TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -49,6 +50,8 @@ export default function SettingsPage() {
   })
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState('')
 
   const patch = (updates: Partial<typeof settings>) => {
     setSettings(prev => ({ ...prev, ...updates }))
@@ -73,32 +76,36 @@ export default function SettingsPage() {
     }
   }
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     if (file.size > 5 * 1024 * 1024) {
       setError('Image must be under 5MB')
       return
     }
-
-    if (!profile?.user_id) {
-      setError('Sign in again to change your photo')
-      return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string)
+      setCropOpen(true)
     }
+    reader.readAsDataURL(file)
+    if (avatarInputRef.current) avatarInputRef.current.value = ''
+  }
 
+  const handleCropComplete = useCallback(async (blob: Blob) => {
+    if (!profile?.user_id) { setError('Sign in again to change your photo'); return }
     try {
       setSaving(true)
+      const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' })
       const { url } = await uploadProfileImage(file, profile.user_id)
       patch({ profile_image: url })
       setError('')
-    } catch (err) {
+    } catch {
       setError('Failed to upload avatar')
     } finally {
       setSaving(false)
-      if (avatarInputRef.current) avatarInputRef.current.value = ''
     }
-  }
+  }, [profile?.user_id])
 
   if (loading) {
     return (
@@ -187,7 +194,7 @@ export default function SettingsPage() {
                     type="file"
                     accept="image/*"
                     style={{ display: 'none' }}
-                    onChange={handleAvatarUpload}
+                    onChange={handleAvatarSelect}
                   />
                 </div>
 
@@ -446,6 +453,15 @@ export default function SettingsPage() {
           </Button>
         </div>
       )}
+
+      <ImageCropModal
+        open={cropOpen}
+        imageSrc={cropImageSrc}
+        onClose={() => setCropOpen(false)}
+        onCropComplete={handleCropComplete}
+        aspect={1}
+        title="Crop your profile photo"
+      />
     </>
   )
 }

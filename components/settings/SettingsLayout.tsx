@@ -36,9 +36,10 @@ export function SettingsLayout({
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '2rem', padding: '1.5rem 1rem 3rem' }}>
-        <div style={{ position: 'sticky', top: 84, alignSelf: 'start' }}>
+      <div className="settings-grid" style={{ padding: '1.5rem 1rem 3rem' }}>
+        <div className="settings-sidebar-wrap">
           <nav className="settings-glass-sidebar">
+            <div className="settings-sidebar-scroll">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {tabs.map(tab => {
                 const isActive = tab.id === activeTab
@@ -48,6 +49,7 @@ export function SettingsLayout({
                   <button
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
+                    className="settings-tab-btn"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -63,6 +65,7 @@ export function SettingsLayout({
                       transition: 'all 0.2s var(--ease-out-expo)',
                       textAlign: 'left',
                       position: 'relative',
+                      minHeight: 44,
                     }}
                   >
                     {isActive && (
@@ -86,10 +89,11 @@ export function SettingsLayout({
                 )
               })}
             </div>
+            </div>
           </nav>
         </div>
 
-        <div>{children}</div>
+        <div className="settings-content">{children}</div>
       </div>
     </div>
   )

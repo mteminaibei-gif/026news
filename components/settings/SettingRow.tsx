@@ -14,14 +14,16 @@ export function SettingRow({ label, description, value, action, divider = true }
   return (
     <>
       <div
+        className="setting-row"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '1rem 0.85rem',
-          gap: '1rem',
+          gap: '0.75rem',
           borderRadius: '14px',
           transition: 'background 0.2s var(--ease-out-expo)',
+          flexWrap: 'wrap',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--surface-2)'
@@ -58,7 +60,10 @@ export function SettingRow({ label, description, value, action, divider = true }
               style={{
                 fontSize: '0.875rem',
                 color: 'var(--text-secondary)',
-                minWidth: 150,
+                maxWidth: 200,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
                 textAlign: 'right',
                 fontWeight: 500,
               }}
