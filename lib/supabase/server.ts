@@ -44,10 +44,15 @@ export async function createClient() {
 export async function createAdminClient() {
   if (!SUPABASE_SVC) {
     console.error('[Supabase] SUPABASE_SERVICE_ROLE_KEY is not set — admin operations will fail')
+    throw new Error('Server configuration error: SUPABASE_SERVICE_ROLE_KEY is not set')
+  }
+  if (!SUPABASE_URL) {
+    console.error('[Supabase] NEXT_PUBLIC_SUPABASE_URL is not set')
+    throw new Error('Server configuration error: NEXT_PUBLIC_SUPABASE_URL is not set')
   }
   return createServerClient<Database>(
-    SUPABASE_URL || 'https://placeholder.supabase.co',
-    SUPABASE_SVC || 'https://placeholder.supabase.co',
+    SUPABASE_URL,
+    SUPABASE_SVC,
     {
       cookies: {
         getAll() { return [] },
