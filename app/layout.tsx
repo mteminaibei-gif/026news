@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Space_Grotesk, Newsreader } from 'next/font/google';
-// import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -128,8 +128,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </QueryProvider>
           </ToastProvider>
         </ThemeProvider>
-        {/* Analytics disabled - CSP conflict */}
-        {/* <Analytics /> */}
+        <Analytics />
         <PushSubscriptionManager />
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <Script
