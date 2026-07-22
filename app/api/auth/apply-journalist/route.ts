@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const admin = await createAdminClient()
     const { data: profile, error: fetchError } = await admin
       .from('users')
-      .select('user_id, role, status, author_application')
+      .select('user_id, role, status, author_application, name')
       .eq('user_id', Number(user.userId))
       .single()
 
@@ -73,6 +73,29 @@ export async function POST(req: NextRequest) {
       .eq('user_id', Number(user.userId))
 
     if (updateError) throw updateError
+
+    // Notify all admins about the new application
+    const applicantName = (profile as any).name || user.name || 'A reader'
+    try {
+      const { data: admins } = await admin
+        .from('users')
+        .select('user_id')
+        .eq('role', 'admin')
+      if (admins?.length) {
+        const adminNotifications = admins.map((a: { user_id: number }) => ({
+          user_id: a.user_id,
+          type: 'journalist_application',
+          title: 'New Author Application',
+          message: `${applicantName} has applied to become an author.`,
+          actor_name: applicantName,
+          actor_id: Number(user.userId),
+          link: '/admin/journalists?filter=pending',
+        }))
+        await admin.from('notifications').insert(adminNotifications as never)
+      }
+    } catch (notifErr) {
+      console.error('[apply-journalist] Failed to notify admins:', notifErr)
+    }
 
     return NextResponse.json(
       { success: true, status: 'pending', message: 'Application submitted for review.' },

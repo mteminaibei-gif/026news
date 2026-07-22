@@ -18,6 +18,8 @@ type ArticleRow = {
   is_aggregated: boolean | null
   tags: string[] | null
   category_id: number | null
+  featured: boolean | null
+  pinned: boolean | null
   author: { name: string; profile_image: string | null } | null
   category: { name: string; category_id: number } | null
 }
@@ -25,13 +27,15 @@ type ArticleRow = {
 const STATUSFilters = ['all', 'published', 'under_review', 'draft', 'rejected'] as const
 
 interface Props {
-  searchParams: Promise<{ filter?: string; source?: string }>
+  searchParams: Promise<{ filter?: string; source?: string; q?: string; priority?: string }>
 }
 
 export default async function AdminArticlesPage({ searchParams }: Props) {
-  const { filter: rawFilter, source: rawSource } = await searchParams
+  const { filter: rawFilter, source: rawSource, q: rawQ, priority: rawPriority } = await searchParams
   const filter = STATUSFilters.includes(rawFilter as any) ? rawFilter! : 'all'
   const source = rawSource === 'rss' ? 'rss' : rawSource === 'inhouse' ? 'inhouse' : 'all'
+  const searchQuery = rawQ || ''
+  const showPriority = rawPriority === '1'
 
   let supabase: Awaited<ReturnType<typeof createClient>>
   try {
@@ -61,22 +65,29 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
   try {
     let q = supabase
       .from('articles')
-      .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, tags, category_id, author:users(name,profile_image), category:categories(name,category_id)')
+      .select('article_id, title, slug, status, monetization_type, featured_image, views, created_at, is_aggregated, tags, category_id, featured, pinned, author:users(name,profile_image), category:categories(name,category_id)')
       .order('created_at', { ascending: false })
       .limit(200)
     if (filter !== 'all') q = q.eq('status', filter)
     if (source === 'inhouse') q = q.eq('is_aggregated', false)
     if (source === 'rss') q = q.eq('is_aggregated', true)
+    if (searchQuery) {
+      const escaped = searchQuery.replace(/%/g, '\\%').replace(/_/g, '\\_')
+      q = q.ilike('title', `%${escaped}%`)
+    }
+    if (showPriority) q = q.eq('pinned', true)
     const { data } = await q
     articles = (data ?? []) as unknown as ArticleRow[]
   } catch { articles = [] }
 
-  const buildHref = (f: string, s: string) => {
-    const p = new URLSearchParams()
-    if (f !== 'all') p.set('filter', f)
-    if (s !== 'all') p.set('source', s)
-    const qs = p.toString()
-    return `/admin/articles${qs ? `?${qs}` : ''}`
+  const buildHref = (f: string, s: string, p?: string, qs?: string) => {
+    const sp = new URLSearchParams()
+    if (f !== 'all') sp.set('filter', f)
+    if (s !== 'all') sp.set('source', s)
+    if (p === '1') sp.set('priority', '1')
+    if (qs) sp.set('q', qs)
+    const qstr = sp.toString()
+    return `/admin/articles${qstr ? `?${qstr}` : ''}`
   }
 
   return (
@@ -103,6 +114,22 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Search */}
+          <form method="GET" action="/admin/articles" className="relative hidden sm:block">
+            <input name="q" defaultValue={searchQuery} placeholder="Search articles..."
+              className="w-40 lg:w-56 text-xs rounded-lg pl-8 pr-2.5 py-1.5 outline-none transition-all"
+              style={{ background: 'var(--bg-muted, #f3f4f6)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle, #e5e7eb)' }}
+            />
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            {searchQuery && <Link href={buildHref(filter, source, showPriority ? '1' : undefined)} className="absolute right-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }}>✕</Link>}
+          </form>
+          {/* Priority toggle */}
+          <Link href={buildHref(filter, source, showPriority ? undefined : '1', searchQuery || undefined)}
+            className="text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap"
+            style={{ background: showPriority ? 'var(--primary)' : 'var(--bg-muted, #f3f4f6)', color: showPriority ? '#fff' : 'var(--text-secondary, #6b7280)' }}
+          >
+            ⭐ Priority
+          </Link>
           {/* Source toggle */}
           <div className="flex rounded-lg overflow-hidden text-xs font-semibold" style={{ border: '1px solid var(--border-subtle, #e5e7eb)' }}>
             {[

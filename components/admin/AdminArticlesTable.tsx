@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Sparkles, MoreHorizontal, Eye, Pencil, Trash2, Star, StarOff } from 'lucide-react'
+import { Sparkles, MoreHorizontal, Eye, Pencil, Trash2, Star, StarOff, Pin, PinOff } from 'lucide-react'
 import { safeRefresh } from '@/lib/utils'
 
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
@@ -17,6 +17,8 @@ type ArticleRow = {
   monetization_type: string; featured_image: string | null; views: number
   created_at: string; is_aggregated: boolean | null; tags: string[] | null
   category_id: number | null
+  featured: boolean | null
+  pinned: boolean | null
   author: { name: string; profile_image: string | null } | null
   category: { name: string; category_id: number } | null
 }
@@ -32,6 +34,19 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
   const router = useRouter()
   const [seoFor, setSeoFor] = useState<{ article_id: number; title: string; slug: string; status: string } | null>(null)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
+  const [priorityLoading, setPriorityLoading] = useState<number | null>(null)
+
+  async function togglePriority(a: ArticleRow) {
+    setPriorityLoading(a.article_id)
+    try {
+      await fetch('/api/admin/articles', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [a.article_id], action: a.pinned ? 'unfeature' : 'feature', pinned: !a.pinned }),
+      })
+      safeRefresh(router)
+    } catch { setPriorityLoading(null) }
+  }
 
   if (articles.length === 0) {
     return (
@@ -86,6 +101,13 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
 
               {/* Quick actions */}
               <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => togglePriority(a)}
+                  disabled={priorityLoading === a.article_id}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ background: a.pinned ? 'var(--warning-light, #fef3c7)' : 'transparent', color: a.pinned ? 'var(--warning)' : 'var(--text-tertiary)' }}
+                  title={a.pinned ? 'Un-pin priority' : 'Mark as priority'}
+                >{a.pinned ? <PinOff size={14} /> : <Pin size={14} />}</button>
                  {a.status === 'under_review' && (
                   <Link href={`/admin/review/${a.article_id}`} className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>Review</Link>
                 )}
