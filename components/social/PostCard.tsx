@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, Fragment, useRef, useEffect } from 'react'
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark, Edit2, Trash2, EyeOff, Flag } from 'lucide-react'
+import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark, Edit2, Trash2, EyeOff, Flag, ExternalLink } from 'lucide-react'
 import type { SocialPost, SocialComment } from '@/lib/hooks/usePosts'
 import { usePostComments } from '@/lib/hooks/usePosts'
 import { formatDistanceToNow } from 'date-fns'
@@ -13,10 +13,37 @@ function renderContentWithLinks(text: string) {
   const parts = text.split(URL_RE)
   return parts.map((part, i) => {
     if (URL_RE.test(part)) {
-      return <Link key={i} href={part} target="_blank" rel="noopener noreferrer" className="social-link" onClick={e => e.stopPropagation()}>{part}</Link>
+      return <Link key={i} href={part} target="_blank" rel="noopener noreferrer" className="social-link" onClick={e => e.stopPropagation()}>{part.length > 40 ? part.slice(0, 37) + '…' : part}</Link>
     }
     return <Fragment key={i}>{part}</Fragment>
   })
+}
+
+function renderHashtags(text: string) {
+  const parts = text.split(/(#\w+)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('#')) {
+      return <span key={i} className="social-tag-inline">{part}</span>
+    }
+    return <Fragment key={i}>{part}</Fragment>
+  })
+}
+
+function renderContent(text: string) {
+  const parts = text.split(URL_RE)
+  return parts.map((part, i) => {
+    if (URL_RE.test(part)) {
+      return <Link key={i} href={part} target="_blank" rel="noopener noreferrer" className="social-link" onClick={e => e.stopPropagation()}>{part.length > 40 ? part.slice(0, 37) + '…' : part}</Link>
+    }
+    const tagged = part.split(/(#\w+)/g)
+    return <Fragment key={i}>{tagged.map((t, j) => t.startsWith('#') ? <span key={`${i}-${j}`} className="social-tag-inline">{t}</span> : t)}</Fragment>
+  })
+}
+
+function estimateReadTime(text: string): string {
+  const words = text.split(/\s+/).length
+  const mins = Math.max(1, Math.ceil(words / 200))
+  return `${mins} min read`
 }
 
 function Avatar({ src, name }: { src: string | null; name: string }) {
@@ -32,6 +59,8 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
   )
   return <div className="social-avatar">{name.charAt(0).toUpperCase()}</div>
 }
+
+const QUICK_REACTIONS = ['❤️', '🔥', '😂', '👏', '😮', '💯']
 
 export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide }: {
   post: SocialPost
@@ -52,14 +81,18 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
   const [sharing, setSharing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [showReactions, setShowReactions] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(post.content)
   const menuRef = useRef<HTMLDivElement>(null)
+  const reactionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false)
+        setShowShareMenu(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -82,12 +115,26 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_id: post.post_id }),
       })
-      const url = `${window.location.origin}/social?post=${post.post_id}`
-      try { await navigator.clipboard.writeText(url) } catch { /* ignore */ }
       setShareCount(c => c + 1)
     } finally {
       setSharing(false)
     }
+  }
+
+  const copyLink = async () => {
+    const url = `${window.location.origin}/social?post=${post.post_id}`
+    try { await navigator.clipboard.writeText(url) } catch { /* ignore */ }
+    setShowShareMenu(false)
+  }
+
+  const nativeShare = async () => {
+    const url = `${window.location.origin}/social?post=${post.post_id}`
+    if (navigator.share) {
+      try { await navigator.share({ title: `${post.author?.name}'s post`, text: post.content.slice(0, 120), url }) } catch { /* ignore */ }
+    } else {
+      copyLink()
+    }
+    setShowShareMenu(false)
   }
 
   const toggleSave = async () => {
@@ -125,12 +172,19 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
           <Avatar src={post.author?.profile_image ?? null} name={post.author?.name ?? 'U'} />
         </Link>
         <div className="social-post-meta">
-          <Link href={`/journalists/${post.author?.user_id ?? ''}`} className="social-post-author">
-            {post.author?.name ?? 'Unknown'}
-          </Link>
+          <div className="social-post-meta-row">
+            <Link href={`/journalists/${post.author?.user_id ?? ''}`} className="social-post-author">
+              {post.author?.name ?? 'Unknown'}
+            </Link>
+            {post.author?.role === 'journalist' && (
+              <span className="social-badge">Writer</span>
+            )}
+          </div>
           <span className="social-post-sub">
             @{post.author?.name?.toLowerCase().replace(/\s+/g, '') ?? 'user'} ·{' '}
             {post.created_at ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : ''}
+            <span className="social-post-dot">·</span>
+            <span className="social-read-time">{estimateReadTime(post.content)}</span>
           </span>
         </div>
         <div className="relative" ref={menuRef}>
@@ -144,58 +198,22 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
           </button>
 
           {showMenu && (
-            <div
-              className="social-post-menu"
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: '100%',
-                marginTop: 8,
-                zIndex: 100,
-                background: 'var(--bg-elevated)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                padding: 4,
-                boxShadow: 'var(--shadow-lg)',
-                minWidth: 160,
-              }}
-            >
-              <button
-                onClick={() => { setEditing(true); setShowMenu(false); }}
-                className="social-menu-item"
-                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
-              >
-                <Edit2 size={16} />
-                Edit Post
+            <div className="social-post-menu">
+              <button onClick={() => { setEditing(true); setShowMenu(false); }} className="social-menu-item">
+                <Edit2 size={15} /> Edit Post
               </button>
               {onHide && (
-                <button
-                  onClick={() => { onHide(post.post_id); setShowMenu(false); }}
-                  className="social-menu-item"
-                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
-                >
-                  <EyeOff size={16} />
-                  Hide Post
+                <button onClick={() => { onHide(post.post_id); setShowMenu(false); }} className="social-menu-item social-menu-item-secondary">
+                  <EyeOff size={15} /> Hide Post
                 </button>
               )}
               {onDelete && (
-                <button
-                  onClick={() => { onDelete(post.post_id); setShowMenu(false); }}
-                  className="social-menu-item"
-                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
-                >
-                  <Trash2 size={16} />
-                  Delete Post
+                <button onClick={() => { onDelete(post.post_id); setShowMenu(false); }} className="social-menu-item social-menu-item-danger">
+                  <Trash2 size={15} /> Delete Post
                 </button>
               )}
-              <button
-                onClick={() => { setShowMenu(false); }}
-                className="social-menu-item"
-                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}
-              >
-                <Flag size={16} />
-                Report
+              <button onClick={() => { setShowMenu(false); }} className="social-menu-item social-menu-item-muted">
+                <Flag size={15} /> Report
               </button>
             </div>
           )}
@@ -207,20 +225,20 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full p-3 rounded-xl text-sm"
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--primary)', color: 'var(--text-primary)', outline: 'none', minHeight: 80, resize: 'vertical' }}
+            className="social-compose-input"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--primary)', color: 'var(--text-primary)', outline: 'none', minHeight: 80, resize: 'vertical', padding: 12, borderRadius: 12, width: '100%', boxSizing: 'border-box' }}
           />
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => { setEditing(false); setEditContent(post.content); }}
-              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              className="social-btn-ghost"
             >
               Cancel
             </button>
             <button
               onClick={() => { onEdit?.(post.post_id, editContent.trim()); setEditing(false); }}
               disabled={!editContent.trim()}
-              style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              className="social-btn-primary"
             >
               Save Edit
             </button>
@@ -235,7 +253,7 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
             transition: 'color 0.2s',
           }}
         >
-          {renderContentWithLinks(post.content)}
+          {renderContent(post.content)}
         </p>
       )}
 
@@ -249,31 +267,51 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
 
       {post.tags && post.tags.length > 0 && (
         <div className="social-post-tags">
-          {post.tags.map(t => (
-            <span key={t} className="social-tag" style={{ transition: 'all 0.2s var(--ease-out-expo)', padding: '2px 6px', borderRadius: 6, background: 'var(--primary-light)', fontSize: '0.78rem' }}>#{t}</span>
+          {[...new Set(post.tags)].map(t => (
+            <span key={t} className="social-tag">#{t}</span>
           ))}
         </div>
       )}
 
       <div className="social-post-actions">
-        <button
-          className={`social-action ${liked ? 'liked' : ''}`}
-          onClick={like}
-          style={{
-            transition: 'all 0.25s var(--ease-out-expo)',
-            transform: likeAnimating ? 'scale(1.2)' : 'scale(1)',
-          }}
+        <div
+          className="social-reaction-wrap"
+          onMouseEnter={() => { if (reactionTimeout.current) clearTimeout(reactionTimeout.current); setShowReactions(true) }}
+          onMouseLeave={() => { reactionTimeout.current = setTimeout(() => setShowReactions(false), 300) }}
         >
-          <Heart
-            size={18}
-            fill={liked ? 'currentColor' : 'none'}
+          <button
+            className={`social-action ${liked ? 'liked' : ''}`}
+            onClick={like}
             style={{
               transition: 'all 0.25s var(--ease-out-expo)',
-              filter: liked ? 'drop-shadow(0 0 4px var(--error))' : undefined,
+              transform: likeAnimating ? 'scale(1.2)' : 'scale(1)',
             }}
-          />
-          <span>{likeCount}</span>
-        </button>
+          >
+            <Heart
+              size={18}
+              fill={liked ? 'currentColor' : 'none'}
+              style={{
+                transition: 'all 0.25s var(--ease-out-expo)',
+                filter: liked ? 'drop-shadow(0 0 4px var(--error))' : undefined,
+              }}
+            />
+            <span>{likeCount}</span>
+          </button>
+          {showReactions && (
+            <div className="social-reaction-bar">
+              {QUICK_REACTIONS.map(r => (
+                <button
+                  key={r}
+                  className="social-reaction-emoji"
+                  onClick={e => { e.stopPropagation(); like(); setShowReactions(false) }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <button
           className="social-action"
           onClick={() => setShowComments(v => !v)}
@@ -285,6 +323,7 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
           <MessageCircle size={18} />
           <span>{post.comment_count}</span>
         </button>
+
         <button
           className={`social-action ${saved ? 'saved' : ''}`}
           onClick={toggleSave}
@@ -302,17 +341,35 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
             }}
           />
         </button>
-        <button
-          className="social-action"
-          onClick={share}
-          style={{
-            transition: 'all 0.25s var(--ease-out-expo)',
-            transform: sharing ? 'scale(0.9)' : 'scale(1)',
-          }}
-        >
-          <Share2 size={18} style={{ transition: 'transform 0.3s var(--ease-out-expo)', transform: sharing ? 'rotate(180deg)' : 'rotate(0)' }} />
-          <span>{shareCount}</span>
-        </button>
+
+        <div className="relative" ref={menuRef}>
+          <button
+            className="social-action"
+            onClick={() => setShowShareMenu(v => !v)}
+            style={{
+              transition: 'all 0.25s var(--ease-out-expo)',
+              transform: sharing ? 'scale(0.9)' : 'scale(1)',
+            }}
+          >
+            <Share2 size={18} style={{ transition: 'transform 0.3s var(--ease-out-expo)', transform: sharing ? 'rotate(180deg)' : 'rotate(0)' }} />
+            <span>{shareCount}</span>
+          </button>
+          {showShareMenu && (
+            <div className="social-post-menu social-share-menu">
+              <button onClick={copyLink} className="social-menu-item">
+                <ExternalLink size={15} /> Copy link
+              </button>
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button onClick={nativeShare} className="social-menu-item">
+                  <Share2 size={15} /> Share
+                </button>
+              )}
+              <button onClick={share} className="social-menu-item">
+                <Bookmark size={15} /> Repost
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {showComments && (

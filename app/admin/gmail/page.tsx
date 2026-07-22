@@ -235,7 +235,7 @@ function GmailInboxPage() {
                   maxHeight: 320, overflow: 'auto', marginBottom: 16,
                 }}
                 dangerouslySetInnerHTML={{
-                  __html: selected.isHtml ? selected.body : `<pre style="white-space:pre-wrap;font-family:inherit;margin:0">${escapeHtml(selected.body)}</pre>`,
+                  __html: selected.isHtml ? selected.body : `<pre style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;font-family:inherit;margin:0">${escapeHtml(selected.body)}</pre>`,
                 }}
               />
 

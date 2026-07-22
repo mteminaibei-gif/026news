@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentAdmin } from '@/lib/server-auth'
 import { slugify } from '@/lib/utils'
@@ -7,14 +6,14 @@ import { slugify } from '@/lib/utils'
 // GET /api/categories — public, returns all categories sorted by name
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const { data, error } = await supabase
       .from('categories')
       .select('category_id, name, slug, description, icon')
       .order('name')
     if (error) throw error
     return NextResponse.json(data ?? [], {
-      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+      headers: { 'Cache-Control': 'no-store' },
     })
   } catch (err) {
     console.error('[GET /api/categories]', err)

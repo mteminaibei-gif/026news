@@ -54,7 +54,7 @@ export default function AdminCategoriesPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/categories')
+      const res = await fetch('/api/categories', { cache: 'no-store' })
       if (!res.ok) {
         setError('Failed to load categories')
         setCategories([])
@@ -240,6 +240,7 @@ export default function AdminCategoriesPage() {
           ) : categories.length === 0 ? (
             <div className="p-8 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>No categories yet</div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--bg-muted)' }}>
@@ -281,6 +282,7 @@ export default function AdminCategoriesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

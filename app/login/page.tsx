@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/layout/Logo'
+import { Eye, EyeOff } from 'lucide-react'
 
 
 function LoginForm() {
@@ -13,6 +14,7 @@ function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(params.get('message') || '')
@@ -235,15 +237,16 @@ function LoginForm() {
                   <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.01em' }}>Password</label>
                   <Link href="/forgot-password" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)', transition: 'opacity 0.2s' }}>Forgot password?</Link>
                 </div>
+                <div style={{ position: 'relative' }}>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   style={{
                     width: '100%',
-                    padding: '13px 16px',
+                    padding: '13px 44px 13px 16px',
                     borderRadius: 'var(--radius-xs)',
                     border: '1.5px solid var(--border)',
                     background: 'var(--bg-elevated)',
@@ -262,6 +265,23 @@ function LoginForm() {
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                    color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                </div>
               </div>
 
               <button
@@ -290,7 +310,9 @@ function LoginForm() {
                 {loading && (
                   <span style={{
                     width: 18, height: 18,
-                    border: '2.5px solid oklch(100% 0 0 / 0.3)',
+                    borderWidth: '2.5px',
+                    borderStyle: 'solid',
+                    borderColor: 'oklch(100% 0 0 / 0.3)',
                     borderTopColor: '#fff',
                     borderRadius: '50%',
                     animation: 'spin 0.7s linear infinite',

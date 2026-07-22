@@ -32,7 +32,8 @@ export function StatCard({ label, value, icon, sub, accent, change, color = 'var
         background: 'var(--glass-bg)',
         backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
         WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
-        border: '1px solid var(--glass-border)',
+        borderWidth: 1,
+        borderStyle: 'solid',
         borderRadius: 'var(--radius-md)',
         padding,
         display: 'flex',
@@ -41,11 +42,11 @@ export function StatCard({ label, value, icon, sub, accent, change, color = 'var
         gap: '0.75rem',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'default',
+        borderColor: hovered ? `oklch(from ${accentColor} l c h / 0.15)` : 'var(--glass-border)',
         ...(hovered
           ? {
               transform: 'translateY(-3px)',
               boxShadow: `0 0 0 1px oklch(from ${accentColor} l c h / 0.12), 0 12px 40px -12px oklch(from ${accentColor} l c h / 0.2)`,
-              borderColor: `oklch(from ${accentColor} l c h / 0.15)`,
             }
           : {
               boxShadow: 'var(--glow-soft)',

@@ -6,18 +6,8 @@ import { useRadio } from './RadioProvider'
 export function RadioWidget() {
   const { currentStation, isPlaying, volume, status, error, toggle, setVolume, stop } = useRadio()
 
-  if (!currentStation) {
-    return (
-      <Link
-        href="/radio"
-        aria-label="Listen to live radio"
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-        style={{ background: 'var(--primary)' }}
-      >
-        <span style={{ fontSize: '1.1rem' }}>📻</span>
-        <span className="hidden sm:inline">Listen Live</span>
-      </Link>
-    )
+  if (!isPlaying || !currentStation) {
+    return null
   }
 
   const color = currentStation.color

@@ -160,7 +160,7 @@ export function AdminArticleEditTags({ articleId, currentTags, currentCategoryId
         <div className="mb-4">
           <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Tags</label>
           <div className="flex flex-wrap gap-1.5 mb-2">
-            {tags.map(tag => (
+            {[...new Set(tags)].map(tag => (
               <span
                 key={tag}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"

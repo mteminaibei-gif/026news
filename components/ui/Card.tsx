@@ -22,7 +22,9 @@ export function Card({ children, variant = 'default', padding = 'md', className,
     background: 'var(--glass-bg)',
     backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
     WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
-    border: '1px solid var(--glass-border)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--glass-border)',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     ...style,
   }
@@ -45,13 +47,9 @@ export function Card({ children, variant = 'default', padding = 'md', className,
       style={{
         ...baseStyle,
         ...variantStyles[variant],
-        ...(hovered
-          ? {
-              transform: 'translateY(-2px)',
-              boxShadow: 'var(--glow-primary)',
-              borderColor: 'oklch(65% 0.12 175 / 0.15)',
-            }
-          : {}),
+        transform: hovered ? 'translateY(-2px)' : undefined,
+        boxShadow: hovered ? 'var(--glow-primary)' : variantStyles[variant]?.boxShadow as string | undefined,
+        borderColor: hovered ? 'oklch(65% 0.12 175 / 0.15)' : baseStyle.borderColor,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 import {
   Home, Compass, MessageSquare, Newspaper,
 } from 'lucide-react'
@@ -15,9 +16,39 @@ const ITEMS: { href: string; label: string; icon: typeof Home; match: (p: string
 
 export function MobileTabBar() {
   const pathname = usePathname() ?? ''
+  const [visible, setVisible] = useState(true)
+  const lastScrollY = useRef(0)
+  const scrollThreshold = 10
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY
+      const diff = currentY - lastScrollY.current
+      
+      if (Math.abs(diff) < scrollThreshold) return
+      
+      if (diff > 0 && currentY > 100) {
+        setVisible(false)
+      } else {
+        setVisible(true)
+      }
+      
+      lastScrollY.current = currentY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <nav className="mobile-tabbar" aria-label="Mobile navigation">
+    <nav 
+      className="mobile-tabbar" 
+      aria-label="Mobile navigation"
+      style={{
+        transform: visible ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.3s ease-out',
+      }}
+    >
       {ITEMS.map(({ href, label, icon: Icon, match, badge }) => {
         const active = match(pathname)
         return (

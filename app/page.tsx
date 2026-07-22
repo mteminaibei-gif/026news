@@ -240,7 +240,7 @@ export default async function LandingPage() {
               <Link href={`/article/${top[0].slug}`} className="landing-top-hero" aria-label={`Featured article: ${top[0].title}`}>
                 {top[0].featured_image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={top[0].featured_image} alt={top[0].title} className="landing-top-hero-img" />
+                  <img src={top[0].featured_image} alt={top[0].title} className="landing-top-hero-img" loading="eager" fetchPriority="high" />
                 ) : (
                   <div className="landing-top-hero-fallback" />
                 )}
@@ -272,7 +272,7 @@ export default async function LandingPage() {
                   <Link key={a.article_id} href={`/article/${a.slug}`} className="landing-top-side-card" role="listitem" aria-label={a.title}>
                     {a.featured_image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.featured_image} alt={a.title} className="landing-top-side-img" />
+                      <img src={a.featured_image} alt={a.title} className="landing-top-side-img" loading="lazy" />
                     ) : (
                       <div className="landing-top-side-fallback" />
                     )}
@@ -350,7 +350,7 @@ export default async function LandingPage() {
                 <Link key={a.article_id} href={`/article/${a.slug}`} className="landing-recent-card" aria-label={a.title}>
                   {a.featured_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.featured_image} alt={a.title} className="landing-recent-img" />
+                    <img src={a.featured_image} alt={a.title} className="landing-recent-img" loading="lazy" />
                   ) : (
                     <div className="landing-recent-img-fallback" />
                   )}

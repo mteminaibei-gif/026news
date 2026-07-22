@@ -289,7 +289,7 @@ export function ArticleManager() {
                       {!a.pinned && (a.priority || 0) > 0 && (
                         <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>⚑ {a.priority}</span>
                       )}
-                      {a.tags?.slice(0, 3).map(tag => (
+                      {[...new Set(a.tags ?? [])].slice(0, 3).map(tag => (
                         <span key={tag} className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: 'var(--bg-muted)', color: 'var(--text-tertiary)' }}>{tag}</span>
                       ))}
                       {a.tags && a.tags.length > 3 && <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>+{a.tags.length - 3}</span>}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtime } from '@/components/providers/RealtimeProvider'
 import { useUser, useProfile } from '@/lib/hooks/useAuth'
@@ -142,10 +143,10 @@ export function MessagePopout() {
 
   if (!myId || notifications.length === 0) return null
 
-  return (
+  return createPortal(
     <div
-      className="fixed z-50 flex flex-col gap-3"
-      style={{ bottom: 24, right: 24, left: 24, alignItems: 'flex-end' }}
+      className="fixed flex flex-col gap-3"
+      style={{ bottom: 24, right: 24, left: 24, alignItems: 'flex-end', zIndex: 9999 }}
       role="region"
       aria-label="Message notifications"
     >
@@ -241,6 +242,7 @@ export function MessagePopout() {
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }

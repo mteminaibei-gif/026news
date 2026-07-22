@@ -7,10 +7,13 @@ import { useFollowSuggestions, useFollow } from '@/lib/hooks/useFollow'
 import { PostCard } from '@/components/social/PostCard'
 import { useUser, useProfile } from '@/lib/hooks/useAuth'
 import { uploadPostMedia } from '@/lib/storage'
-import { Image as ImageIcon, Users, Sparkles, UserPlus, X, Send, Bookmark } from 'lucide-react'
+import { EmojiPicker } from '@/components/social/EmojiPicker'
+import { SponsoredCard } from '@/components/social/SponsoredCard'
+import { Image as ImageIcon, Users, Sparkles, UserPlus, X, Send, Bookmark, Smile, Hash, MapPin } from 'lucide-react'
 
-function FollowButton({ userId }: { userId: number }) {
+function FollowButton({ userId, currentUserId }: { userId: number; currentUserId?: number }) {
   const { following, toggle, loading } = useFollow(userId)
+  if (currentUserId && userId === currentUserId) return null
   return (
     <button
       className={`social-follow-btn ${following ? 'following' : ''}`}
@@ -27,6 +30,8 @@ function parseTags(content: string): string[] {
   return Array.from(new Set(matches.map(m => m.slice(1).toLowerCase()))).slice(0, 10)
 }
 
+const QUICK_EMOJIS = ['😂','🔥','❤️','👍','😮','💯','🎉','👀']
+
 function ComposeBox({
   createPost,
   onPosted,
@@ -40,7 +45,11 @@ function ComposeBox({
   const [error, setError] = useState<string | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [focused, setFocused] = useState(false)
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionResults, setMentionResults] = useState<any[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { data: user } = useUser()
   const { data: profile } = useProfile(user?.email ?? undefined)
 
@@ -48,6 +57,37 @@ function ComposeBox({
   const charCount = text.length
   const nearLimit = charCount > MAX_CHARS * 0.85
   const overLimit = charCount > MAX_CHARS
+  const progress = Math.min(charCount / MAX_CHARS, 1)
+  const circumference = 2 * Math.PI * 14
+
+  useEffect(() => {
+    if (mentionQuery === null) return
+    const q = mentionQuery.toLowerCase()
+    if (!q) { setMentionResults([]); return }
+    const ctrl = new AbortController()
+    fetch(`/api/people?q=${encodeURIComponent(q)}&limit=5`, { signal: ctrl.signal })
+      .then(r => r.json())
+      .then(d => setMentionResults(d.users ?? []))
+      .catch(() => {})
+    return () => ctrl.abort()
+  }, [mentionQuery])
+
+  const handleInput = (val: string) => {
+    setText(val)
+    const cursorPos = textareaRef.current?.selectionStart ?? val.length
+    const before = val.slice(0, cursorPos)
+    const mentionMatch = before.match(/@(\w*)$/)
+    setMentionQuery(mentionMatch ? mentionMatch[1] : null)
+  }
+
+  const insertMention = (name: string) => {
+    const cursorPos = textareaRef.current?.selectionStart ?? text.length
+    const before = text.slice(0, cursorPos).replace(/@\w*$/, `@${name} `)
+    const after = text.slice(cursorPos)
+    setText(before + after)
+    setMentionQuery(null)
+    textareaRef.current?.focus()
+  }
 
   const onPickImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -85,9 +125,16 @@ function ComposeBox({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      submit()
+    }
+  }
+
   return (
     <div
-      className="social-compose"
+      className={`social-compose ${focused ? 'focused' : ''}`}
       style={{
         transition: 'all 0.35s var(--ease-out-expo)',
         boxShadow: focused ? 'var(--glow-primary)' : 'var(--glow-soft)',
@@ -101,32 +148,125 @@ function ComposeBox({
           : <div>{profile?.name?.charAt(0).toUpperCase() ?? 'U'}</div>}
       </div>
       <div className="social-compose-main">
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="What's happening in your world? Use #hashtags to tag topics."
-          className="social-compose-input"
-          rows={2}
-          maxLength={MAX_CHARS}
-        />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-          <span style={{
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            fontFamily: 'var(--font-ui)',
-            transition: 'color 0.2s',
-            color: overLimit ? 'var(--error)' : nearLimit ? 'var(--accent)' : 'var(--text-tertiary)',
-          }}>
-            {charCount}/{MAX_CHARS}
-          </span>
+        <div className="social-compose-input-wrap">
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={e => handleInput(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setTimeout(() => setFocused(false), 150)}
+            onKeyDown={handleKeyDown}
+            placeholder="What's happening in your world?"
+            className="social-compose-input"
+            rows={focused ? 3 : 1}
+            maxLength={MAX_CHARS + 50}
+          />
+
+          {mentionQuery !== null && mentionResults.length > 0 && (
+            <div className="social-mention-dropdown">
+              {mentionResults.map((u: any) => (
+                <button
+                  key={u.user_id}
+                  type="button"
+                  className="social-mention-item"
+                  onMouseDown={e => { e.preventDefault(); insertMention(u.name) }}
+                >
+                  {u.profile_image
+                    ? <img src={u.profile_image} alt="" className="social-mention-avatar" />
+                    : <div className="social-mention-avatar social-mention-avatar-text">{u.name?.charAt(0).toUpperCase()}</div>}
+                  <div className="social-mention-info">
+                    <span className="social-mention-name">{u.name}</span>
+                    <span className="social-mention-role">{u.role}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        <div className="social-compose-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, position: 'relative' }}>
+            <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onPickImages} />
+            <button
+              className="social-compose-tool"
+              type="button"
+              title="Add image"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+            >
+              <ImageIcon size={17} />
+            </button>
+            <button
+              className="social-compose-tool"
+              type="button"
+              title="Add emoji"
+              onClick={() => setShowEmoji(v => !v)}
+            >
+              <Smile size={17} />
+            </button>
+            <button
+              className="social-compose-tool"
+              type="button"
+              title="Add hashtag"
+              onClick={() => setText(t => t + (t && !t.endsWith(' ') ? ' ' : '') + '#')}
+            >
+              <Hash size={17} />
+            </button>
+            {showEmoji && (
+              <EmojiPicker
+                onSelect={emoji => { setText(t => t + emoji); textareaRef.current?.focus() }}
+                onClose={() => setShowEmoji(false)}
+              />
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="char-ring-wrap" title={`${charCount}/${MAX_CHARS}`}>
+              <svg className="char-ring" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="14" fill="none" stroke="var(--border)" strokeWidth="2.5" />
+                <circle
+                  cx="16" cy="16" r="14" fill="none"
+                  stroke={overLimit ? 'var(--error)' : nearLimit ? 'var(--accent)' : 'var(--primary)'}
+                  strokeWidth="2.5"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={circumference * (1 - progress)}
+                  strokeLinecap="round"
+                  transform="rotate(-90 16 16)"
+                  style={{ transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease' }}
+                />
+              </svg>
+              {(nearLimit || overLimit) && (
+                <span className="char-ring-count" style={{ color: overLimit ? 'var(--error)' : 'var(--accent)' }}>
+                  {MAX_CHARS - charCount}
+                </span>
+              )}
+            </div>
+            <button
+              className="social-post-btn"
+              onClick={submit}
+              disabled={(!text.trim() && images.length === 0) || posting || uploading || overLimit}
+              style={{
+                transition: 'all 0.3s var(--ease-out-expo)',
+                opacity: posting ? 0.7 : undefined,
+                transform: posting ? 'scale(0.97)' : undefined,
+              }}
+            >
+              {posting ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="social-post-spinner" /> Posting
+                </span>
+              ) : (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Send size={14} /> Post
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
         {images.length > 0 && (
           <div className="social-compose-images">
             {images.map((url, i) => (
               <div key={i} className="social-compose-image">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" />
                 <button type="button" onClick={() => setImages(prev => prev.filter((_, j) => j !== i))} aria-label="Remove">
                   <X size={14} />
@@ -135,38 +275,14 @@ function ComposeBox({
             ))}
           </div>
         )}
-        <div className="social-compose-actions">
-          <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onPickImages} />
-          <button
-            className="social-icon-btn"
-            aria-label="Add image"
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            style={{
-              transition: 'all 0.25s var(--ease-out-expo)',
-              transform: uploading ? 'scale(0.9)' : undefined,
-            }}
-          >
-            <ImageIcon size={18} />
-          </button>
-          <button className="social-icon-btn" aria-label="Tag" type="button" onClick={() => setText(t => t + (t && !t.endsWith(' ') ? ' ' : '') + '#')}>
-            <Users size={18} />
-          </button>
-          <button
-            className="social-post-btn"
-            onClick={submit}
-            disabled={(!text.trim() && images.length === 0) || posting || uploading || overLimit}
-            style={{
-              transition: 'all 0.3s var(--ease-out-expo)',
-              opacity: posting ? 0.7 : undefined,
-              transform: posting ? 'scale(0.97)' : undefined,
-            }}
-          >
-            {posting ? 'Posting…' : 'Post'}
-          </button>
-        </div>
+
         {error && <p className="social-compose-error" role="alert">{error}</p>}
+
+        {focused && (
+          <div className="social-compose-hint">
+            <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to post
+          </div>
+        )}
       </div>
     </div>
   )
@@ -174,6 +290,7 @@ function ComposeBox({
 
 function Suggestions() {
   const { suggestions, loading } = useFollowSuggestions()
+  const { data: profile } = useProfile(undefined)
   const [onlineSet, setOnlineSet] = useState<Set<number>>(new Set())
 
   useEffect(() => {
@@ -224,7 +341,7 @@ function Suggestions() {
               <Link href={`/journalists/${s.user_id}`} className="social-suggest-name">{s.name}</Link>
               <span className="social-suggest-role">{onlineSet.has(s.user_id) ? 'Online' : s.role}</span>
             </div>
-            <FollowButton userId={s.user_id} />
+            <FollowButton userId={s.user_id} currentUserId={profile?.user_id} />
           </div>
         ))}
       </div>
@@ -235,14 +352,53 @@ function Suggestions() {
 export default function SocialPage() {
   const [tab, setTab] = useState<'home' | 'following' | 'saved'>('home')
   const feed = usePosts(tab)
-  const { posts, loading, loadMore, hasMore, toggleLike, refetch } = feed
+  const { posts, loading, loadMore, hasMore, loadingMore, toggleLike, refetch } = feed
   const [openPostId, setOpenPostId] = useState<number | null>(null)
+  const [newPostCount, setNewPostCount] = useState(0)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const initialLoadDone = useRef(false)
+  const feedRef = useRef<HTMLDivElement>(null)
+  const prevPostCountRef = useRef(0)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const pid = Number(params.get('post'))
     if (pid) setOpenPostId(pid)
   }, [])
+
+  useEffect(() => {
+    if (loading || initialLoadDone.current) return
+    if (posts.length > 0) initialLoadDone.current = true
+  }, [loading, posts.length])
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || tab === 'saved') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMore()
+        }
+      },
+      { rootMargin: '400px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, loading, loadMore, tab])
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setNewPostCount(0)
+  }, [])
+
+  useEffect(() => {
+    if (loading) return
+    const diff = posts.length - prevPostCountRef.current
+    if (diff > 0 && initialLoadDone.current && window.scrollY > 300) {
+      setNewPostCount(c => c + diff)
+    }
+    prevPostCountRef.current = posts.length
+  }, [posts.length, loading])
 
   const handleDelete = useCallback(async (postId: number) => {
     if (!confirm('Are you sure you want to delete this post?')) return
@@ -320,44 +476,84 @@ export default function SocialPage() {
             ))}
           </div>
 
-          <div className="social-feed">
+          <div className="social-feed" ref={feedRef}>
+            {newPostCount > 0 && (
+              <button className="social-new-posts-banner" onClick={scrollToTop}>
+                <span className="social-new-posts-dot" />
+                {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} — tap to see
+              </button>
+            )}
             {loading && posts.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {[1, 2, 3].map(i => (
-                  <div
-                    key={i}
-                    className="skeleton"
-                    style={{
-                      height: 180,
-                      borderRadius: 'var(--radius-lg)',
-                      animationDelay: `${i * 150}ms`,
-                    }}
-                  />
+                  <div key={i} className="social-skeleton">
+                    <div className="social-skeleton-header">
+                      <div className="skeleton" style={{ width: 44, height: 44, borderRadius: '50%' }} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div className="skeleton" style={{ width: '40%', height: 14, borderRadius: 7 }} />
+                        <div className="skeleton" style={{ width: '25%', height: 10, borderRadius: 5 }} />
+                      </div>
+                    </div>
+                    <div className="skeleton" style={{ width: '90%', height: 14, borderRadius: 7, marginTop: 12 }} />
+                    <div className="skeleton" style={{ width: '70%', height: 14, borderRadius: 7 }} />
+                    <div className="skeleton" style={{ width: '100%', height: 180, borderRadius: 12, marginTop: 12 }} />
+                  </div>
                 ))}
               </div>
             ) : posts.length === 0 ? (
               <div className="social-empty" style={{ animation: 'futr-fade-up 0.4s var(--ease-out-expo) both' }}>
-                <p>{tab === 'saved' ? 'No saved posts yet. Tap the bookmark on any post.' : 'No posts yet. Be the first to share something!'}</p>
+                <div className="social-empty-icon">📝</div>
+                <p className="social-empty-title">{tab === 'saved' ? 'No saved posts yet' : 'No posts yet'}</p>
+                <p className="social-empty-sub">{tab === 'saved' ? 'Tap the bookmark on any post to save it here.' : 'Be the first to share something with the community!'}</p>
               </div>
             ) : (
-              posts.map(p => <PostCard key={p.post_id} post={p} onToggleLike={toggleLike} onOpen={setOpenPostId} onDelete={handleDelete} onEdit={handleEdit} onHide={handleHide} />)
-            )}
-
-            {hasMore && tab !== 'saved' && (
-              <button
-                className="social-load-more"
-                onClick={loadMore}
-                style={{
-                  transition: 'all 0.3s var(--ease-out-expo)',
-                }}
-              >
-                Load more
-              </button>
+              <>
+                {posts.map((p, idx) => (
+                  <div key={p.post_id}>
+                    <PostCard post={p} onToggleLike={toggleLike} onOpen={setOpenPostId} onDelete={handleDelete} onEdit={handleEdit} onHide={handleHide} />
+                    {idx === 2 && (
+                      <SponsoredCard
+                        adId="sidebar-1"
+                        slot="feed"
+                        title="026connect Premium"
+                        body="Get exclusive access to premium content, analytics, and ad-free browsing. Join hundreds of writers already on the platform."
+                        cta="Upgrade Now"
+                        ctaUrl="/premium"
+                      />
+                    )}
+                  </div>
+                ))}
+                {hasMore && tab !== 'saved' && (
+                  <div ref={sentinelRef} className="social-scroll-sentinel">
+                    {loadingMore && (
+                      <div className="social-load-spinner">
+                        <div className="social-spinner-dot" />
+                        <div className="social-spinner-dot" />
+                        <div className="social-spinner-dot" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!hasMore && posts.length > 0 && tab !== 'saved' && (
+                  <div className="social-end-of-feed">
+                    <span>You&apos;re all caught up</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </main>
 
         <aside className="social-sidebar">
+          <SponsoredCard
+            adId="sidebar-ad-1"
+            slot="sidebar"
+            title="Write for 026connect!"
+            body="Share your stories with thousands of readers. Earn revenue from your journalism."
+            cta="Apply Now"
+            ctaUrl="/apply"
+          />
+
           {trending.length > 0 && (
             <div className="social-suggest-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.1s both' }}>
               <h3 className="social-side-title"><Sparkles size={15} /> Trending Topics</h3>
@@ -371,15 +567,7 @@ export default function SocialPage() {
             </div>
           )}
           <Suggestions />
-          {/* Sponsored Ad Placeholder */}
-          <div className="social-side-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.4s both', border: '1px dashed var(--border)', background: 'var(--bg-glass)' }}>
-            <h3 className="social-side-title">Sponsored</h3>
-            <div style={{ padding: '1rem', textAlign: 'center', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Advertisement</div>
-              <div style={{ fontSize: '1rem', color: 'var(--fg)', fontWeight: 500 }}>Your Ad Here</div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>Admin can inject sponsored content</div>
-            </div>
-          </div>
+
           <div className="social-side-card" style={{ animation: 'futr-fade-up 0.5s var(--ease-out-expo) 0.3s both' }}>
             <h3 className="social-side-title">Community Guidelines</h3>
             <p className="social-side-note">
@@ -422,6 +610,12 @@ function PostDetailModal({ postId, onClose }: { postId: number; onClose: () => v
   }, [postId])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   const handleLike = useCallback(async () => {
     if (liking) return

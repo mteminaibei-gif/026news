@@ -64,19 +64,25 @@ export function ConversationList({ conversations, selectedConv, onSelectConversa
   }, [searchQuery])
 
   return (
-    <div style={{ width: 360, minWidth: 360, borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)', position: 'relative' }}>
+    <div className="inbox-sidebar">
       {/* Header */}
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 60 }}>
-        <h1 style={{ fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>Chats</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button 
-            onClick={() => setShowNewChat(true)} 
-            style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', transition: 'background 0.2s' }} 
-            title="New chat" aria-label="New chat"
+      <div className="inbox-sidebar-header">
+        <h1 className="inbox-sidebar-title">Chats</h1>
+        <div className="inbox-sidebar-actions">
+          <button
+            onClick={() => setShowNewChat(true)}
+            className="inbox-icon-btn primary"
+            title="New chat"
+            aria-label="New chat"
           >
             <Plus size={18} />
           </button>
-          <button onClick={() => setShowSearch(true)} style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-inset)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }} title="Search users" aria-label="Search users">
+          <button
+            onClick={() => setShowSearch(true)}
+            className="inbox-icon-btn"
+            title="Search users"
+            aria-label="Search users"
+          >
             <Search size={18} />
           </button>
         </div>
@@ -84,96 +90,196 @@ export function ConversationList({ conversations, selectedConv, onSelectConversa
 
       {/* Search overlay */}
       {showSearch && (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: 360, height: '100%', background: 'var(--bg-surface)', zIndex: 20, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4, display: 'flex' }} aria-label="Back">
+        <div className="inbox-search-overlay">
+          <div className="inbox-search-bar">
+            <button
+              onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]) }}
+              className="inbox-back-btn-inline"
+              aria-label="Back"
+            >
               <ArrowLeft size={20} />
             </button>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input ref={searchInputRef} type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search people..." aria-label="Search people" style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-inset)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} />
+            <div className="inbox-search-input-wrap">
+              <Search size={16} className="inbox-search-icon" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search people..."
+                aria-label="Search people"
+                className="inbox-search-input"
+              />
               {searchQuery && (
-                <button onClick={() => { setSearchQuery(''); setSearchResults([]); searchInputRef.current?.focus() }} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'var(--bg-muted)', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }} aria-label="Clear search">
+                <button
+                  onClick={() => { setSearchQuery(''); setSearchResults([]); searchInputRef.current?.focus() }}
+                  className="inbox-search-clear"
+                  aria-label="Clear search"
+                >
                   <X size={12} />
                 </button>
               )}
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="inbox-search-results">
             {searching && (
-              <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-tertiary)' }}>
-                <Loader2 className="animate-spin" size={24} style={{ margin: '0 auto', display: 'block', color: 'var(--primary)' }} />
+              <div className="inbox-search-loading">
+                <Loader2 className="animate-spin" size={24} />
               </div>
             )}
             {!searching && searchResults.length === 0 && searchQuery.length >= 2 && (
-              <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>No users found</div>
+              <div className="inbox-search-empty">No users found</div>
             )}
             {searchResults.map(user => (
-              <div key={user.user_id} onClick={() => { onStartConversation(user); setShowSearch(false); setSearchQuery(''); setSearchResults([]) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', cursor: 'pointer', transition: 'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-inset)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div
+                key={user.user_id}
+                onClick={() => { onStartConversation(user); setShowSearch(false); setSearchQuery(''); setSearchResults([]) }}
+                className="inbox-user-item"
+              >
                 {user.profile_image ? (
-                  <div style={{ position: 'relative', width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    <Image src={user.profile_image} alt={user.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
+                  <div className="inbox-avatar-wrap">
+                    <Image src={user.profile_image} alt={user.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 640px) 100vw, 50vw" loading="lazy" />
                   </div>
                 ) : (
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>
+                  <div className="inbox-avatar initials">
                     {getInitials(user.name)}
                   </div>
                 )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{user.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'capitalize' }}>{user.role}</div>
+                <div className="inbox-user-info">
+                  <div className="inbox-user-name">{user.name}</div>
+                  <div className="inbox-user-role">{user.role}</div>
                 </div>
               </div>
             ))}
             {!searching && searchQuery.length < 2 && (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>Type at least 2 characters to search</div>
+              <div className="inbox-search-hint">Type at least 2 characters to search</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* New chat overlay */}
+      {showNewChat && (
+        <div className="inbox-search-overlay">
+          <div className="inbox-search-bar">
+            <button
+              onClick={() => { setShowNewChat(false); setSearchQuery(''); setSearchResults([]) }}
+              className="inbox-back-btn-inline"
+              aria-label="Back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="inbox-search-input-wrap">
+              <Search size={16} className="inbox-search-icon" />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Find people to chat with..."
+                aria-label="Search people"
+                className="inbox-search-input"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(''); setSearchResults([]) }}
+                  className="inbox-search-clear"
+                  aria-label="Clear search"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="inbox-search-results">
+            {searching && (
+              <div className="inbox-search-loading">
+                <Loader2 className="animate-spin" size={24} />
+              </div>
+            )}
+            {!searching && searchResults.length === 0 && searchQuery.length >= 2 && (
+              <div className="inbox-search-empty">No users found</div>
+            )}
+            {searchResults.map(user => (
+              <div
+                key={user.user_id}
+                onClick={() => { onStartConversation(user); setShowNewChat(false); setSearchQuery(''); setSearchResults([]) }}
+                className="inbox-user-item"
+              >
+                {user.profile_image ? (
+                  <div className="inbox-avatar-wrap">
+                    <Image src={user.profile_image} alt={user.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 640px) 100vw, 50vw" loading="lazy" />
+                  </div>
+                ) : (
+                  <div className="inbox-avatar initials">
+                    {getInitials(user.name)}
+                  </div>
+                )}
+                <div className="inbox-user-info">
+                  <div className="inbox-user-name">{user.name}</div>
+                  <div className="inbox-user-role">{user.role}</div>
+                </div>
+              </div>
+            ))}
+            {!searching && searchQuery.length < 2 && (
+              <div className="inbox-search-hint">Search for people to start a conversation</div>
             )}
           </div>
         </div>
       )}
 
       {/* Conversation list */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div className="inbox-conversations">
         {conversations.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '64px 24px' }}>
-            <MessageSquare size={48} style={{ color: 'var(--text-tertiary)', margin: '0 auto 16px', display: 'block', opacity: 0.3 }} />
-            <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>No conversations yet</p>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Tap the search icon to start chatting</p>
+          <div className="inbox-empty">
+            <MessageSquare size={48} />
+            <p className="inbox-empty-title">No conversations yet</p>
+            <p className="inbox-empty-sub">Tap the + button to start chatting</p>
           </div>
         ) : (
           conversations.map(conv => {
             const isActive = selectedConv?.other_user.user_id === conv.other_user.user_id
+            const isOnline = onlineUsers.has(conv.other_user.user_id)
             return (
-              <div key={conv.other_user.user_id} onClick={() => onSelectConversation(conv)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', cursor: 'pointer', transition: 'background 0.15s', background: isActive ? 'var(--primary-light)' : 'transparent', borderBottom: '1px solid var(--border-subtle)' }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-inset)' }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}>
-                {conv.other_user.profile_image ? (
-                  <div style={{ position: 'relative', width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    <Image src={conv.other_user.profile_image} alt={conv.other_user.name} fill style={{ objectFit: 'cover' }}  sizes="(max-width: 640px) 100vw, 50vw" loading="lazy"/>
-                    <span style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: onlineUsers.has(conv.other_user.user_id) ? 'var(--success)' : 'var(--bg-inset)', border: '2px solid var(--bg-surface)' }} />
-                  </div>
-                ) : (
-                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'var(--bg-inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', fontWeight: 700, color: isActive ? '#fff' : 'var(--text-secondary)', flexShrink: 0 }}>
-                    {getInitials(conv.other_user.name)}
-                  </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                    <span style={{ fontSize: '0.88rem', fontWeight: conv.unread > 0 ? 700 : 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.other_user.name}</span>
-                    <span style={{ fontSize: '0.65rem', color: conv.unread > 0 ? 'var(--primary)' : 'var(--text-muted)', flexShrink: 0, marginLeft: 8, fontWeight: conv.unread > 0 ? 600 : 400 }}>
+              <div
+                key={conv.other_user.user_id}
+                onClick={() => onSelectConversation(conv)}
+                className={`inbox-conv-item ${isActive ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}`}
+              >
+                <div className="inbox-conv-avatar">
+                  {conv.other_user.profile_image ? (
+                    <>
+                      <div className="inbox-avatar-wrap">
+                        <Image src={conv.other_user.profile_image} alt={conv.other_user.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 640px) 100vw, 50vw" loading="lazy" />
+                      </div>
+                      {isOnline && <span className="inbox-online-dot" />}
+                    </>
+                  ) : (
+                    <>
+                      <div className={`inbox-avatar initials ${isActive ? 'active' : ''}`}>
+                        {getInitials(conv.other_user.name)}
+                      </div>
+                      {isOnline && <span className="inbox-online-dot" />}
+                    </>
+                  )}
+                </div>
+                <div className="inbox-conv-content">
+                  <div className="inbox-conv-top">
+                    <span className={`inbox-conv-name ${conv.unread > 0 ? 'bold' : ''}`}>
+                      {conv.other_user.name}
+                    </span>
+                    <span className={`inbox-conv-time ${conv.unread > 0 ? 'unread' : ''}`}>
                       {conv.last_message_at ? formatMessageTime(conv.last_message_at) : ''}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <p style={{ fontSize: '0.78rem', color: conv.unread > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)', fontWeight: conv.unread > 0 ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                  <div className="inbox-conv-bottom">
+                    <p className={`inbox-conv-preview ${conv.unread > 0 ? 'unread' : ''}`}>
                       {conv.last_message || 'Start a conversation'}
                     </p>
                     {conv.unread > 0 && (
-                      <span style={{ minWidth: 20, height: 20, borderRadius: 10, background: 'var(--primary)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px', flexShrink: 0 }}>
+                      <span className="inbox-unread-badge">
                         {conv.unread > 99 ? '99+' : conv.unread}
                       </span>
                     )}

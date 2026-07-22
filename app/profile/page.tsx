@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -9,16 +9,11 @@ import { useUserPosts, usePosts } from '@/lib/hooks/usePosts'
 import { PostCard } from '@/components/social/PostCard'
 import {
   Settings, Edit3, FileText, Bookmark, Heart, MessageSquare,
-  Users, Newspaper, Radio, Tv, Compass, Calendar, ExternalLink, BookmarkCheck,
-  Activity, Eye, ThumbsUp, PenLine
+  Users, BookmarkCheck, Activity, Eye, ThumbsUp, PenLine
 } from 'lucide-react'
 
 const QUICK_LINKS = [
   { label: 'Social Feed', href: '/social', icon: Users, desc: 'See what people are saying' },
-  { label: 'Explore', href: '/explore', icon: Compass, desc: 'Discover trending topics' },
-  { label: 'News', href: '/news', icon: Newspaper, desc: 'Latest breaking stories' },
-  { label: 'Radio', href: '/radio', icon: Radio, desc: 'Listen live' },
-  { label: 'TV', href: '/tv', icon: Tv, desc: 'Watch live streams' },
   { label: 'Communities', href: '/communities', icon: Users, desc: 'Join a community' },
 ]
 
@@ -30,6 +25,14 @@ const PROFILE_TABS = [
 ]
 
 export default function ProfilePage() {
+  return (
+    <Suspense>
+      <ProfilePageInner />
+    </Suspense>
+  )
+}
+
+function ProfilePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -124,12 +127,13 @@ export default function ProfilePage() {
             </div>
             {role === 'reader' && (
               <div className="profile-hero-actions-author">
-                <button 
+                <Link 
+                  href="/author-apply"
                   className="profile-hero-btn primary"
-                  onClick={() => router.push('/author-apply')}
+                  style={{ textDecoration: 'none' }}
                 >
-                  <PenLine size={15} /> Apply to Write
-                </button>
+                  <PenLine size={15} /> Become an Author
+                </Link>
               </div>
             )}
           </div>

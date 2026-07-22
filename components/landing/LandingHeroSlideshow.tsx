@@ -13,52 +13,56 @@ interface Slide {
 
 export function LandingHeroSlideshow({ slides }: { slides: Slide[] }) {
   const [current, setCurrent] = useState(0)
+  const [prev, setPrev] = useState<number | null>(null)
   const [fading, setFading] = useState(false)
 
   const goTo = useCallback((idx: number) => {
     if (idx === current || fading) return
+    setPrev(current)
     setFading(true)
     setTimeout(() => {
       setCurrent(idx)
       setFading(false)
+      setPrev(null)
     }, 600)
   }, [current, fading])
 
   useEffect(() => {
     if (slides.length <= 1) return
     const timer = setInterval(() => {
+      setPrev(current)
       setFading(true)
       setTimeout(() => {
-        setCurrent(prev => (prev + 1) % slides.length)
+        setCurrent(p => (p + 1) % slides.length)
         setFading(false)
+        setPrev(null)
       }, 600)
     }, 5000)
     return () => clearInterval(timer)
-  }, [slides.length])
+  }, [slides.length, current])
 
   if (!slides.length) return null
 
   const slide = slides[current]
+  const prevSlide = prev !== null ? slides[prev] : null
 
   return (
     <div className="landing-slideshow" aria-hidden="true">
-      {slides.map((s, i) => (
-        <div
-          key={s.slug}
-          className={`landing-slideshow-slide ${i === current ? 'active' : ''} ${i === current && fading ? 'fading' : ''}`}
-        >
-          {s.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={s.image} alt="" className="landing-slideshow-img" />
-          ) : (
-            <div className="landing-slideshow-fallback" />
-          )}
+      {prevSlide?.image && (
+        <div className="landing-slideshow-slide active fading">
+          <img src={prevSlide.image} alt="" className="landing-slideshow-img" loading="eager" />
         </div>
-      ))}
+      )}
+      <div className={`landing-slideshow-slide active ${fading ? '' : ''}`}>
+        {slide.image ? (
+          <img src={slide.image} alt="" className="landing-slideshow-img" loading="eager" fetchPriority="high" />
+        ) : (
+          <div className="landing-slideshow-fallback" />
+        )}
+      </div>
       <div className="landing-slideshow-overlay" />
       <div className="landing-slideshow-gradient" />
 
-      {/* Dots */}
       {slides.length > 1 && (
         <div className="landing-slideshow-dots">
           {slides.map((s, i) => (
@@ -72,7 +76,6 @@ export function LandingHeroSlideshow({ slides }: { slides: Slide[] }) {
         </div>
       )}
 
-      {/* Slide info bar */}
       <Link href={`/article/${slide.slug}`} className="landing-slideshow-info">
         <span className="landing-slideshow-cat">{slide.category}</span>
         <span className="landing-slideshow-title">{slide.title}</span>

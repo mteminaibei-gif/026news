@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { formatNumber } from '@/lib/utils'
 import { autoCategorize, getCategoryName, type CategorizationResult } from '@/lib/auto-categorize'
+import { createClient } from '@/lib/supabase/client'
 import {
   TrendingUp, Loader2, Eye, Clock,
   ChevronRight, Sparkles, ArrowLeft, Tag, Search, X,
@@ -168,19 +169,14 @@ export default function ExplorePage() {
   }, [])
 
   useEffect(() => {
-    let active = true
-    import('@/lib/supabase/client').then(({ createClient }) => {
-      if (!active) return
-      const supabase = createClient()
-      const channel = supabase
-        .channel('explore-categories')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
-          loadExploreData()
-        })
-        .subscribe()
-      return () => { supabase.removeChannel(channel) }
-    })
-    return () => { active = false }
+    const supabase = createClient()
+    const channel = supabase
+      .channel('explore-categories')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+        loadExploreData()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [loadExploreData])
 
   const loadCategoryArticles = useCallback(async (catId: number, pageNum: number) => {

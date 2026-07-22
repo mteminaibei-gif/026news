@@ -77,16 +77,16 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
 
       {/* ── Article Detail ── */}
       <div className="space-y-5">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-6 transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-6 transition-all duration-300 hover:shadow-md" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-subtle)' }}>
 
           {submitError && (
-            <div role="alert" className="text-sm px-4 py-3 rounded-xl mb-4" style={{ background: 'var(--error-light)', borderColor: 'var(--error)', border: '1px solid var(--error)', color: 'var(--error)' }}>
+            <div role="alert" className="text-sm px-4 py-3 rounded-xl mb-4" style={{ background: 'var(--error-light)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--error)', color: 'var(--error)' }}>
               {submitError}
             </div>
           )}
 
           {/* Headline */}
-          <div className="rounded-xl px-4 py-3 mb-5" style={{ background: 'var(--primary-light)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+          <div className="rounded-xl px-4 py-3 mb-5" style={{ background: 'var(--primary-light)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-subtle)' }}>
             <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--primary)', opacity: 0.6 }}>Headline</p>
             <p className="text-base font-bold text-gray-900">{article.title}</p>
           </div>
@@ -217,7 +217,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
       <div className="space-y-4">
 
         {/* Revision Notes */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-subtle)' }}>
           <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)', background: 'linear-gradient(to right, var(--primary-light), white)' }}>
             <h4 className="text-sm font-bold" style={{ color: 'var(--primary)' }}>📝 Revision Notes</h4>
           </div>
@@ -236,7 +236,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
 
         {/* Journalist Profile */}
         {article.author && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 transition-all duration-300 hover:shadow-md" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-subtle)' }}>
             <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--primary)' }}>✍️ Author Profile</h4>
             <div className="flex items-center gap-3 mb-3">
               {article.author.profile_image ? (
@@ -261,7 +261,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
         )}
 
         {/* Article Stats */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 transition-all duration-300 hover:shadow-md" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-subtle)' }}>
           <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--primary)' }}>📊 Article Stats</h4>
           <div className="space-y-0 divide-y" style={{ borderColor: 'var(--primary-light)' }}>
             {[
@@ -280,7 +280,7 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
         </div>
 
         {/* Audit Trail */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm p-4 transition-all duration-300 hover:shadow-md" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-subtle)' }}>
           <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--primary)' }}>🔒 Audit Trail</h4>
           <div className="space-y-3">
             {[

@@ -25,7 +25,9 @@ export async function middleware(request: NextRequest) {
   const isStaticAsset = /\/_next\/|(?:\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|mp4|webm)$)/.test(
     request.nextUrl.pathname
   )
-  const hasAuthCookie = request.cookies.has('sb-access-token') || request.cookies.has('supabase-auth-token')
+  const hasAuthCookie = request.cookies.getAll().some(
+    (c) => c.name.startsWith('sb-') && c.name.includes('auth-token')
+  )
 
   if (isGet && !isStaticAsset && !hasAuthCookie) {
     response.headers.set(

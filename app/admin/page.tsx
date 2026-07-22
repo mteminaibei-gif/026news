@@ -11,7 +11,7 @@ import { formatNumber, formatCurrency, timeAgo } from '@/lib/utils'
 import { BarChart } from '@/components/ui/BarChart'
 import { LiveRegistrationsFeed } from '@/components/admin/LiveRegistrationsFeed'
 import { RealtimeFeedFetcher } from '@/components/admin/RealtimeFeedFetcher'
-import { RealtimeNotifications } from '@/components/admin/RealtimeNotifications'
+import { LiveAuthorFeed } from '@/components/admin/LiveAuthorFeed'
 import { AccountCreationDialog } from '@/components/admin/AccountCreationDialog'
 
 interface Profile {
@@ -442,7 +442,7 @@ export default function AdminProfilePage() {
                 })}
               </div>
 
-              {/* Real-time Notifications */}{/* Real-time Notifications */}
+              {/* Live Author Activity Feed */}
               <div style={{
                 background: 'var(--glass-bg)',
                 backdropFilter: 'blur(var(--glass-blur)) saturate(140%)',
@@ -450,18 +450,9 @@ export default function AdminProfilePage() {
                 border: '1px solid var(--glass-border)',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--glow-soft)',
+                overflow: 'hidden',
               }}>
-                <div className="px-6 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--success)' }} />
-                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--primary)' }} />
-                    </span>
-                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Live</span>
-                  </div>
-                  <RealtimeNotifications />
-                </div>
+                <LiveAuthorFeed />
               </div>
 
               {/* Pending Journalist Applications */}

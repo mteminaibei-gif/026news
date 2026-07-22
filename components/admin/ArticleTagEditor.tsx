@@ -112,7 +112,7 @@ export function ArticleTagEditor({ articleId, currentTags, currentCategoryId, on
           <div>
             <label className="text-sm font-semibold block mb-2" style={{ color: 'var(--text-secondary)' }}>Tags</label>
             <div className="flex flex-wrap gap-2 mb-3">
-              {tags.map(tag => (
+              {[...new Set(tags)].map(tag => (
                 <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
                   {tag}
                   <button onClick={() => removeTag(tag)} className="ml-1 opacity-60 hover:opacity-100">&times;</button>

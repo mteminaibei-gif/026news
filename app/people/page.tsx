@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Search, UserPlus, Check } from 'lucide-react'
 import { useFollow } from '@/lib/hooks/useFollow'
+import { useProfile } from '@/lib/hooks/useAuth'
 
 interface Person {
   user_id: number
@@ -14,8 +15,9 @@ interface Person {
   is_following: boolean
 }
 
-function PersonRow({ p }: { p: Person }) {
+function PersonRow({ p, currentUserId }: { p: Person; currentUserId?: number }) {
   const { following, toggle, loading } = useFollow(p.user_id, p.is_following)
+  const isSelf = currentUserId && p.user_id === currentUserId
   return (
     <div className="social-post" style={{ alignItems: 'center', display: 'flex', gap: '0.75rem' }}>
       <Link href={`/journalists/${p.user_id}`} className="social-avatar-link">
@@ -27,13 +29,15 @@ function PersonRow({ p }: { p: Person }) {
         <Link href={`/journalists/${p.user_id}`} className="social-post-author">{p.name}</Link>
         <span className="social-post-sub">{p.role}{p.bio ? ` · ${p.bio.slice(0, 60)}` : ''}</span>
       </div>
-      <button
-        className={`social-follow-btn ${following ? 'following' : ''}`}
-        onClick={toggle}
-        disabled={loading}
-      >
-        {following ? (<><Check size={14} /> Following</>) : (<><UserPlus size={14} /> Follow</>)}
-      </button>
+      {!isSelf && (
+        <button
+          className={`social-follow-btn ${following ? 'following' : ''}`}
+          onClick={toggle}
+          disabled={loading}
+        >
+          {following ? (<><Check size={14} /> Following</>) : (<><UserPlus size={14} /> Follow</>)}
+        </button>
+      )}
     </div>
   )
 }
@@ -42,6 +46,7 @@ export default function PeoplePage() {
   const [q, setQ] = useState('')
   const [users, setUsers] = useState<Person[]>([])
   const [loading, setLoading] = useState(false)
+  const { data: profile } = useProfile(undefined)
 
   const search = useCallback(async (term: string) => {
     setLoading(true)
@@ -87,7 +92,7 @@ export default function PeoplePage() {
           )}
 
           <div className="social-feed">
-            {users.map(u => <PersonRow key={u.user_id} p={u} />)}
+            {users.map(u => <PersonRow key={u.user_id} p={u} currentUserId={profile?.user_id} />)}
           </div>
         </main>
       </div>

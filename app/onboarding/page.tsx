@@ -4,6 +4,7 @@ import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { Logo } from '@/components/layout/Logo'
 import { useRouter } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -57,6 +58,8 @@ export default function OnboardingPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   // Preferences
   const [interests, setInterests] = useState<string[]>([])
@@ -227,14 +230,34 @@ export default function OnboardingPage() {
                   onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
                 />
-                <input style={inputStyle} type="password" placeholder="Password (min 8, upper + lower + number)" value={password} onChange={(e) => setPassword(e.target.value)}
+                <div style={{ position: 'relative' }}>
+                <input style={{ ...inputStyle, paddingRight: 44 }} type={showPassword ? 'text' : 'password'} placeholder="Password (min 8, upper + lower + number)" value={password} onChange={(e) => setPassword(e.target.value)}
                   onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
                 />
-                <input style={inputStyle} type="password" placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                <button type="button" onClick={() => setShowPassword(v => !v)} tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                </div>
+                <div style={{ position: 'relative' }}>
+                <input style={{ ...inputStyle, paddingRight: 44 }} type={showConfirm ? 'text' : 'password'} placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
                   onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = 'var(--glow-primary)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
                 />
+                <button type="button" onClick={() => setShowConfirm(v => !v)} tabIndex={-1}
+                  aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                >
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                </div>
               </div>
               <button
                 onClick={() => setStep(1)}
@@ -455,7 +478,9 @@ export default function OnboardingPage() {
                   {loading && (
                     <span style={{
                       width: 18, height: 18,
-                      border: '2.5px solid oklch(100% 0 0 / 0.3)',
+                      borderWidth: '2.5px',
+                      borderStyle: 'solid',
+                      borderColor: 'oklch(100% 0 0 / 0.3)',
                       borderTopColor: '#fff',
                       borderRadius: '50%',
                       animation: 'spin 0.7s linear infinite',

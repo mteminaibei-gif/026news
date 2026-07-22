@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Moon, Sun, Search, Menu, Bell, LogOut, User, Users, Compass, Newspaper, FileText, Radio, Tv } from 'lucide-react'
+import { Moon, Sun, Search, Menu, Bell, LogOut, User, Users, Compass, Newspaper, FileText, Radio, Tv, LogIn, UserPlus } from 'lucide-react'
 import { Logo } from '@/components/layout/Logo'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { useUser, useProfile, useSignOut } from '@/lib/hooks/useAuth'
@@ -79,28 +79,30 @@ export function Navbar({ onMenu }: { onMenu: () => void }) {
           </Link>
         </div>
 
-        {/* Center: desktop nav links — only for logged-out visitors */}
-        {!user && (
-          <nav className="hidden md:flex items-center justify-center gap-0.5" aria-label="Main navigation">
-            {NAV_ITEMS.map(item => {
-              const active = item.match(pathname)
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-tab-link ${active ? 'active' : ''}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <item.Icon size={15} />
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
-        )}
-
-        {/* Center spacer when logged in (keeps logo left, actions right) */}
-        {user && <div />}
+        {/* Center: desktop nav links — visible for all users */}
+        <nav className="hidden md:flex items-center justify-center gap-0.5" aria-label="Main navigation">
+          {NAV_ITEMS.map(item => {
+            const active = item.match(pathname)
+            const isSamePage = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={(e) => {
+                  if (isSamePage) {
+                    e.preventDefault()
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
+                }}
+                className={`nav-tab-link ${active ? 'active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <item.Icon size={15} />
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
 
         {/* Right: search + actions */}
         <div className="flex items-center gap-2 justify-end">
@@ -200,10 +202,7 @@ export function Navbar({ onMenu }: { onMenu: () => void }) {
                 )}
               </button>
               {notifOpen && (
-                <>
-                  <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.3)' }} onClick={() => setNotifOpen(false)} />
-                  <NavbarNotificationDropdown userId={profile?.user_id ?? 0} role={(profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader'} onClose={() => setNotifOpen(false)} />
-                </>
+                <NavbarNotificationDropdown userId={profile?.user_id ?? 0} role={(profile?.role as 'admin' | 'journalist' | 'reader') ?? 'reader'} onClose={() => setNotifOpen(false)} />
               )}
             </div>
           )}
@@ -244,7 +243,7 @@ export function Navbar({ onMenu }: { onMenu: () => void }) {
                   onClick={() => signOutMutation.mutate()}
                   title="Sign out"
                   aria-label="Sign out"
-                  className="hidden sm:flex items-center justify-center"
+                  className="flex items-center justify-center"
                   style={{
                     width: 36, height: 36, borderRadius: 'var(--radius-xs)',
                     border: '1px solid var(--glass-border)', background: 'var(--glass-bg)',
@@ -259,38 +258,24 @@ export function Navbar({ onMenu }: { onMenu: () => void }) {
                 </button>
               </div>
             ) : (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  style={{
-                    height: 34, padding: '0 14px', borderRadius: 'var(--radius-xs)',
-                    fontSize: '0.82rem', fontWeight: 600,
-                    background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
-                    color: 'var(--text-primary)', cursor: 'pointer', textDecoration: 'none',
-                    display: 'inline-flex', alignItems: 'center',
-                    transition: 'all var(--dur-fast) var(--ease-out-expo)',
-                    backdropFilter: 'blur(4px)',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.background = 'var(--primary-light)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.background = 'var(--glass-bg)' }}
+                  className="navbar-auth-btn"
+                  title="Sign In"
+                  aria-label="Sign In"
                 >
-                  Sign In
+                  <LogIn size={16} />
+                  <span className="navbar-auth-label">Sign In</span>
                 </Link>
                 <Link
                   href="/onboarding"
-                  style={{
-                    height: 34, padding: '0 14px', borderRadius: 'var(--radius-xs)',
-                    fontSize: '0.82rem', fontWeight: 600,
-                    background: 'var(--grad-primary)', border: '1px solid transparent',
-                    color: '#fff', cursor: 'pointer', textDecoration: 'none',
-                    display: 'inline-flex', alignItems: 'center',
-                    transition: 'all var(--dur-fast) var(--ease-out-expo)',
-                    boxShadow: 'var(--glow-primary)',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 20px -4px var(--primary)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--glow-primary)'; e.currentTarget.style.transform = 'none' }}
+                  className="navbar-auth-btn primary"
+                  title="Sign Up"
+                  aria-label="Sign Up"
                 >
-                  Sign Up
+                  <UserPlus size={16} />
+                  <span className="navbar-auth-label">Sign Up</span>
                 </Link>
               </div>
             )

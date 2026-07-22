@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useNotifications, type AppNotification, type NotificationType } from '@/lib/hooks/useNotifications'
@@ -45,11 +46,16 @@ export function NavbarNotificationDropdown({ userId, role, onClose }: Props) {
     setMenuId(menuId === id ? null : id)
   }
 
-  return (
-    <div
-      style={{
-        position: 'absolute', right: 0, top: '100%', marginTop: 8,
-        width: 'min(380px, calc(100vw - 24px))',
+  return createPortal(
+    <>
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.3)' }}
+        onClick={onClose}
+      />
+      <div
+        style={{
+          position: 'fixed', right: 16, top: 56,
+        width: 'min(380px, calc(100vw - 32px))',
         maxHeight: 'min(480px, calc(100dvh - 80px))',
         background: 'var(--glass-bg-strong)',
         backdropFilter: 'blur(calc(var(--glass-blur) + 4px)) saturate(160%)',
@@ -57,7 +63,7 @@ export function NavbarNotificationDropdown({ userId, role, onClose }: Props) {
         borderRadius: 'var(--radius-sm)',
         boxShadow: 'var(--glow-soft), 0 0 0 1px var(--glass-border)',
         border: '1px solid var(--glass-border)',
-        zIndex: 50,
+        zIndex: 9999,
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
         animation: 'notif-fade-in 0.18s var(--ease-out-expo)',
@@ -294,5 +300,7 @@ export function NavbarNotificationDropdown({ userId, role, onClose }: Props) {
         }
       `}</style>
     </div>
+    </>,
+    document.body
   )
 }

@@ -359,7 +359,9 @@ export default function SignupPage() {
                 {loading && (
                   <span style={{
                     width: 18, height: 18,
-                    border: '2.5px solid oklch(100% 0 0 / 0.3)',
+                    borderWidth: '2.5px',
+                    borderStyle: 'solid',
+                    borderColor: 'oklch(100% 0 0 / 0.3)',
                     borderTopColor: '#fff',
                     borderRadius: '50%',
                     animation: 'spin 0.7s linear infinite',
