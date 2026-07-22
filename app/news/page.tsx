@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 
-import { createClient } from '@/lib/supabase/client'
 import { formatNumber, stripHtml } from '@/lib/utils'
 import { useCategories } from '@/lib/hooks/useCategories'
 import { Clock, Eye, Bookmark, BookmarkCheck, Radio, Filter, Loader2, RefreshCw, ChevronDown } from 'lucide-react'
@@ -89,9 +88,21 @@ export default function NewsPage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const offsetRef = useRef(0)
-  const latestTimestampRef = useRef<string>('')
+  const latestTimestampRef = useRef('')
 
-  const supabase = createClient()
+  const buildApiParams = useCallback((reset: boolean, forPoll = false) => {
+    const params = new URLSearchParams()
+    if (!forPoll) {
+      params.set('offset', String(reset ? 0 : offsetRef.current))
+      params.set('limit', String(PAGE_SIZE))
+    }
+    params.set('sort', sortBy === 'Most Popular' ? 'trending' : 'latest')
+    params.set('post_type', 'news')
+    if (activeCategory !== 'All') params.set('category', activeCategory)
+    if (activeRegion !== 'All Regions') params.set('region', activeRegion)
+    if (forPoll && latestTimestampRef.current) params.set('after', latestTimestampRef.current)
+    return params
+  }, [activeCategory, activeRegion, sortBy])
 
   const fetchArticles = useCallback(async (reset = false) => {
     if (reset) {
@@ -100,35 +111,13 @@ export default function NewsPage() {
       setHasMore(true)
     }
 
-    let query = supabase
-      .from('articles')
-      .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, category_id, author:users(name, profile_image), category:categories(name)')
-      .eq('status', 'published')
-      .eq('post_type', 'news')
-
-    if (activeCategory !== 'All') {
-      const { data: catRow } = await supabase.from('categories').select('category_id').eq('name', activeCategory).maybeSingle() as { data: { category_id: number } | null }
-      if (catRow) query = query.eq('category_id', catRow.category_id)
-    }
-
-    if (activeRegion !== 'All Regions') {
-      const regionMap: Record<string, string> = {
-        'Kenya': 'KE', 'East Africa': 'EA', 'Africa': 'AF', 'World': 'INTL',
-      }
-      const code = regionMap[activeRegion]
-      if (code) query = query.contains('regions', [code])
-    }
-
-    if (sortBy === 'Most Popular') {
-      query = query.order('views', { ascending: false })
-    } else {
-      query = query.order('created_at', { ascending: false })
-    }
-
-    query = query.range(offsetRef.current, offsetRef.current + PAGE_SIZE - 1)
-
-    const { data } = await query
-    const fetched = (data as unknown as NewsArticle[]) ?? []
+    const params = buildApiParams(reset, false)
+    let res: Response
+    try {
+      res = await fetch(`/api/articles?${params}`)
+    } catch { return }
+    const data = await res.json()
+    const fetched = (data.articles ?? []) as NewsArticle[]
 
     if (fetched.length < PAGE_SIZE) setHasMore(false)
 
@@ -142,7 +131,7 @@ export default function NewsPage() {
     }
 
     offsetRef.current += fetched.length
-  }, [activeCategory, activeRegion, sortBy, supabase])
+  }, [buildApiParams])
 
   useEffect(() => {
     setLoading(true)
@@ -172,37 +161,21 @@ export default function NewsPage() {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!latestTimestampRef.current) return
-
-      let query = supabase
-        .from('articles')
-        .select('article_id, slug, title, excerpt, content, featured_image, views, created_at, tags, source_name, category_id, author:users(name, profile_image), category:categories(name)')
-        .eq('status', 'published')
-        .eq('post_type', 'news')
-        .gt('created_at', latestTimestampRef.current)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (activeCategory !== 'All') {
-        const { data: catRow } = await supabase.from('categories').select('category_id').eq('name', activeCategory).maybeSingle() as { data: { category_id: number } | null }
-        if (catRow) query = query.eq('category_id', catRow.category_id)
-      }
-      if (activeRegion !== 'All Regions') {
-        const regionMap: Record<string, string> = { 'Kenya': 'KE', 'East Africa': 'EA', 'Africa': 'AF', 'World': 'INTL' }
-        const code = regionMap[activeRegion]
-        if (code) query = query.contains('regions', [code])
-      }
-
-      const { data } = await query
-      const newArticles = (data as unknown as NewsArticle[]) ?? []
-      if (newArticles.length > 0) {
-        setNewCount(prev => prev + newArticles.length)
-        setArticles(prev => sortByRegionPriority([...newArticles, ...prev]))
-        latestTimestampRef.current = newArticles[0].created_at
-      }
-    }, 60000)
-
+      const params = buildApiParams(false, true)
+      params.set('limit', '20')
+      try {
+        const res = await fetch(`/api/articles?${params}`)
+        const data = await res.json()
+        const newArticles = (data.articles ?? []) as NewsArticle[]
+        if (newArticles.length > 0) {
+          setNewCount(prev => prev + newArticles.length)
+          setArticles(prev => sortByRegionPriority([...newArticles, ...prev]))
+          latestTimestampRef.current = newArticles[0].created_at
+        }
+      } catch { /* ignore */ }
+    }, 30000)
     return () => clearInterval(interval)
-  }, [activeCategory, activeRegion, supabase])
+  }, [buildApiParams])
 
   useEffect(() => {
     const el = scrollRef.current

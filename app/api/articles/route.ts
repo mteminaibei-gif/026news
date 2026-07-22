@@ -56,6 +56,9 @@ export async function GET(req: NextRequest) {
       offset: searchParams.get('offset') ? Number(searchParams.get('offset')) : undefined,
       sort: searchParams.get('sort') ?? undefined,
       search: searchParams.get('search') ?? undefined,
+      after: searchParams.get('after') ?? undefined,
+      post_type: searchParams.get('post_type') ?? undefined,
+      region: searchParams.get('region') ?? undefined,
     }
 
     const validatedFilters = articlesFilterSchema.parse(filterParams)
@@ -64,7 +67,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from('articles')
       .select(
-        '*, author:users(user_id,name,profile_image,bio), category:categories(name)',
+        'article_id,title,slug,excerpt,featured_image,views,created_at,tags,source_name,source_reference,is_aggregated,category_id,reading_time_minutes,like_count,share_count,monetization_type,status,published_at,updated_at,post_type,author:users(user_id,name,profile_image,bio),category:categories(name)',
         { count: 'exact' }
       )
       .eq('status', 'published')
@@ -94,6 +97,22 @@ export async function GET(req: NextRequest) {
 
     if (validatedFilters.search) {
       query = query.textSearch('search_vector', validatedFilters.search)
+    }
+
+    if (validatedFilters.after) {
+      query = query.gt('created_at', validatedFilters.after)
+    }
+
+    if (validatedFilters.post_type) {
+      query = query.eq('post_type', validatedFilters.post_type)
+    }
+
+    if (validatedFilters.region) {
+      const regionMap: Record<string, string> = {
+        'Kenya': 'KE', 'East Africa': 'EA', 'Africa': 'AF', 'World': 'INTL',
+      }
+      const code = regionMap[validatedFilters.region]
+      if (code) query = query.contains('regions', [code])
     }
 
     const { data, error, count } = await query

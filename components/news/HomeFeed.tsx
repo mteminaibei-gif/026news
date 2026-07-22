@@ -57,26 +57,12 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
   useEffect(() => {
     const supabase = createClient()
 
-    function sleep(ms: number) {
-      return new Promise((resolve) => setTimeout(resolve, ms))
-    }
-
-    async function fetchArticleWithRetry(articleId: number, attempts = 3, delay = 250) {
-      let lastData: ArticleWithAuthor | null = null
-      for (let i = 0; i < attempts; i++) {
-        const { data, error } = await supabase
-          .from('articles')
-          .select('*, author:users(user_id,name,profile_image,bio), category:categories(name), journalist:journalists(user_id,name,avatar_url,bio)')
-          .eq('article_id', articleId)
-          .single()
-
-        if (!error && data) {
-          lastData = data as unknown as ArticleWithAuthor
-          if (lastData.content && lastData.author) return lastData
-        }
-        await sleep(delay)
-      }
-      return lastData
+    async function fetchArticleFromApi(articleId: number) {
+      try {
+        const res = await fetch(`/api/articles/single?id=${articleId}`)
+        if (!res.ok) return null
+        return (await res.json()) as unknown as ArticleWithAuthor
+      } catch { return null }
     }
 
     const channel = supabase
@@ -86,7 +72,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
         { event: 'INSERT', schema: 'public', table: 'articles' },
         async (payload) => {
           if (payload.new.status !== 'published') return
-          const newArt = await fetchArticleWithRetry(payload.new.article_id)
+          const newArt = await fetchArticleFromApi(payload.new.article_id)
           if (!newArt) return
           const art = newArt as unknown as ArticleWithAuthor
           if (categoryFilterName && art.category?.name !== categoryFilterName) return
@@ -104,7 +90,7 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
             setArticles((prev) => prev.filter((a) => a.article_id !== payload.new.article_id))
             return
           }
-          const updatedArt = await fetchArticleWithRetry(payload.new.article_id)
+          const updatedArt = await fetchArticleFromApi(payload.new.article_id)
           if (!updatedArt) return
           const art = updatedArt as unknown as ArticleWithAuthor
           if (categoryFilterName && art.category?.name !== categoryFilterName) {
@@ -137,19 +123,12 @@ export function HomeFeed({ initialArticles, categoryFilterName }: Props) {
     loadingMoreRef.current = true
     setLoadingMore(true)
     try {
-      const supabase = createClient()
       const from = loadedRef.current
-      let query = supabase
-        .from('articles')
-        .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-        .eq('status', 'published' as never)
-        .order('created_at', { ascending: false })
-        .range(from, from + PAGE - 1)
-      const { data } = await query
-      let rows = (data ?? []) as ArticleWithAuthor[]
-      if (categoryFilterName) {
-        rows = rows.filter((r) => r.category?.name === categoryFilterName)
-      }
+      const params = new URLSearchParams({ offset: String(from), limit: String(PAGE) })
+      if (categoryFilterName) params.set('category', categoryFilterName)
+      const res = await fetch(`/api/articles?${params}`)
+      const data = await res.json()
+      let rows = (data.articles ?? []) as ArticleWithAuthor[]
       loadedRef.current = from + rows.length
       if (rows.length < PAGE) setHasMore(false)
       if (rows.length) {

@@ -119,6 +119,9 @@ export const articlesFilterSchema = z.object({
   offset: z.number().int().min(0).default(0),
   sort: z.enum(['recent', 'popular', 'trending']).default('recent'),
   search: z.string().max(200, 'Search query too long').optional(),
+  after: z.string().optional(),
+  post_type: z.string().optional(),
+  region: z.string().optional(),
 })
 
 /**

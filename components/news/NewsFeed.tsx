@@ -67,28 +67,19 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
   useEffect(() => {
     const supabase = createClient()
 
-    async function fetchArticleWithRetry(articleId: number, attempts = 3, delay = 250) {
-      let lastData: ArticleWithAuthor | null = null
-      for (let i = 0; i < attempts; i++) {
-        const { data, error } = await supabase
-          .from('articles')
-          .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-          .eq('article_id', articleId)
-          .single()
-        if (!error && data) {
-          lastData = data as unknown as ArticleWithAuthor
-          if (lastData.content && lastData.author) return lastData
-        }
-        await new Promise(r => setTimeout(r, delay))
-      }
-      return lastData
+    async function fetchArticleFromApi(articleId: number) {
+      try {
+        const res = await fetch(`/api/articles/single?id=${articleId}`)
+        if (!res.ok) return null
+        return (await res.json()) as unknown as ArticleWithAuthor
+      } catch { return null }
     }
 
     const channel = supabase
       .channel('live-news-feed')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'articles' }, async (payload) => {
         if (payload.new.status !== 'published') return
-        const art = await fetchArticleWithRetry(payload.new.article_id)
+        const art = await fetchArticleFromApi(payload.new.article_id)
         if (!art) return
         if (categoryFilter && art.category?.name !== categoryFilter) return
         setArticles(prev => {
@@ -101,7 +92,7 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
           setArticles(prev => prev.filter(a => a.article_id !== payload.new.article_id))
           return
         }
-        const art = await fetchArticleWithRetry(payload.new.article_id)
+        const art = await fetchArticleFromApi(payload.new.article_id)
         if (!art) return
         setArticles(prev => {
           if (!prev.some(a => a.article_id === art.article_id)) return [art, ...prev]
@@ -122,15 +113,12 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
     loadingMoreRef.current = true
     setLoadingMore(true)
     try {
-      const supabase = createClient()
       const from = loadedRef.current
-      const { data } = await supabase
-        .from('articles')
-        .select('*, author:users(user_id,name,profile_image,bio), category:categories(name)')
-        .eq('status', 'published' as never)
-        .order('created_at', { ascending: false })
-        .range(from, from + PAGE - 1)
-      const rows = (data ?? []) as ArticleWithAuthor[]
+      const params = new URLSearchParams({ offset: String(from), limit: String(PAGE) })
+      if (categoryFilter) params.set('category', categoryFilter)
+      const res = await fetch(`/api/articles?${params}`)
+      const data = await res.json()
+      const rows = (data.articles ?? []) as ArticleWithAuthor[]
       loadedRef.current = from + rows.length
       if (rows.length < PAGE) setHasMore(false)
       if (rows.length) {
@@ -144,7 +132,7 @@ export function NewsFeed({ initialArticles, categoryFilter }: Props) {
       setLoadingMore(false)
       loadingMoreRef.current = false
     }
-  }, [])
+  }, [categoryFilter])
 
   useEffect(() => { loadMoreRef.current = loadMore }, [loadMore])
 
