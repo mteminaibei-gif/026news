@@ -52,6 +52,13 @@ export async function GET(request: NextRequest) {
       await supabase.auth.exchangeCodeForSession(code)
       response = NextResponse.redirect(`${origin}${safeNext}`)
     } else if (token_hash && type) {
+      // Build the redirect URL FIRST so the supabase client's setAll
+      // writes cookies onto the actual response returned to the browser.
+      const target = new URL('/verify-email', origin)
+      target.searchParams.set('verified', '1')
+      if (email) target.searchParams.set('email', email)
+      response = NextResponse.redirect(target.toString())
+
       const { error } = await supabase.auth.verifyOtp({
         token_hash,
         type: type as never,
@@ -60,11 +67,6 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         response = NextResponse.redirect(`${origin}/login?error=verification_failed`)
-      } else {
-        const target = new URL('/verify-email', origin)
-        target.searchParams.set('verified', '1')
-        if (email) target.searchParams.set('email', email)
-        response = NextResponse.redirect(target.toString())
       }
     } else {
       response = NextResponse.redirect(`${origin}${safeNext}`)

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatDate } from '@/lib/utils'
+import { formatDate, safeRefresh } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
 type FeedRow = {
@@ -67,7 +67,7 @@ export function AdminSourcesClient({ feeds: initialFeeds, categories }: Props) {
           (errs ? `, ${errs} errors` : '') + ` across ${f} feeds.`
         )
       }
-      router.refresh()
+      safeRefresh(router)
     } catch {
       setFetchResult('❌ Fetch failed — check server logs.')
     } finally {

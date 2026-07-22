@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Sparkles, MoreHorizontal, Eye, Pencil, Trash2, Star, StarOff } from 'lucide-react'
+import { safeRefresh } from '@/lib/utils'
 
 import { AdminArticleActions } from '@/components/admin/AdminArticleActions'
 import { AdminArticleEditTags } from '@/components/admin/AdminArticleEditTags'
@@ -125,7 +126,7 @@ export function AdminArticlesTable({ articles }: { articles: ArticleRow[] }) {
       </div>
 
       {seoFor && (
-        <ArticleSEOPanel article={seoFor} onClose={() => setSeoFor(null)} onApplied={() => { setSeoFor(null); router.refresh() }} />
+        <ArticleSEOPanel article={seoFor} onClose={() => setSeoFor(null)} onApplied={() => { setSeoFor(null); safeRefresh(router) }} />
       )}
     </>
   )

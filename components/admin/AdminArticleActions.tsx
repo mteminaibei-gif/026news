@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
+import { safeRefresh } from '@/lib/utils'
 import { Check, X, Trash2 } from 'lucide-react'
 
 interface Props {
@@ -24,7 +25,7 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
         body: JSON.stringify({ id: articleId, action: 'approve', notes: '' }),
       })
       if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Failed', 'error'); return }
-      toast('Published!', 'success'); router.refresh()
+      toast('Published!', 'success'); safeRefresh(router)
     } catch { toast('Network error', 'error') } finally { setLoading(null) }
   }
 
@@ -37,7 +38,7 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
         body: JSON.stringify({ id: articleId, action: 'reject', notes: '' }),
       })
       if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Failed', 'error'); return }
-      toast('Rejected', 'info'); router.refresh()
+      toast('Rejected', 'info'); safeRefresh(router)
     } catch { toast('Network error', 'error') } finally { setLoading(null) }
   }
 
@@ -46,7 +47,7 @@ export function AdminArticleActions({ articleId, currentStatus }: Props) {
     try {
       const res = await fetch(`/api/admin/articles?id=${articleId}`, { method: 'DELETE' })
       if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Failed', 'error'); return }
-      toast('Deleted', 'success'); router.refresh()
+      toast('Deleted', 'success'); safeRefresh(router)
     } catch { toast('Network error', 'error') } finally { setLoading(null) }
   }
 

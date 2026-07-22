@@ -116,9 +116,9 @@ function ForgotPasswordForm() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
       <div style={{ maxWidth: 440, width: '100%', animation: 'futr-fade-up 0.6s var(--ease-out-expo) both' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link href="/" style={{ display: 'inline-block', marginBottom: 16 }}>
+          <div style={{ marginBottom: 16 }}>
             <Logo size="lg" href="/" />
-          </Link>
+          </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>Reset Password</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Enter your email to receive a reset link</p>
         </div>
@@ -404,9 +404,9 @@ function VerifyToken({ token }: { token: string }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
       <div style={{ maxWidth: 440, width: '100%', animation: 'futr-fade-up 0.6s var(--ease-out-expo) both' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link href="/" style={{ display: 'inline-block', marginBottom: 16 }}>
+          <div style={{ marginBottom: 16 }}>
             <Logo size="lg" href="/" />
-          </Link>
+          </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>New Password</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Enter your new password for <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{userEmail}</span></p>
         </div>

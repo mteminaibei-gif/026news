@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, safeRefresh } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 
 type JournalistEarn = { user_id: number; name: string; email: string; total: number; pending: number }
@@ -44,7 +44,7 @@ export function AdminPayoutPanel({ journalistEarnings, payouts }: Props) {
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Payout failed'); return }
       setResult(`✅ ${data.payouts_created} payout(s) created — Author: ${formatCurrency(data.journalist_total)} · Platform: ${formatCurrency(data.platform_total)}`)
-      router.refresh()
+      safeRefresh(router)
     } catch {
       setError('Network error — try again.')
     } finally {

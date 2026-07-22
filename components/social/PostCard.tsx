@@ -103,7 +103,8 @@ export function PostCard({ post, onToggleLike, onOpen, onDelete, onEdit, onHide 
     const text = draft.trim()
     if (!text) return
     setDraft('')
-    await addComment(text)
+    const ok = await addComment(text)
+    if (!ok) setDraft(text)
   }
 
   const share = async () => {

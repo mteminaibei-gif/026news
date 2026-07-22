@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Share2, MessageCircle, Mail } from 'lucide-react'
 
 interface InviteAuthorModalProps {
@@ -13,12 +13,17 @@ interface InviteAuthorModalProps {
 export function InviteAuthorModal({ isOpen, onClose, authorName = 'Author', authorEmail = '' }: InviteAuthorModalProps) {
   const [copied, setCopied] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState<'whatsapp' | 'email' | 'twitter' | null>(null)
+  const [origin, setOrigin] = useState('')
+
+  useEffect(() => {
+    if (isOpen) setOrigin(window.location.origin)
+  }, [isOpen])
 
   if (!isOpen) return null
 
-  const inviteMessage = `Join 026connet! as an author and start earning from your stories! Sign up and begin publishing today. ${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=invite`
+  const inviteMessage = `Join 026connet! as an author and start earning from your stories! Sign up and begin publishing today. ${origin}/onboarding?ref=invite`
 
-  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding?ref=journalist_invite`
+  const inviteLink = `${origin}/onboarding?ref=journalist_invite`
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink)

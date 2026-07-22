@@ -37,7 +37,8 @@ function stopHeartbeat() {
   if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null }
 }
 
-if (typeof window !== 'undefined') {
+function setupGlobalListeners() {
+  if (typeof window === 'undefined') return
   window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') send({ type: 'leave' })
     else startHeartbeat()
@@ -47,6 +48,14 @@ if (typeof window !== 'undefined') {
 
 export function usePageView(pathname: string) {
   const lastPath = useRef(pathname)
+  const listenersSetup = useRef(false)
+
+  useEffect(() => {
+    if (!listenersSetup.current) {
+      setupGlobalListeners()
+      listenersSetup.current = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!pathname) return

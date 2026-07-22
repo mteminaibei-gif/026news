@@ -12,10 +12,11 @@ export function ShareBar({ title, slug }: Props) {
   const [copied, setCopied] = useState(false)
   const [canShare, setCanShare] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [url, setUrl] = useState(`https://036connect.vercel.app/article/${slug}`)
 
-  const url = typeof window !== 'undefined'
-    ? window.location.href
-    : `https://026connet!.vercel.app/article/${slug}`
+  useEffect(() => {
+    setUrl(window.location.href)
+  }, [slug])
 
   const shareText = `Read this article on 026connet!: ${title}`
 

@@ -100,12 +100,10 @@ export async function updateSession(request: NextRequest) {
 
   const profile = rawProfile as { role: string } | null
 
-  // If DB query fails or profile not found, deny access
+  // If DB query fails or profile not found, allow through — the user may
+  // be completing onboarding. The login API handles missing profiles.
   if (!profile || profileErr) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('error', 'profile_not_found')
-    return NextResponse.redirect(url)
+    return supabaseResponse
   }
 
   // Wrong role — redirect to login

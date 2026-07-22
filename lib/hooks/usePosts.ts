@@ -159,7 +159,7 @@ export function usePostComments(postId: number | null) {
   useEffect(() => { load() }, [load])
 
   const addComment = useCallback(async (text: string, parent_comment_id?: number) => {
-    if (!postId) return
+    if (!postId) return false
     const res = await fetch(`/api/posts/${postId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -168,7 +168,9 @@ export function usePostComments(postId: number | null) {
     if (res.ok) {
       const data = await res.json()
       setComments(prev => [...prev, data.comment as SocialComment])
+      return true
     }
+    return false
   }, [postId])
 
   return { comments, loading, addComment, refetch: load }

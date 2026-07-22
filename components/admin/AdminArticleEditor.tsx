@@ -150,7 +150,6 @@ export function AdminArticleEditor({ initialData, redirectTo = '/admin/articles'
       setSaved(true)
       if (!isEdit) localStorage.removeItem(AUTOSAVE_KEY)
       router.push(redirectTo)
-      router.refresh()
     } catch { setSaveError('Unexpected error — please try again.') }
     finally   { setSaving(false) }
   }, [title, content, excerpt, tags, categoryId, sourceRef, monetization, status, imagePreview, imageFile, isEdit, initialData, redirectTo, router])

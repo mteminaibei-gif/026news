@@ -64,7 +64,6 @@ export function AdminReviewClient({ article, authorArticleCount }: Props) {
       }
       const redirectFilter = action === 'approve' ? 'published' : action === 'reject' ? 'rejected' : 'under_review'
       router.push(`/admin/articles?filter=${redirectFilter}`)
-      router.refresh()
     } catch {
       setSubmitError('Network error. Please try again.')
     } finally {

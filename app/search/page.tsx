@@ -139,9 +139,10 @@ export default function SearchPage() {
             className="flex items-center gap-3 rounded-xl px-5 py-4 transition-all"
             style={{
               background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: query ? 'var(--primary)' : 'var(--border)',
               boxShadow: query ? '0 0 0 3px var(--primary-light)' : 'var(--card-shadow)',
-              borderColor: query ? 'var(--primary)' : undefined,
             }}
           >
             <SearchIcon size={20} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />

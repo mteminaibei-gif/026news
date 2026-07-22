@@ -208,7 +208,11 @@ export default async function ArticlePage({ params }: Props) {
 
   // Gate full content behind auth: anonymous visitors read the intro only.
   const { data: authData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
-  const isAuthed = !!authData.user
+  let isAuthed = !!authData.user
+  if (!isAuthed) {
+    const { data: { session } } = await supabase.auth.getSession()
+    isAuthed = !!session
+  }
 
   let rawArticle: unknown = null
   try {

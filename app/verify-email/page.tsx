@@ -25,7 +25,7 @@ function VerifyEmailInner() {
 
   useEffect(() => {
     if (!success) return
-    const t = setTimeout(() => router.push('/social'), 4000)
+    const t = setTimeout(() => router.push('/welcome'), 4000)
     return () => clearTimeout(t)
   }, [success, router])
 
@@ -47,9 +47,9 @@ function VerifyEmailInner() {
   return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: '32px 24px' }}>
       <div style={{ width: '100%', maxWidth: 480, textAlign: 'center', animation: 'futr-fade-up 0.6s var(--ease-out-expo) both' }}>
-        <Link href="/" style={{ display: 'inline-block', marginBottom: 40 }}>
+        <div style={{ marginBottom: 40 }}>
           <Logo size="md" href="/" />
-        </Link>
+        </div>
 
         {/* ── Check your email ── */}
         {!success && (
@@ -248,7 +248,7 @@ function VerifyEmailInner() {
               ))}
             </div>
 
-            <Link href="/social" style={{
+            <Link href="/welcome" style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               width: '100%', padding: '14px 28px', borderRadius: 10,
               fontSize: '0.88rem', fontWeight: 700,

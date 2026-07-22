@@ -386,9 +386,8 @@ export default function AdminProfilePage() {
               padding: '14px 22px', background: 'none', border: 'none', cursor: 'pointer',
               fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 7,
               color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-tertiary)',
-              borderBottom: '2px solid transparent',
+              borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
               transition: 'all 0.2s var(--ease-out-expo)',
-              ...(activeTab === tab.id ? { borderBottomColor: 'var(--primary)' } : {}),
             }}>
             <tab.icon size={16} /> {tab.label}
           </button>

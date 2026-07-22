@@ -30,7 +30,8 @@ interface Notification {
 }
 
 export function ChatWidget({ receiverId, receiverName, receiverImage }: ChatWidgetProps) {
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')

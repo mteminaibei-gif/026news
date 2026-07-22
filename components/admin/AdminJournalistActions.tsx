@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
+import { safeRefresh } from '@/lib/utils'
 
 interface Props {
   userId: number
@@ -30,7 +31,7 @@ export function AdminJournalistActions({ userId, currentStatus }: Props) {
         return
       }
       toast(`Author ${newStatus === 'banned' ? 'suspended' : 'reactivated'}.`, 'success')
-      router.refresh()
+      safeRefresh(router)
     } catch {
       toast('Network error. Please try again.', 'error')
     } finally {

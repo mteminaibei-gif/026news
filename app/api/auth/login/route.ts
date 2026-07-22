@@ -41,36 +41,58 @@ export async function POST(req: NextRequest) {
         .eq('auth_id', verifiedUser.id)
         .single()
       if (profileError) {
-        console.error('[Login] Profile lookup failed:', profileError.message)
-        return NextResponse.json(
-          { error: 'User profile not found. Please ensure your account is properly set up.' },
-          { status: 401 }
-        )
+        // Profile may not exist yet — try by email as fallback
+        if (verifiedUser.email) {
+          const { data: emailProfile } = await supabase
+            .from('users')
+            .select('role, name, profile_image, user_id, auth_id')
+            .eq('email', verifiedUser.email)
+            .maybeSingle()
+          if (emailProfile) {
+            // Link existing profile to this auth_id
+            if (!emailProfile.auth_id || emailProfile.auth_id !== verifiedUser.id) {
+              await supabase.from('users').update({ auth_id: verifiedUser.id }).eq('email', verifiedUser.email)
+            }
+            profile = { role: emailProfile.role, name: emailProfile.name, profile_image: emailProfile.profile_image, user_id: emailProfile.user_id }
+          } else {
+            // No profile exists at all — auto-create one
+            const insertPayload: Record<string, unknown> = {
+              auth_id: verifiedUser.id,
+              email: verifiedUser.email,
+              name: verifiedUser.user_metadata?.name ?? verifiedUser.email.split('@')[0],
+              role: 'reader',
+              status: 'active',
+              password_hash: '',
+              social_links: {},
+            }
+            const { data: newProfile } = await supabase
+              .from('users')
+              .insert(insertPayload as never)
+              .select('user_id, role, name, profile_image')
+              .single()
+            if (newProfile) {
+              profile = newProfile as unknown as UserProfile
+            }
+          }
+        }
+      } else {
+        profile = rawProfile as unknown as UserProfile | null
       }
-      profile = rawProfile as unknown as UserProfile | null
     } catch (err) {
       console.error('[Login] Profile query exception:', err)
-      return NextResponse.json(
-        { error: 'User profile not found. Please ensure your account is properly set up.' },
-        { status: 401 }
-      )
     }
 
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'User profile not found. Please contact support.' },
-        { status: 401 }
-      )
-    }
+    // If no profile found after all fallbacks, return minimal user data
+    const safeProfile = profile ?? { role: 'reader' as const, name: '', profile_image: null, user_id: null }
 
     return NextResponse.json({
       user: {
         id:            verifiedUser.id,
         email:         verifiedUser.email,
-        role:          profile.role ?? 'reader',
-        name:          profile.name ?? '',
-        profile_image: profile.profile_image ?? null,
-        user_id:       profile.user_id ?? null,
+        role:          safeProfile.role,
+        name:          safeProfile.name ?? '',
+        profile_image: safeProfile.profile_image ?? null,
+        user_id:       safeProfile.user_id ?? null,
       },
     })
   } catch (err) {

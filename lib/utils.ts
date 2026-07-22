@@ -1,6 +1,13 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { formatDistanceToNow, format } from 'date-fns'
+import { type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+
+export function safeRefresh(router: AppRouterInstance) {
+  const y = window.scrollY
+  router.refresh()
+  requestAnimationFrame(() => window.scrollTo({ top: y }))
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

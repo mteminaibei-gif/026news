@@ -347,7 +347,7 @@ export function MessageWidget({ userId, role }: { userId: number | null; role?: 
                             <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{c.other_user.name.charAt(0).toUpperCase()}</div>
                           )}
                           {onlineUsers.has(c.other_user.user_id) && (
-                            <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-elevated)' }} />
+                            <span style={{ position: 'absolute', bottom: -1, right: -1, width: 11, height: 11, borderRadius: '50%', background: 'var(--success)', border: '2px solid var(--bg-elevated)', zIndex: 1 }} />
                           )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>

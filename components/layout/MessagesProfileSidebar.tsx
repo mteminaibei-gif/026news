@@ -149,12 +149,12 @@ export function MessagesProfileSidebar({ userId, profile }: { userId: number; pr
               style={{ borderColor: 'var(--border-subtle)' }}
             >
               <div className="flex items-center gap-3">
-                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[var(--bg-inset)]">
+                <div className="relative w-8 h-8 rounded-full bg-[var(--bg-inset)] shrink-0">
                   {f.profile_image
-                    ? <img src={f.profile_image} alt={f.name} className="w-full h-full object-cover" />
+                    ? <img src={f.profile_image} alt={f.name} className="w-full h-full object-cover rounded-full" />
                     : <span className="flex items-center justify-center h-full font-semibold text-xs">{f.name.charAt(0)}</span>
                   }
-                  {onlineIds.has(f.user_id) && <span className="absolute bottom-0 right-0 w-2 h-2 bg-[var(--success)] border-2 border-[var(--bg-surface)] rounded-full" />}
+                  {onlineIds.has(f.user_id) && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[var(--success)] border-2 border-[var(--bg-surface)] rounded-full" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{f.name}</p>

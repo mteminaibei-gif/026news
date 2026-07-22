@@ -331,12 +331,14 @@ function Suggestions() {
               e.currentTarget.style.transform = 'translateX(0)'
             }}
           >
-            <Link href={`/journalists/${s.user_id}`} className="social-suggest-avatar" style={{ position: 'relative' }}>
-              {s.profile_image
-                ? <img src={s.profile_image} alt={s.name} />
-                : <div>{s.name.charAt(0).toUpperCase()}</div>}
+            <div className="social-suggest-avatar-wrap">
+              <Link href={`/journalists/${s.user_id}`} className="social-suggest-avatar">
+                {s.profile_image
+                  ? <img src={s.profile_image} alt={s.name} />
+                  : <div>{s.name.charAt(0).toUpperCase()}</div>}
+              </Link>
               {onlineSet.has(s.user_id) && <span className="online-dot" />}
-            </Link>
+            </div>
             <div className="social-suggest-meta">
               <Link href={`/journalists/${s.user_id}`} className="social-suggest-name">{s.name}</Link>
               <span className="social-suggest-role">{onlineSet.has(s.user_id) ? 'Online' : s.role}</span>
@@ -646,6 +648,7 @@ function PostDetailModal({ postId, onClose }: { postId: number; onClose: () => v
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment_text: text }),
     })
     if (res.ok) { const data = await res.json(); setComments(prev => [...prev, data.comment]) }
+    else setDraft(text)
   }
 
   return (
